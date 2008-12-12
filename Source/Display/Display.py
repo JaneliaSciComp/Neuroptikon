@@ -881,14 +881,15 @@ class Display(wx.glcanvas.GLCanvas):
                         pass
             else:  # Fall back to using pydot.
                 pydotGraph = self.network.to_pydot(graph_attr=graphAttr, node_attr=nodeAttr)
-                graphData = pydotGraph.create_dot(prog="fdp")
-                pydotGraph = pydot.graph_from_dot_data(graphData)
-                for node in graph.nodes(): 
-                   visible = self.visibleForObject(self.network.objectWithId(node))
-                   pyNode = pydotGraph.get_node(str(node))
-                   pos = pyNode.get_pos()[1:-1] 
-                   if pos != None:
-                      x, y = pos.split(",")
-                      visible.setPosition((float(x), float(y), 0))
-                # TODO: extract path segments
+                if pydotGraph is not None:
+                    graphData = pydotGraph.create_dot(prog="fdp")
+                    pydotGraph = pydot.graph_from_dot_data(graphData)
+                    for node in graph.nodes(): 
+                       visible = self.visibleForObject(self.network.objectWithId(node))
+                       pyNode = pydotGraph.get_node(str(node))
+                       pos = pyNode.get_pos()[1:-1] 
+                       if pos != None:
+                          x, y = pos.split(",")
+                          visible.setPosition((float(x), float(y), 0))
+                    # TODO: extract path segments
         self.Refresh(False)

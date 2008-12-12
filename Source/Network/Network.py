@@ -10,7 +10,11 @@ from GapJunction import GapJunction
 from Stimulus import Stimulus
 from Muscle import Muscle
 from Innervation import Innervation
-import pydot
+
+try:
+    import pydot
+except:
+    pydot = None
 
 
 class Network:
@@ -100,6 +104,48 @@ class Network:
     def to_pydot(self, graph_attr=None, node_attr=None, edge_attr=None):
         # This is a custom version of networkx.drawing.nx_pydot.to_pydot() that works around a bug in pydot 1.0.2.
         
-        if graph_attr is not None:            graph_attributes = graph_attr
-        else:            graph_attributes = {}        try:            node_a = self.graph.node_attr        except:            node_a = {}        if node_attr is not None:                    node_a.update(node_attr)        P = pydot.Dot(graph_type='graph', strict=False)        for n in self.graph.nodes_iter():            if n in node_a:                attr=node_a[n]            else:                attr={}            p=pydot.Node(str(n),**attr)            P.add_node(p)        
-        # This is the workaround for the pydot bug.  As long as every edge has some attribute then it works.        for (u, v, x) in self.graph.edges_iter():            attr = {'label': ''}            edge = pydot.Edge(str(u), str(v), **attr)            P.add_edge(edge)        try:            P.obj_dict['attributes'].update(graph_attributes['graph'])        except:            pass        try:            P.obj_dict['nodes']['node'][0]['attributes'].update(graph_attributes['node'])        except:            pass        try:            P.obj_dict['nodes']['edge'][0]['attributes'].update(graph_attributes['edge'])        except:            pass        return P
+        if pydot is None:
+            return None
+        
+        if graph_attr is not None:
+            graph_attributes = graph_attr
+        else:
+            graph_attributes = {}
+
+        try:
+            node_a = self.graph.node_attr
+        except:
+            node_a = {}
+        if node_attr is not None:        
+            node_a.update(node_attr)
+
+        P = pydot.Dot(graph_type='graph', strict=False)
+
+        for n in self.graph.nodes_iter():
+            if n in node_a:
+                attr=node_a[n]
+            else:
+                attr={}
+            p=pydot.Node(str(n),**attr)
+            P.add_node(p)
+        
+        # This is the workaround for the pydot bug.  As long as every edge has some attribute then it works.
+        for (u, v, x) in self.graph.edges_iter():
+            attr = {'label': ''}
+            edge = pydot.Edge(str(u), str(v), **attr)
+            P.add_edge(edge)
+
+        try:
+            P.obj_dict['attributes'].update(graph_attributes['graph'])
+        except:
+            pass
+        try:
+            P.obj_dict['nodes']['node'][0]['attributes'].update(graph_attributes['node'])
+        except:
+            pass
+        try:
+            P.obj_dict['nodes']['edge'][0]['attributes'].update(graph_attributes['edge'])
+        except:
+            pass
+
+        return P
