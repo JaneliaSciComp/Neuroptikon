@@ -1,4 +1,6 @@
 import os, platform, sys
+
+# Make sure that the library paths are set up correctly for the current location.
 commonLibPath = os.getcwd() + os.sep + 'lib' + os.sep + 'CrossPlatform'
 platformLibPath = os.getcwd() + os.sep + 'lib' + os.sep + platform.system()
 
@@ -6,15 +8,19 @@ if platform.system() == 'Darwin':
     libraryEnvVar = 'DYLD_LIBRARY_PATH'
 elif platform.system() == 'Windows':
     libraryEnvVar = 'PATH'
+#elif platform.system() == 'Linux':
+#    libraryEnvVar = 'LD_LIBRARY_PATH'
 
 if libraryEnvVar not in os.environ or platformLibPath not in os.environ[libraryEnvVar].split(os.pathsep):
-    # Add the search path for the native libraries and restart.
+    # Add the search path for the native libraries to the enviroment.
     if libraryEnvVar in os.environ:
         os.environ[libraryEnvVar] = platformLibPath + os.pathsep + os.environ[libraryEnvVar]
     else:
         os.environ[libraryEnvVar] = platformLibPath
-    # TODO: pass along any command line arguments
-    os.system('python Neuroptikon.py')
+    # Restart this script with the same instance of python and the same arguments.
+    arguments = [sys.executable]
+    arguments.extend(sys.argv)
+    os.system(' '.join(arguments))
     raise SystemExit
 
 sys.path.insert(0, commonLibPath)
