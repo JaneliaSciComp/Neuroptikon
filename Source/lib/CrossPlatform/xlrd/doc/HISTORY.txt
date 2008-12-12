@@ -1,0 +1,139 @@
+Version 0.6.0a4
+
+    * Added extraction of human-readable formulas from NAME records.
+    
+    * Worked around OOo Calc writing 9-byte BOOLERR records instead of 8. Reported by Rory C.-L.
+    
+    * This history file converted to descending chronological order and HTML format.
+
+Version 0.6.0a3, 2006-09-19
+
+    * Names: minor bugfixes; added script xlrdnameAPIdemo.py
+    
+    * ROW records were being used as additional hints for sizing memory requirements. In some
+    files the ROW records overstate the number of used columns, and/or there are ROW records for
+    rows that have no data in them. This would cause xlrd to report sheet.ncols and/or sheet.nrows
+    as larger than reasonably expected. Change: ROW records are ignored. The number of columns/rows is
+    based solely on the highest column/row index seen in non-empty data records. Empty data records (types 
+    BLANK and MULBLANKS) which contain no data, only formatting information, have always been ignored, and 
+    this will continue. Consequence: trailing rows and columns which contain only empty cells will
+    vanish.
+    
+Version 0.6.0a2, 2006-09-13
+
+    * Fixed a bug reported by Rory C.-L.: "open failed"; incorrect assumptions about the layout
+    of array formulas which return strings.
+    
+    * Further work on defined names, especially the API.
+
+Version 0.6.0a1, 2006-09-08
+
+    * Sheet objects have two new convenience methods: col_values(colx, start_rowx=0, end_rowx=None)
+    and the corresponding col_types. Suggested by Dennis O'Brien.
+
+    * BIFF 8 file missing its CODEPAGE record: xlrd will now assume utf_16_le encoding
+    (the only possibility) and keep going.
+    
+    * Older files missing a CODEPAGE record: an exception will be raised.
+    Thanks to Sergey Krushinsky for a sample file.
+    The open_workbook() function has a new argument (encoding_override) which can
+    be used if the CODEPAGE record is missing or incorrect (for example, codepage=1251
+    but the data is actually encoded in koi8_r). The runxlrd.py script takes a
+    corresponding -e argument, for example -e cp1251
+    
+    * Further work done on parsing "number formats". Thanks to Chris Withers for the 
+    "General_)" example.
+    
+    * Excel 97 introduced the concept of row and column labels, defined by Insert > Name > Labels.
+    The ranges containing the labels are now exposed as the Sheet attributes 
+    row_label_ranges and col_label_ranges.
+    
+    * The major effort in this 0.6.0 release has been the provision of access
+    to named cell ranges and named constants (Excel: Insert > Name > Define).
+    Juan C. Méndez provided very useful real-world sample files.
+    
+Version 0.5.3a1, 2006-05-24
+
+    * John Popplewell and Richard Sharp provided sample files which caused any
+    reliance at all on DIMENSIONS records and ROW records to be abandoned.
+        
+    * If the file size is not a whole number of OLE sectors, a warning message is logged.
+    Previously this caused an exception to be raised.
+
+Version 0.5.2, 2006-03-14, public release
+
+    * Updated version numbers, README, HISTORY.
+   
+        
+Version 0.5.2a3, 2006-03-13
+
+    * Gnumeric writes user-defined formats with format codes starting at
+    50 instead of 164; worked around.
+    	
+    * Thanks to Didrik Pinte for reporting the need for xlrd to be more tolerant
+    of the idiosyncracies of other software, for supplying sample files,
+    and for performing alpha testing.
+        
+    * '_' character in a format should be treated like an escape character; fixed.
+    
+    * An "empty" formula result means a zero-length string, not an empty cell! Fixed.
+
+Version 0.5.2a2, 2006-03-09
+
+    * Found that Gnumeric writes all DIMENSIONS records with nrows and ncols
+    each 1 less than they should be (except when it clamps ncols at 256!),
+    and pyXLwriter doesn't write ROW records. Cell memory pre-allocation was
+    generalised to use ROW records if available with fall-back to DIMENSIONS records.
+       
+    
+
+Version 0.5.2a1, 2006-03-06
+
+    * pyXLwriter writes DIMENSIONS record with antique opcode 0x0000
+    instead of 0x0200; worked around
+
+    * A file written by Gnumeric had zeroes in DIMENSIONS record
+    but data in cell A1; worked around
+
+Version 0.5.1, 2006-02-18, released to Journyx    
+
+    * Python 2.1 mmap requires file to be opened for update access.
+    Added fall-back to read-only access withoup mmap if 2.1 open fails
+    because "permission denied".
+
+Version 0.5, 2006-02-07, released to Journyx
+
+    * Now works with Python 2.1. Backporting to Python 2.1 was partially
+    funded by Journyx - provider of timesheet and project accounting
+    solutions (http://journyx.com/)
+
+    * open_workbook() can be given the contents of a file
+    instead of its name. Thanks to Remco Boerma for the suggestion.
+
+    * New module attribute __VERSION__ (as a string; for example "0.5")
+
+    * Minor enhancements to classification of formats as date or not-date.
+    
+    * Added warnings about files with inconsistent OLE compound document
+    structures. Thanks to Roman V. Kiseliov (author of pyexcelerator)
+    for the tip-off.
+
+
+Version 0.4a1, 2005-09-07, released to Laurent T.
+
+    * Book and sheet objects can now be pickled and unpickled.
+        Instead of reading a large spreadsheet multiple times,
+        consider pickling it once and loading the saved pickle;
+        can be much faster. Thanks to Laurent Thioudellet for the
+        enhancement request.
+
+    * Using the mmap module can be turned off.
+        But you would only do that for benchmarking purposes.
+
+    * Handling NUMBER records has been made faster
+    
+    
+Version 0.3a1, 2005-05-15, first public release    
+
+
+    
