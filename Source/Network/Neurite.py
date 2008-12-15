@@ -25,8 +25,8 @@ class Neurite(Object):
         return parent
     
     
-    def arborize(self, region, input=True, output=True):
-        self.arborization = Arborization(self, region, input, output)
+    def arborize(self, region, sendsOutput=None, receivesInput=None):
+        self.arborization = Arborization(self, region, sendsOutput, receivesInput)
         region.arborizations.append(self.arborization)
         self.network.addObject(self.arborization)
     
@@ -98,6 +98,7 @@ class Neurite(Object):
     
     def inputs(self):
         inputs = Object.inputs(self)
+        # TODO: handle receivesInput is None
         if self.arborization is not None and self.arborization.receivesInput:
             inputs.append(self.arborization)
         for synapse in self.incomingSynapses():
@@ -110,6 +111,7 @@ class Neurite(Object):
     
     def outputs(self):
         outputs = Object.outputs(self)
+        # TODO: handle sendsOutput is None
         if self.arborization is not None and self.arborization.sendsOutput:
             outputs.append(self.arborization)
         for synapse in self.outgoingSynapses():
