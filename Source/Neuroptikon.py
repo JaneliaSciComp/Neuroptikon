@@ -122,7 +122,7 @@ if __name__ == "__main__":
             frame.display.setNetwork(network)
             frame.Show(True)
             self._frames.append(frame)
-            return frame
+            return frame.display
         
         
         def convertRealData(self, display):
