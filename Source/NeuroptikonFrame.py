@@ -10,7 +10,6 @@ class NeuroptikonFrame( wx.Frame ):
         
         width, height = self.GetClientSize()
         self.display = Display(self, wx.ID_ANY, 0, 0, width, height)
-        self.Bind(wx.EVT_IDLE, self.display.onPaint)
         displayBox = wx.BoxSizer(wx.VERTICAL)
         displayBox.Add(self.display, 1, wx.EXPAND)
         sizer = wx.BoxSizer(wx.VERTICAL)

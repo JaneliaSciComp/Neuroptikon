@@ -98,6 +98,7 @@ class Display(wx.glcanvas.GLCanvas):
         
         self.Bind(wx.EVT_SIZE, self.onSize)
         self.Bind(wx.EVT_PAINT, self.onPaint)
+        self.Bind(wx.EVT_IDLE, self.onIdle)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
@@ -306,7 +307,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def onPaint(self, event):
-        wx.ClientDC(self)
+        wx.PaintDC(self)
         
         if self.GetContext() != 0 and self.graphicsWindow.valid():
             self.SetCurrent()
