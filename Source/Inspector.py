@@ -1,6 +1,7 @@
 import wx
 from Display import Visible
 from Network import Object
+import platform
 
 
 class Inspector( wx.Frame ):
@@ -21,7 +22,10 @@ class Inspector( wx.Frame ):
         titleSizer = wx.BoxSizer(wx.VERTICAL)
         self.titleField = wx.StaticText(self, -1, "")
         self.subTitleField = wx.StaticText(self, -1, "")
-        self.subTitleField.SetForegroundColour('LIGHT GRAY')
+        if platform.system() == 'Windows':
+            self.subTitleField.SetForegroundColour('LIGHT GRAY')
+        else:
+            self.subTitleField.SetForegroundColour('GRAY')
         titleSizer.Add(self.titleField, 0, wx.EXPAND)
         titleSizer.Add(self.subTitleField, 0, wx.EXPAND)
         headerBox = wx.BoxSizer(wx.HORIZONTAL)
