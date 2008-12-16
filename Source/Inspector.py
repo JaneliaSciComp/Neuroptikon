@@ -6,17 +6,22 @@ from Network import Object
 class Inspector( wx.Frame ):
     
     def __init__(self, parent):
-        wx.Frame.__init__(self, parent, -1, "Inspector", size=(200,300), pos=(-1,-1), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
+        wx.Frame.__init__(self, parent, -1, "Inspector", size=(200,300), pos=(-1,-1))	#, style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
+        
+        # Create an empty bitmap
+        emptyImage = wx.EmptyImage(32, 32)
+        emptyImage.SetMaskColour(0, 0, 0)
+        emptyImage.InitAlpha()
+        self.emptyBitmap = emptyImage.ConvertToBitmap()
         
         # Build the header UI
         self.iconField = wx.StaticBitmap(self, -1)
         self.iconField.SetMinSize(wx.Size(32, 32))
         self.iconField.SetMaxSize(wx.Size(32, 32))
-        self.iconField.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_TRANSPARENT))
         titleSizer = wx.BoxSizer(wx.VERTICAL)
         self.titleField = wx.StaticText(self, -1, "")
         self.subTitleField = wx.StaticText(self, -1, "")
-        self.subTitleField.SetForegroundColour('GRAY')
+        self.subTitleField.SetForegroundColour('LIGHT GRAY')
         titleSizer.Add(self.titleField, 0, wx.EXPAND)
         titleSizer.Add(self.subTitleField, 0, wx.EXPAND)
         headerBox = wx.BoxSizer(wx.HORIZONTAL)
@@ -68,7 +73,7 @@ class Inspector( wx.Frame ):
         self.objects = objects
         self.display = display
         if len(objects) == 0:
-            self.iconField.SetBitmap(wx.NullBitmap)
+            self.iconField.SetBitmap(self.emptyBitmap)
             self.titleField.SetLabel("")
             self.subTitleField.SetLabel("")
             self.mainSizer.Show(self.noSelectionBox)
@@ -93,7 +98,7 @@ class Inspector( wx.Frame ):
             self.fixedPositionCheckBox.SetValue(visible.positionIsFixed())
             self.fixedPositionCheckBox.Enable(True)
         else:
-            self.iconField.SetBitmap(wx.NullBitmap)
+            self.iconField.SetBitmap(self.emptyBitmap)
             self.titleField.SetLabel(str(len(objects)) + " items selected")
             self.subTitleField.SetLabel("")
             self.multiGridSizer.Clear(True)
@@ -103,7 +108,6 @@ class Inspector( wx.Frame ):
                 bitmap = wx.StaticBitmap(self, -1)
                 bitmap.SetMinSize(wx.Size(16, 16))
                 bitmap.SetMaxSize(wx.Size(16, 16))
-                bitmap.SetBackgroundColour(wx.Colour(0, 0, 0, wx.ALPHA_TRANSPARENT))
                 image = object.image()
                 if image is None or not image.Ok():
                     bitmap.SetBitmap(wx.NullBitmap)
