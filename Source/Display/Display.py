@@ -285,6 +285,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     def onIdle(self, event):
         self.Refresh()
+        event.RequestMore()
     
     
     def onEraseBackground(self, event):
@@ -316,9 +317,6 @@ class Display(wx.glcanvas.GLCanvas):
             else:
                 self.viewer3D.frame()
             self.SwapBuffers()
-        
-        if isinstance(event, wx.IdleEvent):
-            event.RequestMore()
     
     
     def GetConvertedKeyCode(self,evt):
