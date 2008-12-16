@@ -1,4 +1,5 @@
 import wx
+import platform
 from Display.Display import Display
 from Network.Network import Network
 from Search.Finder import Finder
@@ -21,13 +22,20 @@ class NeuroptikonFrame( wx.Frame ):
         
         toolbar = wx.ToolBar(self)
         view2DId = wx.NewId()
-        toolbar.AddLabelTool(view2DId, "2D View", wx.Bitmap("View2D.png"))
+        toolbar.AddLabelTool(view2DId, "2D View", self.loadBitmap("View2D.png"))
         self.Bind(wx.EVT_TOOL, self.display.onViewIn2D, id=view2DId)
         view3DId = wx.NewId()
-        toolbar.AddLabelTool(view3DId, "3D View", wx.Bitmap("View3D.png"))
+        toolbar.AddLabelTool(view3DId, "3D View", self.loadBitmap("View3D.png"))
         self.Bind(wx.EVT_TOOL, self.display.onViewIn3D, id=view3DId)
         toolbar.Realize()
         self.SetToolBar(toolbar)
+    
+    
+    def loadBitmap(self, fileName):
+        image = wx.Image(fileName)
+        if platform.system() == 'Windows':
+            image.Rescale(16, 16)
+        return image.ConvertToBitmap()
     
     
     def menuBar(self):
