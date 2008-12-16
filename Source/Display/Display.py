@@ -19,7 +19,7 @@ from networkx import *
 from math import pi, fabs
 from numpy import zeros, diag, mat, sign, inner, isinf
 from numpy.linalg import pinv, eigh
-import os
+import os, platform
 
 try:
     import pygraphviz
@@ -57,6 +57,10 @@ class Display(wx.glcanvas.GLCanvas):
         self.orthoZoom = 0
         self.rootNode = osg.MatrixTransform()
         self.rootNode.setMatrix(osg.Matrixd.identity())
+        if platform.system() == 'Windows':
+            self.scrollWheelScale = 0.1
+        else:
+            self.scrollWheelScale = 1
         
         if False:
             lightGroup = osg.Group()
@@ -274,13 +278,13 @@ class Display(wx.glcanvas.GLCanvas):
             elif event.AltDown():
                 self.orthoCenter = (self.orthoCenter[0], self.orthoCenter[1] - event.GetWheelRotation() * 10)
             else:
-                self.orthoZoom -= event.GetWheelRotation()
+                self.orthoZoom -= event.GetWheelRotation() * self.scrollWheelScale
                 if self.orthoZoom < 0:
                     self.orthoZoom = 0
                 # TODO: alter orthoCenter to keep visibles in view
             self.resetView()
         elif self.viewDimensions == 3:
-            self.trackball.setDistance(self.trackball.getDistance() + event.GetWheelRotation() * 100)
+            self.trackball.setDistance(self.trackball.getDistance() + event.GetWheelRotation() * 100 * self.scrollWheelScale)
     
     
     def onIdle(self, event):
