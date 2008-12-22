@@ -1,4 +1,4 @@
-import os, platform, sys
+import os, platform, stat, sys
 
 # Make sure that the library paths are set up correctly for the current location.
 commonLibPath = os.getcwd() + os.sep + 'lib' + os.sep + 'CrossPlatform'
@@ -31,6 +31,10 @@ os.environ['GVBINDIR'] = platformLibPath + os.sep + 'graphviz'
 
 # Make sure our custom build of graphviz's binaries can be found.
 os.environ['PATH'] = platformLibPath + os.pathsep + os.environ['PATH']
+
+# Make sure fdp is executable.
+fdpPath = platformLibPath + os.sep + 'fdp'
+os.chmod(fdpPath, os.stat(fdpPath).st_mode | stat.S_IXUSR)
 
 import wx
 import wx.lib.mixins.inspection
