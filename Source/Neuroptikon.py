@@ -26,6 +26,12 @@ if libraryEnvVar not in os.environ or platformLibPath not in os.environ[libraryE
 sys.path.insert(0, commonLibPath)
 sys.path.insert(0, platformLibPath)
 
+# Make sure graphviz's binaries can find the graphviz plug-ins.
+os.environ['GVBINDIR'] = platformLibPath + os.sep + 'graphviz'
+
+# Make sure our custom build of graphviz's binaries can be found.
+os.environ['PATH'] = platformLibPath + os.pathsep + os.environ['PATH']
+
 import wx
 import wx.lib.mixins.inspection
 from NeuroptikonFrame import NeuroptikonFrame

@@ -841,13 +841,15 @@ class Display(wx.glcanvas.GLCanvas):
                 self.setVisiblePath(edge[2], path_3D, visible0, visible1)
         elif method == "graphviz":
             graphAttr = {"graph": {"splines": "polyline", "overlap": "vpsc", "sep": "+20"}}
-            nodeAttr = {"label": "", "shape": "box"}
+            nodeAttr = {}
             for node in graph.nodes():
                 object = self.network.objectWithId(node)
                 visible = self.visibleForObject(object)
                 pos = visible.position()
                 attr = {"width": str(visible.size()[0]/72.0), 
                         "height": str(visible.size()[1]/72.0), 
+                        "label": " ",
+                        "shape": "box",
                         "fixedsize": "true", 
                         "pos": "%f,%f" % (pos[0]/72.0, pos[1]/72.0)}
                 if visible.positionIsFixed():
@@ -856,6 +858,7 @@ class Display(wx.glcanvas.GLCanvas):
             nodePos={} 
             if pygraphviz is not None:  # Use pygraphviz if it's available as it's faster than pydot.
                 A=to_agraph(graph, graph_attr=graphAttr, node_attr=nodeAttr)
+                #print A.to_string()
                 A.layout(prog="fdp")
                 for node in graph.nodes(): 
                     visible = self.visibleForObject(self.network.objectWithId(node))
