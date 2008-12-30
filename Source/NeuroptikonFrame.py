@@ -74,6 +74,8 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_MENU, self.onShowHideNeuronNames, self.showNeuronNamesMenuItem)
         self.showFlowMenuItem = viewMenu.Append(wx.NewId(), "Show Flow of Information", "Animate the connections between objects", True)
         self.Bind(wx.EVT_MENU, self.onShowFlow, self.showFlowMenuItem)
+        self.useGhostsMenuItem = viewMenu.Append(wx.NewId(), "Use Ghosting", "Dim objects that are not currently selected", True)
+        self.Bind(wx.EVT_MENU, self.onUseGhosts, self.useGhostsMenuItem)
         viewMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, self.display.onAutoLayout, viewMenu.Append(wx.NewId(), "Layout Objects\tCtrl-L", "Automatically positions all objects"))
         viewMenu.AppendSeparator()
@@ -138,6 +140,10 @@ class NeuroptikonFrame( wx.Frame ):
     
     def onShowFlow(self, event):
         self.display.setShowFlow(not self.display.showFlow())
+    
+    
+    def onUseGhosts(self, event):
+        self.display.setUseGhosts(not self.display.useGhosts())
     
     
     def Close(self, force=False):

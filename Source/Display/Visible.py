@@ -54,7 +54,8 @@ class Visible(object):
         self._label = None
         self._labelNode = None
         self._shapeName = "none"
-        self._color = (1, 1, 1)
+        self._color = ((1, 1, 1), (1, 1, 1)) # diffuse, emissive
+        self._opacity = 1
         self._path = None
         self.pathStart = None
         self.pathEnd = None
@@ -121,14 +122,30 @@ class Visible(object):
         self._material.setDiffuse(osg.Material.FRONT_AND_BACK, osg.Vec4 (diffuseColor[0], diffuseColor[1], diffuseColor[2], 1))
         if emissiveColor is not None:
             self._material.setEmission(osg.Material.FRONT_AND_BACK, osg.Vec4 (emissiveColor[0], emissiveColor[1], emissiveColor[2], 1))
-        #self._material.setAlpha(osg.Material.FRONT_AND_BACK, 0.5)
-        #self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
-        #self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
-        _color = diffuseColor
+        self._color = (diffuseColor, emissiveColor)
     
     
     def color(self):
         return self._color
+    
+    
+    def setOpacity(self, opacity):
+        if opacity < 0:
+            opacity = 0
+        elif opacity > 1:
+            opacity = 1
+        self._material.setAlpha(osg.Material.FRONT_AND_BACK, opacity)
+        if opacity == 1:
+            self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.OPAQUE_BIN)
+            self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
+        else:
+            self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
+            self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+        self._opacity = opacity
+    
+    
+    def opacity(self):
+        return self._opacity
     
     
     def updateTransform(self):
