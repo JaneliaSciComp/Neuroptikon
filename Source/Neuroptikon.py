@@ -34,7 +34,8 @@ os.environ['PATH'] = platformLibPath + os.pathsep + os.environ['PATH']
 
 # Make sure fdp is executable.
 fdpPath = platformLibPath + os.sep + 'fdp'
-os.chmod(fdpPath, os.stat(fdpPath).st_mode | stat.S_IXUSR)
+if os.access(fdpPath, os.F_OK):
+    os.chmod(fdpPath, os.stat(fdpPath).st_mode | stat.S_IXUSR)
 
 import wx
 import wx.lib.mixins.inspection
