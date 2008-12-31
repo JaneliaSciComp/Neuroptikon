@@ -17,7 +17,7 @@ from Visible import Visible
 from pydispatch import dispatcher
 from networkx import *
 from math import pi, fabs
-from numpy import diag, mat, sign, inner, isinf, identity
+from numpy import diag, mat, sign, inner, isinf, zeros
 from numpy.linalg import pinv, eigh
 import os, platform
 
@@ -83,6 +83,9 @@ class Display(wx.glcanvas.GLCanvas):
         self.trackball = osgGA.TrackballManipulator()
         self._pickHandler = PickHandler(self)
         
+        config = wx.Config("Neuroptikon")
+        clearColor = osg.Vec4(config.ReadFloat("Color/Background/Red", 0.7), config.ReadFloat("Color/Background/Green", 0.8), config.ReadFloat("Color/Background/Blue", 0.7), 1)
+        
         self.viewer2D = osgViewer.Viewer()
         self.viewer2D.setThreadingModel(self.viewer2D.SingleThreaded)
         self.viewer2D.addEventHandler(osgViewer.StatsHandler())
@@ -90,7 +93,8 @@ class Display(wx.glcanvas.GLCanvas):
 #        self.viewer2D.setCameraManipulator(self.trackball)
 #        self.viewer2D.setCameraManipulator(None)
         self.viewer2D.addEventHandler(self._pickHandler)
-        self.viewer2D.getCamera().setClearColor(osg.Vec4(0.7, 0.8, 0.7, 1))
+        config = wx.Config("Neuroptikon")
+        self.viewer2D.getCamera().setClearColor(clearColor)
 #        self.viewer2D.getCamera().setComputeNearFarMode(osg.CullSettings.COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES)
         
         self.viewer3D = osgViewer.Viewer()
@@ -99,7 +103,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.viewer3D.setSceneData(self.rootNode)
         self.viewer3D.setCameraManipulator(self.trackball)
         self.viewer3D.addEventHandler(self._pickHandler)
-        self.viewer3D.getCamera().setClearColor(osg.Vec4(0.7, 0.8, 0.7, 1))
+        self.viewer3D.getCamera().setClearColor(clearColor)
         
         self.Bind(wx.EVT_SIZE, self.onSize)
         self.Bind(wx.EVT_PAINT, self.onPaint)
@@ -783,7 +787,7 @@ class Display(wx.glcanvas.GLCanvas):
         if method == "spectral-mitya":
             nodes = graph.nodes()
             n=len(nodes)
-            A = identity(n)
+            A = zeros((n, n))
             for edge in graph.edges():
                 n1 = nodes.index(edge[0])
                 n2 = nodes.index(edge[1])

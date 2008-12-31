@@ -6,7 +6,7 @@ import platform
 
 class Inspector( wx.Frame ):
     
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         wx.Frame.__init__(self, parent, -1, "Inspector", size=(200,300), pos=(-1,-1))	#, style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
         
         # Create an empty bitmap

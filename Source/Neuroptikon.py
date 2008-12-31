@@ -32,7 +32,7 @@ os.environ['GVBINDIR'] = platformLibPath + os.sep + 'graphviz'
 # Make sure our custom build of graphviz's binaries can be found.
 os.environ['PATH'] = platformLibPath + os.pathsep + os.environ['PATH']
 
-# Make sure fdp is executable.
+# Make sure fdp is executable if it exists.
 fdpPath = platformLibPath + os.sep + 'fdp'
 if os.access(fdpPath, os.F_OK):
     os.chmod(fdpPath, os.stat(fdpPath).st_mode | stat.S_IXUSR)
@@ -41,6 +41,7 @@ import wx
 import wx.lib.mixins.inspection
 from NeuroptikonFrame import NeuroptikonFrame
 from Network.Network import Network
+from Preferences import Preferences
 from Inspector import Inspector
 
 def debugException(type, value, tb):
@@ -60,11 +61,12 @@ if __name__ == "__main__":
             
             self._networks = []
             
-            self.inspector = Inspector(None)
+            self.preferences = Preferences()
+            self.inspector = Inspector()
             
             # Keep track of open frames so we can close them on quit.
             # TODO: use wxWidget's document/view framework instead
-            self._frames = [self.inspector]
+            self._frames = [self.preferences, self.inspector]
             self.SetExitOnFrameDelete(False)
             
             # open an empty network by default
@@ -180,6 +182,11 @@ if __name__ == "__main__":
             # TODO: region groups
             text += 'display.autoLayout("graphviz")\ndisplay.resetView()\n'
             print text
+        
+        
+        def onOpenPreferences(self, event):
+            self.preferences.Show(True)
+            return self.preferences
         
         
         def onOpenInspector(self, event):

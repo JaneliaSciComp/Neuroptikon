@@ -42,11 +42,13 @@ class NeuroptikonFrame( wx.Frame ):
     
     def menuBar(self):
         menuBar = wx.MenuBar()
+        
         fileMenu = wx.Menu()
         self.Bind(wx.EVT_MENU, wx.GetApp().onNewNetwork, fileMenu.Append(wx.NewId(), "New Network\tCtrl-N", "Open a new network window"))
         fileMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, self.onRunScript, fileMenu.Append(wx.NewId(), "Run Script...\tCtrl-R", "Run a console script file"))
         self.Bind(wx.EVT_MENU, wx.GetApp().onOpenConsole, fileMenu.Append(wx.NewId(), "Open the Console\tCtrl-Alt-O", "Open the Console window"))
+        self.Bind(wx.EVT_MENU, wx.GetApp().onOpenPreferences, fileMenu.Append(wx.ID_PREFERENCES, "Preferences", "Change Neuroptikon preferences"))
         fileMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, wx.GetApp().onQuit, fileMenu.Append(wx.ID_EXIT, "E&xit\tCtrl-Q", "Exit this simple sample"))
         menuBar.Append(fileMenu, "&File")
