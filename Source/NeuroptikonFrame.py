@@ -9,6 +9,8 @@ class NeuroptikonFrame( wx.Frame ):
     def __init__(self, parent, id=wx.ID_ANY, title="Neuroptikon"):
         wx.Frame.__init__(self, parent, id, title, size=(800,600), style=wx.DEFAULT_FRAME_STYLE|wx.FULL_REPAINT_ON_RESIZE)
         
+        self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
+        
         width, height = self.GetClientSize()
         self.display = Display(self, wx.ID_ANY, 0, 0, width, height)
         displayBox = wx.BoxSizer(wx.VERTICAL)
@@ -144,12 +146,6 @@ class NeuroptikonFrame( wx.Frame ):
     
     def onUseGhosts(self, event):
         self.display.setUseGhosts(not self.display.useGhosts())
-    
-    
-    def Close(self, force=False):
-        self.display.deselectAll()
-        self.display.setShowFlow(False)
-        return wx.Frame.Close(self, force)
         
         
     def OnCloseWindow(self, event):
