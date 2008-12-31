@@ -9,7 +9,7 @@ class NeuroptikonFrame( wx.Frame ):
     def __init__(self, parent, id=wx.ID_ANY, title="Neuroptikon"):
         wx.Frame.__init__(self, parent, id, title, size=(800,600), style=wx.DEFAULT_FRAME_STYLE|wx.FULL_REPAINT_ON_RESIZE)
         
-        self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
+        self.Bind(wx.EVT_CLOSE, self.onCloseWindow)
         
         width, height = self.GetClientSize()
         self.display = Display(self, wx.ID_ANY, 0, 0, width, height)
@@ -45,10 +45,11 @@ class NeuroptikonFrame( wx.Frame ):
         
         fileMenu = wx.Menu()
         self.Bind(wx.EVT_MENU, wx.GetApp().onNewNetwork, fileMenu.Append(wx.NewId(), "New Network\tCtrl-N", "Open a new network window"))
+        self.Bind(wx.EVT_MENU, self.onCloseWindow, fileMenu.Append(wx.ID_CLOSE, "Close Network\tCtrl-W", "Close the current network window"))
         fileMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, self.onRunScript, fileMenu.Append(wx.NewId(), "Run Script...\tCtrl-R", "Run a console script file"))
         self.Bind(wx.EVT_MENU, wx.GetApp().onOpenConsole, fileMenu.Append(wx.NewId(), "Open the Console\tCtrl-Alt-O", "Open the Console window"))
-        self.Bind(wx.EVT_MENU, wx.GetApp().onOpenPreferences, fileMenu.Append(wx.ID_PREFERENCES, "Preferences", "Change Neuroptikon preferences"))
+        self.Bind(wx.EVT_MENU, wx.GetApp().onOpenPreferences, fileMenu.Append(wx.ID_PREFERENCES, "Settings", "Change Neuroptikon preferences"))
         fileMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, wx.GetApp().onQuit, fileMenu.Append(wx.ID_EXIT, "E&xit\tCtrl-Q", "Exit this simple sample"))
         menuBar.Append(fileMenu, "&File")
@@ -150,7 +151,8 @@ class NeuroptikonFrame( wx.Frame ):
         self.display.setUseGhosts(not self.display.useGhosts())
         
         
-    def OnCloseWindow(self, event):
+    def onCloseWindow(self, event):
         self.display.deselectAll()
         self.display.setShowFlow(False)
+        wx.GetApp()._frames.remove(self)    # hackish
         self.Destroy()
