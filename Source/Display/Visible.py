@@ -107,6 +107,7 @@ class Visible(object):
                 self._textDrawable.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
                 self._textDrawable.setCharacterSize(48)
                 self._textGeode.addDrawable(self._textDrawable)
+                self._textDrawable.setColor(osg.Vec4(0, 0, 0, self._opacity))
             self._textDrawable.setText(label)
         elif label is None and self._textDrawable is not None:
             self._textGeode.removeDrawable(self._textDrawable)
@@ -299,6 +300,7 @@ class Visible(object):
                 callback = AnimatedTextureCallback(self, 0, textureMatrix, osg.Matrixd.translate(-0.05, -0.05, -0.05))
                 self._shapeGeode.setUpdateCallback(callback.__disown__())
             if self.flowFrom:
+                # TODO: this should be using texture unit 1 but it doesn't render correctly on Mac OS X
                 self._stateSet.setTextureAttributeAndModes(0, self._motionTexture2, osg.StateAttribute.ON)
                 textureMatrix = osg.TexMat(osg.Matrixd.scale(10,  self.size()[1] / 400,  10))
                 textureMatrix.setDataVariance(osg.Object.DYNAMIC)
