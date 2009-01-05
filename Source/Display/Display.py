@@ -121,6 +121,7 @@ class Display(wx.glcanvas.GLCanvas):
         self._textureTransform = osg.Matrixd.scale(10,  10,  10)
         self.selection = None
         self.selectionShouldExtend = False
+        self.findShortestPath = False
         
         self.graphicsWindow = self.viewer2D.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
     
@@ -263,10 +264,8 @@ class Display(wx.glcanvas.GLCanvas):
    
     def onMouseEvent(self, event):
         if event.ButtonDown():
-            if event.ShiftDown():
-                self.selectionShouldExtend = True
-            else:
-                self.selectionShouldExtend = False
+            self.selectionShouldExtend = event.ShiftDown()
+            self.findShortestPath = event.AltDown()
             button = event.GetButton()
             self.graphicsWindow.getEventQueue().mouseButtonPress(event.GetX(), event.GetY(), button)
         elif event.ButtonUp():
@@ -662,12 +661,17 @@ class Display(wx.glcanvas.GLCanvas):
                 self.selectObject(object, True)
     
     
-    def selectObject(self, object, extend=False):
+    def selectObject(self, object, extend=False, findShortestPath=False):
         # TODO: allow a selection delegate that can modify what gets selected?  could be set via script...
         self.clearDragger()
         if object is None:
             self.deselectAll()
         else:
+            if extend and findShortestPath and len(self.selectedObjects) == 1:
+                for pathObject in self.selectedObjects[0].shortestPathTo(object):
+                    self.selectObject(pathObject, True)
+                return
+                
             if not extend or object not in self.selectedObjects:
                 if isinstance(object, Arborization) and object.neurite.neuron() not in self.selectedObjects:
                     object = object.neurite.neuron()

@@ -81,7 +81,7 @@ class PickHandler(osgGA.GUIEventHandler):
                 if geode != None:
                     #print "Picking geode ", geode.getName()
                     objectID = int(geode.getName())
-                    self._display.selectObject(self._display.network.objectWithId(objectID), self._display.selectionShouldExtend)
+                    self._display.selectObject(self._display.network.objectWithId(objectID), self._display.selectionShouldExtend, self._display.findShortestPath)
             else:
                 self._display.deselectAll()
         return True       
