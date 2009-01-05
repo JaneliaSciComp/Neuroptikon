@@ -39,8 +39,8 @@ class Display(wx.glcanvas.GLCanvas):
         self.network = None
         self.visibles = {}
         self.selectedObjects = []
-        self.highlightedObjects = []
-        self.animatedObjects = []
+        self.highlightedVisibles = []
+        self.animatedVisibles = []
         self.selectAdjacentObjects = True
         self._showRegionNames = True
         self._showNeuronNames = False
@@ -575,7 +575,7 @@ class Display(wx.glcanvas.GLCanvas):
             if len(self.selectedObjects) > 0:
                 for key, visible in self.visibles.iteritems():
                     if isinstance(visible, Visible):
-                        if self._useGhosts and visible not in self.highlightedObjects and visible not in self.animatedObjects:
+                        if self._useGhosts and visible not in self.highlightedVisibles and visible not in self.animatedVisibles:
                             visible.setOpacity(0.1)
                         else:
                             visible.setOpacity(1)
@@ -619,18 +619,40 @@ class Display(wx.glcanvas.GLCanvas):
             self.dragger = None
     
     
-    def highlightObject(self, object):
+    def highlightObject(self, object, highlight=True):
         visible = self.visibleForObject(object)
-        visible.setGlowColor(self._secondarySelectionColor)
-        visible.setOpacity(1)
-        self.highlightedObjects.append(visible)
+        if highlight:
+            if visible not in self.highlightedVisibles:
+                visible.setGlowColor(self._secondarySelectionColor)
+                visible.setOpacity(1)
+                self.highlightedVisibles.append(visible)
+        else:
+            if visible in self.highlightedVisibles:
+                visible.setGlowColor(None)
+                self.highlightedVisibles.remove(visible)
+            else:
+                visible = self.visibleForObject(object, False)
+                if visible in self.highlightedVisibles:
+                    visible.setGlowColor(None)
+                    self.highlightedVisibles.remove(visible)
     
     
-    def animateObjectFlow(self, object):
+    def animateObjectFlow(self, object, animate=True):
         visible = self.visibleForObject(object)
-        visible.animateFlow()
-        visible.setOpacity(1)
-        self.animatedObjects.append(visible)
+        if animate:
+            if visible not in self.animatedVisibles:
+                visible.animateFlow()
+                visible.setOpacity(1)
+                self.animatedVisibles.append(visible)
+        else:
+            if visible in self.animatedVisibles:
+                visible.animateFlow(False)
+                self.animatedVisibles.remove(visible)
+            else:
+                visible = self.visibleForObject(object, False)
+                if visible in self.animatedVisibles:
+                    visible.animateFlow(False)
+                    self.animatedVisibles.remove(visible)
     
     
     def selectObjectsMatching(self, predicate):
@@ -645,80 +667,99 @@ class Display(wx.glcanvas.GLCanvas):
         self.clearDragger()
         if object is None:
             self.deselectAll()
-        elif not extend or object not in self.selectedObjects:
-            if isinstance(object, Arborization) and object.neurite.neuron() not in self.selectedObjects:
-                object = object.neurite.neuron()
-            elif isinstance(object, Synapse) and object.presynapticNeurite.neuron() not in self.selectedObjects:
-                object = object.presynapticNeurite.neuron()
-            elif isinstance(object, GapJunction) and list(object.neurites)[0].neuron() not in self.selectedObjects:
-                object = list(object.neurites)[0].neuron()
-            #print "Selecting ", object.__class__.__name__, " ", object.name or object
-            if not extend:
-                self.deselectAll()
-            # TODO: highlight via display filters
-            # TODO: handle stimulus tuple
-            self.selectedObjects.append(object)
-            visible = self.visibleForObject(object, False)
-            visible.setGlowColor(self._primarySelectionColor)
-            self.highlightedObjects.append(visible)
-            if self._useGhosts:
-                visible.setOpacity(1)
-            if isinstance(object, Region) and self.selectAdjacentObjects:
-                for arborization in object.arborizations:
-                    neuron = arborization.neurite.neuron()
-                    self.highlightObject(neuron)
-                    for secondaryArborization in neuron.arborizations():
-                        if secondaryArborization.region == object or (arborization.sendsOutput and secondaryArborization.receivesInput) or (arborization.receivesInput and secondaryArborization.sendsOutput):
-                            self.animateObjectFlow(secondaryArborization)
-                    # TODO: synapses too?
-            elif isinstance(object, Pathway):
-                for region in object.regions:
-                    self.highlightObject(region)
-            elif isinstance(object, Neuron):
-                for synapse in object.incomingSynapses():
-                    self.animateObjectFlow(synapse)
-                    if self.selectAdjacentObjects:
-                        self.highlightObject(synapse.presynapticNeurite.neuron())
-                for synapse in object.outgoingSynapses():
-                    self.animateObjectFlow(synapse)
-                    if self.selectAdjacentObjects:
-                        self.highlightObject(synapse.postsynapticNeurites[0].neuron())
-                for arborization in object.arborizations():
-                    self.animateObjectFlow(arborization)
-                    if self.selectAdjacentObjects:
-                        self.highlightObject(arborization.region)
-                for gapJunction in object.gapJunctions():
-                    self.animateObjectFlow(gapJunction)
-                    if self.selectAdjacentObjects:
+        else:
+            if not extend or object not in self.selectedObjects:
+                if isinstance(object, Arborization) and object.neurite.neuron() not in self.selectedObjects:
+                    object = object.neurite.neuron()
+                elif isinstance(object, Synapse) and object.presynapticNeurite.neuron() not in self.selectedObjects:
+                    object = object.presynapticNeurite.neuron()
+                elif isinstance(object, GapJunction) and list(object.neurites)[0].neuron() not in self.selectedObjects:
+                    object = list(object.neurites)[0].neuron()
+                #print "Selecting ", object.__class__.__name__, " ", object.name or object
+                if not extend:
+                    self.deselectAll()
+                # TODO: highlight via display filters
+                # TODO: handle stimulus tuple
+                self.selectedObjects.append(object)
+                visible = self.visibleForObject(object, False)
+                visible.setGlowColor(self._primarySelectionColor)
+                self.highlightedVisibles.append(visible)
+                if self._useGhosts:
+                    visible.setOpacity(1)
+                if isinstance(object, Region) and self.selectAdjacentObjects:
+                    for arborization in object.arborizations:
+                        neuron = arborization.neurite.neuron()
+                        if not extend or neuron in self.selectedObjects:
+                            self.animateObjectFlow(arborization)
+                            self.highlightObject(neuron)
+                        for secondaryArborization in neuron.arborizations():
+                            if secondaryArborization != arborization and (arborization.sendsOutput and secondaryArborization.receivesInput) or (arborization.receivesInput and secondaryArborization.sendsOutput):
+                                if not extend or secondaryArborization.region in self.selectedObjects:
+                                    self.animateObjectFlow(arborization)
+                                    self.highlightObject(neuron)
+                                    self.animateObjectFlow(secondaryArborization)
+                                    self.highlightObject(secondaryArborization.region)
+                        # TODO: synapses too?
+                elif isinstance(object, Pathway):
+                    for region in object.regions:
+                        self.highlightObject(region)
+                elif isinstance(object, Neuron):
+                    for synapse in object.incomingSynapses():
+                        if not extend or synapse.presynapticNeurite.neuron() in self.selectedObjects:
+                            self.animateObjectFlow(synapse)
+                            if self.selectAdjacentObjects:
+                                self.highlightObject(synapse.presynapticNeurite.neuron())
+                    for synapse in object.outgoingSynapses():
+                        if not extend or synapse.postsynapticNeurites[0].neuron() in self.selectedObjects:
+                            self.animateObjectFlow(synapse)
+                            if self.selectAdjacentObjects:
+                                self.highlightObject(synapse.postsynapticNeurites[0].neuron())
+                    for arborization in object.arborizations():
+                        if not extend or arborization.region in self.selectedObjects:
+                            self.animateObjectFlow(arborization)
+                            if self.selectAdjacentObjects:
+                                self.highlightObject(arborization.region)
+                    for gapJunction in object.gapJunctions():
                         neurites = list(gapJunction.neurites)
                         if neurites[0].neuron() == object:
                             adjacentNeuron = neurites[1].neuron()
                         else:
                             adjacentNeuron = neurites[0].neuron()
-                        self.highlightObject(adjacentNeuron)
-                for innervation in object.innervations():
-                    self.animateObjectFlow(innervation)
-                    if self.selectAdjacentObjects:
-                        self.highlightObject(innervation.muscle)
-            elif isinstance(object, Stimulus):
-                visible = self.visibleForObject(object, False)
-                visible.setGlowColor(self._secondarySelectionColor)
-                self.highlightedObjects.append(visible)
-                visible.animateFlow()
-                self.animatedObjects.append(visible)
-            elif isinstance(object, Muscle):
-                for innervation in object.innervations:
-                    self.animateObjectFlow(innervation)
-                    if self.selectAdjacentObjects:
-                        self.highlightObject(innervation.neurite.neuron())
-        if self.selectAdjacentObjects:
-            for stimulus in object.stimuli:
-                visible = self.visibleForObject(stimulus, False)
-                visible.setGlowColor(self._secondarySelectionColor)
-                self.highlightedObjects.append(visible)
-                visible.animateFlow()
-                self.animatedObjects.append(visible)
-            
+                        if not extend or adjacentNeuron in self.selectedObjects:
+                            self.animateObjectFlow(gapJunction)
+                            if self.selectAdjacentObjects:
+                                self.highlightObject(adjacentNeuron)
+                    for innervation in object.innervations():
+                        if not extend or innervation.muscle in self.selectedObjects:
+                            self.animateObjectFlow(innervation)
+                            if self.selectAdjacentObjects:
+                                self.highlightObject(innervation.muscle)
+                elif isinstance(object, Stimulus):
+                    visible = self.visibleForObject(object, False)
+                    visible.setGlowColor(self._secondarySelectionColor)
+                    self.highlightedVisibles.append(visible)
+                    visible.animateFlow()
+                    self.animatedVisibles.append(visible)
+                elif isinstance(object, Muscle):
+                    for innervation in object.innervations:
+                        self.animateObjectFlow(innervation)
+                        if self.selectAdjacentObjects:
+                            self.highlightObject(innervation.neurite.neuron())
+                if self.selectAdjacentObjects:
+                    for stimulus in object.stimuli:
+                        visible = self.visibleForObject(stimulus, False)
+                        visible.setGlowColor(self._secondarySelectionColor)
+                        self.highlightedVisibles.append(visible)
+                        visible.animateFlow()
+                        self.animatedVisibles.append(visible)
+            elif extend and object in self.selectedObjects:
+                self.selectedObjects.remove(object)
+                if len(self.selectedObjects) == 1:
+                    self.selectObject(self.selectedObjects[0])
+                    return
+                else:
+                    self.highlightObject(object, False)
+        
         wx.GetApp().inspector.inspectObjects(self, self.selectedObjects)    # TODO: factor this so wx.GetApp() doesn't have to be called, something like "self.app.inspector.inspectObject()"...
         
         if len(self.selectedObjects) == 1:
@@ -740,23 +781,67 @@ class Display(wx.glcanvas.GLCanvas):
                 
                 self.commandMgr = osgManipulator.CommandManager()
                 self.commandMgr.connect(self.dragger, self.selection)
+        elif len(self.selectedObjects) > 1:
+            # Turn off highlighting/animation for objects that aren't selected or that aren't direct connections between the selected objects.
+            tempList = list(self.highlightedVisibles)
+            for highlightedVisible in tempList:
+                highlightedObject = highlightedVisible.client
+                if highlightedObject not in self.selectedObjects:
+                    removeHighlight = True
+                    if isinstance(highlightedObject, Region):
+                        pass
+                    elif isinstance(highlightedObject, Neuron):
+                        inputs = []
+                        outputs = []
+                        for arborization in highlightedObject.arborizations():
+                            if arborization.region in self.selectedObjects:
+                                if arborization.receivesInput:
+                                   inputs.append(arborization.region)
+                                if arborization.sendsOutput:
+                                   outputs.append(arborization.region)
+                        if len(inputs) > 0 and len(outputs) > 0 and inputs != outputs:
+                            removeHighlight = False
+                    if removeHighlight:
+                        self.highlightObject(highlightedObject, False)
+            tempList = list(self.animatedVisibles)
+            for animatedVisible in tempList:
+                removeAnimation = False
+                animatedObject = animatedVisible.client
+                if isinstance(animatedObject, Arborization):
+                    removeAnimation = True
+                    if animatedObject.region in self.selectedObjects:
+                        if animatedObject.neurite.neuron() in self.selectedObjects and animatedObject.sendsOutput and animatedObject.receivesInput:
+                            removeAnimation = False
+                        else:
+                            neuron = animatedObject.neurite.neuron()
+                            for secondaryArborization in neuron.arborizations():
+                                if secondaryArborization != animatedObject and secondaryArborization.region in self.selectedObjects and \
+                                    ((animatedObject.sendsOutput and secondaryArborization.receivesInput) or (animatedObject.receivesInput and secondaryArborization.sendsOutput)):
+                                    removeAnimation = False
+                elif isinstance(animatedObject, Synapse):
+                    if animatedObject.presynapticNeurite.neuron() not in self.selectedObjects or animatedObject.postsynapticNeurites[0].neuron() not in self.selectedObjects:
+                        removeAnimation = True
+                elif isinstance(animatedObject, GapJunction):
+                    neurites = list(animatedObject.neurites)
+                    if neurites[0].neuron() not in self.selectedObjects or neurites[1].neuron() not in self.selectedObjects:
+                        removeAnimation = True
+                if removeAnimation:
+                    self.animateObjectFlow(animatedObject, False)
         
         if self._useGhosts:
             # Dim everything that isn't selected or connected to the selection.
             for key, visible in self.visibles.iteritems():
-                if isinstance(visible, Visible) and visible not in self.highlightedObjects and visible not in self.animatedObjects:
+                if isinstance(visible, Visible) and visible not in self.highlightedVisibles and visible not in self.animatedVisibles:
                     visible.setOpacity(0.1)
     
     
     def deselectAll(self):
         self.clearDragger()
-        for highlightedObject in self.highlightedObjects:
-            highlightedObject.setGlowColor(None)
-        for animatedObject in self.animatedObjects:
-            animatedObject.animateFlow(False)
+        while len(self.highlightedVisibles) > 0:
+            self.highlightObject(self.highlightedVisibles[0].client, False)
+        while len(self.animatedVisibles) > 0:
+            self.animateObjectFlow(self.animatedVisibles[0].client, False)
         self.selectedObjects = []
-        self.highlightedObjects = []
-        self.animatedObjects = []
         
         if self._useGhosts:
             # Restore all visibles to full opacity.
