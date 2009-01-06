@@ -93,7 +93,6 @@ class Display(wx.glcanvas.GLCanvas):
 #        self.viewer2D.setCameraManipulator(self.trackball)
 #        self.viewer2D.setCameraManipulator(None)
         self.viewer2D.addEventHandler(self._pickHandler)
-        config = wx.Config("Neuroptikon")
         self.viewer2D.getCamera().setClearColor(clearColor)
 #        self.viewer2D.getCamera().setComputeNearFarMode(osg.CullSettings.COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES)
         
@@ -1018,7 +1017,7 @@ class Display(wx.glcanvas.GLCanvas):
             if wildcard != "":
                 wildcard += "|"
             wildcard += fileTypes[index] + "|" + fileExtensions[index]
-        fileDialog = wx.FileDialog(None, "Save As:", "", "", wildcard, wx.FD_SAVE)
+        fileDialog = wx.FileDialog(None, _("Save As:"), "", "", wildcard, wx.FD_SAVE)
         if fileDialog.ShowModal() == wx.ID_OK:
             extension = fileExtensions[fileDialog.GetFilterIndex()]
             savePath = str(fileDialog.GetPath())

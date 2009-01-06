@@ -7,7 +7,7 @@ import platform
 class Inspector( wx.Frame ):
     
     def __init__(self, parent=None):
-        wx.Frame.__init__(self, parent, -1, "Inspector", size=(200,300), pos=(-1,-1))	#, style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
+        wx.Frame.__init__(self, parent, -1, _("Inspector"), size=(200,300), pos=(-1,-1))	#, style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
         
         # Create an empty bitmap
         emptyImage = wx.EmptyImage(32, 32)
@@ -35,7 +35,7 @@ class Inspector( wx.Frame ):
         
         # Build the no selection UI
         self.noSelectionBox = wx.BoxSizer(wx.VERTICAL)
-        noSelectionField = wx.StaticText(self, -1, "No selection")
+        noSelectionField = wx.StaticText(self, -1, _("No selection"))
         noSelectionField.SetForegroundColour('GRAY')
         self.noSelectionBox.Add(noSelectionField, 1, wx.ALIGN_CENTER_VERTICAL)
         
@@ -51,7 +51,7 @@ class Inspector( wx.Frame ):
         self.multiSelectionBox.Add(self.multiGridSizer, 1, wx.EXPAND)
         
         # Build the footer UI
-        self.fixedPositionCheckBox = wx.CheckBox(self, -1, "Fixed position", wx.DefaultPosition, wx.DefaultSize, wx.CHK_3STATE)
+        self.fixedPositionCheckBox = wx.CheckBox(self, -1, _("Fixed position"), wx.DefaultPosition, wx.DefaultSize, wx.CHK_3STATE)
         self.Bind(wx.EVT_CHECKBOX, self.onSetPositionIsFixed)
         self.footerBox = wx.BoxSizer(wx.VERTICAL)
         self.footerBox.Add(self.fixedPositionCheckBox, 0, wx.EXPAND )
@@ -94,7 +94,7 @@ class Inspector( wx.Frame ):
             else:
                 scaledImage = image.Rescale(32, 32)
                 self.iconField.SetBitmap(wx.BitmapFromImage(scaledImage))
-            self.titleField.SetLabel(object.name or "<unnamed>")
+            self.titleField.SetLabel(object.name or _("<unnamed>"))
             self.subTitleField.SetLabel(object.__class__.__name__)
             self.mainSizer.Hide(self.noSelectionBox)
             self.mainSizer.Show(self.singleSelectionBox)
@@ -103,7 +103,7 @@ class Inspector( wx.Frame ):
             self.fixedPositionCheckBox.Enable(True)
         else:
             self.iconField.SetBitmap(self.emptyBitmap)
-            self.titleField.SetLabel(str(len(objects)) + " items selected")
+            self.titleField.SetLabel(str(len(objects)) + _(" items selected"))
             self.subTitleField.SetLabel("")
             self.multiGridSizer.Clear(True)
             allFixed = True
@@ -119,8 +119,8 @@ class Inspector( wx.Frame ):
                     scaledImage = image.Rescale(16, 16)
                     bitmap.SetBitmap(wx.BitmapFromImage(scaledImage))
                 self.multiGridSizer.Add(bitmap)
-                self.multiGridSizer.Add(wx.StaticText(self, -1, object.name or "Unnamed " + object.__class__.__name__))
-                selectButton = wx.Button(self, -1, "Select", wx.DefaultPosition, wx.DefaultSize, wx.BU_EXACTFIT)
+                self.multiGridSizer.Add(wx.StaticText(self, -1, object.name or _("Unnamed ") + object.__class__.__name__))
+                selectButton = wx.Button(self, -1, _("Select"), wx.DefaultPosition, wx.DefaultSize, wx.BU_EXACTFIT)
                 selectButton.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
                 selectButton.SetSize(wx.Size(50, selectButton.GetSize().GetHeight()))
                 selectButton.SetMinSize(selectButton.GetSize())

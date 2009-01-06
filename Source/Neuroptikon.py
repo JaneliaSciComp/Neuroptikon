@@ -37,12 +37,16 @@ fdpPath = platformLibPath + os.sep + 'fdp'
 if os.access(fdpPath, os.F_OK):
     os.chmod(fdpPath, os.stat(fdpPath).st_mode | stat.S_IXUSR)
 
+import gettext
+gettext.install('Neuroptikon')
+
 import wx
 import wx.lib.mixins.inspection
 from NeuroptikonFrame import NeuroptikonFrame
 from Network.Network import Network
 from Preferences import Preferences
 from Inspector import Inspector
+
 
 def debugException(type, value, tb):
     import traceback; traceback.print_tb(tb)
@@ -86,7 +90,7 @@ if __name__ == "__main__":
         
         
         def onRunScript(self, event):
-            dlg = wx.FileDialog(None, 'Choose a script to run', 'Scripts', '', '*.py', wx.OPEN)  # TODO: make this portable
+            dlg = wx.FileDialog(None, _('Choose a script to run'), 'Scripts', '', '*.py', wx.OPEN)
             if dlg.ShowModal() == wx.ID_OK:
                 locals = {"createNetwork": self.createNetwork, 
                           "displayNetwork": self.displayNetwork, 
@@ -109,7 +113,7 @@ if __name__ == "__main__":
                 locals = {"createNetwork": self.createNetwork, 
                           "displayNetwork": self.displayNetwork, 
                           "networks": self.networks}
-                self._console = py.shell.ShellFrame(title="Console", config=self.config, dataDir=confDir, locals=locals)
+                self._console = py.shell.ShellFrame(title=_("Console"), config=self.config, dataDir=confDir, locals=locals)
                 #TODO: need to just hide the console window on close or set up some kind of callback to clear _console when the console closes
             self._console.Show()
         
@@ -199,11 +203,6 @@ if __name__ == "__main__":
             
     
     def run():
-        # Make sure PyGraphViz can find the command line tools
-        # TODO: does this work on Windows?
-        import os
-        os.environ["PATH"] = os.environ["PATH"] + ":/usr/local/bin:"
-    
         app = Neuroptikon(None)
         app.MainLoop()
     
