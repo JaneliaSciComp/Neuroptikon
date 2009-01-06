@@ -85,6 +85,8 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_MENU, self.display.onAutoLayout, viewMenu.Append(wx.NewId(), "Layout Objects\tCtrl-L", "Automatically positions all objects"))
         viewMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, self.display.onCenterView, viewMenu.Append(wx.NewId(), "Center View", "Center the display on all objects"))
+        viewMenu.AppendSeparator()
+        self.Bind(wx.EVT_MENU, self.display.onSaveView, viewMenu.Append(wx.NewId(), "Save View as...", "Save the current view to a file"))
         menuBar.Append(viewMenu, "&View")
         
         return menuBar

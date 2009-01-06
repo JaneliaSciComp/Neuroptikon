@@ -1008,3 +1008,25 @@ class Display(wx.glcanvas.GLCanvas):
                           visible.setPosition((float(x), float(y), 0))
                     # TODO: extract path segments
         self.Refresh(False)
+    
+    
+    def onSaveView(self, event):
+        fileTypes = ["JPG", "Microsoft BMP", "PDF", "PNG", "TIFF"]
+        fileExtensions = ["jpg", "bmp", "pdf", "png", "tiff"]
+        wildcard = ""
+        for index in range(0, len(fileTypes)):
+            if wildcard != "":
+                wildcard += "|"
+            wildcard += fileTypes[index] + "|" + fileExtensions[index]
+        fileDialog = wx.FileDialog(None, "Save As:", "", "", wildcard, wx.FD_SAVE)
+        if fileDialog.ShowModal() == wx.ID_OK:
+            extension = fileExtensions[fileDialog.GetFilterIndex()]
+            savePath = str(fileDialog.GetPath())
+            if not savePath.endswith("." + extension):
+                savePath += "." + extension
+            width, height = self.GetClientSize()
+            image = osg.Image()
+            self.SetCurrent()
+            image.readPixels(0, 0, width, height, osg.GL_RGB, osg.GL_UNSIGNED_BYTE)
+            osgDB.writeImageFile(image, savePath)
+    
