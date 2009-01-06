@@ -1011,8 +1011,8 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def onSaveView(self, event):
-        fileTypes = ["JPG", "Microsoft BMP", "PDF", "PNG", "TIFF"]
-        fileExtensions = ["jpg", "bmp", "pdf", "png", "tiff"]
+        fileTypes = ["JPG", "Microsoft BMP", "PNG", "TIFF"]
+        fileExtensions = ["jpg", "bmp", "png", "tiff"]
         wildcard = ""
         for index in range(0, len(fileTypes)):
             if wildcard != "":
