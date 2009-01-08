@@ -26,17 +26,18 @@ if libraryEnvVar not in os.environ or platformLibPath not in os.environ[libraryE
 sys.path.insert(0, commonLibPath)
 sys.path.insert(0, platformLibPath)
 
-# Make sure graphviz's binaries can find the graphviz plug-ins.
-os.environ['GVBINDIR'] = platformLibPath + os.sep + 'graphviz'
-
-# Make sure our custom build of graphviz's binaries can be found.
-os.environ['PATH'] = platformLibPath + os.pathsep + os.environ['PATH']
-
-# Make sure fdp is executable if it exists.
 fdpPath = platformLibPath + os.sep + 'fdp'
 if os.access(fdpPath, os.F_OK):
+    # Make sure graphviz's binaries can find the graphviz plug-ins.
+    os.environ['GVBINDIR'] = platformLibPath + os.sep + 'graphviz'
+
+    # Make sure our custom build of graphviz's binaries can be found.
+    os.environ['PATH'] = platformLibPath + os.pathsep + os.environ['PATH']
+
+    # Make sure fdp is executable.
     os.chmod(fdpPath, os.stat(fdpPath).st_mode | stat.S_IXUSR)
 
+# Set up for internationalization.
 import gettext
 gettext.install('Neuroptikon')
 
@@ -44,14 +45,16 @@ import wx
 import wx.lib.mixins.inspection
 from NeuroptikonFrame import NeuroptikonFrame
 from Network.Network import Network
+from Network.Neurotransmitter import Neurotransmitter
 from Preferences import Preferences
-from Inspector import Inspector
+from Inspection.InspectorFrame import InspectorFrame
 
 
 def debugException(type, value, tb):
     import traceback; traceback.print_tb(tb)
     print "Exception:", value
     import pdb; pdb.pm()
+
 
 if __name__ == "__main__":
     #if __debug__:
@@ -63,10 +66,12 @@ if __name__ == "__main__":
             
             #self.convertRealData(None)
             
+            self._createNeurotransmitters()
+            
             self._networks = []
             
             self.preferences = Preferences()
-            self.inspector = Inspector()
+            self.inspector = InspectorFrame()
             
             # Keep track of open frames so we can close them on quit.
             # TODO: use wxWidget's document/view framework instead
@@ -78,6 +83,20 @@ if __name__ == "__main__":
             self.onNewNetwork()
             
             return True
+        
+        
+        def _createNeurotransmitters(self):
+            # TODO: might need a UI for adding to this list
+            self.neurotransmitters = []
+            self.neurotransmitters.append(Neurotransmitter("acetylcholine", _("Acetylcholine")))
+            self.neurotransmitters.append(Neurotransmitter("dopamine", _("Dopamine")))
+            self.neurotransmitters.append(Neurotransmitter("epinephrine", _("Epinephrine")))
+            self.neurotransmitters.append(Neurotransmitter("GABA", _("Gamma-aminobutyric acid"), _("GABA")))
+            self.neurotransmitters.append(Neurotransmitter("glutamate", _("Glutamate")))
+            self.neurotransmitters.append(Neurotransmitter("glycine", _("Glycine")))
+            self.neurotransmitters.append(Neurotransmitter("histamine", _("Histamine")))
+            self.neurotransmitters.append(Neurotransmitter("norepinephrine", _("Norepinephrine")))
+            self.neurotransmitters.append(Neurotransmitter("serotonin", _("Serotonin")))
         
         
         def onQuit(self, event):

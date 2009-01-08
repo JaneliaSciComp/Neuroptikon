@@ -1,13 +1,32 @@
 import wx
+import os
 from networkx import shortest_path
 
-class Object:
+class Object(object):
+    
+    
     def __init__(self, network, name=None):
         self.network = network
         self.name = name
         self.description = None
         self.abbreviation = None
         self.stimuli = []
+    
+    
+    @classmethod
+    def displayName(cls):
+        return _(cls.__name__)
+    
+    
+    @classmethod
+    def image(cls):
+        try:
+            image = wx.Image("Network" + os.sep + cls.__name__ + ".png")
+        except:
+            pass
+        if image is None or not image.IsOk():
+            image = wx.EmptyImage(32, 32)
+        return image
     
     
     def __hash__(self):
@@ -24,11 +43,6 @@ class Object:
     
     def addStimulus(self, stimulus):
         self.stimuli.append(stimulus)
-    
-    
-    def image(self):
-        imageFileName = "Network/" + self.__class__.__name__ + ".png"
-        return wx.Image(imageFileName)
         
     
     def shortestPathTo(self, otherObject):

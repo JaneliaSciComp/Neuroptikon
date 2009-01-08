@@ -4,10 +4,13 @@ from Neurite import Neurite as Neurite
 
 class Neuron(Object):
     # TODO: neurotransmitter, class, etc.
+    # TODO: neurites method that returns all neurites
+    
     
     def __init__(self, network, name=None):
         Object.__init__(self, network, name)
         self.neurites = []
+        self.neurotransmitter = None
     
     
     def createNeurite(self):
