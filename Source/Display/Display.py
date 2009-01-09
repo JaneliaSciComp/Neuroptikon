@@ -13,6 +13,7 @@ from Network.GapJunction import GapJunction
 from Network.Stimulus import Stimulus
 from Network.Muscle import Muscle
 from Network.Innervation import Innervation
+from Network.ObjectList import ObjectList
 from Visible import Visible
 from pydispatch import dispatcher
 from networkx import *
@@ -120,7 +121,7 @@ class Display(wx.glcanvas.GLCanvas):
         self._motionTexture2 = self.textureFromImage('texture.png')
         self._pathwayTexture = self.textureFromImage('pathway.jpg')
         self._textureTransform = osg.Matrixd.scale(10,  10,  10)
-        self.selection = None
+        self.dragSelection = None
         self.selectionShouldExtend = False
         self.findShortestPath = False
         
@@ -402,9 +403,7 @@ class Display(wx.glcanvas.GLCanvas):
                 visible = Visible(self, object)
                 visible.setShape("box")
                 visible.setSize((500, 500, 100))
-#                visible.setRotation((1, 0, 0, pi/2))
-#                visible.setScaleOrientation((1, 0, 0, -pi/2))
-                visible.setColor((0.01, 0.01, 0.01), (0.5 * 1.5, 0.39 * 1.5, 0.2 * 1.5)) #((0.1, 0.01, 0.01))
+                visible.setColor((0.5 * 1.5, 0.39 * 1.5, 0.2 * 1.5))
                 if self._showRegionNames:
                     visible.setLabel(object.name)
                 self.addVisible(visible, object)
@@ -412,7 +411,7 @@ class Display(wx.glcanvas.GLCanvas):
                 visible = Visible(self, object)
                 visible.setShape("tube")
                 visible.setWeight(5)
-                visible.setColor((0.01, 0.01, 0.01), (0.5, 0.39, 0.2))
+                visible.setColor((0.01, 0.01, 0.01))
                 visible.setTexture(self._pathwayTexture)
                 visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
                 regions = list(object.regions)
@@ -425,7 +424,7 @@ class Display(wx.glcanvas.GLCanvas):
                 visible = Visible(self, object)
                 visible.setShape("ball")
                 visible.setSize((50, 50, 50))
-                visible.setColor((0.1, 0.1, 0.1), (0.5, 0.39, 0.2))
+                visible.setColor((0.5, 0.39, 0.2))
                 if self._showNeuronNames:
                     visible.setLabel(object.name)
                 self.addVisible(visible, object)
@@ -433,7 +432,7 @@ class Display(wx.glcanvas.GLCanvas):
                 visible = Visible(self, object)
                 visible.setShape("stick")
                 visible.setSize((200, 1000, 100))
-                visible.setColor((0.01, 0, 0), (0.5, 0, 0))
+                visible.setColor((0.5, 0, 0))
                 visible.setTexture(self._pathwayTexture)
                 visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
                 visible.setLabel(object.name)
@@ -441,7 +440,7 @@ class Display(wx.glcanvas.GLCanvas):
             elif isinstance(object, Arborization):
                 visible = Visible(self, object)
                 visible.setShape("tube")
-                visible.setColor((0.01, 0.01, 0.01), (0.5, 0.39, 0.2))
+                visible.setColor((0.5, 0.39, 0.2))
                 neuronVis = self.visibleForObject(object.neurite.neuron())
                 regionVis = self.visibleForObject(object.region)
                 visible.setFlowDirection(neuronVis, regionVis, object.sendsOutput, object.receivesInput)
@@ -455,7 +454,7 @@ class Display(wx.glcanvas.GLCanvas):
                 for neurite in object.postsynapticNeurites:
                     visible = Visible(self, object)
                     visible.setShape("tube")
-                    visible.setColor((0.01, 0.01, 0.01), (0.5, 0.39, 0.2))
+                    visible.setColor((0.5, 0.39, 0.2))
                     postNeuronVis = self.visibleForObject(neurite.neuron())
                     visible.setFlowDirection(preNeuronVis, postNeuronVis)
                     visible.setPath([preNeuronVis.position, postNeuronVis.position], preNeuronVis, postNeuronVis)
@@ -465,7 +464,7 @@ class Display(wx.glcanvas.GLCanvas):
             elif isinstance(object, GapJunction):
                 visible = Visible(self, object)
                 visible.setShape("tube")
-                visible.setColor((0, 0.1, 0), (0, 0.1, 0))
+                visible.setColor((0, 0.1, 0))
                 neurites = list(object.neurites)
                 neuron1 = self.visibleForObject(neurites[0].neuron())
                 neuron2 = self.visibleForObject(neurites[1].neuron())
@@ -477,7 +476,7 @@ class Display(wx.glcanvas.GLCanvas):
             elif isinstance(object, Innervation):
                 visible = Visible(self, object)
                 visible.setShape("tube")
-                visible.setColor((0.5, 0.25, 0.25), (0.5, 0.25, 0.25))
+                visible.setColor((0.5, 0.25, 0.25))
                 neuronVis = self.visibleForObject(object.neurite.neuron())
                 muscleVis = self.visibleForObject(object.muscle)
                 visible.setFlowDirection(neuronVis, muscleVis)
@@ -492,7 +491,7 @@ class Display(wx.glcanvas.GLCanvas):
                 edge = Visible(self, object)
                 edge.setShape("cone")
                 edge.setWeight(5)
-                edge.setColor((0.01, 0.01, 0.01), (0.5, 0.5, 0.5))
+                edge.setColor((0.5, 0.5, 0.5))
                 edge.setFlowDirection(node, self.visibleForObject(object.target))
                 edge.setPath([node.position, self.visibleForObject(object.target).position], node, self.visibleForObject(object.target))
                 if self._showFlow:
@@ -609,15 +608,15 @@ class Display(wx.glcanvas.GLCanvas):
         visible.setPath(path, startVisible, endVisible)
     
     def clearDragger(self):
-        if self.selection != None:
+        if self.dragSelection != None:
             visible = self.selectedVisibles[0]
             
             self.commandMgr.disconnect(self.dragger)
             self.commandMgr = None
             
-            self.selection.removeChild(visible.sgNode)
-            self.rootNode.removeChild(self.selection)
-            self.selection = None
+            self.dragSelection.removeChild(visible.sgNode)
+            self.rootNode.removeChild(self.dragSelection)
+            self.dragSelection = None
             
             self.rootNode.addChild(visible.sgNode)
             self.visibleWasDragged()
@@ -668,10 +667,10 @@ class Display(wx.glcanvas.GLCanvas):
             if predicate.matches(object):
                 visible = self.visibleForObject(object)
                 if visible is not None:
-                    self.selectVisible(visible, True)
+                    self.selectVisible(visible, extend = True, report = False)
     
     
-    def selectObject(self, object, extend=False, findShortestPath=False):
+    def selectObject(self, object, extend = False, findShortestPath = False):
         visible = self.visibleForObject(object, False)
         self.selectVisible(visible, extend, findShortestPath)
     
@@ -681,19 +680,18 @@ class Display(wx.glcanvas.GLCanvas):
         return visible in self.selectedVisibles
     
     
-    def selectVisible(self, visible, extend=False, findShortestPath=False):
-        # TODO: allow a selection delegate that can modify what gets selected?  could be set via script...
+    def selectVisible(self, visible, extend = False, findShortestPath = False):
         self.clearDragger()
-        object = visible.client
-        if object is None:
-            self.deselectAll(False)
+        if visible is None:
+            self.deselectAll(report = False)
         else:
+            object = visible.client
             if extend and findShortestPath and len(self.selectedVisibles) == 1:
                 # Add the visibles that exist along the path to the selection.
                 for pathObject in self.selectedVisibles[0].client.shortestPathTo(object):
                     pathVisible = self.visibleForObject(pathObject)
                     if pathVisible is not None:
-                        self.selectVisible(pathVisible, True)
+                        self.selectVisible(pathVisible, extend = True)
                 return
                 
             if not extend or visible not in self.selectedVisibles:
@@ -704,7 +702,7 @@ class Display(wx.glcanvas.GLCanvas):
                 elif isinstance(object, GapJunction) and not self.objectIsSelected(list(object.neurites)[0].neuron()):
                     object = list(object.neurites)[0].neuron()
                 if not extend:
-                    self.deselectAll(False)
+                    self.deselectAll(report = False)
                 # TODO: highlight via display filters
                 # TODO: handle stimulus tuple
                 self.selectedVisibles.append(visible)
@@ -786,17 +784,19 @@ class Display(wx.glcanvas.GLCanvas):
                 else:
                     self.highlightObject(object, False)
         
-        wx.GetApp().inspector.inspect(self, self.selectedVisibles)    # TODO: factor this so wx.GetApp() doesn't have to be called, something like "self.app.inspector.inspectObject()"...
+        dispatcher.send(('set', 'selection'), self)
         
+        # Update visible attributes based on the new selection.
         if len(self.selectedVisibles) == 1:
+            # Add a dragger to the selected visible.
             visible = self.selectedVisibles[0]
             
             if visible.isDraggable():
                 self.rootNode.removeChild(visible.sgNode)
                 
-                self.selection = osgManipulator.Selection()
-                self.selection.addChild(visible.sgNode)
-                self.rootNode.addChild(self.selection)
+                self.dragSelection = osgManipulator.Selection()
+                self.dragSelection.addChild(visible.sgNode)
+                self.rootNode.addChild(self.dragSelection)
                 
                 self.dragger = osgManipulator.TranslatePlaneDragger()   # TODO: use a different dragger for 3D
                 self.dragger.setupDefaultGeometry()
@@ -806,7 +806,7 @@ class Display(wx.glcanvas.GLCanvas):
                 self.rootNode.addChild(self.dragger)
                 
                 self.commandMgr = osgManipulator.CommandManager()
-                self.commandMgr.connect(self.dragger, self.selection)
+                self.commandMgr.connect(self.dragger, self.dragSelection)
         elif len(self.selectedVisibles) > 1:
             # Turn off highlighting/animation for visibles that aren't selected or that aren't direct connections between the selected visibles.
             tempList = list(self.highlightedVisibles)
@@ -861,6 +861,16 @@ class Display(wx.glcanvas.GLCanvas):
                     visible.setOpacity(0.1)
     
     
+    def selection(self):
+        selection = ObjectList()
+        for visible in self.selectedVisibles:
+            if isinstance(visible, tuple):
+                selection.append(visible[0])    #stimulus tuple
+            else:
+                selection.append(visible)
+        return selection
+    
+    
     def deselectAll(self, report = True):
         self.clearDragger()
         while len(self.highlightedVisibles) > 0:
@@ -874,8 +884,9 @@ class Display(wx.glcanvas.GLCanvas):
             for key, visible in self.visibles.iteritems():
                 if isinstance(visible, Visible):
                     visible.setOpacity(1)
+        
         if report:
-            wx.GetApp().inspector.inspect(self, self.selectedVisibles)    # TODO: factor this so wx.GetApp() doesn't have to be called, something like "self.app.inspector.inspectObject()"...
+            dispatcher.send(('set', 'selection'), self)
     
     
     def visibleWasDragged(self):

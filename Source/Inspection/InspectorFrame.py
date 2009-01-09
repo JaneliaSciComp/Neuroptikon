@@ -1,5 +1,6 @@
 import wx
 import sys
+from pydispatch import dispatcher
 import Inspection
 
 # TODO: should use dispatcher to listen for selection changes from the current display
@@ -9,17 +10,10 @@ class InspectorFrame( wx.Frame ):
     def __init__(self, parent=None):
         wx.Frame.__init__(self, parent, -1, _("Inspector"), size=(200,300), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
         
-        self.toolBook = wx.Toolbook(self, wx.ID_ANY)
-        self.toolBook.SetFitToCurrentPage(True)
-        self.imageList = wx.ImageList(16, 16)
-        self.toolBook.SetImageList(self.imageList)
-        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self.onPageChanging, self.toolBook)
-        self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.onPageChanged, self.toolBook)
-        self.grabChosenInspectorClass = False
+        self.display = None
+        self.toolBook = None
         
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(self.toolBook, 0, wx.EXPAND)
-        self.SetSizer(sizer)
+        self.SetSizer(wx.BoxSizer(wx.VERTICAL))
         
         self.Bind(wx.EVT_CLOSE, self.Close)
         
@@ -57,53 +51,77 @@ class InspectorFrame( wx.Frame ):
 #    def onSelectObject(self, event):
 #        sizerItem = self.multiGridSizer.GetItem(event.GetEventObject())
 #        self.display.selectObject(sizerItem.GetUserData())
-
-
-# TODO: move to new visible inspector
-#        self.fixedPositionCheckBox = wx.CheckBox(self, -1, _("Fixed position"), wx.DefaultPosition, wx.DefaultSize, wx.CHK_3STATE)
-#        self.Bind(wx.EVT_CHECKBOX, self.onSetPositionIsFixed)
-#        self.footerBox = wx.BoxSizer(wx.VERTICAL)
-#        self.footerBox.Add(self.fixedPositionCheckBox, 0, wx.EXPAND )
-#        self.fixedPositionCheckBox.SetValue(visible.positionIsFixed())
-#        self.fixedPositionCheckBox.Enable(True)
     
     
-    def inspect(self, display, visibles):
-        self.display = display
-        self.visibles = visibles
+    def inspectDisplay(self, display):
+        if display != self.display:
+            if self.display is not None:
+                dispatcher.disconnect(self.onDisplaySelectionChanged, ('set', 'selection'), self.display)
+            self.display = display
+            if self.display is not None:
+                dispatcher.connect(self.onDisplaySelectionChanged, ('set', 'selection'), self.display)
+            self.updateInspectors()
+            # TODO: Are there display attributes other than the selection that would cause the list of inspectors to change?
+    
+    
+    def onDisplaySelectionChanged( self, signal, sender, event=None, value=None, **arguments):
+        self.updateInspectors()
+    
+    
+    def updateInspectors(self):
+        # Update the available inspectors based on the current selection.
+        # wx.ToolBook is buggy when modifying the pages so the safest thing to do is to nuke the whole thing and start from scratch.
         
-        inspector = self.toolBook.GetCurrentPage()
-        if inspector is not None:
-            inspector.willBeClosed()
+        if self.toolBook is not None:
+            lastInspectorClass = self.currentInspector().__class__
+            self.currentInspector().willBeClosed()
+            self.Unbind(wx.EVT_TOOLBOOK_PAGE_CHANGING, self.toolBook)
+            self.Unbind(wx.EVT_TOOLBOOK_PAGE_CHANGED, self.toolBook)
+            self.toolBook.DeleteAllPages()
+            self.GetSizer().Remove(self.toolBook)
+        else:
+            lastInspectorClass = None
         
-        self.Unbind(wx.EVT_TOOLBOOK_PAGE_CHANGING, self.toolBook)
-        self.Unbind(wx.EVT_TOOLBOOK_PAGE_CHANGED, self.toolBook)
-        
+        self.toolBook = wx.Toolbook(self, wx.ID_ANY)
         inspectors = []
-        for i in range(self.toolBook.GetPageCount() - 1, -1, -1):
-            inspector = self.toolBook.GetPage(i)
-            if inspector.canInspect(self.display, self.visibles):
-                inspector.inspect(self.display, self.visibles)
-                inspectors.append(inspector)
-            else:
-                self.toolBook.DeletePage(i)
-                self.imageList.Remove(i)
-        
         for inspectorClass in Inspection.inspectorClasses():
-            existingInspector = None
+            # Create a new inspector instance
+            inspector = inspectorClass(self.toolBook)
+            if inspector.canInspectDisplay(self.display):
+                inspectors.append(inspector)
+        
+        if len(inspectors) == 0:
+            self.toolBook = None
+        else:
+            self.toolBook.SetFitToCurrentPage(True)
+            imageList = wx.ImageList(16, 16)
+            self.toolBook.SetImageList(imageList)
             for inspector in inspectors:
-                if inspector.__class__ == inspectorClass:
-                    existingInspector = inspector
-            if existingInspector is None:
-                inspector = inspectorClass(self.toolBook)
-                if inspector.canInspect(display, visibles):
-                    self.imageList.Add(inspector.bitmap())
-                    self.toolBook.AddPage(inspector, inspector.name(), imageId = self.imageList.GetImageCount() - 1)
-                    inspector.inspect(self.display, self.visibles)
-        self.Bind(wx.EVT_TOOLBOOK_PAGE_CHANGING, self.onPageChanging, self.toolBook)
-        self.Bind(wx.EVT_TOOLBOOK_PAGE_CHANGED, self.onPageChanged, self.toolBook)
+                imageList.Add(inspector.bitmap())
+                self.toolBook.AddPage(inspector, inspector.name(), imageId = imageList.GetImageCount() - 1)
+                inspector.inspectDisplay(self.display)
+            self.GetSizer().Add(self.toolBook, 0, wx.EXPAND)
+            self.Bind(wx.EVT_TOOLBOOK_PAGE_CHANGING, self.onPageChanging, self.toolBook)
+            self.Bind(wx.EVT_TOOLBOOK_PAGE_CHANGED, self.onPageChanged, self.toolBook)
+        
+        if lastInspectorClass is not None:
+            foundInspector = False
+            for i in range(0, len(inspectors)):
+                if inspectors[i].__class__ == lastInspectorClass:
+                    self.toolBook.ChangeSelection(i)
+                    foundInspector = True
+            if not foundInspector:
+                lastInspectorBaseClass = lastInspectorClass.__bases__[0]
+                for i in range(0, len(inspectors)):
+                    inspectorBaseClasses = inspectors[i].__class__.__bases__
+                    if lastInspectorBaseClass in inspectorBaseClasses:
+                        self.toolBook.ChangeSelection(i)
         
         self.Layout()
+    
+    
+    def currentInspector(self):
+        return self.toolBook.GetCurrentPage()
     
     
     def onPageChanging(self, event):

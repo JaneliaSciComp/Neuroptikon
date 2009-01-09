@@ -54,7 +54,7 @@ class Visible(object):
         self._label = None
         self._labelNode = None
         self._shapeName = "none"
-        self._color = ((1, 1, 1), (1, 1, 1)) # diffuse, emissive
+        self._color = (0.5, 0.5, 0.5)
         self._opacity = 1
         self._path = None
         self.pathStart = None
@@ -119,11 +119,9 @@ class Visible(object):
         return self._label
     
     
-    def setColor(self, diffuseColor, emissiveColor=None):
-        self._material.setDiffuse(osg.Material.FRONT_AND_BACK, osg.Vec4 (diffuseColor[0], diffuseColor[1], diffuseColor[2], 1))
-        if emissiveColor is not None:
-            self._material.setEmission(osg.Material.FRONT_AND_BACK, osg.Vec4 (emissiveColor[0], emissiveColor[1], emissiveColor[2], 1))
-        self._color = (diffuseColor, emissiveColor)
+    def setColor(self, color):
+        self._material.setEmission(osg.Material.FRONT_AND_BACK, osg.Vec4 (color[0], color[1], color[2], 1))
+        self._color = color
     
     
     def color(self):
@@ -158,7 +156,7 @@ class Visible(object):
 #        self.sgNode.setScale(osg.Vec3d(self.size()[0], self.size()[1], self.size()[2]))
 #        self.sgNode.setAttitude(osg.Quat(self.rotation()[3], osg.Vec3d(self.rotation()[0], self.rotation()[1], self.rotation()[2])))
         # update the transform unless we're under an osgGA.Selection node, i.e. being dragged
-        if len(self.sgNode.getParents()) == 0 or self.display.selection is None or self.sgNode.getParent(0).__repr__() != self.display.selection.asGroup().__repr__():
+        if len(self.sgNode.getParents()) == 0 or self.display.dragSelection is None or self.sgNode.getParent(0).__repr__() != self.display.dragSelection.asGroup().__repr__():
             self.sgNode.setMatrix(osg.Matrixd.scale(osg.Vec3d(self.size()[0], self.size()[1], self.size()[2])) * 
                                    osg.Matrixd.rotate(self.rotation()[3], osg.Vec3d(self.rotation()[0], self.rotation()[1], self.rotation()[2])) *
                                    osg.Matrixd.translate(osg.Vec3d(self.position()[0], self.position()[1], self.position()[2])))

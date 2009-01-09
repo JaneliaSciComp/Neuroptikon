@@ -9,6 +9,7 @@ class NeuroptikonFrame( wx.Frame ):
     def __init__(self, parent, id=wx.ID_ANY, title=_("Neuroptikon")):
         wx.Frame.__init__(self, parent, id, title, size=(800,600), style=wx.DEFAULT_FRAME_STYLE|wx.FULL_REPAINT_ON_RESIZE)
         
+        self.Bind(wx.EVT_ACTIVATE, self.onActivate)
         self.Bind(wx.EVT_CLOSE, self.onCloseWindow)
         
         width, height = self.GetClientSize()
@@ -91,6 +92,10 @@ class NeuroptikonFrame( wx.Frame ):
         
         return menuBar
     
+    
+    def onActivate(self, event):
+        wx.GetApp().inspector.inspectDisplay(self.display)
+        event.Skip()
     
     def onRunScript(self, event):
         # TODO: It would be nice to provide progress for long running scripts.  Would need some kind of callback for scripts to indicate how far along they were.

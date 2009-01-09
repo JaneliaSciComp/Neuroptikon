@@ -6,7 +6,7 @@ from Inspection.Inspector import Inspector
 class DisplayInspector(Inspector):
     
     def name(self):
-        return 'Display'
+        return _('Display')
     
     
     def bitmap(self):
@@ -18,14 +18,14 @@ class DisplayInspector(Inspector):
             return Inspector.bitmap(self)
             
     
-    def inspect(self, display, visibles):
+    def inspectDisplay(self, display):
         self.display = display
         
         if not hasattr(self, 'backgroundColorPicker'):
             self.backgroundColorPicker = wx.lib.colourselect.ColourSelect(self, wx.ID_ANY)
             self.Bind(wx.lib.colourselect.EVT_COLOURSELECT, self.onColorChanged, self.backgroundColorPicker)
             colorBox = wx.BoxSizer(wx.HORIZONTAL)
-            colorBox.Add(wx.StaticText(self, wx.ID_ANY, 'Background Color:'), 0, wx.EXPAND)
+            colorBox.Add(wx.StaticText(self, wx.ID_ANY, _('Background Color:')), 0, wx.EXPAND)
             colorBox.AddSpacer(8)
             colorBox.Add(self.backgroundColorPicker, 1, wx.EXPAND)
             

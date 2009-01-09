@@ -23,15 +23,15 @@ class ObjectInspector(Inspector):
             return wx.BitmapFromImage(scaledImage)
     
     
-    def canInspect(self, display, visibles):
+    def canInspectDisplay(self, display):
         # This inspector can be used if there is at least one object of this type selected.
-        for visible in visibles:
+        for visible in display.selection():
             if visible.client.__class__ == self.objectClass():
                 return True
         return False
     
     
-    def inspect(self, display, visibles):
+    def inspectDisplay(self, display):
         if not hasattr(self, 'iconField'):
             self.iconField = wx.StaticBitmap(self, wx.ID_ANY)
             self.iconField.SetMinSize(wx.Size(32, 32))
@@ -47,7 +47,7 @@ class ObjectInspector(Inspector):
             self.SetSizer(mainSizer)
         
         self.objects = ObjectList()
-        for visible in visibles:
+        for visible in display.selection():
             if visible.client.__class__ == self.objectClass():
                 self.objects.append(visible.client)
         
@@ -60,7 +60,14 @@ class ObjectInspector(Inspector):
             self.iconField.SetBitmap(wx.BitmapFromImage(scaledImage))
         
         # Set the name
-        if self.objects.hasEqualAttrs('name'):
+        if self.objects.haveEqualAttr('name'):
             self.titleField.SetLabel(self.objects[0].name or _("<unnamed>"))
         else:
             self.titleField.SetLabel(_("Multiple names"))
+        
+        # Object inspectors are supposed to work purely at the network/biological layer so they don't need to know what the display is.
+        self.inspectObjects()
+
+
+    def inspectObjects(self):
+        pass

@@ -9,8 +9,7 @@ class PathwayInspector( ObjectInspector ):
         return Pathway
     
     
-    def inspect(self, display, visibles):
-        ObjectInspector.inspect(self, display, visibles)
+    def inspectObjects(self):
         
         # Lazily create our UI
         if not hasattr(self, ''):

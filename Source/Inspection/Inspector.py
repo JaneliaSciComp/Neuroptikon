@@ -15,7 +15,7 @@ class Inspector( wx.Panel ):
         return wx.EmptyBitmap(16, 16)
     
     
-    def canInspect(self, display, visibles):
+    def canInspectDisplay(self, display):
         return True
     
     
@@ -23,7 +23,7 @@ class Inspector( wx.Panel ):
         pass
     
     
-    def inspect(self, display, visibles):
+    def inspectDisplay(self, display):
         pass
     
     

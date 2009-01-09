@@ -9,8 +9,7 @@ class NeuronInspector( ObjectInspector ):
         return Neuron
     
     
-    def inspect(self, display, visibles):
-        ObjectInspector.inspect(self, display, visibles)
+    def inspectObjects(self):
         
         # Lazily create our UI
         if not hasattr(self, '_sizer'):
@@ -29,7 +28,7 @@ class NeuronInspector( ObjectInspector ):
             self.GetSizer().Layout()
         
         # Choose the appropriate item in the pop-up menu.
-        if self.objects.hasEqualAttrs('neurotransmitter'):
+        if self.objects.haveEqualAttr('neurotransmitter'):
             if self.objects[0].neurotransmitter is None:
                 self._neurotransmitterChoice.SetSelection(self._unknownNeurotransmitterId)
             else:
