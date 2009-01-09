@@ -4,7 +4,13 @@ class ObjectList(list):
     
     def haveEqualAttr(self, attributeName):
         value0 = getattr(self[0], attributeName)
+        isMethod = type(value0) == type(self.haveEqualAttr)
+        if isMethod:
+            value0 = value0()
         for object in self[1:]:
-            if getattr(object, attributeName) != value0:
+            value = getattr(object, attributeName)
+            if isMethod:
+                value = value()
+            if value != value0:
                 return False
         return True
