@@ -10,5 +10,5 @@ Inspection.registerInspectorClass(DisplayInspector)
 from VisibleInspector import VisibleInspector
 Inspection.registerInspectorClass(VisibleInspector)
 
-#from MultiVisibleInspector import MultiVisibleInspector
-#Inspection.registerInspectorClass(MultiVisibleInspector)
+from GroupInspector import GroupInspector
+Inspection.registerInspectorClass(GroupInspector)

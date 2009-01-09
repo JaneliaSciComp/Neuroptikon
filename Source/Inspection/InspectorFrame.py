@@ -16,41 +16,6 @@ class InspectorFrame( wx.Frame ):
         self.SetSizer(wx.BoxSizer(wx.VERTICAL))
         
         self.Bind(wx.EVT_CLOSE, self.Close)
-        
-        
-# TODO: move to new multi-selection inspector
-#        self.multiGridSizer = wx.FlexGridSizer(0, 3, 8, 8)
-#        self.multiGridSizer.SetFlexibleDirection(wx.HORIZONTAL)
-#        self.multiSelectionBox = wx.BoxSizer(wx.VERTICAL)
-#        self.multiSelectionBox.Add(self.multiGridSizer, 1, wx.EXPAND)
-#            self.iconField.SetBitmap(self.emptyBitmap)
-#            self.titleField.SetLabel(str(len(objects)) + _(" items selected"))
-#            self.subTitleField.SetLabel("")
-#            self.multiGridSizer.Clear(True)
-#            allFixed = True
-#            allUnfixed = True
-#            for object in self.objects:
-#                bitmap = wx.StaticBitmap(self, -1)
-#                bitmap.SetMinSize(wx.Size(16, 16))
-#                bitmap.SetMaxSize(wx.Size(16, 16))
-#                image = object.image()
-#                if image is None or not image.Ok():
-#                    bitmap.SetBitmap(wx.NullBitmap)
-#                else:
-#                    scaledImage = image.Rescale(16, 16)
-#                    bitmap.SetBitmap(wx.BitmapFromImage(scaledImage))
-#                self.multiGridSizer.Add(bitmap)
-#                self.multiGridSizer.Add(wx.StaticText(self, -1, object.name or _("Unnamed ") + object.__class__.__name__))
-#                selectButton = wx.Button(self, -1, _("Select"), wx.DefaultPosition, wx.DefaultSize, wx.BU_EXACTFIT)
-#                selectButton.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
-#                selectButton.SetSize(wx.Size(50, selectButton.GetSize().GetHeight()))
-#                selectButton.SetMinSize(selectButton.GetSize())
-#                self.Bind(wx.EVT_BUTTON, self.onSelectObject)
-#                self.multiGridSizer.Add(selectButton, 0, 0, 0, object)
-#            self.Layout()
-#    def onSelectObject(self, event):
-#        sizerItem = self.multiGridSizer.GetItem(event.GetEventObject())
-#        self.display.selectObject(sizerItem.GetUserData())
     
     
     def inspectDisplay(self, display):
