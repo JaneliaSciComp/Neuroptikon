@@ -87,16 +87,16 @@ if __name__ == "__main__":
         
         def _createNeurotransmitters(self):
             # TODO: might need a UI for adding to this list
-            self.neurotransmitters = []
-            self.neurotransmitters.append(Neurotransmitter("acetylcholine", _("Acetylcholine")))
-            self.neurotransmitters.append(Neurotransmitter("dopamine", _("Dopamine")))
-            self.neurotransmitters.append(Neurotransmitter("epinephrine", _("Epinephrine")))
-            self.neurotransmitters.append(Neurotransmitter("GABA", _("Gamma-aminobutyric acid"), _("GABA")))
-            self.neurotransmitters.append(Neurotransmitter("glutamate", _("Glutamate")))
-            self.neurotransmitters.append(Neurotransmitter("glycine", _("Glycine")))
-            self.neurotransmitters.append(Neurotransmitter("histamine", _("Histamine")))
-            self.neurotransmitters.append(Neurotransmitter("norepinephrine", _("Norepinephrine")))
-            self.neurotransmitters.append(Neurotransmitter("serotonin", _("Serotonin")))
+            self.neurotransmitters = {}
+            self.neurotransmitters['acetylcholine'] = Neurotransmitter('acetylcholine', _('Acetylcholine'))
+            self.neurotransmitters['dopamine'] = Neurotransmitter('dopamine', _('Dopamine'))
+            self.neurotransmitters['epinephrine'] = Neurotransmitter('epinephrine', _('Epinephrine'))
+            self.neurotransmitters['GABA'] = Neurotransmitter('GABA', _('Gamma-aminobutyric acid'), _('GABA'))
+            self.neurotransmitters['glutamate'] = Neurotransmitter('glutamate', _('Glutamate'))
+            self.neurotransmitters['glycine'] = Neurotransmitter('glycine', _('Glycine'))
+            self.neurotransmitters['histamine'] = Neurotransmitter('histamine', _('Histamine'))
+            self.neurotransmitters['norepinephrine'] = Neurotransmitter('norepinephrine', _('Norepinephrine'))
+            self.neurotransmitters['serotonin'] = Neurotransmitter('serotonin', _('Serotonin'))
         
         
         def onQuit(self, event):
@@ -108,18 +108,22 @@ if __name__ == "__main__":
                 self.ExitMainLoop()
         
         
+        def scriptLocals(self):
+            return {'createNetwork': self.createNetwork, 
+                    'displayNetwork': self.displayNetwork, 
+                    'networks': self.networks, 
+                    'neurotransmitters': self.neurotransmitters}
+        
+        
         def onRunScript(self, event):
             dlg = wx.FileDialog(None, _('Choose a script to run'), 'Scripts', '', '*.py', wx.OPEN)
             if dlg.ShowModal() == wx.ID_OK:
-                locals = {"createNetwork": self.createNetwork, 
-                          "displayNetwork": self.displayNetwork, 
-                          "networks": self.networks}
-                execfile(dlg.GetPath(), locals)
+                execfile(dlg.GetPath(), self.scriptLocals())
             dlg.Destroy()
         
         
         def onOpenConsole(self, event):
-            if "_console" not in dir(self):
+            if '_console' not in dir(self):
                 import os
                 import wx
                 from wx import py
@@ -129,10 +133,7 @@ if __name__ == "__main__":
                 fileName = os.path.join(confDir, 'Console.config')
                 self.config = wx.FileConfig(localFilename=fileName)
                 self.config.SetRecordDefaults(True)
-                locals = {"createNetwork": self.createNetwork, 
-                          "displayNetwork": self.displayNetwork, 
-                          "networks": self.networks}
-                self._console = py.shell.ShellFrame(title=_("Console"), config=self.config, dataDir=confDir, locals=locals)
+                self._console = py.shell.ShellFrame(title=_('Console'), config=self.config, dataDir=confDir, locals=self.scriptLocals())
                 #TODO: need to just hide the console window on close or set up some kind of callback to clear _console when the console closes
             self._console.Show()
         

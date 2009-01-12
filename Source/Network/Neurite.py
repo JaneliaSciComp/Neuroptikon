@@ -9,7 +9,7 @@ class Neurite(Object):
     def __init__(self, network, root, name=None):
         Object.__init__(self, network, name)
         self.root = root
-        self.subNeurites = []
+        self._neurites = []
         self.arborization = None
         self.synapses = []
         self._gapJunctions = []
@@ -23,6 +23,14 @@ class Neurite(Object):
         while isinstance(parent, Neurite):
             parent = parent.root
         return parent
+    
+    
+    def neurites(self, recurse = False):
+        neurites = list(self._neurites)
+        if recurse:
+            for neurite in self._neurites:
+                neurites.append(neurite.neurites(True))
+        return neurites
     
     
     def arborize(self, region, sendsOutput=None, receivesInput=None):
@@ -67,7 +75,7 @@ class Neurite(Object):
         junctions = []
         junctions.extend(self._gapJunctions)
         if recurse:
-            for subNeurite in self.subNeurites:
+            for subNeurite in self._neurites:
                 junctions.extend(subNeurite.gapJunctions(True))
         return junctions
     
@@ -91,7 +99,7 @@ class Neurite(Object):
         innervations = []
         innervations.extend(self._innervations)
         if recurse:
-            for subNeurite in self.subNeurites:
+            for subNeurite in self._neurites:
                 innervations.extend(subNeurite.innervations(True))
         return innervations
     
@@ -104,7 +112,7 @@ class Neurite(Object):
         for synapse in self.incomingSynapses():
             inputs.append(synapse.presynapticNeurite)
         inputs.extend(self._gapJunctions)
-        for neurite in self.subNeurites:
+        for neurite in self._neurites:
             inputs.extend(neurite.inputs())
         return inputs
     
@@ -118,6 +126,6 @@ class Neurite(Object):
             outputs.extend(synapse.postsynapticNeurites)
         outputs.extend(self._gapJunctions)
         outputs.extend(self._innervations)
-        for neurite in self.subNeurites:
+        for neurite in self._neurites:
             outputs.extend(neurite.outputs())
         return outputs

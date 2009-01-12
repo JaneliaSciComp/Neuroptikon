@@ -33,8 +33,8 @@ class Network:
         return region
     
     
-    def createNeuron(self, name=None):
-        neuron = Neuron(self, name)
+    def createNeuron(self, name = None, neurotransmitter = None):
+        neuron = Neuron(self, name, neurotransmitter)
         self.addObject(neuron)
         return neuron
     

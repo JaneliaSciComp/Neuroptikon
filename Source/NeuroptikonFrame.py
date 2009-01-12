@@ -102,13 +102,11 @@ class NeuroptikonFrame( wx.Frame ):
         # TODO: make this portable
         dlg = wx.FileDialog(None, _('Choose a script to run'), '/Users/midgleyf/Development/Neuroptikon/Source/Scripts', '', '*.py', wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
-            globals = {"createNetwork": wx.GetApp().createNetwork, 
-                       "displayNetwork": wx.GetApp().displayNetwork, 
-                       "networks": wx.GetApp().networks, 
-                       "network": self.display.network, 
-                       "display": self.display}
-            # TODO: wrap in a try block?
-            execfile(dlg.GetPath(), globals)
+            locals = wx.GetApp().scriptLocals()
+            locals['network'] = self.display.network
+            locals['display'] = self.display
+            # TODO: wrap in a try block
+            execfile(dlg.GetPath(), locals)
         dlg.Destroy()
         self.Refresh(False)
         self.Show(True)

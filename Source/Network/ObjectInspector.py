@@ -61,7 +61,7 @@ class ObjectInspector(Inspector):
         
         # Set the name
         if self.objects.haveEqualAttr('name'):
-            self.titleField.SetLabel(self.objects[0].name or _("<unnamed>"))
+            self.titleField.SetLabel(self.objects[0].name or ("<" + _("unnamed ") + self.objectClass().displayName().lower() + ">"))
         else:
             self.titleField.SetLabel(_("Multiple names"))
         

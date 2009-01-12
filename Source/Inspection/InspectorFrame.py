@@ -3,8 +3,6 @@ import sys
 from pydispatch import dispatcher
 import Inspection
 
-# TODO: should use dispatcher to listen for selection changes from the current display
-
 class InspectorFrame( wx.Frame ):
     
     def __init__(self, parent=None):

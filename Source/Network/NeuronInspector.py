@@ -17,7 +17,7 @@ class NeuronInspector( ObjectInspector ):
             self._sizer.SetFlexibleDirection(wx.HORIZONTAL)
             self._sizer.Add(wx.StaticText(self, wx.ID_ANY, _('Neurotransmitter') + ":"))
             self._neurotransmitterChoice = wx.Choice(self, wx.ID_ANY)
-            for neurotransmitter in wx.GetApp().neurotransmitters:
+            for neurotransmitter in wx.GetApp().neurotransmitters.values():
                 self._neurotransmitterChoice.Append(neurotransmitter.name, neurotransmitter)
             self._unknownNeurotransmitterId = self._neurotransmitterChoice.Append(_('Unknown'), None)
             self._multipleNeurotransmittersId = wx.NOT_FOUND
