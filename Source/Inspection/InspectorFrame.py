@@ -46,22 +46,23 @@ class InspectorFrame( wx.Frame ):
             lastInspectorClass = None
         
         self.toolBook = wx.Toolbook(self, wx.ID_ANY)
-        inspectors = []
+        self.inspectors = []
         for inspectorClass in Inspection.inspectorClasses():
             # Create a new inspector instance
-            inspector = inspectorClass(self.toolBook)
-            if inspector.canInspectDisplay(self.display):
-                inspectors.append(inspector)
+            if inspectorClass.canInspectDisplay(self.display):
+                inspector = inspectorClass()
+                self.inspectors.append(inspector)
         
-        if len(inspectors) == 0:
+        if len(self.inspectors) == 0:
             self.toolBook = None
         else:
             self.toolBook.SetFitToCurrentPage(True)
             imageList = wx.ImageList(16, 16)
             self.toolBook.SetImageList(imageList)
-            for inspector in inspectors:
-                imageList.Add(inspector.bitmap())
-                self.toolBook.AddPage(inspector, inspector.name(), imageId = imageList.GetImageCount() - 1)
+            for inspector in self.inspectors:
+                imageList.Add(inspector.__class__.bitmap())
+                self.toolBook.AddPage(inspector.window(self.toolBook), inspector.__class__.name(), imageId = imageList.GetImageCount() - 1)
+                # TODO: listen for size changes from each inspector's window and call Fit()?
                 inspector.inspectDisplay(self.display)
             self.GetSizer().Add(self.toolBook, 0, wx.EXPAND)
             self.Bind(wx.EVT_TOOLBOOK_PAGE_CHANGING, self.onPageChanging, self.toolBook)
@@ -69,14 +70,14 @@ class InspectorFrame( wx.Frame ):
         
         if lastInspectorClass is not None:
             foundInspector = False
-            for i in range(0, len(inspectors)):
-                if inspectors[i].__class__ == lastInspectorClass:
+            for i in range(0, len(self.inspectors)):
+                if self.inspectors[i].__class__ == lastInspectorClass:
                     self.toolBook.ChangeSelection(i)
                     foundInspector = True
             if not foundInspector:
                 lastInspectorBaseClass = lastInspectorClass.__bases__[0]
-                for i in range(0, len(inspectors)):
-                    inspectorBaseClasses = inspectors[i].__class__.__bases__
+                for i in range(0, len(self.inspectors)):
+                    inspectorBaseClasses = self.inspectors[i].__class__.__bases__
                     if lastInspectorBaseClass in inspectorBaseClasses:
                         self.toolBook.ChangeSelection(i)
         
@@ -84,21 +85,20 @@ class InspectorFrame( wx.Frame ):
     
     
     def currentInspector(self):
-        return self.toolBook.GetCurrentPage()
+        return self.inspectors[self.toolBook.GetSelection()]
     
     
     def onPageChanging(self, event):
-        inspector = self.toolBook.GetCurrentPage()
+        inspector = self.inspectors[event.GetOldSelection()]
         if inspector is not None:
             inspector.willBeClosed()
         event.Skip()
     
     
     def onPageChanged(self, event):
-        inspector = self.toolBook.GetCurrentPage()
+        inspector = self.inspectors[event.GetSelection()]
         if inspector is not None:
             inspector.willBeShown()
-            inspector.Layout()
             self.Layout()
             self.Fit()
             self.SetTitle(inspector.name() + ' ' + _('Inspector'))

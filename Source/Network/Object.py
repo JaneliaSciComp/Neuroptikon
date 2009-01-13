@@ -1,5 +1,6 @@
 import wx
 import os
+from pydispatch import dispatcher
 from networkx import shortest_path
 
 class Object(object):
@@ -31,6 +32,17 @@ class Object(object):
     
     def __hash__(self):
         return id(self)
+    
+    
+    def __setattr__(self, name, value):
+        # Send out a message whenever one of this object's values changes.  This is needed, for example, to allow the GUI to update when an object is modified via the console.
+        hasPreviousValue = hasattr(self, name)
+        if hasPreviousValue:
+            previousValue = getattr(self, name)
+        object.__setattr__(self, name, value)
+        if not hasPreviousValue or getattr(self, name) != previousValue:
+            print "Set " + name + " to " + str(value)
+            dispatcher.send(('set', name), self)
     
     
     def inputs(self):

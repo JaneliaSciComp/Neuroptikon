@@ -1,22 +1,25 @@
 import wx
 
 
-class Inspector( wx.Panel ):
+class Inspector( object ):
     
-    def __init__(self, parentWindow=None):
-        wx.Window.__init__(self, parentWindow, wx.ID_ANY)
-        
-    
-    def name(self):
+    @classmethod
+    def name(cls):
         return ''
     
     
-    def bitmap(self):
+    @classmethod
+    def bitmap(cls):
         return wx.EmptyBitmap(16, 16)
     
     
-    def canInspectDisplay(self, display):
+    @classmethod
+    def canInspectDisplay(cls, display):
         return True
+    
+    
+    def window(self, parentWindow=None):
+        return None
     
     
     def willBeShown(self):

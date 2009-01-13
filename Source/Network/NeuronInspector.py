@@ -5,37 +5,45 @@ from Neuron import Neuron
 
 class NeuronInspector( ObjectInspector ):
     
-    def objectClass(self):
+    @classmethod
+    def objectClass(cls):
         return Neuron
     
     
-    def inspectObjects(self):
-        
-        # Lazily create our UI
+    @classmethod
+    def inspectedAttributes(cls):
+        return ['neurotransmitter']
+    
+    
+    def objectSizer(self, parentWindow):
         if not hasattr(self, '_sizer'):
             self._sizer = wx.FlexGridSizer(1, 2, 8, 8)
             self._sizer.SetFlexibleDirection(wx.HORIZONTAL)
-            self._sizer.Add(wx.StaticText(self, wx.ID_ANY, _('Neurotransmitter') + ":"))
-            self._neurotransmitterChoice = wx.Choice(self, wx.ID_ANY)
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, _('Neurotransmitter') + ":"))
+            self._neurotransmitterChoice = wx.Choice(parentWindow, wx.ID_ANY)
             for neurotransmitter in wx.GetApp().neurotransmitters.values():
                 self._neurotransmitterChoice.Append(neurotransmitter.name, neurotransmitter)
             self._unknownNeurotransmitterId = self._neurotransmitterChoice.Append(_('Unknown'), None)
             self._multipleNeurotransmittersId = wx.NOT_FOUND
             self._sizer.Add(self._neurotransmitterChoice)
-            self.Bind(wx.EVT_CHOICE, self.onChooseNeurotransmitter, self._neurotransmitterChoice)
+            parentWindow.Bind(wx.EVT_CHOICE, self.onChooseNeurotransmitter, self._neurotransmitterChoice)
             
-            self.GetSizer().Add(self._sizer, 0, wx.EXPAND)
-            self.GetSizer().Layout()
-        
-        # Choose the appropriate item in the pop-up menu.
-        if self.objects.haveEqualAttr('neurotransmitter'):
-            if self.objects[0].neurotransmitter is None:
-                self._neurotransmitterChoice.SetSelection(self._unknownNeurotransmitterId)
+        return self._sizer
+    
+    
+    def populateObjectSizer(self, attribute = None):
+        if attribute is None or attribute == 'neurotransmitter':
+            # Choose the appropriate item in the pop-up menu.
+            if self.objects.haveEqualAttr('neurotransmitter'):
+                if self.objects[0].neurotransmitter is None:
+                    self._neurotransmitterChoice.SetSelection(self._unknownNeurotransmitterId)
+                else:
+                    self._neurotransmitterChoice.SetStringSelection(self.objects[0].neurotransmitter.name)
             else:
-                self._neurotransmitterChoice.SetStringSelection(self.objects[0].neurotransmitter.name)
-        else:
-            self._multipleNeurotransmittersId = self._neurotransmitterChoice.Append(_('Multiple values'), None)
-            self._neurotransmitterChoice.SetSelection(self._multipleNeurotransmittersId)
+                self._multipleNeurotransmittersId = self._neurotransmitterChoice.Append(_('Multiple values'), None)
+                self._neurotransmitterChoice.SetSelection(self._multipleNeurotransmittersId)
+        
+        self._sizer.Layout()
         
     
     def onChooseNeurotransmitter(self, event):
