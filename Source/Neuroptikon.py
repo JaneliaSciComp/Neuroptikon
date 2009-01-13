@@ -45,7 +45,9 @@ import wx
 import wx.lib.mixins.inspection
 from NeuroptikonFrame import NeuroptikonFrame
 from Network.Network import Network
-from Network.Neurotransmitter import Neurotransmitter
+from Library.Library import Library
+from Library.Neurotransmitter import Neurotransmitter
+from Library.Modality import Modality
 from Preferences import Preferences
 from Inspection.InspectorFrame import InspectorFrame
 
@@ -66,7 +68,8 @@ if __name__ == "__main__":
             
             #self.convertRealData(None)
             
-            self._createNeurotransmitters()
+            self.library = Library()
+            self._loadDefaultLibraryItems()
             
             self._networks = []
             
@@ -85,18 +88,20 @@ if __name__ == "__main__":
             return True
         
         
-        def _createNeurotransmitters(self):
-            # TODO: might need a UI for adding to this list
-            self.neurotransmitters = {}
-            self.neurotransmitters['acetylcholine'] = Neurotransmitter('acetylcholine', _('Acetylcholine'))
-            self.neurotransmitters['dopamine'] = Neurotransmitter('dopamine', _('Dopamine'))
-            self.neurotransmitters['epinephrine'] = Neurotransmitter('epinephrine', _('Epinephrine'))
-            self.neurotransmitters['GABA'] = Neurotransmitter('GABA', _('Gamma-aminobutyric acid'), _('GABA'))
-            self.neurotransmitters['glutamate'] = Neurotransmitter('glutamate', _('Glutamate'))
-            self.neurotransmitters['glycine'] = Neurotransmitter('glycine', _('Glycine'))
-            self.neurotransmitters['histamine'] = Neurotransmitter('histamine', _('Histamine'))
-            self.neurotransmitters['norepinephrine'] = Neurotransmitter('norepinephrine', _('Norepinephrine'))
-            self.neurotransmitters['serotonin'] = Neurotransmitter('serotonin', _('Serotonin'))
+        def _loadDefaultLibraryItems(self):
+            self.library.add(Neurotransmitter('acetylcholine', _('Acetylcholine')))
+            self.library.add(Neurotransmitter('dopamine', _('Dopamine')))
+            self.library.add(Neurotransmitter('epinephrine', _('Epinephrine')))
+            self.library.add(Neurotransmitter('GABA', _('Gamma-aminobutyric acid'), _('GABA')))
+            self.library.add(Neurotransmitter('glutamate', _('Glutamate')))
+            self.library.add(Neurotransmitter('glycine', _('Glycine')))
+            self.library.add(Neurotransmitter('histamine', _('Histamine')))
+            self.library.add(Neurotransmitter('norepinephrine', _('Norepinephrine')))
+            self.library.add(Neurotransmitter('serotonin', _('Serotonin')))
+            self.library.add(Modality('light', _('Light')))
+            self.library.add(Modality('odor', _('Odor')))
+            self.library.add(Modality('sound', _('Sound')))
+            self.library.add(Modality('taste', _('Taste')))
         
         
         def onQuit(self, event):
@@ -112,7 +117,9 @@ if __name__ == "__main__":
             return {'createNetwork': self.createNetwork, 
                     'displayNetwork': self.displayNetwork, 
                     'networks': self.networks, 
-                    'neurotransmitters': self.neurotransmitters}
+                    'library': self.library, 
+                    'Neurotransmitter': Neurotransmitter, 
+                    'Modality': Modality}
         
         
         def onRunScript(self, event):

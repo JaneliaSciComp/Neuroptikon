@@ -3,22 +3,16 @@ from Object import Object
 
 class Stimulus(Object):
     
-    LIGHT, SMELL, TASTE, SOUND = range(4)
-    
-    def __init__(self, network, target=None, type=LIGHT, name=None):
+    def __init__(self, network, target = None, modality = None, name = None):
+        if target is None:
+            raise ValueError, 'A stimulus must have a target'
+        
         if name is None:
-            if type == Stimulus.LIGHT:
-                name = "Light"
-            elif type == Stimulus.SMELL:
-                name = "Smell"
-            elif type == Stimulus.TASTE:
-                name = "Taste"
-            elif type == Stimulus.SOUND:
-                name = "Sound"
+            name = modality.name
             
         Object.__init__(self, network, name)
         self.target = target
-        self.type = type
+        self.modality = modality
         target.addStimulus(self)
     
     

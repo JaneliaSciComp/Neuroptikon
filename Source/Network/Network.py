@@ -27,7 +27,7 @@ class Network:
         self.displays = []
     
     
-    def createRegion(self, name=None):
+    def createRegion(self, name = None):
         region = Region(self, name)
         self.addObject(region)
         return region
@@ -39,20 +39,13 @@ class Network:
         return neuron
     
     
-    def createStimulus(self, target, type="light"):
-        if type == "smell":
-            stimulus = Stimulus(self, target, Stimulus.SMELL)
-        elif type == "taste":
-            stimulus = Stimulus(self, target, Stimulus.TASTE)
-        elif type == "sound":
-            stimulus = Stimulus(self, target, Stimulus.SOUND)
-        else:
-            stimulus = Stimulus(self, target, Stimulus.LIGHT)
+    def createStimulus(self, name = None, target = None, modality = None):
+        stimulus = Stimulus(self, target, modality, name)
         self.addObject(stimulus)
         return stimulus
     
     
-    def createMuscle(self, name=None):
+    def createMuscle(self, name = None):
         muscle = Muscle(self, name)
         self.addObject(muscle)
         return muscle
