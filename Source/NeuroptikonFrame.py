@@ -1,5 +1,5 @@
 import wx
-import platform
+import platform, sys
 from Display.Display import Display
 from Network.Network import Network
 from Search.Finder import Finder
@@ -105,8 +105,12 @@ class NeuroptikonFrame( wx.Frame ):
             locals = wx.GetApp().scriptLocals()
             locals['network'] = self.display.network
             locals['display'] = self.display
-            # TODO: wrap in a try block
-            execfile(dlg.GetPath(), locals)
+            try:
+                execfile(dlg.GetPath(), locals)
+            except:
+                (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
+                dialog = wx.MessageDialog(self, exceptionValue.message, _('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
+                dialog.ShowModal()
         dlg.Destroy()
         self.Refresh(False)
         self.Show(True)

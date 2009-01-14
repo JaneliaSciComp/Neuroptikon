@@ -43,6 +43,7 @@ gettext.install('Neuroptikon')
 
 import wx
 import wx.lib.mixins.inspection
+from wx import py
 from NeuroptikonFrame import NeuroptikonFrame
 from Network.Network import Network
 from Library.Library import Library
@@ -125,15 +126,17 @@ if __name__ == "__main__":
         def onRunScript(self, event):
             dlg = wx.FileDialog(None, _('Choose a script to run'), 'Scripts', '', '*.py', wx.OPEN)
             if dlg.ShowModal() == wx.ID_OK:
-                execfile(dlg.GetPath(), self.scriptLocals())
+                try:
+                    execfile(dlg.GetPath(), self.scriptLocals())
+                except:
+                    (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
+                    dialog = wx.MessageDialog(self, exceptionValue.message, _('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
+                    dialog.ShowModal()
             dlg.Destroy()
         
         
         def onOpenConsole(self, event):
             if '_console' not in dir(self):
-                import os
-                import wx
-                from wx import py
                 confDir = wx.StandardPaths.Get().GetUserDataDir()
                 if not os.path.exists(confDir):
                     os.mkdir(confDir)
