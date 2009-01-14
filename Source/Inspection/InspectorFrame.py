@@ -58,6 +58,7 @@ class InspectorFrame( wx.Frame ):
         else:
             imageList = wx.ImageList(16, 16)
             self.toolBook.SetImageList(imageList)
+            self.toolBook.SetFitToCurrentPage(True)
             for inspector in self.inspectors:
                 imageList.Add(inspector.__class__.bitmap())
                 self.toolBook.AddPage(inspector.window(self.toolBook), inspector.__class__.name(), imageId = imageList.GetImageCount() - 1)
