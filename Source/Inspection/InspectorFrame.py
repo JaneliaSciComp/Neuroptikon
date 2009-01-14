@@ -12,7 +12,6 @@ class InspectorFrame( wx.Frame ):
         self.toolBook = None
         
         self.SetSizer(wx.BoxSizer(wx.VERTICAL))
-        
         self.Bind(wx.EVT_CLOSE, self.Close)
     
     
@@ -42,6 +41,7 @@ class InspectorFrame( wx.Frame ):
             self.Unbind(wx.EVT_TOOLBOOK_PAGE_CHANGED, self.toolBook)
             self.toolBook.DeleteAllPages()
             self.GetSizer().Remove(self.toolBook)
+            self.toolBook.Destroy()
         else:
             lastInspectorClass = None
         
@@ -56,7 +56,6 @@ class InspectorFrame( wx.Frame ):
         if len(self.inspectors) == 0:
             self.toolBook = None
         else:
-            self.toolBook.SetFitToCurrentPage(True)
             imageList = wx.ImageList(16, 16)
             self.toolBook.SetImageList(imageList)
             for inspector in self.inspectors:
@@ -80,8 +79,14 @@ class InspectorFrame( wx.Frame ):
                     inspectorBaseClasses = self.inspectors[i].__class__.__bases__
                     if lastInspectorBaseClass in inspectorBaseClasses:
                         self.toolBook.ChangeSelection(i)
+
+        if self.toolBook is not None:
+            if self.toolBook.GetCurrentPage() is not None:
+                self.toolBook.GetCurrentPage().Layout()
+            self.toolBook.Layout()
         
         self.Layout()
+        self.Fit()
     
     
     def currentInspector(self):
@@ -92,16 +97,24 @@ class InspectorFrame( wx.Frame ):
         inspector = self.inspectors[event.GetOldSelection()]
         if inspector is not None:
             inspector.willBeClosed()
+        inspector = self.inspectors[event.GetSelection()]
+        if inspector is not None:
+            inspector.willBeShown()
+            if self.toolBook.GetCurrentPage() is not None:
+                self.toolBook.GetCurrentPage().Layout()
+        self.toolBook.Layout()
+        self.Layout()
+        self.Fit()
         event.Skip()
     
     
     def onPageChanged(self, event):
         inspector = self.inspectors[event.GetSelection()]
         if inspector is not None:
-            inspector.willBeShown()
-            self.Layout()
-            self.Fit()
             self.SetTitle(inspector.name() + ' ' + _('Inspector'))
+        self.toolBook.Layout()
+        self.Layout()
+        self.Fit()
         event.Skip()
         
     
