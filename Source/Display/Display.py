@@ -1040,7 +1040,8 @@ class Display(wx.glcanvas.GLCanvas):
                           x, y = pos.split(",")
                           visible.setPosition((float(x), float(y), 0))
                     # TODO: extract path segments
-        self.Refresh(False)
+        #self.Refresh(False)
+        self.centerView()
     
     
     def onSaveView(self, event):
