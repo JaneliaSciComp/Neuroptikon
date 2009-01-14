@@ -8,12 +8,16 @@ class Region(Object):
     
     def __init__(self, network, name=None):
         Object.__init__(self, network, name)
+        self.parentRegion = None
         self.subRegions = []
         self.arborizations = []
         self.pathways = []
     
+    
     def addSubRegion(self, subRegion):
         self.subRegions.append(subRegion)
+        subRegion.parentRegion = self
+    
     
     def addPathwayToRegion(self, otherRegion, name=None):
         pathway = Pathway(self, otherRegion, name)
@@ -21,6 +25,7 @@ class Region(Object):
         otherRegion.pathways.append(pathway)
         self.network.addObject(pathway)
         return pathway
+    
     
     def inputs(self):
         inputs = Object.inputs(self)
@@ -31,6 +36,7 @@ class Region(Object):
                 inputs.append(arborization)
         # TODO: sub-regions
         return inputs
+    
     
     def outputs(self):
         outputs = Object.outputs(self)
