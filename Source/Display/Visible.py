@@ -79,6 +79,7 @@ class Visible(object):
         self.sgNode.addChild(self._textGeode)
         self._staticTexture = None
         self._staticTextureTransform = None
+        self._animateFlow = False
     
     
     def shape(self):
@@ -285,10 +286,11 @@ class Visible(object):
         self.pathEnd = toVisible
         self.flowTo = flowTo
         self.flowFrom = flowFrom
+        self.updateFlowAnimation()
     
     
-    def animateFlow(self, animate=True):
-        if animate and self._shapeGeode.getUpdateCallback() is None:
+    def updateFlowAnimation(self):
+        if self._animateFlow and (self.flowTo or self.flowFrom):
             if self.flowTo:
                 self._stateSet.setTextureAttributeAndModes(0, self._motionTexture1, osg.StateAttribute.ON)
                 textureMatrix = osg.TexMat(osg.Matrixd.scale(10,  self.size()[1] / 400,  10))
@@ -297,7 +299,7 @@ class Visible(object):
                 # TODO: Python callbacks really don't perform well.  It may be better to use a TexGen, possibly tied to a cycling uniform?  Or even a shader...
                 callback = AnimatedTextureCallback(self, 0, textureMatrix, osg.Matrixd.translate(-0.05, -0.05, -0.05))
                 self._shapeGeode.setUpdateCallback(callback.__disown__())
-            if self.flowFrom:
+            elif self.flowFrom:
                 # TODO: this should be using texture unit 1 but it doesn't render correctly on Mac OS X
                 self._stateSet.setTextureAttributeAndModes(0, self._motionTexture2, osg.StateAttribute.ON)
                 textureMatrix = osg.TexMat(osg.Matrixd.scale(10,  self.size()[1] / 400,  10))
@@ -306,12 +308,18 @@ class Visible(object):
                 # TODO: Python callbacks really don't perform well.  It may be better to use a TexGen, possibly tied to a cycling uniform?  Or even a shader...
                 callback = AnimatedTextureCallback(self, 0, textureMatrix, osg.Matrixd.translate(0.05, 0.05, 0.05))
                 self._shapeGeode.setUpdateCallback(callback.__disown__())
-        elif not animate and self._shapeGeode.getUpdateCallback() is not None:
+        elif self._shapeGeode.getUpdateCallback() is not None:
             self._shapeGeode.setUpdateCallback(None)
             self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXTURE)
             self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXMAT)
             self.setTexture(self._staticTexture)
             self.setTextureTransform(self._staticTextureTransform)
+    
+    
+    def animateFlow(self, animate=True):
+        if self._animateFlow != animate:
+            self._animateFlow = animate
+            self.updateFlowAnimation()
         
         
     def setPath(self, path, startVisible=None, endVisible=None):

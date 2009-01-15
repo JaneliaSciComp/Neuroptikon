@@ -444,6 +444,8 @@ class Display(wx.glcanvas.GLCanvas):
                 neuronVis = self.visibleForObject(object.neurite.neuron())
                 regionVis = self.visibleForObject(object.region)
                 visible.setFlowDirection(neuronVis, regionVis, object.sendsOutput, object.receivesInput)
+                dispatcher.connect(self.arborizationChangedFlow, ('set', 'sendsOutput'), object)
+                dispatcher.connect(self.arborizationChangedFlow, ('set', 'receivesInput'), object)
                 visible.setPath([neuronVis.position, regionVis.position], neuronVis, regionVis)
                 if self._showFlow:
                     visible.animateFlow()
@@ -500,6 +502,14 @@ class Display(wx.glcanvas.GLCanvas):
         elif isinstance(object, Synapse) or isinstance(object, GapJunction):
             pass    #visible.setWeight(visible.weight() + 1)
     
+    
+    def arborizationChangedFlow(self, signal, sender):
+        visible = self.visibleForObject(sender)
+        neuronVis = self.visibleForObject(sender.neurite.neuron())
+        regionVis = self.visibleForObject(sender.region)
+        visible.setFlowDirection(neuronVis, regionVis, sender.sendsOutput, sender.receivesInput)
+    
+        
     def setNetwork(self, network):
         if self.network != None:
             self.network.removeDisplay(self)
