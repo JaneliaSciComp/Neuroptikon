@@ -620,6 +620,8 @@ class Display(wx.glcanvas.GLCanvas):
     def clearDragger(self):
         if self.dragSelection != None:
             visible = self.selectedVisibles[0]
+            if isinstance(visible.client, Stimulus):
+                visible = self.visibleForObject(visible.client)
             
             self.commandMgr.disconnect(self.dragger)
             self.commandMgr = None
@@ -800,6 +802,8 @@ class Display(wx.glcanvas.GLCanvas):
         if len(self.selectedVisibles) == 1:
             # Add a dragger to the selected visible.
             visible = self.selectedVisibles[0]
+            if isinstance(visible.client, Stimulus):
+                visible = self.visibleForObject(visible.client)
             
             if visible.isDraggable():
                 self.rootNode.removeChild(visible.sgNode)
@@ -901,6 +905,8 @@ class Display(wx.glcanvas.GLCanvas):
     
     def visibleWasDragged(self):
         visible = self.selectedVisibles[0]
+        if isinstance(visible.client, Stimulus):
+            visible = self.visibleForObject(visible.client)
         matrix = self.dragger.getMatrix()
         position = matrix.getTrans()
         size = matrix.getScale()
