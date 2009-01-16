@@ -12,15 +12,20 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_ACTIVATE, self.onActivate)
         self.Bind(wx.EVT_CLOSE, self.onCloseWindow)
         
+        splitter = wx.SplitterWindow(self, wx.ID_ANY, style = wx.SP_LIVE_UPDATE)
+        
         width, height = self.GetClientSize()
-        self.display = Display(self, wx.ID_ANY, 0, 0, width, height)
-        displayBox = wx.BoxSizer(wx.VERTICAL)
-        displayBox.Add(self.display, 1, wx.EXPAND)
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(displayBox, 1, wx.EXPAND)
-        self.SetAutoLayout(True)
-        self.SetSizer(sizer)
-        self.SetMenuBar(self.menuBar())
+        self.display = Display(splitter, wx.ID_ANY, 0, 0, width, height)
+        
+        self._console = wx.py.shell.Shell(splitter, wx.ID_ANY, locals = self.scriptLocals(), introText=_('Welcome to Neuroptikon.'))
+        
+        splitter.SplitHorizontally(self.display, self._console)
+        splitter.SetSashPosition(-100)
+        splitter.SetSashGravity(1.0)
+        
+        sizer = wx.BoxSizer(wx.VERTICAL)        sizer.Add(splitter, 1, wx.EXPAND)        self.SetAutoLayout(True)        self.SetSizer(sizer)
+                self.SetMenuBar(self.menuBar())
+        
         self.finder = None
         
         toolbar = wx.ToolBar(self)
@@ -97,16 +102,21 @@ class NeuroptikonFrame( wx.Frame ):
         wx.GetApp().inspector.inspectDisplay(self.display)
         event.Skip()
     
+    
+    def scriptLocals(self):
+        locals = wx.GetApp().scriptLocals()
+        locals['network'] = self.display.network
+        locals['display'] = self.display
+        return locals
+    
+        
     def onRunScript(self, event):
         # TODO: It would be nice to provide progress for long running scripts.  Would need some kind of callback for scripts to indicate how far along they were.
         # TODO: make this portable
-        dlg = wx.FileDialog(None, _('Choose a script to run'), '/Users/midgleyf/Development/Neuroptikon/Source/Scripts', '', '*.py', wx.OPEN)
+        dlg = wx.FileDialog(None, 'Choose a script to run', '/Users/midgleyf/Development/Neuroptikon/Source/Scripts', '', '*.py', wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
-            locals = wx.GetApp().scriptLocals()
-            locals['network'] = self.display.network
-            locals['display'] = self.display
             try:
-                execfile(dlg.GetPath(), locals)
+                execfile(dlg.GetPath(), self.scriptLocals())
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                 dialog = wx.MessageDialog(self, exceptionValue.message, _('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
