@@ -49,6 +49,7 @@ from Network.Network import Network
 from Library.Library import Library
 from Library.Neurotransmitter import Neurotransmitter
 from Library.Modality import Modality
+from Library.Ontology import Ontology
 from Preferences import Preferences
 from Inspection.InspectorFrame import InspectorFrame
 
@@ -99,10 +100,15 @@ if __name__ == "__main__":
             self.library.add(Neurotransmitter('histamine', _('Histamine')))
             self.library.add(Neurotransmitter('norepinephrine', _('Norepinephrine')))
             self.library.add(Neurotransmitter('serotonin', _('Serotonin')))
+            
             self.library.add(Modality('light', _('Light')))
             self.library.add(Modality('odor', _('Odor')))
             self.library.add(Modality('sound', _('Sound')))
             self.library.add(Modality('taste', _('Taste')))
+            
+            flyOntology = Ontology('drosophila brain')
+            flyOntology.importOBO('flybrain.obo')
+            self.library.add(flyOntology)
         
         
         def onQuit(self, event):
@@ -174,35 +180,22 @@ if __name__ == "__main__":
         
         def convertRealData(self, display):
             """ Convert the data from the 0.87 prototype to a script """
-            #network = Network()
-            #display.setNetwork(network)
-            #regions = {}
-            text = 'regions={}\n'
+            text = 'regions={}\n\n'
             from realdata import realdata 
-            for regionName in realdata.regions:
+            for regionName in sorted(realdata.regions):
                 props = realdata.regions[regionName]
                 label = props[0]
-                #region = network.createRegion(label)
-                #regions[regionName] = region
-                text += 'region = network.createRegion("%s")\nregions["%s"] = region\n' % (regionName, regionName)
+                text += "regions['%s'] = network.createRegion(name = '%s', abbreviation = '%s')\n" % (regionName, regionName, label)
                 x, y, width, height = props[1][1]
-                position = ((x + width / 2 - 50) * 10, ((350 - y) + height / 2) * 10, 0)
-                size = (width * 10, height * 10, 100)
-                #display.setVisiblePosition(region, position)
-                #display.setVisibleSize(region, size)
-                text += 'display.setVisiblePosition(region, %s, True)\ndisplay.setVisibleSize(region, %s)\ndisplay.setLabel(region, "%s")\n' % (position, size, label)
+                position = ((x + width / 2.0 - 50.0) / 650.0, ((350.0 - y) + height / 2.0) / 650.0, 0.0)
+                size = (width / 650.0, height / 650.0, 0.01)
+                text += "display.setVisiblePosition(regions['%s'], %s, True)\ndisplay.setVisibleSize(regions['%s'], %s)\n\n" % (regionName, position, regionName, size)
             for neuronName in realdata.connections:
                 props = realdata.connections[neuronName]
                 label = props[0]
-                #neuron = network.createNeuron(label)
-                text += 'neuron = network.createNeuron("%s")\nneuron.abbreviation = "%s"\n' % (neuronName, label)
+                text += "neuron = network.createNeuron(name = '%s', abbreviation = '%s')\n" % (neuronName, label)
                 nodeList = props[1]
-                #visitedRegions = []
                 for node in nodeList:
-                    #region = regions[node[1]]
-                    #if region not in visitedRegions:
-                        #neuron.arborize(region)
-                        #visitedRegions.append(region)
                     iob = node[0]
                     if iob == 'o' or iob == 'b':
                         sendsOutput = 'True'
@@ -212,9 +205,10 @@ if __name__ == "__main__":
                         receivesInput = 'True'
                     else:
                         receivesInput = 'False'
-                    text += 'neuron.arborize(regions["%s"], %s, %s)\n' % (node[1], sendsOutput, receivesInput)
+                    text += "neuron.arborize(regions['%s'], %s, %s)\n" % (node[1], sendsOutput, receivesInput)
+                text += '\n'
             # TODO: region groups
-            text += 'display.autoLayout("graphviz")\ndisplay.resetView()\n'
+            text += 'display.autoLayout("graphviz")\ndisplay.centerView()\n'
             print text
         
         
