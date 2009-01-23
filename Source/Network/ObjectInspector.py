@@ -67,6 +67,8 @@ class ObjectInspector(Inspector):
     
     def inspectDisplay(self, display):
         # Object inspectors are supposed to work purely at the network/biological layer so they don't need to know what the display is.
+        self.display = display
+        
         self.objects = ObjectList()
         for visible in display.selection():
             if visible.client.__class__ == self.__class__.objectClass():
@@ -110,4 +112,7 @@ class ObjectInspector(Inspector):
     def inspectedAttributeChanged(self, signal, sender, event=None, value=None, **arguments):
         self.populateObjectSizer(signal[1])
     
+    
+    def selectObject(self, object):
+        self.display.selectObject(object)
     

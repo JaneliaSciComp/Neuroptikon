@@ -6,8 +6,8 @@ class Neuron(Object):
     # TODO: neurites method that returns all neurites
     
     
-    def __init__(self, network, name = None, neurotransmitter = None):
-        Object.__init__(self, network, name)
+    def __init__(self, network, neurotransmitter = None, *args, **keywords):
+        Object.__init__(self, network, *args, **keywords)
         self._neurites = []
         self.neurotransmitter = neurotransmitter
     

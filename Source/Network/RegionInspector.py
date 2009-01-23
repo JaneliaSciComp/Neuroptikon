@@ -10,6 +10,11 @@ class RegionInspector( ObjectInspector ):
         return Region
     
     
+    @classmethod
+    def inspectedAttributes(cls):
+        return ['parentRegion', 'subRegions']
+    
+    
     def objectSizer(self, parentWindow):
         if not hasattr(self, '_sizer'):
             self._sizer = wx.FlexGridSizer(1, 2, 8, 8)
@@ -26,7 +31,7 @@ class RegionInspector( ObjectInspector ):
             parentSizer.Add(wx.StaticBitmap(parentWindow, wx.ID_ANY, self._regionBitmap))
             self._parentNameField = wx.StaticText(parentWindow, wx.ID_ANY)
             parentSizer.Add(self._parentNameField, 1, wx.LEFT, 2)
-            self._selectParentButton = wx.Button(self._window, wx.ID_ANY, _("Select"), wx.DefaultPosition, wx.DefaultSize, wx.BU_EXACTFIT)
+            self._selectParentButton = wx.Button(self._window, wx.ID_ANY, _("Select"), style = wx.BU_EXACTFIT)
             self._selectParentButton.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
             self._selectParentButton.SetSize(wx.Size(50, self._selectParentButton.GetSize().GetHeight()))
             self._selectParentButton.SetMinSize(self._selectParentButton.GetSize())
@@ -35,9 +40,14 @@ class RegionInspector( ObjectInspector ):
             self._sizer.Add(parentSizer)
             
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, _('Sub-regions:')))
+            self._subRegionsField = wx.StaticText(parentWindow, wx.ID_ANY)
+            self._sizer.Add(self._subRegionsField, 1, wx.EXPAND | wx.ALL, 5)
             self._subRegionsSizer = wx.FlexGridSizer(0, 3, 2, 5)
             self._subRegionsSizer.SetFlexibleDirection(wx.HORIZONTAL)
             self._sizer.Add(self._subRegionsSizer, 1, wx.EXPAND)
+            self._addSubRegionsButton = wx.Button(parentWindow, wx.ID_ANY, _("Add sub-regions from ontology"), style = wx.BU_EXACTFIT)
+            self._window.Bind(wx.EVT_BUTTON, self.onAddSubRegions, self._addSubRegionsButton)
+            self._sizer.Add(self._addSubRegionsButton, 0, wx.ALL, 5)
             
             self._parentWindow = parentWindow
         
@@ -57,28 +67,49 @@ class RegionInspector( ObjectInspector ):
                 self._parentNameField.SetLabel(_('Multiple values'))
                 self._selectParentButton.Disable()
         
-        if len(self.objects) == 1:
-            self._subRegionsSizer.Clear(True)
-            for subRegion in self.objects[0].subRegions:
-                self._subRegionsSizer.Add(wx.StaticBitmap(self._parentWindow, wx.ID_ANY, self._regionBitmap))
-                self._subRegionsSizer.Add(wx.StaticText(self._parentWindow, wx.ID_ANY, subRegion.name or _("Unnamed region")))
-                selectButton = wx.Button(self._parentWindow, wx.ID_ANY, _("Select"), wx.DefaultPosition, wx.DefaultSize, wx.BU_EXACTFIT)
-                selectButton.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
-                selectButton.SetSize(wx.Size(50, selectButton.GetSize().GetHeight()))
-                selectButton.SetMinSize(selectButton.GetSize())
-                self._parentWindow.Bind(wx.EVT_BUTTON, self.onSelectSubRegion, selectButton)
-                self._subRegionsSizer.Add(selectButton, 0, 0, 0, subRegion)
+        self._subRegionsSizer.Clear(True)
+        if len(self.objects) > 1:
+            self._subRegionsField.Show()
+            self._subRegionsField.SetLabel(_('Multiple values'))
+            self._addSubRegionsButton.Hide()
+        else:
+            region = self.objects[0]
+            if len(region.subRegions) == 0:
+                if region.ontologyTerm is not None and len(region.ontologyTerm.parts) > 0:
+                    self._subRegionsField.Hide()
+                    self._addSubRegionsButton.Show()
+                else:
+                    self._subRegionsField.Show()
+                    self._subRegionsField.SetLabel(_('None'))
+                    self._addSubRegionsButton.Hide()
+            else:
+                self._subRegionsField.Hide()
+                self._addSubRegionsButton.Hide()
+                for subRegion in self.objects[0].subRegions:
+                    self._subRegionsSizer.Add(wx.StaticBitmap(self._parentWindow, wx.ID_ANY, self._regionBitmap))
+                    self._subRegionsSizer.Add(wx.StaticText(self._parentWindow, wx.ID_ANY, subRegion.name or _("Unnamed region")))
+                    selectButton = wx.Button(self._parentWindow, wx.ID_ANY, _("Select"), style = wx.BU_EXACTFIT)
+                    selectButton.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+                    selectButton.SetSize(wx.Size(50, selectButton.GetSize().GetHeight()))
+                    selectButton.SetMinSize(selectButton.GetSize())
+                    self._parentWindow.Bind(wx.EVT_BUTTON, self.onSelectSubRegion, selectButton)
+                    self._subRegionsSizer.Add(selectButton, 0, 0, 0, subRegion)
         
         self._window.Layout()
     
     
     def onSelectParentRegion(self, event):
-        # TODO: need access to the display
-        pass
+        self.selectObject(self.objects[0].parentRegion)
+        
+    
+    def onAddSubRegions(self, event):
+        region = self.objects[0]
+        for term in region.ontologyTerm.parts:
+            region.network.createRegion(ontologyTerm = term, parentRegion = region, addSubTerms = wx.GetKeyState(wx.WXK_ALT))
     
     
     def onSelectSubRegion(self, event):
         sizerItem = self._subRegionsSizer.GetItem(event.GetEventObject())
         subRegion = sizerItem.GetUserData()
-        # TODO: need access to the display
+        self.selectObject(subRegion)
     

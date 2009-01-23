@@ -4,8 +4,8 @@ class Muscle(Object):
     
     # TODO: stretch receptors?
     
-    def __init__(self, network, name=None):
-        Object.__init__(self, network, name)
+    def __init__(self, network, *args, **keywords):
+        Object.__init__(self, network, *args, **keywords)
         self.innervations = []
         self.stretchReceptors = []
     

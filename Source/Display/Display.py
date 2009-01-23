@@ -59,25 +59,11 @@ class Display(wx.glcanvas.GLCanvas):
         self.orthoZoom = 0
         self.rootNode = osg.MatrixTransform()
         self.rootNode.setMatrix(osg.Matrixd.identity())
+        self.rootNode.getOrCreateStateSet().setMode(osg.GL_NORMALIZE, osg.StateAttribute.ON )
         if platform.system() == 'Windows':
             self.scrollWheelScale = 0.1
         else:
             self.scrollWheelScale = 1
-        
-        if False:
-            lightGroup = osg.Group()
-            light = osg.Light()
-            light.setLightNum(1)
-            light.setPosition(osg.Vec4f(0, 0, -1000, 1))
-            light.setAmbient(osg.Vec4f(0.2, 0.2, 0.2, 1))
-            light.setDiffuse(osg.Vec4f(0.1, 0.1, 0.1, 1))
-            #light.setConstantAttenuation(1)
-            lightSource = osg.LightSource()
-            lightSource.setLight(light)
-            lightSource.setLocalStateSetModes(osg.StateAttribute.ON)
-            lightSource.setStateSetModes(self.rootNode.getOrCreateStateSet(), osg.StateAttribute.ON)
-            lightGroup.addChild(lightSource)
-            self.rootNode.addChild(lightGroup)
         
         osg.DisplaySettings.instance().setNumMultiSamples(4);
         
@@ -88,10 +74,10 @@ class Display(wx.glcanvas.GLCanvas):
         self.viewer2D.setThreadingModel(self.viewer2D.SingleThreaded)
         self.viewer2D.addEventHandler(osgViewer.StatsHandler())
         self.viewer2D.setSceneData(self.rootNode)
-#        self.viewer2D.setCameraManipulator(self.trackball)
-#        self.viewer2D.setCameraManipulator(None)
         self.viewer2D.addEventHandler(self._pickHandler)
-#        self.viewer2D.getCamera().setComputeNearFarMode(osg.CullSettings.COMPUTE_NEAR_FAR_USING_BOUNDING_VOLUMES)
+        light = self.viewer2D.getLight()
+        light.setAmbient(osg.Vec4f(0.4, 0.4, 0.4, 1))
+        light.setDiffuse(osg.Vec4f(0.5, 0.5, 0.5, 1))
         
         self.viewer3D = osgViewer.Viewer()
         self.viewer3D.setThreadingModel(self.viewer3D.SingleThreaded)
@@ -99,6 +85,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.viewer3D.setSceneData(self.rootNode)
         self.viewer3D.setCameraManipulator(self.trackball)
         self.viewer3D.addEventHandler(self._pickHandler)
+        self.viewer3D.setLight(light)
         
         config = wx.Config("Neuroptikon")
         clearColor = (config.ReadFloat("Color/Background/Red", 0.7), \
@@ -120,7 +107,7 @@ class Display(wx.glcanvas.GLCanvas):
         self._motionTexture1 = self.textureFromImage('texture.png')
         self._motionTexture2 = self.textureFromImage('texture.png')
         self._pathwayTexture = self.textureFromImage('pathway.jpg')
-        self._textureTransform = osg.Matrixd.scale(10,  10,  10)
+        self._textureTransform = osg.Matrixd.scale(10 / 5000.0,  10 / 5000.0,  10 / 5000.0)
         self.dragSelection = None
         self.selectionShouldExtend = False
         self.findShortestPath = False
@@ -169,14 +156,14 @@ class Display(wx.glcanvas.GLCanvas):
     def resetView(self):
         if self.viewDimensions == 2:
             width, height = self.GetClientSize()
-            zoom = 2 ** (self.orthoZoom / 10.0)
-            self.viewer2D.getCamera().setProjectionMatrixAsOrtho2D(self.orthoCenter[0] - width * self.zoomScale / 2 / zoom, 
-                                                                   self.orthoCenter[0] + width * self.zoomScale / 2 / zoom, 
-                                                                   self.orthoCenter[1] - height * self.zoomScale / 2 / zoom, 
-                                                                   self.orthoCenter[1] + height * self.zoomScale / 2 / zoom)
-            self.viewer2D.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(0, 0, -1000)))
-            self.SetScrollbar(wx.HORIZONTAL, (self.orthoCenter[0] - self.visiblesMin[0]) / self.visiblesSize[0] * width - width / zoom / 2, width / zoom, width, True)
-            self.SetScrollbar(wx.VERTICAL, (self.visiblesMax[1] - self.orthoCenter[1]) / self.visiblesSize[1] * height - height / zoom / 2, height / zoom, height, True)
+            zoom = 2.0 ** (self.orthoZoom / 10.0)
+            self.viewer2D.getCamera().setProjectionMatrixAsOrtho2D(self.orthoCenter[0] - width * self.zoomScale / 2.0 / zoom, 
+                                                                   self.orthoCenter[0] + width * self.zoomScale / 2.0 / zoom, 
+                                                                   self.orthoCenter[1] - height * self.zoomScale / 2.0 / zoom, 
+                                                                   self.orthoCenter[1] + height * self.zoomScale / 2.0 / zoom)
+            self.viewer2D.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(0, 0, -2.0)))
+            self.SetScrollbar(wx.HORIZONTAL, (self.orthoCenter[0] - self.visiblesMin[0]) / self.visiblesSize[0] * width - width / zoom / 2.0, width / zoom, width, True)
+            self.SetScrollbar(wx.VERTICAL, (self.visiblesMax[1] - self.orthoCenter[1]) / self.visiblesSize[1] * height - height / zoom / 2.0, height / zoom, height, True)
     
     
     def centerView(self, visible=None):
@@ -195,24 +182,24 @@ class Display(wx.glcanvas.GLCanvas):
         self.visiblesMax = [-100000, -100000, -100000]
         for visible in self.visibles.values():
             if isinstance(visible, tuple):
-                x, y, z = visible[0].position()
-                w, h, d = visible[1].size()
+                x, y, z = visible[0].worldPosition()
+                w, h, d = visible[0].worldSize()
             else:
-                x, y, z = visible.position()
-                w, h, d = visible.size()
-            if x - w / 2 < self.visiblesMin[0]:
-                self.visiblesMin[0] = x - w / 2
-            if x + w / 2 > self.visiblesMax[0]:
-                self.visiblesMax[0] = x + w / 2
-            if y - h / 2 < self.visiblesMin[1]:
-                self.visiblesMin[1] = y - h / 2
-            if y + h / 2 > self.visiblesMax[1]:
-                self.visiblesMax[1] = y + h / 2
-            if z - d / 2 < self.visiblesMin[2]:
-                self.visiblesMin[2] = z - d / 2
-            if z + d / 2 > self.visiblesMax[2]:
-                self.visiblesMax[2] = z + d / 2
-        self.visiblesCenter = ((self.visiblesMin[0] + self.visiblesMax[0]) / 2, (self.visiblesMin[1] + self.visiblesMax[1]) / 2, (self.visiblesMin[2] + self.visiblesMax[2]) / 2)
+                x, y, z = visible.worldPosition()
+                w, h, d = visible.worldSize()
+            if x - w / 2.0 < self.visiblesMin[0]:
+                self.visiblesMin[0] = x - w / 2.0
+            if x + w / 2.0 > self.visiblesMax[0]:
+                self.visiblesMax[0] = x + w / 2.0
+            if y - h / 2.0 < self.visiblesMin[1]:
+                self.visiblesMin[1] = y - h / 2.0
+            if y + h / 2.0 > self.visiblesMax[1]:
+                self.visiblesMax[1] = y + h / 2.0
+            if z - d / 2.0 < self.visiblesMin[2]:
+                self.visiblesMin[2] = z - d / 2.0
+            if z + d / 2.0 > self.visiblesMax[2]:
+                self.visiblesMax[2] = z + d / 2.0
+        self.visiblesCenter = ((self.visiblesMin[0] + self.visiblesMax[0]) / 2.0, (self.visiblesMin[1] + self.visiblesMax[1]) / 2.0, (self.visiblesMin[2] + self.visiblesMax[2]) / 2.0)
         self.visiblesSize = (self.visiblesMax[0] - self.visiblesMin[0], self.visiblesMax[1] - self.visiblesMin[1], self.visiblesMax[2] - self.visiblesMin[2])
         # Reverse the calculation in resetView():
         # self.orthoCenter[0] - width / 2 / (2 ** (self.orthoZoom / 10.0)) = minx 
@@ -223,8 +210,8 @@ class Display(wx.glcanvas.GLCanvas):
         width, height = self.GetClientSize()
         #xZoom = 10 * math.log((width - 10) / 2 / (self.visiblesCenter[0] - self.visiblesMin[0]), 2)
         #yZoom = 10 * math.log((height - 10) / 2 / (self.visiblesCenter[1] - self.visiblesMin[1]), 2)
-        xZoom = self.visiblesSize[0] / (width - 10)
-        yZoom = self.visiblesSize[1] / (height - 10)
+        xZoom = self.visiblesSize[0] / (width - 10.0)
+        yZoom = self.visiblesSize[1] / (height - 10.0)
         if xZoom > yZoom:
             self.zoomScale = xZoom
         else:
@@ -254,13 +241,13 @@ class Display(wx.glcanvas.GLCanvas):
             # pos = (self.orthoCenter[0] - self.visiblesMin[0]) / self.visiblesSize[0] * width - width / zoom / 2
             # pos + width / zoom / 2 = (self.orthoCenter[0] - self.visiblesMin[0]) / self.visiblesSize[0] * width
             # (pos + width / zoom / 2) * self.visiblesSize[0] / width = self.orthoCenter[0] - self.visiblesMin[0]
-            self.orthoCenter = ((event.GetPosition() + width / zoom / 2) / width * self.visiblesSize[0] + self.visiblesMin[0], self.orthoCenter[1])
+            self.orthoCenter = ((event.GetPosition() + width / zoom / 2.0) / width * self.visiblesSize[0] + self.visiblesMin[0], self.orthoCenter[1])
         else:
             # Reverse the calculation in resetView():
             # pos = (self.visiblesMax[1] - self.orthoCenter[1]) / self.visiblesSize[1] * height - height / zoom / 2
             # pos + height / zoom / 2 = (self.visiblesMax[1] - self.orthoCenter[1]) / self.visiblesSize[1] * height
             # (pos + height / zoom / 2) * self.visiblesSize[1] / height = self.visiblesMax[1] - self.orthoCenter[1]
-            self.orthoCenter = (self.orthoCenter[0], self.visiblesMax[1] - (event.GetPosition() + height / zoom / 2) * self.visiblesSize[1] / height)
+            self.orthoCenter = (self.orthoCenter[0], self.visiblesMax[1] - (event.GetPosition() + height / zoom / 2.0) * self.visiblesSize[1] / height)
         self.resetView()
         self.Refresh()
    
@@ -287,9 +274,9 @@ class Display(wx.glcanvas.GLCanvas):
     def onMouseWheel(self, event):
         if self.viewDimensions == 2:
             if event.ShiftDown():
-                self.orthoCenter = (self.orthoCenter[0] + event.GetWheelRotation() * 10, self.orthoCenter[1])
+                self.orthoCenter = (self.orthoCenter[0] + event.GetWheelRotation() * .002, self.orthoCenter[1])
             elif event.AltDown():
-                self.orthoCenter = (self.orthoCenter[0], self.orthoCenter[1] - event.GetWheelRotation() * 10)
+                self.orthoCenter = (self.orthoCenter[0], self.orthoCenter[1] - event.GetWheelRotation() * 10.0)
             else:
                 self.orthoZoom += event.GetWheelRotation() * self.scrollWheelScale
                 if self.orthoZoom < 0:
@@ -297,7 +284,7 @@ class Display(wx.glcanvas.GLCanvas):
                 # TODO: alter orthoCenter to keep visibles in view
             self.resetView()
         elif self.viewDimensions == 3:
-            self.trackball.setDistance(self.trackball.getDistance() - event.GetWheelRotation() * 100 * self.scrollWheelScale)
+            self.trackball.setDistance(self.trackball.getDistance() - event.GetWheelRotation() * .02 * self.scrollWheelScale)
     
     
     def onIdle(self, event):
@@ -387,31 +374,36 @@ class Display(wx.glcanvas.GLCanvas):
             return None
     
     
-    def addVisible(self, visible, object):
+    def addVisible(self, visible, object, parentVisible = None):
         self.visibles[self.keyForObject(object)] = visible
-        if isinstance(visible, tuple):
-            for subVisible in visible:
-                self.rootNode.addChild(subVisible.sgNode)
+        if parentVisible is None:
+            if isinstance(visible, tuple):
+                for subVisible in visible:
+                    self.rootNode.addChild(subVisible.sgNode)
+            else:
+                self.rootNode.addChild(visible.sgNode)
         else:
-            self.rootNode.addChild(visible.sgNode)
-        
+            parentVisible.addChildVisible(visible)
+    
+    
     def visualizeObject(self, object):
         visible = self.visibleForObject(object)
         if visible == None:
             # TODO: replace this whole block with display filters
+            neuralTissueColor = (0.85, 0.75, 0.6)
             if isinstance(object, Region):
                 visible = Visible(self, object)
                 visible.setShape("box")
-                visible.setSize((500, 500, 100))
-                visible.setColor((0.5 * 1.5, 0.39 * 1.5, 0.2 * 1.5))
+                visible.setSize((0.1, 0.1, 0.01))
+                visible.setColor(neuralTissueColor)
                 if self._showRegionNames:
-                    visible.setLabel(object.name)
-                self.addVisible(visible, object)
+                    visible.setLabel(object.abbreviation or object.name)
+                self.addVisible(visible, object, self.visibleForObject(object.parentRegion))
             elif isinstance(object, Pathway):
                 visible = Visible(self, object)
                 visible.setShape("tube")
-                visible.setWeight(5)
-                visible.setColor((0.01, 0.01, 0.01))
+                visible.setWeight(5.0)
+                visible.setColor(neuralTissueColor)
                 visible.setTexture(self._pathwayTexture)
                 visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
                 regions = list(object.regions)
@@ -423,15 +415,15 @@ class Display(wx.glcanvas.GLCanvas):
             elif isinstance(object, Neuron):
                 visible = Visible(self, object)
                 visible.setShape("ball")
-                visible.setSize((50, 50, 50))
-                visible.setColor((0.5, 0.39, 0.2))
+                visible.setSize((.01, .01, .01))
+                visible.setColor(neuralTissueColor)
                 if self._showNeuronNames:
-                    visible.setLabel(object.name)
+                    visible.setLabel(object.abbreviation or object.name)
                 self.addVisible(visible, object)
             elif isinstance(object, Muscle):
                 visible = Visible(self, object)
                 visible.setShape("stick")
-                visible.setSize((200, 1000, 100))
+                visible.setSize((.04, .2, .02))
                 visible.setColor((0.5, 0, 0))
                 visible.setTexture(self._pathwayTexture)
                 visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
@@ -440,7 +432,7 @@ class Display(wx.glcanvas.GLCanvas):
             elif isinstance(object, Arborization):
                 visible = Visible(self, object)
                 visible.setShape("tube")
-                visible.setColor((0.5, 0.39, 0.2))
+                visible.setColor(neuralTissueColor)
                 neuronVis = self.visibleForObject(object.neurite.neuron())
                 regionVis = self.visibleForObject(object.region)
                 visible.setFlowDirection(neuronVis, regionVis, object.sendsOutput, object.receivesInput)
@@ -456,7 +448,7 @@ class Display(wx.glcanvas.GLCanvas):
                 for neurite in object.postsynapticNeurites:
                     visible = Visible(self, object)
                     visible.setShape("tube")
-                    visible.setColor((0.5, 0.39, 0.2))
+                    visible.setColor(neuralTissueColor)
                     postNeuronVis = self.visibleForObject(neurite.neuron())
                     visible.setFlowDirection(preNeuronVis, postNeuronVis)
                     visible.setPath([preNeuronVis.position, postNeuronVis.position], preNeuronVis, postNeuronVis)
@@ -466,7 +458,7 @@ class Display(wx.glcanvas.GLCanvas):
             elif isinstance(object, GapJunction):
                 visible = Visible(self, object)
                 visible.setShape("tube")
-                visible.setColor((0, 0.1, 0))
+                visible.setColor((.65, 0.75, 0.4))
                 neurites = list(object.neurites)
                 neuron1 = self.visibleForObject(neurites[0].neuron())
                 neuron2 = self.visibleForObject(neurites[1].neuron())
@@ -478,7 +470,7 @@ class Display(wx.glcanvas.GLCanvas):
             elif isinstance(object, Innervation):
                 visible = Visible(self, object)
                 visible.setShape("tube")
-                visible.setColor((0.5, 0.25, 0.25))
+                visible.setColor((0.55, 0.35, 0.25))
                 neuronVis = self.visibleForObject(object.neurite.neuron())
                 muscleVis = self.visibleForObject(object.muscle)
                 visible.setFlowDirection(neuronVis, muscleVis)
@@ -488,8 +480,8 @@ class Display(wx.glcanvas.GLCanvas):
                 self.addVisible(visible, object)
             elif isinstance(object, Stimulus):
                 node = Visible(self, object)
-                node.setSize((100, 100, 100)) # so the label is in front (hacky...)
-                node.setLabel(object.name)
+                node.setSize((.02, .02, .02)) # so the label is in front (hacky...)
+                node.setLabel(object.abbreviation or object.name)
                 edge = Visible(self, object)
                 edge.setShape("cone")
                 edge.setWeight(5)
@@ -600,22 +592,32 @@ class Display(wx.glcanvas.GLCanvas):
     def useGhosts(self):
         return self._useGhosts
     
+    
     def setLabel(self, object, label):
         visible = self.visibleForObject(object)
         visible.setLabel(label)
+    
     
     def setVisiblePosition(self, object, position, fixed=False):
         visible = self.visibleForObject(object)
         visible.setPosition(position)
         visible.setPositionIsFixed(fixed)
     
+    
     def setVisibleSize(self, object, size):
         visible = self.visibleForObject(object)
         visible.setSize(size)
     
+    
+    def arrangeChildren(self, object, axis = 'largest', spacing = 2, recurse = False):
+        visible = self.visibleForObject(object)
+        visible.arrangeChildren(axis = axis, spacing = spacing, recurse = recurse)
+        
+    
     def setVisiblePath(self, object, path, startVisible, endVisible):
         visible = self.visibleForObject(object, False)
         visible.setPath(path, startVisible, endVisible)
+    
     
     def clearDragger(self):
         if self.dragSelection != None:
@@ -623,17 +625,23 @@ class Display(wx.glcanvas.GLCanvas):
             if isinstance(visible.client, Stimulus):
                 visible = self.visibleForObject(visible.client)
             
+            if visible.parent is None:
+                rootNode = self.rootNode
+            else:
+                rootNode = visible.parent.sgNode
+            
             self.commandMgr.disconnect(self.dragger)
             self.commandMgr = None
             
             self.dragSelection.removeChild(visible.sgNode)
-            self.rootNode.removeChild(self.dragSelection)
+            rootNode.removeChild(self.dragSelection)
             self.dragSelection = None
             
-            self.rootNode.addChild(visible.sgNode)
+            rootNode.addChild(visible.sgNode)
             self.visibleWasDragged()
             
-            self.rootNode.removeChild(self.dragger)
+            rootNode.removeChild(self.dragger)
+            
             self.dragger = None
     
     
@@ -679,7 +687,7 @@ class Display(wx.glcanvas.GLCanvas):
             if predicate.matches(object):
                 visible = self.visibleForObject(object)
                 if visible is not None:
-                    self.selectVisible(visible, extend = True, report = False)
+                    self.selectVisible(visible, extend = True)
     
     
     def selectObject(self, object, extend = False, findShortestPath = False):
@@ -806,18 +814,30 @@ class Display(wx.glcanvas.GLCanvas):
                 visible = self.visibleForObject(visible.client)
             
             if visible.isDraggable():
-                self.rootNode.removeChild(visible.sgNode)
+                if visible.parent is None:
+                    rootNode = self.rootNode
+                else:
+                    rootNode = visible.parent.sgNode
+                    
+                rootNode.removeChild(visible.sgNode)
                 
                 self.dragSelection = osgManipulator.Selection()
                 self.dragSelection.addChild(visible.sgNode)
-                self.rootNode.addChild(self.dragSelection)
+                rootNode.addChild(self.dragSelection)
                 
-                self.dragger = osgManipulator.TranslatePlaneDragger()   # TODO: use a different dragger for 3D
+                if self.viewDimensions == 2:
+                    self.dragger = osgManipulator.TranslatePlaneDragger()
+                    self.draggerZOffset = visible.size()[2]
+                    self.draggerScale = 1.0
+                    self.dragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * visible.sgNode.getMatrix() * osg.Matrixd.translate(0, 0, self.draggerZOffset))
+                elif self.viewDimensions == 3:
+                    self.dragger = osgManipulator.TabBoxDragger()
+                    self.draggerZOffset = 0
+                    self.draggerScale = 1.02
+                    self.dragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * visible.sgNode.getMatrix())
                 self.dragger.setupDefaultGeometry()
                 # TODO: should scale so that increase in size is fixed and greater than glow increase (14).  Probably should use a ComputeBoundsVisitor...
-                self.draggerZOffset = visible.size()[2]
-                self.dragger.setMatrix(osg.Matrixd.rotate(pi/2, osg.Vec3d(1, 0, 0)) * visible.sgNode.getMatrix() * osg.Matrixd.translate(0, 0, self.draggerZOffset))
-                self.rootNode.addChild(self.dragger)
+                rootNode.addChild(self.dragger)
                 
                 self.commandMgr = osgManipulator.CommandManager()
                 self.commandMgr.connect(self.dragger, self.dragSelection)
@@ -911,7 +931,7 @@ class Display(wx.glcanvas.GLCanvas):
         position = matrix.getTrans()
         size = matrix.getScale()
         visible.setPosition((position.x(), position.y(), position.z() - self.draggerZOffset))
-        visible.setSize((size.x(), size.y(), size.z()))
+        visible.setSize((size.x() / self.draggerScale, size.y() / self.draggerScale, size.z() / self.draggerScale))
     
     
     def onAutoLayout(self, event):
@@ -945,7 +965,7 @@ class Display(wx.glcanvas.GLCanvas):
             #   [vx,lambda]=eig(q);
             #   x=d^(-1/2)*vx(:,2);
             #   y=d^(-1/2)*vx(:,3);
-            c = (A + A_prime) / 2
+            c = (A + A_prime) / 2.0
             d = diag(c.sum(0))
             l = mat(d - c)
             b = (c * sign(A - A_prime)).sum(1).reshape(1, n)
@@ -957,13 +977,13 @@ class Display(wx.glcanvas.GLCanvas):
             x = d2 * mat(eVec[:,1])
             y = d2 * mat(eVec[:,2])
             xMin, xMax = x.min(), x.max()
-            xScale = 5000.0 / (xMax - xMin)
+            xScale = 1.0 / (xMax - xMin)
             xOff = (xMax + xMin) / 2.0
             yMin, yMax = y.min(), y.max()
-            yScale = 5000.0 / (yMax - yMin)
+            yScale = 1.0 / (yMax - yMin)
             yOff = (yMax + yMin) / 2.0
             zMin, zMax = z.min(), z.max()
-            zScale = 5000.0 / (zMax - zMin)
+            zScale = 1.0 / (zMax - zMin)
             zOff = (zMax + zMin) / 2.0
             for i in range(n):
                 node = nodes[i]
@@ -998,62 +1018,95 @@ class Display(wx.glcanvas.GLCanvas):
                 path_3D.append(visible1.position())
                 self.setVisiblePath(edge[2], path_3D, visible0, visible1)
         elif method == "graphviz":
-            graphAttr = {"graph": {"splines": "polyline", "overlap": "vpsc", "sep": "+20"}}
-            nodeAttr = {}
-            for node in graph.nodes():
-                object = self.network.objectWithId(node)
-                visible = self.visibleForObject(object)
-                pos = visible.position()
-                attr = {"width": str(visible.size()[0]/72.0), 
-                        "height": str(visible.size()[1]/72.0), 
-                        "label": " ",
-                        "shape": "box",
-                        "fixedsize": "true", 
-                        "pos": "%f,%f" % (pos[0]/72.0, pos[1]/72.0)}
-                if visible.positionIsFixed():
-                    attr["pin"] = "true"
-                nodeAttr[node] = attr
-            nodePos={} 
+            visibles = {}
+            edgeVisibles = []
             if pygraphviz is not None:  # Use pygraphviz if it's available as it's faster than pydot.
-                A=to_agraph(graph, graph_attr=graphAttr, node_attr=nodeAttr)
-                #print A.to_string()
-                A.layout(prog="fdp")
-                for node in graph.nodes(): 
-                    visible = self.visibleForObject(self.network.objectWithId(node))
-                    pynode = pygraphviz.Node(A, node) 
-                    try: 
-                        x, y = pynode.attr["pos"].split(',') 
-                        visible.setPosition((float(x), float(y), 0))
-                    except: 
-                        pass
-                for edge in graph.edges():
+                mainGraph = pygraphviz.AGraph(strict = False, overlap = 'vpsc', sep = '+1', splines = 'polyline')
+                for key, visible in self.visibles.iteritems():
+                    if isinstance(visible, tuple):
+                        visibles[str(id(visible[0]))] = visible[0]
+                        mainGraph.add_node(id(visible[0]), **visible[0].graphvizAttributes())
+                        edgeVisibles.append(visible[1])
+                    else:
+                        if visible.pathStart is not None:
+                            edgeVisibles.append(visible)   # don't add edges until all the nodes have been added
+                        elif len(visible.children) == 0:    #visible.parent is None:
+                            visibles[str(id(visible))] = visible
+                            mainGraph.add_node(id(visible), **visible.graphvizAttributes())
+                for edgeVisible in edgeVisibles:
+                    visibles[str(id(edgeVisible))] = edgeVisible
+                    if True:
+                        mainGraph.add_edge(str(id(edgeVisible.pathStart)), str(id(edgeVisible.pathEnd)), str(id(edgeVisible)))
+                    else:
+                        startKey = str(id(edgeVisible.pathStart.rootVisible()))
+                        endKey = str(id(edgeVisible.pathEnd.rootVisible()))
+                        edgeAttrs = {}
+                        if edgeVisible.pathStart.parent is not None:
+                            worldX, worldY, worldZ = edgeVisible.pathStart.worldPosition()
+                            rootX, rootY, rootZ = edgeVisible.pathStart.rootVisible().position()
+                            rootWidth, rootHeight, rootDepth = edgeVisible.pathStart.rootVisible().size()
+                            subX = int((worldX - rootX) / rootWidth * 9.0) + 4
+                            subY = int((worldY - rootY) / rootHeight * 9.0) + 4
+                            startKey += ':' + str(subX) + str(subY)
+                            edgeAttrs['tailport'] = str(subX) + str(subY)
+                        if edgeVisible.pathEnd.parent is not None:
+                            worldX, worldY, worldZ = edgeVisible.pathEnd.worldPosition()
+                            rootX, rootY, rootZ = edgeVisible.pathEnd.rootVisible().position()
+                            rootWidth, rootHeight, rootDepth = edgeVisible.pathEnd.rootVisible().size()
+                            subX = int((worldX - rootX) / rootWidth * 9.0) + 4
+                            subY = int((worldY - rootY) / rootHeight * -9.0) + 4
+                            edgeAttrs['headport'] = str(subX) + str(subY)
+                        mainGraph.add_edge(startKey, endKey, str(id(edgeVisible)), **edgeAttrs)
+                
+                #print mainGraph.to_string()
+                mainGraph.layout(prog='fdp')
+                
+                # Get the bounding box of the entire graph so we can center it in the display.
+                # The 'bb' attribute doesn't seem to be exposed by pygraphviz so we have to hack it out of the text dump.
+                import re
+                matches = re.search('bb="([0-9,]+)"', mainGraph.to_string())
+                bbx1, bby1, bbx2, bby2 = matches.group(1).split(',')
+                width, height = (float(bbx2) - float(bbx1), float(bby2) - float(bby1))
+                dx, dy = ((float(bbx2) + float(bbx1)) / 2.0, (float(bby2) + float(bby1)) / 2.0)
+                for visibleId in mainGraph.nodes():
+                    visible = visibles[visibleId]
+                    if visible.parent is None:
+                        pynode = pygraphviz.Node(mainGraph, visibleId) 
+                        try: 
+                            x, y = pynode.attr['pos'].split(',') 
+                            # TODO: convert to local coordinates?
+                            visible.setPosition(((float(x) - dx) / width, (float(y) - dy) / height, 0))
+                        except: 
+                            pass
+                for edge in mainGraph.edges():
                     try:
                         path_3D = []
-                        visible0 = self.visibleForObject(self.network.objectWithId(edge[0]))
-                        visible1 = self.visibleForObject(self.network.objectWithId(edge[1]))
-                        if True:
-                           pyedge = pygraphviz.Edge(A, edge[0], edge[1])
-                           path = pyedge.attr["pos"].split(' ')
+                        pathStart = visibles[edge[0]]
+                        pathEnd = visibles[edge[1]]
+                        visible = visibles[edge[2]]
+                        if False:
+                           pyedge = pygraphviz.Edge(mainGraph, edge[0], edge[1])
+                           path = pyedge.attr['pos'].split(' ')
                            for pathElement in path:
                               x, y = pathElement.split(',')
-                              path_3D.append((float(x), float(y), 0.0))
+                              path_3D.append(((float(x) - dx) / width, (float(y) - dy) / height, 0))
                         else:
-                            path_3D.append(visible0.position())
-                            path_3D.append(visible1.position())
-                        self.setVisiblePath(edge[2], path_3D, visible0, visible1)
+                            path_3D.append(pathStart.worldPosition())
+                            path_3D.append(pathEnd.worldPosition())
+                        visible.setPath(path_3D, visible.pathStart, visible.pathEnd)
                     except:
                         pass
             else:  # Fall back to using pydot.
                 pydotGraph = self.network.to_pydot(graph_attr=graphAttr, node_attr=nodeAttr)
                 if pydotGraph is not None:
-                    graphData = pydotGraph.create_dot(prog="fdp")
+                    graphData = pydotGraph.create_dot(prog='fdp')
                     pydotGraph = pydot.graph_from_dot_data(graphData)
                     for node in graph.nodes(): 
                        visible = self.visibleForObject(self.network.objectWithId(node))
                        pyNode = pydotGraph.get_node(str(node))
                        pos = pyNode.get_pos()[1:-1] 
                        if pos != None:
-                          x, y = pos.split(",")
+                          x, y = pos.split(',')
                           visible.setPosition((float(x), float(y), 0))
                     # TODO: extract path segments
         #self.Refresh(False)
@@ -1061,19 +1114,19 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def onSaveView(self, event):
-        fileTypes = ["JPG", "Microsoft BMP", "PNG", "TIFF"]
-        fileExtensions = ["jpg", "bmp", "png", "tiff"]
-        wildcard = ""
+        fileTypes = ['JPG', 'Microsoft BMP', 'PNG', 'TIFF']
+        fileExtensions = ['jpg', 'bmp', 'png', 'tiff']
+        wildcard = ''
         for index in range(0, len(fileTypes)):
-            if wildcard != "":
-                wildcard += "|"
-            wildcard += fileTypes[index] + "|" + fileExtensions[index]
-        fileDialog = wx.FileDialog(None, _("Save As:"), "", "", wildcard, wx.FD_SAVE)
+            if wildcard != '':
+                wildcard += '|'
+            wildcard += fileTypes[index] + '|' + fileExtensions[index]
+        fileDialog = wx.FileDialog(None, _('Save As:'), '', '', wildcard, wx.FD_SAVE)
         if fileDialog.ShowModal() == wx.ID_OK:
             extension = fileExtensions[fileDialog.GetFilterIndex()]
             savePath = str(fileDialog.GetPath())
-            if not savePath.endswith("." + extension):
-                savePath += "." + extension
+            if not savePath.endswith('.' + extension):
+                savePath += '.' + extension
             width, height = self.GetClientSize()
             image = osg.Image()
             self.SetCurrent()

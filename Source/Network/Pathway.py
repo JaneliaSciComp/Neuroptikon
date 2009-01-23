@@ -4,8 +4,8 @@ class Pathway(Object):
     
     # TODO: handle input/output
     
-    def __init__(self, startRegion, endRegion, name=None):
-        Object.__init__(self, startRegion.network, name)
+    def __init__(self, startRegion, endRegion, *args, **keywords):
+        Object.__init__(self, startRegion.network, *args, **keywords)
         self.neurites = []
         self.regions = set([startRegion, endRegion])
 

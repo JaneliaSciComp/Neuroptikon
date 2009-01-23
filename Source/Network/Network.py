@@ -27,26 +27,31 @@ class Network:
         self.displays = []
     
     
-    def createRegion(self, name = None):
-        region = Region(self, name)
+    def createRegion(self, addSubTerms = False, *args, **keywordArgs):
+        region = Region(self, *args, **keywordArgs)
         self.addObject(region)
+        
+        if region.ontologyTerm is not None and addSubTerms:
+            for term in region.ontologyTerm.parts:
+                self.createRegion(ontologyTerm = term, parentRegion = region, addSubTerms = True)
+        
         return region
     
     
-    def createNeuron(self, name = None, neurotransmitter = None):
-        neuron = Neuron(self, name, neurotransmitter)
+    def createNeuron(self, *args, **keywordArgs):
+        neuron = Neuron(self, *args, **keywordArgs)
         self.addObject(neuron)
         return neuron
     
     
-    def createStimulus(self, name = None, target = None, modality = None):
-        stimulus = Stimulus(self, target, modality, name)
+    def createStimulus(self, *args, **keywordArgs):
+        stimulus = Stimulus(self, *args, **keywordArgs)
         self.addObject(stimulus)
         return stimulus
     
     
-    def createMuscle(self, name = None):
-        muscle = Muscle(self, name)
+    def createMuscle(self, *args, **keywordArgs):
+        muscle = Muscle(self, *args, **keywordArgs)
         self.addObject(muscle)
         return muscle
     

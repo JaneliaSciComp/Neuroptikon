@@ -1,22 +1,34 @@
 from Object import *
 from Pathway import Pathway
+from pydispatch import dispatcher
 
 
 class Region(Object):
     #TODO: sub region layout (layers, columns, etc)
     #TODO: atlasIsosurface
     
-    def __init__(self, network, name=None):
-        Object.__init__(self, network, name)
+    def __init__(self, network, parentRegion = None, ontologyTerm = None, *args, **keywords):
+        if ontologyTerm is not None:
+            if 'name' not in keywords:
+                keywords['name'] = ontologyTerm.name
+            if 'abbreviation' not in keywords and ontologyTerm.abbreviation is not None:
+                keywords['abbreviation'] = ontologyTerm.abbreviation
+        
+        Object.__init__(self, network, *args, **keywords)
+        
         self.parentRegion = None
         self.subRegions = []
+        self.ontologyTerm = ontologyTerm
         self.arborizations = []
         self.pathways = []
+        if parentRegion is not None:
+            parentRegion.addSubRegion(self)
     
     
     def addSubRegion(self, subRegion):
         self.subRegions.append(subRegion)
         subRegion.parentRegion = self
+        dispatcher.send(('set', 'subRegions'), self)
     
     
     def addPathwayToRegion(self, otherRegion, name=None):

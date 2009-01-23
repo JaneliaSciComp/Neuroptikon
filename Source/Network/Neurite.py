@@ -6,8 +6,8 @@ from Innervation import Innervation
 
 class Neurite(Object):
     
-    def __init__(self, network, root, name=None):
-        Object.__init__(self, network, name)
+    def __init__(self, network, root, *args, **keywords):
+        Object.__init__(self, network, *args, **keywords)
         self.root = root
         self._neurites = []
         self.arborization = None

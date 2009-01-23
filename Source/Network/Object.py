@@ -6,11 +6,11 @@ from networkx import shortest_path
 class Object(object):
     
     
-    def __init__(self, network, name=None):
+    def __init__(self, network, name = None, abbreviation = None):
         self.network = network
         self.name = name
+        self.abbreviation = abbreviation
         self.description = None
-        self.abbreviation = None
         self.stimuli = []
     
     
