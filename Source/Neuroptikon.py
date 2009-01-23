@@ -107,7 +107,7 @@ if __name__ == "__main__":
             self.library.add(Modality('taste', _('Taste')))
             
             flyOntology = Ontology('drosophila brain')
-            flyOntology.importOBO('flybrain.obo')
+            flyOntology.importOBO('Library/flybrain.obo')
             self.library.add(flyOntology)
         
         
