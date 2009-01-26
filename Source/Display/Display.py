@@ -612,7 +612,25 @@ class Display(wx.glcanvas.GLCanvas):
     def arrangeChildren(self, object, axis = 'largest', spacing = 2, recurse = False):
         visible = self.visibleForObject(object)
         visible.arrangeChildren(axis = axis, spacing = spacing, recurse = recurse)
-        
+    
+    
+    def visibleChild(self, object, index):
+        visible = self.visibleForObject(object)
+        if visible is not None:
+            if index < len(visible.children):
+                visible = visible.children[index]
+            else:
+                visible = None
+        if visible is None:
+            return None
+        else:
+            return visible.client
+    
+    
+    def setArrangedWeight(self, object, weight):
+        visible = self.visibleForObject(object)
+        visible.setArrangedWeight(weight)
+    
     
     def setVisiblePath(self, object, path, startVisible, endVisible):
         visible = self.visibleForObject(object, False)

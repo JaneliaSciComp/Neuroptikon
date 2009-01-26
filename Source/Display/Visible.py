@@ -79,6 +79,7 @@ class Visible(object):
         self.children = []
         self.arrangedAxis = None
         self.arrangedSpacing = None
+        self._arrangedWeight = 1.0
     
     
     def shape(self):
@@ -257,6 +258,7 @@ class Visible(object):
         self.children.append(childVisible)
         childVisible.parent = self
         self.sgNode.addChild(childVisible.sgNode)
+        dispatcher.connect(self.childArrangedWeightChanged, ('set', 'arrangedWeight'), childVisible)
         self._stateSet.setAttributeAndModes(osg.PolygonMode(osg.PolygonMode.FRONT_AND_BACK, osg.PolygonMode.LINE), osg.StateAttribute.ON)
         self.arrangeChildren()
         dispatcher.send(('set', 'children'), self)
@@ -302,40 +304,64 @@ class Visible(object):
         self.arrangedSpacing = spacing / 100.0
         
         childCount = len(self.children)
+        weightedChildCount = 0.0
+        for child in self.children:
+            weightedChildCount += child.arrangedWeight()
         if axisToUse == 'X':
-            childWidth = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / childCount
             worldSpacing = worldSize[0] * self.arrangedSpacing
             ySize = (worldSize[1] - 2.0 * worldSpacing) / worldSize[1]
             zSize = (worldSize[2] - 2.0 * worldSpacing) / worldSize[2]
+            curX = -0.5 + self.arrangedSpacing
             for index in range(0, childCount):
                 child = self.children[index]
-                child.setPosition((-0.5 + self.arrangedSpacing * (index + 1) + childWidth * index + childWidth / 2.0, 0.0, 0.0))
+                childWidth = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight()
+                child.setPosition((curX + childWidth / 2.0, 0.0, 0.0))
                 child.setSize((childWidth, max(ySize, 0.5), max(zSize, 0.5)))
                 child.setPositionIsFixed(True)
+                curX += childWidth + self.arrangedSpacing
         elif axisToUse == 'Y':
-            childHeight = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / childCount
             worldSpacing = worldSize[1] * self.arrangedSpacing
             xSize = (worldSize[0] - 2.0 * worldSpacing) / worldSize[0]
             zSize = (worldSize[2] - 2.0 * worldSpacing) / worldSize[2]
+            curY = 0.5
             for index in range(0, childCount):
                 child = self.children[index]
-                child.setPosition((0.0, 0.5 - self.arrangedSpacing * (index + 1) - childHeight * index - childHeight / 2.0, 0.0))
+                childHeight = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight()
+                child.setPosition((0.0, curY - childHeight / 2.0, 0.0))
                 child.setSize((max(xSize, 0.5), childHeight, max(zSize, 0.5)))
                 child.setPositionIsFixed(True)
+                curY -= childHeight + self.arrangedSpacing
         else:   # self.arrangedAxis == 'Z'
-            childDepth = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / childCount
             worldSpacing = worldSize[2] * self.arrangedSpacing
             xSize = (worldSize[0] - 2.0 * worldSpacing) / worldSize[0]
             ySize = (worldSize[1] - 2.0 * worldSpacing) / worldSize[1]
+            curZ = -0.5
             for index in range(0, childCount):
                 child = self.children[index]
-                child.setPosition((0.0, 0.0, -0.5 + self.arrangedSpacing * (index + 1) + childDepth * index + childDepth / 2.0))
+                childDepth = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight()
+                child.setPosition((0.0, 0.0, curZ + childDepth / 2.0))
                 child.setSize((max(xSize, 0.5), max(ySize, 0.5), childDepth))
                 child.setPositionIsFixed(True)
+                curZ += childDepth + self.arrangedSpacing
         
         if recurse:
             for child in self.children:
                 child.arrangeChildren(axis = axis, spacing = spacing, recurse = True)
+    
+    
+    def setArrangedWeight(self, weight):
+        if weight != self._arrangedWeight:
+            self._arrangedWeight = weight
+            dispatcher.send(('set', 'arrangedWeight'), self)
+    
+    
+    def arrangedWeight(self):
+        return self._arrangedWeight
+    
+    
+    def childArrangedWeightChanged(self, signal, sender, **arguments):
+        if len(self.children) > 0 and self.arrangedAxis is not None:
+            self.arrangeChildren('current', recurse = True)
     
     
 #    def allChildrenAreArranged(self):
