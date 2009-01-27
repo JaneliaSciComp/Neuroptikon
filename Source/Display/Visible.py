@@ -271,6 +271,14 @@ class Visible(object):
             return self.parent.rootVisible()
     
     
+    def ancestors(self):
+        ancestors = []
+        if self.parent is not None:
+            ancestors.append(self.parent)
+            ancestors.extend(self.parent.ancestors())
+        return ancestors
+    
+    
     def arrangeChildren(self, axis = 'largest', spacing = 2, recurse = False):
         """ Arrange the children of this visible along one axis. """
         
@@ -300,8 +308,8 @@ class Visible(object):
         if axis != 'current':
             self.arrangedAxis = axis
         
-        # Convert spacing percentage to a unit space scaling
-        self.arrangedSpacing = spacing / 100.0
+            # Convert spacing percentage to a unit space scaling
+            self.arrangedSpacing = spacing / 100.0
         
         childCount = len(self.children)
         weightedChildCount = 0.0

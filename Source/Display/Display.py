@@ -153,6 +153,19 @@ class Display(wx.glcanvas.GLCanvas):
         self.setViewDimensions(3)
     
     
+    def setUseStereo(self, useStereo):
+        settings = self.viewer3D.getDisplaySettings()
+        
+        if useStereo:
+            if settings is None:
+                settings = osg.DisplaySettings()
+                self.viewer3D.setDisplaySettings(settings)
+            settings.setStereo(True)
+            settings.setStereoMode(osg.DisplaySettings.ANAGLYPHIC)
+        elif settings is not None:
+            settings.setStereo(False)
+    
+    
     def resetView(self):
         if self.viewDimensions == 2:
             width, height = self.GetClientSize()
@@ -909,8 +922,15 @@ class Display(wx.glcanvas.GLCanvas):
         if self._useGhosts:
             # Dim everything that isn't selected or connected to the selection.
             for key, visible in self.visibles.iteritems():
-                if isinstance(visible, Visible) and visible not in self.highlightedVisibles and visible not in self.animatedVisibles:
-                    visible.setOpacity(0.1)
+                if isinstance(visible, Visible):
+                    ghost = True
+                    ancestors = [visible]
+                    ancestors.extend(visible.ancestors())
+                    for ancestor in ancestors:
+                        if ancestor in self.highlightedVisibles or ancestor in self.animatedVisibles:
+                            ghost = False
+                    if ghost:
+                        visible.setOpacity(0.1)
     
     
     def selection(self):
