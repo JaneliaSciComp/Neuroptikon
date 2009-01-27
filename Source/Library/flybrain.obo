@@ -9,7 +9,6 @@ namespace-id-rule: * GMR:$sequence(8,10000001,99999999)$
 [Term]
 id: GMR:10000001
 name: Drosophila melanogaster
-def: "Obsolete." [AJ(obsolete):JFRC "Should this be changed to an obsolete relationship?"]
 synonym: "D.m." EXACT ABBREVIATION []
 
 [Term]
