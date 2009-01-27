@@ -14,6 +14,8 @@ class OntologyFrame( wx.Frame ):
         for rootTerm in self.ontology.rootTerms:
             rootItem = self.treeCtrl.AddRoot(rootTerm.name)
             self.treeCtrl.SetPyData(rootItem, rootTerm)
+            if rootTerm.obsolete:
+                self.treeCtrl.SetItemTextColour(rootItem, wx.NamedColor('GRAY'))
             if len(rootTerm.parts) > 0:
                 self.treeCtrl.SetItemHasChildren(rootItem, True)
         self.Bind(wx.EVT_TREE_ITEM_EXPANDING, self.onItemExpanding, self.treeCtrl)
@@ -34,6 +36,8 @@ class OntologyFrame( wx.Frame ):
                 for childTerm in term.parts:
                     childItem = self.treeCtrl.AppendItem(item, childTerm.name)
                     self.treeCtrl.SetPyData(childItem, childTerm)
+                    if childTerm.obsolete:
+                        self.treeCtrl.SetItemTextColour(childItem, wx.NamedColor('GRAY'))
                     if len(childTerm.parts) > 0:
                         self.treeCtrl.SetItemHasChildren(childItem, True)
     
