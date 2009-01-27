@@ -20,7 +20,7 @@ from networkx import *
 from math import pi, fabs
 from numpy import diag, mat, sign, inner, isinf, zeros
 from numpy.linalg import pinv, eigh
-import os, platform
+import os, platform, cPickle
 
 try:
     import pygraphviz
@@ -113,6 +113,8 @@ class Display(wx.glcanvas.GLCanvas):
         self.findShortestPath = False
         
         self.graphicsWindow = self.viewer2D.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
+        
+        self.SetDropTarget(DisplayDropTarget(self))
     
     
     def textureFromImage(self, imageName):
@@ -1170,4 +1172,35 @@ class Display(wx.glcanvas.GLCanvas):
             self.SetCurrent()
             image.readPixels(0, 0, width, height, osg.GL_RGB, osg.GL_UNSIGNED_BYTE)
             osgDB.writeImageFile(image, savePath)
+    
+
+
+class DisplayDropTarget(wx.PyDropTarget):
+    
+    def __init__(self, display):
+        wx.PyDropTarget.__init__(self)
+        self.display = display
+
+        # specify the type of data we will accept
+        self.dropData = wx.CustomDataObject("Neuroptikon Ontology Term")
+        self.SetDataObject(self.dropData)
+    
+    
+    def OnData(self, x, y, dragType):
+        if self.GetData():
+            termData = self.dropData.GetData()
+            termDict = cPickle.loads(termData)
+            ontologyId = termDict['Ontology']
+            termId = termDict['Term']
+            
+            ontology = wx.GetApp().library.ontology(ontologyId)
+            if ontology is not None:
+                term = ontology[termId]
+                if term is not None:
+                    region = self.display.network.createRegion(ontologyTerm = term, addSubTerms = wx.GetKeyState(wx.WXK_ALT))
+                    # TODO: self.display.setDisplayPosition(region, ???)
+                    if True:    # TODO: only if new region is the only visible
+                        self.display.centerView()
+            
+        return dragType
     

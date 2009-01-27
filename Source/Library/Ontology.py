@@ -1,5 +1,6 @@
 from LibraryItem import LibraryItem
 from OntologyTerm import OntologyTerm
+from OntologyFrame import OntologyFrame
 import obitools.obo.parser as obo
 
 class Ontology(LibraryItem, dict):
@@ -65,3 +66,8 @@ class Ontology(LibraryItem, dict):
                 matchingTerms.append(term)
         
         return matchingTerms
+    
+    
+    def browse(self):
+        OntologyFrame(self).Show()
+    
