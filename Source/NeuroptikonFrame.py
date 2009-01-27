@@ -20,11 +20,14 @@ class NeuroptikonFrame( wx.Frame ):
         self._console = wx.py.shell.Shell(splitter, wx.ID_ANY, locals = self.scriptLocals(), introText=_('Welcome to Neuroptikon.'))
         
         splitter.SplitHorizontally(self.display, self._console)
-        splitter.SetSashPosition(-100)
         splitter.SetSashGravity(1.0)
         
-        sizer = wx.BoxSizer(wx.VERTICAL)        sizer.Add(splitter, 1, wx.EXPAND)        self.SetAutoLayout(True)        self.SetSizer(sizer)
-                self.SetMenuBar(self.menuBar())
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(splitter, 1, wx.EXPAND)
+        self.SetAutoLayout(True)
+        self.SetSizer(sizer)
+        
+        self.SetMenuBar(self.menuBar())
         
         self.finder = None
         
@@ -37,6 +40,9 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_TOOL, self.display.onViewIn3D, id=view3DId)
         toolbar.Realize()
         self.SetToolBar(toolbar)
+        
+        self.Show(1)
+        splitter.SetSashPosition(-100)
     
     
     def loadBitmap(self, fileName):
