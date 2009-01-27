@@ -2,7 +2,7 @@ flyBrainOnt = library.ontology('drosophila brain')
 
 # Build the network
 
-ellipsoidBody = network.createRegion(name = 'Ellipsoid body')
+ellipsoidBody = network.createRegion(ontologyTerm = flyBrainOnt.findTerm(name = 'Ellipsoid body'))
 anteriorEB = network.createRegion(name = 'Anterior EB', parentRegion = ellipsoidBody)
 anteriorEBInnerRing = network.createRegion(name = 'Anterior EB inner ring', abbreviation = 'Inner ring', parentRegion = anteriorEB)
 anteriorEBOuterRing = network.createRegion(name = 'Anterior EB outer ring', abbreviation = 'Outer ring', parentRegion = anteriorEB)

@@ -6,10 +6,10 @@ protocerebralBridge = network.createRegion(ontologyTerm = flyBrainOnt.findTerm(n
 display.setVisiblePosition(protocerebralBridge, (0.0, 0.5, 0.0), True)display.setVisibleSize(protocerebralBridge, (0.8, 0.05, 0.1))display.setLabel(protocerebralBridge, None)
 leftProtocerebralBridge = network.createRegion(name = 'Left protocerebral bridge', parentRegion = protocerebralBridge)display.setLabel(leftProtocerebralBridge, None)
 for i in range(8, 0, -1):
-    regions['PB-L' + str(i)] = network.createRegion(name = 'PB-L' + str(i), abbreviation = str(i), parentRegion = leftProtocerebralBridge)
+    regions['PB-L' + str(i)] = network.createRegion(ontologyTerm = flyBrainOnt.findTerm(abbreviation= 'pcb' + str(i)), abbreviation = str(i), parentRegion = leftProtocerebralBridge)
 rightProtocerebralBridge = network.createRegion(name = 'Right protocerebral bridge', parentRegion = protocerebralBridge)display.setLabel(rightProtocerebralBridge, None)
 for i in range(1, 9):
-    regions['PB-R' + str(i)] = network.createRegion(name = 'PB-R' + str(i), abbreviation = str(i), parentRegion = rightProtocerebralBridge)
+    regions['PB-R' + str(i)] = network.createRegion(ontologyTerm = flyBrainOnt.findTerm(abbreviation = 'pcb' + str(i)), abbreviation = str(i), parentRegion = rightProtocerebralBridge)
 display.arrangeChildren(protocerebralBridge, spacing = 0.5, recurse = True)
 
 regions['DLPC-L'] = network.createRegion(name = 'DLPC-L', abbreviation = 'DLPC')
@@ -18,6 +18,7 @@ display.setVisibleSize(regions['DLPC-L'], (0.05, 0.08, 0.1))
 
 fanShapedBody = network.createRegion(ontologyTerm = flyBrainOnt.findTerm(name = 'Fan-shaped body'))
 display.setVisiblePosition(fanShapedBody, (0.0, 0.25, 0.0), True)display.setVisibleSize(fanShapedBody, (0.55, 0.05, 0.1))display.setLabel(fanShapedBody, None)
+# TODO: how does this map to Arnim's latest ontology which has six FB layers?
 for letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:    regions['FB-' + letter] = network.createRegion(name = 'FB-' + letter, abbreviation = letter, parentRegion = fanShapedBody)
 display.arrangeChildren(fanShapedBody, spacing = 0.5)
 
@@ -26,6 +27,7 @@ regions['DLPC-R'] = region
 display.setVisiblePosition(region, (-0.89230769230769236, 0.46153846153846156, 0.0), True)
 display.setVisibleSize(region, (0.05, 0.08, 0.1))
 
+# TODO: how does this map to Arnim's latest ontology which has four EB rings?
 ellipsoidBody = network.createRegion(ontologyTerm = flyBrainOnt.findTerm(name = 'Ellipsoid body'))
 display.setVisiblePosition(ellipsoidBody, (0.0, -0.15, 0.0), True)display.setVisibleSize(ellipsoidBody, (0.2, 0.35, 0.1))
 display.setLabel(ellipsoidBody, None)anteriorEB = network.createRegion(name = 'Anterior EB', parentRegion = ellipsoidBody)
