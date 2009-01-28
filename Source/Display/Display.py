@@ -624,9 +624,19 @@ class Display(wx.glcanvas.GLCanvas):
         visible.setSize(size)
     
     
-    def arrangeChildren(self, object, axis = 'largest', spacing = 2, recurse = False):
+    def setArrangedAxis(self, object, axis = 'largest', recurse = False):
         visible = self.visibleForObject(object)
-        visible.arrangeChildren(axis = axis, spacing = spacing, recurse = recurse)
+        visible.setArrangedAxis(axis = axis, recurse = recurse)
+    
+    
+    def setArrangedSpacing(self, object, spacing = 2, recurse = False):
+        visible = self.visibleForObject(object)
+        visible.setArrangedSpacing(spacing = spacing, recurse = recurse)
+    
+    
+    def setArrangedWeight(self, object, weight):
+        visible = self.visibleForObject(object)
+        visible.setArrangedWeight(weight)
     
     
     def visibleChild(self, object, index):
@@ -640,11 +650,6 @@ class Display(wx.glcanvas.GLCanvas):
             return None
         else:
             return visible.client
-    
-    
-    def setArrangedWeight(self, object, weight):
-        visible = self.visibleForObject(object)
-        visible.setArrangedWeight(weight)
     
     
     def setVisiblePath(self, object, path, startVisible, endVisible):
@@ -1149,7 +1154,6 @@ class Display(wx.glcanvas.GLCanvas):
                           x, y = pos.split(',')
                           visible.setPosition((float(x), float(y), 0))
                     # TODO: extract path segments
-        #self.Refresh(False)
         self.centerView()
     
     

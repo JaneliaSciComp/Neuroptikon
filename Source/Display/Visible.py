@@ -71,9 +71,9 @@ class Visible(object):
         self._animateFlow = False
         self.parent = None
         self.children = []
-        self.arrangedAxis = None
-        self.arrangedSpacing = None
-        self._arrangedWeight = 1.0
+        self.arrangedAxis = 'largest'
+        self.arrangedSpacing = 0.02
+        self.arrangedWeight = 50.0
     
     
     def shape(self):
@@ -216,8 +216,7 @@ class Visible(object):
         self._size = size
         self.updateTransform()
         dispatcher.send(('set', 'size'), self)
-        if len(self.children) > 0 and self.arrangedAxis is not None:
-            self.arrangeChildren(axis = 'current', recurse = True)
+        self._arrangeChildren()
     
     
     def worldSize(self):
@@ -251,6 +250,7 @@ class Visible(object):
             self.updateTransform()
         else:
             self.setPath(self._path)
+        dispatcher.send(('set', 'weight'), self)
     
     
     def addChildVisible(self, childVisible):
@@ -259,7 +259,7 @@ class Visible(object):
         self.sgNode.addChild(childVisible.sgNode)
         dispatcher.connect(self.childArrangedWeightChanged, ('set', 'arrangedWeight'), childVisible)
         self._stateSet.setAttributeAndModes(osg.PolygonMode(osg.PolygonMode.FRONT_AND_BACK, osg.PolygonMode.LINE), osg.StateAttribute.ON)
-        self.arrangeChildren()
+        self._arrangeChildren()
         dispatcher.send(('set', 'children'), self)
     
     
@@ -278,20 +278,10 @@ class Visible(object):
         return ancestors
     
     
-    def arrangeChildren(self, axis = 'largest', spacing = 2, recurse = False):
-        """ Arrange the children of this visible along one axis. """
-        
-        if len(self.children) == 0:
-            return
-        
+    def _arrangeChildren(self, recurse = True):
         worldSize = self.worldSize()
         
-        if axis == 'current':
-            axisToUse = self.arrangedAxis
-        else:
-            axisToUse = axis
-        
-        if axisToUse is 'largest':
+        if self.arrangedAxis == 'largest':
             # Pick the axis in which our size is largest.
             if worldSize[0] >= worldSize[1] and worldSize[0] >= worldSize[2]:
                 axisToUse = 'X'
@@ -299,21 +289,13 @@ class Visible(object):
                 axisToUse = 'Y'
             else:
                 axisToUse = 'Z'
-        elif axisToUse in ['x', 'X', 'y', 'Y', 'z', 'Z']:
-            axisToUse = axisToUse.upper()
         else:
-            raise ValueError, _("axis must be None, 'X', 'Y' or 'Z'")
-        
-        if axis != 'current':
-            self.arrangedAxis = axis
-        
-            # Convert spacing percentage to a unit space scaling
-            self.arrangedSpacing = spacing / 100.0
+            axisToUse = self.arrangedAxis
         
         childCount = len(self.children)
         weightedChildCount = 0.0
         for child in self.children:
-            weightedChildCount += child.arrangedWeight()
+            weightedChildCount += child.arrangedWeight
         if axisToUse == 'X':
             worldSpacing = worldSize[0] * self.arrangedSpacing
             ySize = (worldSize[1] - 2.0 * worldSpacing) / worldSize[1]
@@ -321,7 +303,7 @@ class Visible(object):
             curX = -0.5 + self.arrangedSpacing
             for index in range(0, childCount):
                 child = self.children[index]
-                childWidth = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight()
+                childWidth = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight
                 child.setPosition((curX + childWidth / 2.0, 0.0, 0.0))
                 child.setSize((childWidth, max(ySize, 0.5), max(zSize, 0.5)))
                 child.setPositionIsFixed(True)
@@ -330,22 +312,22 @@ class Visible(object):
             worldSpacing = worldSize[1] * self.arrangedSpacing
             xSize = (worldSize[0] - 2.0 * worldSpacing) / worldSize[0]
             zSize = (worldSize[2] - 2.0 * worldSpacing) / worldSize[2]
-            curY = 0.5
+            curY = 0.5 - self.arrangedSpacing
             for index in range(0, childCount):
                 child = self.children[index]
-                childHeight = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight()
+                childHeight = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight
                 child.setPosition((0.0, curY - childHeight / 2.0, 0.0))
                 child.setSize((max(xSize, 0.5), childHeight, max(zSize, 0.5)))
                 child.setPositionIsFixed(True)
                 curY -= childHeight + self.arrangedSpacing
-        else:   # self.arrangedAxis == 'Z'
+        else:   # axisToUse == 'Z'
             worldSpacing = worldSize[2] * self.arrangedSpacing
             xSize = (worldSize[0] - 2.0 * worldSpacing) / worldSize[0]
             ySize = (worldSize[1] - 2.0 * worldSpacing) / worldSize[1]
-            curZ = -0.5
+            curZ = -0.5 + self.arrangedSpacing
             for index in range(0, childCount):
                 child = self.children[index]
-                childDepth = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight()
+                childDepth = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight
                 child.setPosition((0.0, 0.0, curZ + childDepth / 2.0))
                 child.setSize((max(xSize, 0.5), max(ySize, 0.5), childDepth))
                 child.setPositionIsFixed(True)
@@ -353,22 +335,52 @@ class Visible(object):
         
         if recurse:
             for child in self.children:
-                child.arrangeChildren(axis = axis, spacing = spacing, recurse = True)
+                child._arrangeChildren(recurse = True)
     
     
-    def setArrangedWeight(self, weight):
-        if weight != self._arrangedWeight:
-            self._arrangedWeight = weight
+    def setArrangedAxis(self, axis = 'largest', recurse = False):
+        """ Arrange the children of this visible along the specified axis. """
+        
+        if axis != self.arrangedAxis:
+            self.arrangedAxis = axis
+            if axis is None:
+                for child in self.children:
+                    child.setPositionIsFixed(False)
+            else:
+                self._arrangeChildren(False)
+            dispatcher.send(('set', 'arrangedAxis'), self)
+        
+        if recurse:
+            for child in self.children:
+                child.setArrangedAxis(axis = axis, recurse = True)
+    
+    
+    def setArrangedSpacing(self, spacing = 2, recurse = False):
+        """ Arrange the children of this visible along the specified axis. """
+        
+        if spacing != self.arrangedSpacing:
+            self.arrangedSpacing = spacing
+            self._arrangeChildren(False)
+            dispatcher.send(('set', 'arrangedSpacing'), self)
+            self.display.Refresh()
+            self.display.Update()
+        
+        if recurse:
+            for child in self.children:
+                child.setArrangedSpacing(spacing = spacing, recurse = True)
+    
+    
+    def setArrangedWeight(self, weight = weight):
+        if weight != self.arrangedWeight:
+            self.arrangedWeight = weight
+            self._arrangeChildren(False)
             dispatcher.send(('set', 'arrangedWeight'), self)
-    
-    
-    def arrangedWeight(self):
-        return self._arrangedWeight
+            self.display.Refresh()
+            self.display.Update()
     
     
     def childArrangedWeightChanged(self, signal, sender, **arguments):
-        if len(self.children) > 0 and self.arrangedAxis is not None:
-            self.arrangeChildren('current', recurse = True)
+        self._arrangeChildren()
     
     
 #    def allChildrenAreArranged(self):
