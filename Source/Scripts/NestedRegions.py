@@ -24,6 +24,5 @@ neuron2.arborize(vln)
 # Set up the display
 
 display.setVisibleSize(ellipsoidBody, (0.1, 0.2, 0.1))
-display.autoLayout('graphviz')
-display.arrangeChildren(ellipsoidBody, recurse = True)
-display.centerView()
+display.setViewDimensions(3)
+display.autoLayout()

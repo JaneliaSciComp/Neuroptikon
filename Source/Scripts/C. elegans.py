@@ -53,4 +53,3 @@ for rowNum in range(1, sheet.nrows):
 
 display.setViewDimensions(3)
 display.autoLayout("spectral-mitya")
-display.centerView()
