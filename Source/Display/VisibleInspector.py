@@ -2,6 +2,7 @@ import wx, wx.lib.colourselect
 import os, sys
 from Inspection.Inspector import Inspector
 from Network.ObjectList import ObjectList
+from Visible import Visible
 
 
 class VisibleInspector(Inspector):
@@ -47,7 +48,15 @@ class VisibleInspector(Inspector):
             gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, ''), 0)
             gridSizer.Add(self._arrangeChildrenButton, 0)
             
-            # TODO: label, shape, opacity, ???
+            self._shapeChoice = wx.Choice(self._window, wx.ID_ANY)
+            for geometryName in sorted(Visible.geometries.keys()):
+                self._shapeChoice.Append(_(geometryName), geometryName)
+            self._multipleShapesId = wx.NOT_FOUND
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, _('Shape:')), 0)
+            gridSizer.Add(self._shapeChoice, 0)
+            parentWindow.Bind(wx.EVT_CHOICE, self.onChooseShape, self._shapeChoice)
+            
+            # TODO: label, opacity, ???
             
             mainSizer = wx.BoxSizer(wx.VERTICAL)
             mainSizer.Add(gridSizer, 1, wx.ALL, 5)
@@ -78,6 +87,16 @@ class VisibleInspector(Inspector):
             if len(visible.children) > 0:
                 self._arrangeChildrenButton.Enable()
                 break
+                
+        # Choose the appropriate item in the pop-up menu.
+        if self.visibles.haveEqualAttr('shape'):
+            for index in range(0, self._shapeChoice.GetCount()):
+                if self._shapeChoice.GetClientData(index) == self.visibles[0].shape():
+                    self._shapeChoice.SetStringSelection(self.visibles[0].shape())
+                    break
+        else:
+            self._multipleShapesId = self._shapeChoice.Append(_('Multiple values'), None)
+            self._shapeChoice.SetSelection(self._multipleShapesId)
         
         self._window.Layout()
         
@@ -100,4 +119,14 @@ class VisibleInspector(Inspector):
     def onArrangeChildren(self, event):
         for visible in self.visibles:
             visible.arrangeChildren()
+        
+    
+    def onChooseShape(self, event):
+        shape = self._shapeChoice.GetClientData(self._shapeChoice.GetSelection())
+        for visible in self.visibles:
+            visible.setShape(shape)
+        # Remove the "multiple values" choice now that all of the visibles have the same value.
+        if self._multipleShapesId != wx.NOT_FOUND:
+            self._shapeChoice.Delete(self._multipleShapesId)
+            self._multipleShapesId = wx.NOT_FOUND
     

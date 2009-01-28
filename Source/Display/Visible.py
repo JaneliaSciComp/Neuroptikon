@@ -19,19 +19,13 @@ class Visible(object):
     # Objects inside a unit cube
     geometries = {"ball": osg.Sphere(osg.Vec3(0, 0, 0), 0.5), 
                   "box": osg.Box(osg.Vec3(0, 0, 0), 1), 
+                  "capsule": osg.Capsule(osg.Vec3(0, 0, 0), 0.25, 0.5), 
                   "cone": osg.Cone(osg.Vec3(0, -0.25, 0), 0.5, 1), # have to offset center <http://www.mail-archive.com/osg-users@lists.openscenegraph.org/msg07081.html>
-                  "stick": osg.Cylinder(osg.Vec3(0, 0, 0), 0.5, 1), 
                   "tube": osg.Cylinder(osg.Vec3(0, 0, 0), 0.5, 1)}
+    geometries["capsule"].setRotation( osg.Quat(-pi / 2.0, osg.Vec3d(1, 0, 0)))
     geometries["cone"].setRotation( osg.Quat(-pi / 2.0, osg.Vec3d(1, 0, 0)))
-    geometries["stick"].setRotation( osg.Quat(-pi / 2.0, osg.Vec3d(1, 0, 0)))
     geometries["tube"].setRotation( osg.Quat(-pi / 2.0, osg.Vec3d(1, 0, 0)))
         
-        
-#        drawables = {"ball": osg.ShapeDrawable(ball), 
-#                     "box": osg.ShapeDrawable(box), 
-#                     "cone": osg.ShapeDrawable(cone), 
-#                     "stick": osg.ShapeDrawable(stick), 
-#                     "tube": osg.ShapeDrawable(stick)}
     # TODO: osgText::Font* font = osgText::readFontFile("fonts/arial.ttf");
     
     
@@ -83,17 +77,22 @@ class Visible(object):
     
     
     def shape(self):
-        """Return the type of shape set for this visualized object, one of 'ball', 'box' or 'stick'"""
+        """Return the type of shape set for this visualized object, one of 'ball', 'box', 'capsule', 'cone' or 'tube'"""
         return self._shapeName
     
     
     def setShape(self, shapeName):
         self._shapeName = shapeName
         if self._shapeDrawable:
-            self._geode.removeDrawable(self._shapeDrawable)
+            self._shapeGeode.removeDrawable(self._shapeDrawable)
         self._shapeDrawable = osg.ShapeDrawable(Visible.geometries[self._shapeName])
         self._shapeGeode.addDrawable(self._shapeDrawable)
-       # TODO: recreate the glow shape if needed
+        
+        # Recreate the glow shape if needed
+        if self._glowNode is not None:
+            glowColor = self._glowColor
+            self.setGlowColor(None)
+            self.setGlowColor(glowColor)
     
     
     def setLabel(self, label):
@@ -536,10 +535,10 @@ class Visible(object):
             self.updateTransform()
             for index in range(len(path) - 1):
                 position, size, rotation = self.positionSizeRotation(path[index], path[index + 1])
-                if self._shapeName in ["tube", "stick"]:
+                if self._shapeName == 'tube':
                     segment = osg.Cylinder(osg.Vec3(position[0], position[1], position[2]), size[0], size[1])
                     segment.setRotation(osg.Quat(-pi/2.0, osg.Vec3d(1, 0, 0)) * osg.Quat(rotation[3], osg.Vec3(rotation[0], rotation[1], rotation[2])))
-                elif self._shapeName == "cone":
+                elif self._shapeName == 'cone':
                     segment = osg.Cone(osg.Vec3(position[0], position[1], position[2]), size[0], size[1])
                     segment.setRotation(osg.Quat(-pi/2.0, osg.Vec3d(1, 0, 0)) * osg.Quat(rotation[3], osg.Vec3(rotation[0], rotation[1], rotation[2])))
                 else:
