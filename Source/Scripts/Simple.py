@@ -16,5 +16,5 @@ neuron3.arborize(regionB, False, True)
 muscle = network.createMuscle(name = 'Muscle X')
 neuron3.innervate(muscle)
 
-#display.autoLayout("graphviz")
+display.autoLayout("graphviz")
 display.centerView()
