@@ -1319,13 +1319,13 @@ relationship: part_of GMR:10000107 ! Mushroom Body
 id: GMR:10000262
 name: Lateral Capello
 synonym: "lCAP" EXACT ABBREVIATION []
-relationship: part_of GMR:10000242 ! Volto
+relationship: part_of GMR:10000241 ! Capello
 
 [Term]
 id: GMR:10000263
 name: Medial Capello
 synonym: "mCAP" EXACT ABBREVIATION []
-relationship: part_of GMR:10000242 ! Volto
+relationship: part_of GMR:10000241 ! Capello
 
 [Typedef]
 id: part_of
