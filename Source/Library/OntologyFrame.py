@@ -7,6 +7,7 @@ class OntologyFrame( wx.Frame ):
     def __init__(self, ontology):
         
         wx.Frame.__init__(self, None, -1, _('Ontology: %s') % (ontology.name or ontology.identifier), size=(300, 400), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
+        self.Bind(wx.EVT_CLOSE, self.Close)
         
         self.ontology = ontology
         
@@ -57,3 +58,41 @@ class OntologyFrame( wx.Frame ):
             dropSource = wx.DropSource(self)
             dropSource.SetData(dragData)
             dropSource.DoDragDrop(wx.Drag_CopyOnly)
+    
+    
+    def exposeTerm(self, term):
+        termItem = None
+        
+        if term.partOf is None:
+            termItem = self.treeCtrl.GetRootItem()
+        else:
+            parentItem = self.exposeTerm(term.partOf)
+        
+            self.treeCtrl.Expand(parentItem)
+            
+            (curItem, cookie) = self.treeCtrl.GetFirstChild(parentItem)
+            while curItem.IsOk():
+                itemTerm = self.treeCtrl.GetPyData(curItem)
+                if itemTerm == term:
+                    termItem = curItem
+                    break
+                else:
+                    curItem = self.treeCtrl.GetNextSibling(curItem)
+        
+        return termItem
+    
+    
+    def selectTerm(self, term = None):
+        if term is None:
+            self.treeCtrl.UnselectAll()
+        else:
+            termItem = self.exposeTerm(term)
+            
+            if termItem is not None:
+                self.treeCtrl.SelectItem(termItem)
+    
+    
+    def Close(self, event=None):
+        self.Hide()
+        return True
+    

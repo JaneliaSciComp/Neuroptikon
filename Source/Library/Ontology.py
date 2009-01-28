@@ -18,6 +18,7 @@ class Ontology(LibraryItem, dict):
     def __init__(self, identifier = None, *args, **keywordArgs):
         LibraryItem.__init__(self, identifier, *args, **keywordArgs)
         self.rootTerms = []
+        self.frame = None
     
     
     def importOBO(self, filePath):
@@ -68,6 +69,9 @@ class Ontology(LibraryItem, dict):
         return matchingTerms
     
     
-    def browse(self):
-        OntologyFrame(self).Show()
+    def browse(self, term = None):
+        if self.frame is None:
+            self.frame = OntologyFrame(self)
+        self.frame.Show()
+        self.frame.selectTerm(term)
     

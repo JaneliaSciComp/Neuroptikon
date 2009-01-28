@@ -12,7 +12,7 @@ class RegionInspector( ObjectInspector ):
     
     @classmethod
     def inspectedAttributes(cls):
-        return ['parentRegion', 'subRegions']
+        return ['parentRegion', 'subRegions', 'ontologyTerm']
     
     
     def objectSizer(self, parentWindow):
@@ -26,12 +26,24 @@ class RegionInspector( ObjectInspector ):
             else:
                 self._regionBitmap = wx.BitmapFromImage(regionImage.Rescale(16, 16))
             
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, _('Ontology term:')))
+            ontologySizer = wx.BoxSizer(wx.HORIZONTAL)
+            self._ontologyField = wx.StaticText(parentWindow, wx.ID_ANY)
+            ontologySizer.Add(self._ontologyField, 1, wx.LEFT, 2)
+            self._browseOntologyButton = wx.Button(parentWindow, wx.ID_ANY, _("Browse"), style = wx.BU_EXACTFIT)
+            self._browseOntologyButton.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+            self._browseOntologyButton.SetSize(wx.Size(50, self._browseOntologyButton.GetSize().GetHeight()))
+            self._browseOntologyButton.SetMinSize(self._browseOntologyButton.GetSize())
+            self._window.Bind(wx.EVT_BUTTON, self.onBrowseOntology, self._browseOntologyButton)
+            ontologySizer.Add(self._browseOntologyButton, 0, wx.LEFT, 8)
+            self._sizer.Add(ontologySizer)
+            
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, _('Parent region:')))
             parentSizer = wx.BoxSizer(wx.HORIZONTAL)
             parentSizer.Add(wx.StaticBitmap(parentWindow, wx.ID_ANY, self._regionBitmap))
             self._parentNameField = wx.StaticText(parentWindow, wx.ID_ANY)
             parentSizer.Add(self._parentNameField, 1, wx.LEFT, 2)
-            self._selectParentButton = wx.Button(self._window, wx.ID_ANY, _("Select"), style = wx.BU_EXACTFIT)
+            self._selectParentButton = wx.Button(parentWindow, wx.ID_ANY, _("Select"), style = wx.BU_EXACTFIT)
             self._selectParentButton.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
             self._selectParentButton.SetSize(wx.Size(50, self._selectParentButton.GetSize().GetHeight()))
             self._selectParentButton.SetMinSize(self._selectParentButton.GetSize())
@@ -55,6 +67,18 @@ class RegionInspector( ObjectInspector ):
         
     
     def populateObjectSizer(self, attribute = None):
+        if attribute is None or attribute == 'ontologyTerm':
+            if self.objects.haveEqualAttr('ontologyTerm'):
+                if self.objects[0].ontologyTerm is None:
+                    self._ontologyField.SetLabel(_('None'))
+                    self._browseOntologyButton.Disable()
+                else:
+                    self._ontologyField.SetLabel(self.objects[0].ontologyTerm.name)
+                    self._browseOntologyButton.Enable()
+            else:
+                self._ontologyField.SetLabel(_('Multiple values'))
+                self._browseOntologyButton.Disable()
+        
         if attribute is None or attribute == 'parentRegion':
             if self.objects.haveEqualAttr('parentRegion'):
                 if self.objects[0].parentRegion is None:
@@ -96,6 +120,11 @@ class RegionInspector( ObjectInspector ):
                     self._subRegionsSizer.Add(selectButton, 0, 0, 0, subRegion)
         
         self._window.Layout()
+    
+    
+    def onBrowseOntology(self, event):
+        term = self.objects[0].ontologyTerm
+        term.ontology.browse(term)
     
     
     def onSelectParentRegion(self, event):
