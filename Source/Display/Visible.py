@@ -25,6 +25,12 @@ class Visible(object):
     geometries["capsule"].setRotation( osg.Quat(-pi / 2.0, osg.Vec3d(1, 0, 0)))
     geometries["cone"].setRotation( osg.Quat(-pi / 2.0, osg.Vec3d(1, 0, 0)))
     geometries["tube"].setRotation( osg.Quat(-pi / 2.0, osg.Vec3d(1, 0, 0)))
+    
+    geometryInterior = {"ball": osg.Matrixd.scale(1.0 / sqrt(3), 1.0 / sqrt(3), 1.0 / sqrt(3)), 
+                        "box": osg.Matrixd.identity(), 
+                        "capsule": osg.Matrixd.scale(sqrt(1.0 / 8.0) * 0.9, 1.0 - 0.5 / sqrt(3), sqrt(1.0 / 8.0) * 0.9), 
+                        "cone": osg.Matrixd.scale(sqrt(1.0 / 8.0), 0.5, sqrt(1.0 / 8.0)) * osg.Matrixd.translate(0.0, -0.25, 0.0), 
+                        "tube": osg.Matrixd.scale(1.0 / sqrt(2), 1.0, 1.0 / sqrt(2))}
         
     # TODO: osgText::Font* font = osgText::readFontFile("fonts/arial.ttf");
     
@@ -51,7 +57,7 @@ class Visible(object):
         self._path = None
         self.pathStart = None
         self.pathEnd = None
-        self.sgNode = osg.MatrixTransform()    #osg.PositionAttitudeTransform()
+        self.sgNode = osg.MatrixTransform()
         self._shapeGeode = osg.Geode()
         self._shapeGeode.setName(str(id(self.client)))
         self._shapeDrawable = None
@@ -74,7 +80,9 @@ class Visible(object):
         self.arrangedAxis = 'largest'
         self.arrangedSpacing = 0.02
         self.arrangedWeight = 50.0
-    
+        self.childGroup = osg.MatrixTransform(osg.Matrixd.identity())
+        self.sgNode.addChild(self.childGroup)
+        
     
     def shape(self):
         """Return the type of shape set for this visualized object, one of 'ball', 'box', 'capsule', 'cone' or 'tube'"""
@@ -87,7 +95,9 @@ class Visible(object):
             self._shapeGeode.removeDrawable(self._shapeDrawable)
         self._shapeDrawable = osg.ShapeDrawable(Visible.geometries[self._shapeName])
         self._shapeGeode.addDrawable(self._shapeDrawable)
-        
+        self.childGroup.setMatrix(Visible.geometryInterior[self._shapeName])
+        for child in self.children:
+            dispatcher.send(('set', 'position'), child)
         # Recreate the glow shape if needed
         if self._glowNode is not None:
             glowColor = self._glowColor
@@ -186,12 +196,21 @@ class Visible(object):
     
     
     def worldPosition(self):
+        # TODO: if a parent is rotated does this screw up?
         # TODO: will OSG do this for us?
+        
         if self.parent is None:
             worldPosition = self._position
         else:
             parentSize = self.parent.worldSize()
             parentPosition = self.parent.worldPosition()
+            trans = osg.Vec3d()
+            rot = osg.Quat()
+            scale = osg.Vec3d()
+            so = osg.Quat()
+            self.parent.childGroup.getMatrix().decompose(trans, rot, scale, so)
+            parentPosition = (parentPosition[0] + trans.x() * parentSize[0], parentPosition[1] + trans.y() * parentSize[1], parentPosition[2] + trans.z() * parentSize[2])
+            parentSize = (parentSize[0] * scale.x(), parentSize[1] * scale.y(), parentSize[2] * scale.z())
             worldPosition = (parentPosition[0] + self._position[0] * parentSize[0], parentPosition[1] + self._position[1] * parentSize[1], parentPosition[2] + self._position[2] * parentSize[2])
         
         return worldPosition
@@ -220,12 +239,19 @@ class Visible(object):
     
     
     def worldSize(self):
+        # TODO: if a parent is rotated does this screw up?
         # TODO: will OSG do this for us?
+        
         if self.parent is None:
             worldSize = self._size
         else:
             parentSize = self.parent.worldSize()
-            worldSize = (self._size[0] * parentSize[0], self._size[1] * parentSize[1], self._size[2] * parentSize[2])
+            trans = osg.Vec3d()
+            rot = osg.Quat()
+            scale = osg.Vec3d()
+            so = osg.Quat()
+            self.parent.childGroup.getMatrix().decompose(trans, rot, scale, so)
+            worldSize = (self._size[0] * parentSize[0] * scale.x(), self._size[1] * parentSize[1] * scale.y(), self._size[2] * parentSize[2] * scale.z())
         
         return worldSize
     
@@ -256,7 +282,7 @@ class Visible(object):
     def addChildVisible(self, childVisible):
         self.children.append(childVisible)
         childVisible.parent = self
-        self.sgNode.addChild(childVisible.sgNode)
+        self.childGroup.addChild(childVisible.sgNode)
         dispatcher.connect(self.childArrangedWeightChanged, ('set', 'arrangedWeight'), childVisible)
         self._stateSet.setAttributeAndModes(osg.PolygonMode(osg.PolygonMode.FRONT_AND_BACK, osg.PolygonMode.LINE), osg.StateAttribute.ON)
         self._arrangeChildren()
@@ -279,6 +305,9 @@ class Visible(object):
     
     
     def _arrangeChildren(self, recurse = True):
+        if len(self.children) == 0:
+            return
+        
         worldSize = self.worldSize()
         
         if self.arrangedAxis == 'largest':
@@ -355,7 +384,7 @@ class Visible(object):
                 child.setArrangedAxis(axis = axis, recurse = True)
     
     
-    def setArrangedSpacing(self, spacing = 2, recurse = False):
+    def setArrangedSpacing(self, spacing = .02, recurse = False):
         """ Arrange the children of this visible along the specified axis. """
         
         if spacing != self.arrangedSpacing:

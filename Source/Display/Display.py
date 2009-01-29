@@ -629,7 +629,7 @@ class Display(wx.glcanvas.GLCanvas):
         visible.setArrangedAxis(axis = axis, recurse = recurse)
     
     
-    def setArrangedSpacing(self, object, spacing = 2, recurse = False):
+    def setArrangedSpacing(self, object, spacing = .02, recurse = False):
         visible = self.visibleForObject(object)
         visible.setArrangedSpacing(spacing = spacing, recurse = recurse)
     
