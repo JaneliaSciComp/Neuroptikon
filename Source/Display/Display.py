@@ -437,8 +437,8 @@ class Display(wx.glcanvas.GLCanvas):
                 self.addVisible(visible, object)
             elif isinstance(object, Muscle):
                 visible = Visible(self, object)
-                visible.setShape('tube')
-                visible.setSize((.04, .2, .02))
+                visible.setShape('capsule')
+                visible.setSize((.1, .2, .02))
                 visible.setColor((0.5, 0, 0))
                 visible.setTexture(self._pathwayTexture)
                 visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
