@@ -14,7 +14,7 @@ rightProtocerebralBridge = network.createRegion(name = 'Right protocerebral brid
 display.setLabel(rightProtocerebralBridge, None)
 for i in range(1, 9):
     regions['PB-R' + str(i)] = network.createRegion(ontologyTerm = flyBrainOnt.findTerm(abbreviation = 'pcb' + str(i)), abbreviation = str(i), parentRegion = rightProtocerebralBridge)
-display.arrangeChildren(protocerebralBridge, spacing = 0.5, recurse = True)
+display.setArrangedSpacing(protocerebralBridge, .005, recurse = True)
 
 regions['DLPC-L'] = network.createRegion(name = 'DLPC-L', abbreviation = 'DLPC')
 display.setVisiblePosition(regions['DLPC-L'], (0.83076923076923082, 0.46153846153846156, 0.0), True)
@@ -24,10 +24,10 @@ fanShapedBody = network.createRegion(ontologyTerm = flyBrainOnt.findTerm(name = 
 display.setVisiblePosition(fanShapedBody, (0.0, 0.25, 0.0), True)
 display.setVisibleSize(fanShapedBody, (0.55, 0.05, 0.1))
 display.setLabel(fanShapedBody, None)
+display.setArrangedSpacing(fanShapedBody, .005)
 # TODO: how does this map to Arnim's latest ontology which has six FB layers?
 for letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
     regions['FB-' + letter] = network.createRegion(name = 'FB-' + letter, abbreviation = letter, parentRegion = fanShapedBody)
-display.arrangeChildren(fanShapedBody, spacing = 0.5)
 
 region = network.createRegion(name = 'DLPC-R', abbreviation = 'DLPC')
 regions['DLPC-R'] = region
@@ -45,7 +45,7 @@ regions['EB-ant-out'] = network.createRegion(name = 'Ellipsoid body anterior out
 posteriorEB = network.createRegion(name = 'Posterior EB', parentRegion = ellipsoidBody)
 regions['EB-post-in'] = network.createRegion(name = 'Ellipsoid body posterior inner ring', abbreviation = 'inner ring', parentRegion = posteriorEB)
 regions['EB-post-out'] = network.createRegion(name = 'Ellipsoid body posterior outer ring', abbreviation = 'outer ring', parentRegion = posteriorEB)
-display.arrangeChildren(ellipsoidBody, axis = 'Y', recurse = True)
+display.setArrangedAxis(ellipsoidBody, 'Y', recurse = True)
 
 regions['LTR-L'] = network.createRegion(name = 'LTR-L', abbreviation = 'LTR')
 display.setVisiblePosition(regions['LTR-L'], (0.81538461538461537, -0.076923076923076927, 0.0), True)
@@ -75,21 +75,20 @@ regions['VBO-R'] = region
 display.setVisiblePosition(region, (-0.75384615384615383, -0.33076923076923076, 0.0), True)
 display.setVisibleSize(region, (0.1, 0.1, 0.1))
 
-nodulii = network.createRegion(ontologyTerm = flyBrainOnt.findTerm(name = 'Noduli'))
-display.setVisiblePosition(nodulii, (0.0, -0.57692307692307687, 0.0), True)
-display.setVisibleSize(nodulii, (0.4, 0.06, 0.1))
-display.setLabel(nodulii, None)
-leftNodulii = network.createRegion(name = 'Left noduli', parentRegion = nodulii)
-display.setLabel(leftNodulii, None)
-regions['N-L2'] = network.createRegion(name = 'N-L2', abbreviation = '2', parentRegion = leftNodulii)
-regions['N-L1'] = network.createRegion(name = 'N-L1', abbreviation = '1', parentRegion = leftNodulii)
-rightNodulii = network.createRegion(name = 'Right noduli', parentRegion = nodulii)
-display.setLabel(rightNodulii, None)
-regions['N-R1'] = network.createRegion(name = 'N-R1', abbreviation = '1', parentRegion = rightNodulii)
-regions['N-R2'] = network.createRegion(name = 'N-R2', abbreviation = '2', parentRegion = rightNodulii)
-display.arrangeChildren(nodulii)
-display.arrangeChildren(leftNodulii, spacing = 0.5)
-display.arrangeChildren(rightNodulii, spacing = 0.5)
+noduli = network.createRegion(ontologyTerm = flyBrainOnt.findTerm(name = 'Noduli'))
+display.setVisiblePosition(noduli, (0.0, -0.57692307692307687, 0.0), True)
+display.setVisibleSize(noduli, (0.4, 0.06, 0.1))
+display.setLabel(noduli, None)
+leftNoduli = network.createRegion(name = 'Left noduli', parentRegion = noduli)
+display.setLabel(leftNoduli, None)
+display.setArrangedSpacing(leftNoduli, spacing = .005)
+regions['N-L2'] = network.createRegion(name = 'N-L2', abbreviation = '2', parentRegion = leftNoduli)
+regions['N-L1'] = network.createRegion(name = 'N-L1', abbreviation = '1', parentRegion = leftNoduli)
+rightNoduli = network.createRegion(name = 'Right noduli', parentRegion = noduli)
+display.setLabel(rightNoduli, None)
+display.setArrangedSpacing(rightNoduli, spacing = .005)
+regions['N-R1'] = network.createRegion(name = 'N-R1', abbreviation = '1', parentRegion = rightNoduli)
+regions['N-R2'] = network.createRegion(name = 'N-R2', abbreviation = '2', parentRegion = rightNoduli)
 
 neuron = network.createNeuron(name = 'pb-eb-ltr-L8', abbreviation = 'pb-eb-ltr')
 neuron.arborize(regions['PB-L8'], False, True)
