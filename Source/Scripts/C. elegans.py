@@ -15,12 +15,12 @@ for rowNum in range(1, sheet.nrows):
         if neuron1_name in neurons:
             neuron1 = neurons[neuron1_name]
         else:
-            neuron1 = network.createNeuron(neuron1_name)
+            neuron1 = network.createNeuron(name = neuron1_name)
             neurons[neuron1_name] = neuron1
         if neuron2_name in neurons:
             neuron2 = neurons[neuron2_name]
         else:
-            neuron2 = network.createNeuron(neuron2_name)
+            neuron2 = network.createNeuron(name = neuron2_name)
             neurons[neuron2_name] = neuron2
         alreadyExists = False
         for synapse in neuron1.outgoingSynapses(): 
@@ -34,12 +34,12 @@ for rowNum in range(1, sheet.nrows):
         if neuron1_name in neurons:
             neuron1 = neurons[neuron1_name]
         else:
-            neuron1 = network.createNeuron(neuron1_name)
+            neuron1 = network.createNeuron(name = neuron1_name)
             neurons[neuron1_name] = neuron1
         if neuron2_name in neurons:
             neuron2 = neurons[neuron2_name]
         else:
-            neuron2 = network.createNeuron(neuron2_name)
+            neuron2 = network.createNeuron(name = neuron2_name)
             neurons[neuron2_name] = neuron2
         alreadyExists = False
         for gapJunction in neuron1.gapJunctions():
