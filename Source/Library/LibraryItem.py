@@ -12,7 +12,9 @@ class LibraryItem(object):
         return 'libraryItem'
     
     
-    def __init__(self, identifier = None, name = None, abbreviation = None):
+    def __init__(self, identifier = None, name = None, abbreviation = None, *args, **keywordsArgs):
+        object.__init__(self, *args, **keywordsArgs)
+        
         if identifier is None:
             raise ValueError, _('Library items must have an identifier.')
         
