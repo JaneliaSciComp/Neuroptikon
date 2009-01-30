@@ -96,7 +96,6 @@ class Display(wx.glcanvas.GLCanvas):
         
         self.Bind(wx.EVT_SIZE, self.onSize)
         self.Bind(wx.EVT_PAINT, self.onPaint)
-        self.Bind(wx.EVT_IDLE, self.onIdle)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
@@ -108,7 +107,11 @@ class Display(wx.glcanvas.GLCanvas):
         self._motionTexture2 = self.textureFromImage('texture.png')
         self._pathwayTexture = self.textureFromImage('pathway.jpg')
         self._textureTransform = osg.Matrixd.scale(10 / 5000.0,  10 / 5000.0,  10 / 5000.0)
+        
         self.dragSelection = None
+        self.miniDragger = None
+        self.dragger = None
+        
         self.selectionShouldExtend = False
         self.findShortestPath = False
         
@@ -284,6 +287,7 @@ class Display(wx.glcanvas.GLCanvas):
             self.graphicsWindow.getEventQueue().mouseButtonRelease(event.GetX(), event.GetY(), button)
         elif event.Dragging():
             self.graphicsWindow.getEventQueue().mouseMotion(event.GetX(), event.GetY())
+        self.Refresh()
     
     
     def onMouseWheel(self, event):
@@ -300,9 +304,11 @@ class Display(wx.glcanvas.GLCanvas):
             self.resetView()
         elif self.viewDimensions == 3:
             self.trackball.setDistance(self.trackball.getDistance() - event.GetWheelRotation() * .02 * self.scrollWheelScale)
+        self.Refresh()
     
     
     def onIdle(self, event):
+        # TODO: limit this to 30 fps
         self.Refresh()
         event.RequestMore()
     
@@ -668,6 +674,7 @@ class Display(wx.glcanvas.GLCanvas):
             else:
                 rootNode = visible.parent.sgNode
             
+            #self.commandMgr.disconnect(self.miniDragger)
             self.commandMgr.disconnect(self.dragger)
             self.commandMgr = None
             
@@ -678,9 +685,15 @@ class Display(wx.glcanvas.GLCanvas):
             rootNode.addChild(visible.sgNode)
             self.visibleWasDragged()
             
-            rootNode.removeChild(self.dragger)
-            
-            self.dragger = None
+            if True:
+                rootNode.removeChild(self.dragger)                                self.dragger = None            else:
+                rootNode.removeChild(self.draggerLOD)
+                
+                self.miniDragger.setUpdateCallback(None)
+                self.miniDragger = None
+                self.dragger.setUpdateCallback(None)
+                self.dragger = None
+                self.draggerLOD = None
     
     
     def highlightObject(self, object, highlight=True):
@@ -702,6 +715,8 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def animateObjectFlow(self, object, animate=True):
+        wasAnimating = (len(self.animatedVisibles) > 0)
+        
         visible = self.visibleForObject(object)
         if animate:
             if visible not in self.animatedVisibles:
@@ -717,6 +732,11 @@ class Display(wx.glcanvas.GLCanvas):
                 if visible in self.animatedVisibles:
                     visible.animateFlow(False)
                     self.animatedVisibles.remove(visible)
+        
+        if len(self.animatedVisibles) > 0 and not wasAnimating:
+            self.Bind(wx.EVT_IDLE, self.onIdle)
+        elif len(self.animatedVisibles) == 0 and wasAnimating:
+            self.Unbind(wx.EVT_IDLE)
     
     
     def selectObjectsMatching(self, predicate):
@@ -863,22 +883,36 @@ class Display(wx.glcanvas.GLCanvas):
                 self.dragSelection.addChild(visible.sgNode)
                 rootNode.addChild(self.dragSelection)
                 
-                if self.viewDimensions == 2:
-                    self.dragger = osgManipulator.TranslatePlaneDragger()
-                    self.draggerZOffset = visible.size()[2]
-                    self.draggerScale = 1.0
-                    self.dragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * visible.sgNode.getMatrix() * osg.Matrixd.translate(0, 0, self.draggerZOffset))
-                elif self.viewDimensions == 3:
-                    self.dragger = osgManipulator.TabBoxDragger()
-                    self.draggerZOffset = 0
-                    self.draggerScale = 1.02
-                    self.dragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * visible.sgNode.getMatrix())
-                self.dragger.setupDefaultGeometry()
-                # TODO: should scale so that increase in size is fixed and greater than glow increase (14).  Probably should use a ComputeBoundsVisitor...
-                rootNode.addChild(self.dragger)
+                if True:
+                    if self.viewDimensions == 2:                        self.dragger = osgManipulator.TranslatePlaneDragger()                        self.draggerZOffset = visible.size()[2]                        self.draggerScale = 1.0                        self.dragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * visible.sgNode.getMatrix() * osg.Matrixd.translate(0, 0, self.draggerZOffset))                    elif self.viewDimensions == 3:                        self.dragger = osgManipulator.TabBoxDragger()                        self.draggerZOffset = 0                        self.draggerScale = 1.02                        self.dragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * visible.sgNode.getMatrix())                    self.dragger.setupDefaultGeometry()                    # TODO: should scale so that increase in size is fixed and greater than glow increase (14).  Probably should use a ComputeBoundsVisitor...                    rootNode.addChild(self.dragger)                                        self.commandMgr = osgManipulator.CommandManager()                    self.commandMgr.connect(self.dragger, self.dragSelection)                else:
+                    self.draggerLOD = osg.LOD()
+                    self.draggerLOD.setRangeMode(osg.LOD.PIXEL_SIZE_ON_SCREEN)
+                    if self.viewDimensions == 2:
+                        self.draggerZOffset = visible.size()[2]
+                        self.draggerScale = 1.0
+                        self.miniDragger = osgManipulator.TranslatePlaneDragger()
+                        self.miniDragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * visible.sgNode.getMatrix() * osg.Matrixd.translate(0, 0, self.draggerZOffset))
+                        self.dragger = osgManipulator.TabPlaneDragger()
+                        self.dragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * visible.sgNode.getMatrix() * osg.Matrixd.translate(0, 0, self.draggerZOffset))
+                    elif self.viewDimensions == 3:
+                        self.draggerZOffset = 0
+                        self.draggerScale = 1.02
+                        self.miniDragger = osgManipulator.TranslateAxisDragger()
+                        self.miniDragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * visible.sgNode.getMatrix())
+                        self.dragger = osgManipulator.TabBoxDragger()
+                        self.dragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * visible.sgNode.getMatrix())
+                    self.miniDragger.setupDefaultGeometry()
+                    self.draggerLOD.addChild(self.miniDragger, 0.0, 100.0)
+                    self.dragger.setupDefaultGeometry()
+                    self.draggerLOD.addChild(self.dragger, 100.0, 10000.0)
+                    # TODO: should scale so that increase in size is fixed and greater than glow increase (14).  Probably should use a ComputeBoundsVisitor...
+                    rootNode.addChild(self.draggerLOD)
+                    
+                    self.commandMgr = osgManipulator.CommandManager()
+                    self.commandMgr.connect(self.miniDragger, self.dragSelection)
+                    self.commandMgr.connect(self.dragger, self.dragSelection)
                 
-                self.commandMgr = osgManipulator.CommandManager()
-                self.commandMgr.connect(self.dragger, self.dragSelection)
+            # TODO: observe the visible's 'positionIsFixed' attribute and add/remove the draggers as needed
         elif len(self.selectedVisibles) > 1:
             # Turn off highlighting/animation for visibles that aren't selected or that aren't direct connections between the selected visibles.
             tempList = list(self.highlightedVisibles)

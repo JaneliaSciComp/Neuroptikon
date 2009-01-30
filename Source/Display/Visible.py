@@ -103,6 +103,7 @@ class Visible(object):
             glowColor = self._glowColor
             self.setGlowColor(None)
             self.setGlowColor(glowColor)
+        self.display.Refresh()
     
     
     def setLabel(self, label):
@@ -126,6 +127,7 @@ class Visible(object):
             self._textGeode.removeDrawable(self._textDrawable)
             self._textDrawable = None
         self._label = label
+        self.display.Refresh()
     
     
     def label(self):
@@ -139,6 +141,7 @@ class Visible(object):
         if self._shapeDrawable is not None:
             self._shapeDrawable.setColor(colorVec)
         self._color = color
+        self.display.Refresh()
     
     
     def color(self):
@@ -162,6 +165,7 @@ class Visible(object):
             self._textDrawable.setColor(osg.Vec4(0, 0, 0, opacity))
         
         self._opacity = opacity
+        self.display.Refresh()
     
     
     def opacity(self):
@@ -186,13 +190,14 @@ class Visible(object):
             self._position = position
             self.updateTransform()
             dispatcher.send(('set', 'position'), self)
+            self.display.Refresh()
     
     
     def offsetPosition(self, offset):
         if offset != (0, 0, 0):
             self._position = (self._position[0] + offset[0], self._position[1] + offset[1], self._position[2] + offset[2])
-            self._positionFixed = True
             self.updateTransform()
+            self.display.Refresh()
     
     
     def worldPosition(self):
@@ -236,6 +241,7 @@ class Visible(object):
         self.updateTransform()
         dispatcher.send(('set', 'size'), self)
         self._arrangeChildren()
+        self.display.Refresh()
     
     
     def worldSize(self):
@@ -264,6 +270,7 @@ class Visible(object):
         self._rotation = rotation
         self.updateTransform()
         dispatcher.send(('set', 'rotation'), self)
+        self.display.Refresh()
     
     
     def weight(self):
@@ -277,6 +284,7 @@ class Visible(object):
         else:
             self.setPath(self._path)
         dispatcher.send(('set', 'weight'), self)
+        self.display.Refresh()
     
     
     def addChildVisible(self, childVisible):
@@ -287,6 +295,7 @@ class Visible(object):
         self._stateSet.setAttributeAndModes(osg.PolygonMode(osg.PolygonMode.FRONT_AND_BACK, osg.PolygonMode.LINE), osg.StateAttribute.ON)
         self._arrangeChildren()
         dispatcher.send(('set', 'children'), self)
+        self.display.Refresh()
     
     
     def rootVisible(self):
@@ -378,6 +387,7 @@ class Visible(object):
             else:
                 self._arrangeChildren(False)
             dispatcher.send(('set', 'arrangedAxis'), self)
+            self.display.Refresh()
         
         if recurse:
             for child in self.children:
@@ -494,6 +504,7 @@ class Visible(object):
         else:
             self._stateSet.setTextureAttributeAndModes(0, texture, osg.StateAttribute.ON)
         self._staticTexture = texture
+        self.display.Refresh()
     
         
     def setTextureTransform(self, transform):
@@ -504,6 +515,7 @@ class Visible(object):
             textureMatrix.setMatrix(transform)
             self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
         self._staticTextureTransform = transform
+        self.display.Refresh()
     
     
     def setFlowDirection(self, fromVisible, toVisible, flowTo=True, flowFrom=False):
@@ -512,6 +524,7 @@ class Visible(object):
         self.flowTo = flowTo
         self.flowFrom = flowFrom
         self.updateFlowAnimation()
+        self.display.Refresh()
     
     
     def updateFlowAnimation(self):
@@ -586,6 +599,7 @@ class Visible(object):
                     # TODO: handle other shapes
                     print "oops"
                 self._shapeGeode.addDrawable(osg.ShapeDrawable(segment))
+        self.display.Refresh()
     
     
     def onMouseDown(self, event):
@@ -624,4 +638,5 @@ class Visible(object):
                     self._glowNode.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
                 
             self._glowColor = color
+            self.display.Refresh()
     
