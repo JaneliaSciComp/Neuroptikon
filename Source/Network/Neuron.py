@@ -5,11 +5,24 @@ from Neurite import Neurite as Neurite
 class Neuron(Object):
     # TODO: neurites method that returns all neurites
     
+    UNIPOLAR = 'UNIPOLAR'
+    BIPOLAR = 'BIPOLAR'
+    PSEUDOUNIPOLAR = 'PSEUDOUNIPOLAR'
+    MULTIPOLAR = 'MULTIPOLAR'
     
-    def __init__(self, network, neurotransmitter = None, *args, **keywords):
+    
+    def __init__(self, network, neuronClass = None, polarity = None, neurotransmitter = None, excitatory = None, *args, **keywords):
         Object.__init__(self, network, *args, **keywords)
         self._neurites = []
-        self.neurotransmitter = neurotransmitter
+        self.neuronClass = neuronClass
+        if self.neuronClass is not None:
+            self.polarity = self.neuronClass.polarity
+            self.neurotransmitter = self.neuronClass.neurotransmitter
+            self.excitatory = self.neuronClass.excitatory
+        else:
+            self.polarity = polarity
+            self.neurotransmitter = neurotransmitter
+            self.excitatory = excitatory
     
     
     def createNeurite(self):
@@ -43,7 +56,7 @@ class Neuron(Object):
         """Convenience method that creates a neurite for each neuron and then creates a synapse between them."""
         neurite = self.createNeurite()
         otherNeurite = otherNeuron.createNeurite()
-        return neurite.synapseOn(otherNeurite)
+        return neurite.synapseOn(neurite = otherNeurite, excitatory = self.excitatory)
     
     
     def incomingSynapses(self):

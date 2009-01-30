@@ -46,8 +46,10 @@ import wx.lib.mixins.inspection
 from wx import py
 from NeuroptikonFrame import NeuroptikonFrame
 from Network.Network import Network
+from Network.Neuron import Neuron
 from Library.Library import Library
 from Library.Neurotransmitter import Neurotransmitter
+from Library.NeuronClass import NeuronClass
 from Library.Modality import Modality
 from Library.Ontology import Ontology
 from Preferences import Preferences
@@ -100,6 +102,17 @@ if __name__ == "__main__":
             self.library.add(Neurotransmitter('histamine', _('Histamine')))
             self.library.add(Neurotransmitter('norepinephrine', _('Norepinephrine')))
             self.library.add(Neurotransmitter('serotonin', _('Serotonin')))
+            
+            self.library.add(NeuronClass(identifier = 'basket', name = _('Basket cell'), polarity = Neuron.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
+            self.library.add(NeuronClass(identifier = 'pyramidal', name = _('Pyramidal cell'), polarity = Neuron.MULTIPOLAR, excitatory = True, neurotransmitter = self.library.neurotransmitter('glutamate')))
+            self.library.add(NeuronClass(identifier = 'RSad pyramidal', name = _('RSad Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
+            self.library.add(NeuronClass(identifier = 'RSna pyramidal', name = _('RSna Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
+            self.library.add(NeuronClass(identifier = 'IB pyramidal', name = _('IB Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
+            self.library.add(NeuronClass(identifier = 'betz', name = _('Betz cell'), parentClass = self.library.neuronClass('pyramidal')))
+            self.library.add(NeuronClass(identifier = 'medium spiny', name = _('Medium spiny neuron'), polarity = Neuron.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
+            self.library.add(NeuronClass(identifier = 'purkinje', name = _('Purkinje cell'), polarity = Neuron.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
+            self.library.add(NeuronClass(identifier = 'renshaw', name = _('Renshaw cell'), polarity = Neuron.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('glycine')))
+            self.library.add(NeuronClass(identifier = 'anterior horn', name = _('Anterior horn cell')))
             
             self.library.add(Modality('light', _('Light')))
             self.library.add(Modality('odor', _('Odor')))
