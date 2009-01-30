@@ -39,8 +39,8 @@ class Neurite(Object):
         self.network.addObject(self.arborization)
     
     
-    def synapseOn(self, neurite):
-        synapse = Synapse(self.network, self, [neurite])
+    def synapseOn(self, neurite, excitatory = None):
+        synapse = Synapse(self.network, self, [neurite], excitatory)
         self.synapses.append(synapse)
         neurite.synapses.append(synapse)
         self.network.addObject(synapse)

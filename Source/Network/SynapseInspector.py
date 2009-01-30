@@ -27,6 +27,13 @@ class SynapseInspector( ObjectInspector ):
             parentWindow.Bind(wx.EVT_RADIOBUTTON, self.onSetActivation, self.inhibitoryButton)
             self._sizer.AddStretchSpacer()
             self._sizer.Add(self.inhibitoryButton, 0)
+            self.unknownActivationButton = wx.RadioButton(parentWindow, wx.ID_ANY, _('Unknown'))
+            parentWindow.Bind(wx.EVT_RADIOBUTTON, self.onSetActivation, self.unknownActivationButton)
+            self._sizer.AddStretchSpacer()
+            self._sizer.Add(self.unknownActivationButton, 0)
+            self.multipleActivationsButton = wx.RadioButton(parentWindow, wx.ID_ANY, _('Multiple Values'))
+            self._sizer.AddStretchSpacer()
+            self._sizer.Add(self.multipleActivationsButton, 0)
         
         return self._sizer
     
@@ -34,16 +41,30 @@ class SynapseInspector( ObjectInspector ):
     def populateObjectSizer(self, attribute = None):
         if attribute is None or attribute == 'excitatory':
             if self.objects.haveEqualAttr('excitatory'):
-                self.excitatoryButton.SetValue(self.objects[0].excitatory)
-                self.inhibitoryButton.SetValue(not self.objects[0].excitatory)
+                self.excitatoryButton.SetValue(self.objects[0].excitatory is not None and self.objects[0].excitatory)
+                self.inhibitoryButton.SetValue(self.objects[0].excitatory is not None and not self.objects[0].excitatory)
+                self.unknownActivationButton.SetValue(self.objects[0].excitatory is None)
+                self.multipleActivationsButton.SetValue(False)
+                self.multipleActivationsButton.Hide()
             else:
-                self.excitatoryButton.SetValue(false)
-                self.inhibitoryButton.SetValue(false)
+                self.excitatoryButton.SetValue(False)
+                self.inhibitoryButton.SetValue(False)
+                self.unknownActivationButton.SetValue(False)
+                self.multipleActivationsButton.SetValue(True)
+                self.multipleActivationsButton.Show()
         
         self._sizer.Layout()
     
     
     def onSetActivation(self, event):
-        newValue = self.excitatoryButton.GetValue()
+        if self.excitatoryButton.GetValue():
+            newValue = True
+        elif self.inhibitoryButton.GetValue():
+            newValue = False
+        elif self.unknownActivationButton.GetValue():
+            newValue = None
+        else:
+            return
+        
         for object in self.objects:
             object.excitatory = newValue
