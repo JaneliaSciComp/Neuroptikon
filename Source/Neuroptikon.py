@@ -103,15 +103,15 @@ if __name__ == "__main__":
             self.library.add(Neurotransmitter('norepinephrine', _('Norepinephrine')))
             self.library.add(Neurotransmitter('serotonin', _('Serotonin')))
             
-            self.library.add(NeuronClass(identifier = 'basket', name = _('Basket cell'), polarity = Neuron.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
-            self.library.add(NeuronClass(identifier = 'pyramidal', name = _('Pyramidal cell'), polarity = Neuron.MULTIPOLAR, excitatory = True, neurotransmitter = self.library.neurotransmitter('glutamate')))
+            self.library.add(NeuronClass(identifier = 'basket', name = _('Basket cell'), polarity = Neuron.Polarity.MULTIPOLAR, function = Neuron.Function.INTERNEURON, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
+            self.library.add(NeuronClass(identifier = 'pyramidal', name = _('Pyramidal cell'), polarity = Neuron.Polarity.MULTIPOLAR, excitatory = True, neurotransmitter = self.library.neurotransmitter('glutamate')))
             self.library.add(NeuronClass(identifier = 'RSad pyramidal', name = _('RSad Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
             self.library.add(NeuronClass(identifier = 'RSna pyramidal', name = _('RSna Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
             self.library.add(NeuronClass(identifier = 'IB pyramidal', name = _('IB Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
-            self.library.add(NeuronClass(identifier = 'betz', name = _('Betz cell'), parentClass = self.library.neuronClass('pyramidal')))
-            self.library.add(NeuronClass(identifier = 'medium spiny', name = _('Medium spiny neuron'), polarity = Neuron.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
-            self.library.add(NeuronClass(identifier = 'purkinje', name = _('Purkinje cell'), polarity = Neuron.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
-            self.library.add(NeuronClass(identifier = 'renshaw', name = _('Renshaw cell'), polarity = Neuron.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('glycine')))
+            self.library.add(NeuronClass(identifier = 'betz', name = _('Betz cell'), parentClass = self.library.neuronClass('pyramidal'), function = Neuron.Function.MOTOR))
+            self.library.add(NeuronClass(identifier = 'medium spiny', name = _('Medium spiny neuron'), polarity = Neuron.Polarity.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
+            self.library.add(NeuronClass(identifier = 'purkinje', name = _('Purkinje cell'), polarity = Neuron.Polarity.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
+            self.library.add(NeuronClass(identifier = 'renshaw', name = _('Renshaw cell'), polarity = Neuron.Polarity.MULTIPOLAR, function = Neuron.Function.INTERNEURON, excitatory = False, neurotransmitter = self.library.neurotransmitter('glycine')))
             self.library.add(NeuronClass(identifier = 'anterior horn', name = _('Anterior horn cell')))
             
             self.library.add(Modality('light', _('Light')))
@@ -139,7 +139,10 @@ if __name__ == "__main__":
                     'networks': self.networks, 
                     'library': self.library, 
                     'Neurotransmitter': Neurotransmitter, 
-                    'Modality': Modality}
+                    'Modality': Modality, 
+                    'Ontology': Ontology, 
+                    'NeuralPolarity': Neuron.Polarity, 
+                    'NeuralFunction': Neuron.Function}
         
         
         def onRunScript(self, event):

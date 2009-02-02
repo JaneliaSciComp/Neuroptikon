@@ -5,24 +5,43 @@ from Neurite import Neurite as Neurite
 class Neuron(Object):
     # TODO: neurites method that returns all neurites
     
-    UNIPOLAR = 'UNIPOLAR'
-    BIPOLAR = 'BIPOLAR'
-    PSEUDOUNIPOLAR = 'PSEUDOUNIPOLAR'
-    MULTIPOLAR = 'MULTIPOLAR'
+    
+    class Polarity:
+        UNIPOLAR = 'UNIPOLAR'
+        BIPOLAR = 'BIPOLAR'
+        PSEUDOUNIPOLAR = 'PSEUDOUNIPOLAR'
+        MULTIPOLAR = 'MULTIPOLAR'
     
     
-    def __init__(self, network, neuronClass = None, polarity = None, neurotransmitter = None, excitatory = None, *args, **keywords):
-        Object.__init__(self, network, *args, **keywords)
+    class Function:
+        SENSORY = 'SENSORY'
+        INTERNEURON = 'INTERNEURON'
+        MOTOR = 'MOTOR'
+    
+    
+    def __init__(self, network, neuronClass = None, *args, **keywordArgs):
+        # Pull out the keyword arguments specific to this class before we call super.
+        # We need to do this so we can know if the caller specified an argument or not.
+        # For example, the caller might specify a neuron class and one attribute to override.  We need to know which attributes _not_ to set.
+        localAttrNames = ['excitatory', 'function', 'neurotransmitter', 'polarity']
+        localKeywordArgs = {}
+        for attrName in localAttrNames:
+            if attrName in keywordArgs:
+                localKeywordArgs[attrName] = keywordArgs[attrName]
+                del keywordArgs[attrName]
+        
+        Object.__init__(self, network, *args, **keywordArgs)
+        
         self._neurites = []
         self.neuronClass = neuronClass
-        if self.neuronClass is not None:
-            self.polarity = self.neuronClass.polarity
-            self.neurotransmitter = self.neuronClass.neurotransmitter
-            self.excitatory = self.neuronClass.excitatory
-        else:
-            self.polarity = polarity
-            self.neurotransmitter = neurotransmitter
-            self.excitatory = excitatory
+        
+        for attrName in localAttrNames:
+            attrValue = None
+            if attrName in localKeywordArgs:
+                attrValue = localKeywordArgs[attrName]  # The user has explicitly set the attribute.
+            elif self.neuronClass:
+                attrValue = getattr(self.neuronClass, attrName) # Inherit the value from the class
+            setattr(self, attrName, attrValue)
     
     
     def createNeurite(self):
