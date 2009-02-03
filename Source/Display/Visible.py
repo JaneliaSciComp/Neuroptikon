@@ -46,6 +46,7 @@ class Visible(object):
         self._position = (random.random() - 0.5, random.random() - 0.5, 0)
         self._positionIsFixed = False
         self._size = (.001, .001, .001)
+        self.sizeIsAbsolute = False
         self._rotation = (0, 0, 1, 0)
         self._weight = 1.0
         self._dependencies = set()
@@ -59,7 +60,7 @@ class Visible(object):
         self.pathEnd = None
         self.sgNode = osg.MatrixTransform()
         self._shapeGeode = osg.Geode()
-        self._shapeGeode.setName(str(id(self.client)))
+        self._shapeGeode.setName(str(id(self)))
         self._shapeDrawable = None
         self._stateSet = self._shapeGeode.getOrCreateStateSet()
         self._stateSet.setAttributeAndModes(osg.BlendFunc(), osg.StateAttribute.ON)
@@ -69,7 +70,7 @@ class Visible(object):
         self._stateSet.setAttribute(self._material)
         self.sgNode.addChild(self._shapeGeode)
         self._textGeode = osg.Geode()
-        self._textGeode.setName(str(id(self.client)))
+        self._textGeode.setName(str(id(self)))
         self._textDrawable = None
         self.sgNode.addChild(self._textGeode)
         self._staticTexture = None
@@ -175,7 +176,12 @@ class Visible(object):
     def updateTransform(self):
         # update the transform unless we're under an osgGA.Selection node, i.e. being dragged
         if len(self.sgNode.getParents()) == 0 or self.display.dragSelection is None or self.sgNode.getParent(0).__repr__() != self.display.dragSelection.asGroup().__repr__():
-            self.sgNode.setMatrix(osg.Matrixd.scale(osg.Vec3d(self.size()[0], self.size()[1], self.size()[2])) * 
+            if self.parent is None or not self.sizeIsAbsolute:
+                scale = self._size
+            else:
+                parentScale = self.parent.worldSize()
+                scale = (self._size[0] / parentScale[0], self._size[1] / parentScale[1], self._size[2] / parentScale[2])
+            self.sgNode.setMatrix(osg.Matrixd.scale(osg.Vec3d(scale[0], scale[1], scale[2])) * 
                                    osg.Matrixd.rotate(self.rotation()[3], osg.Vec3d(self.rotation()[0], self.rotation()[1], self.rotation()[2])) *
                                    osg.Matrixd.translate(osg.Vec3d(self.position()[0], self.position()[1], self.position()[2])))
     
@@ -185,7 +191,7 @@ class Visible(object):
     
     
     def setPosition(self, position):
-        """ Set the position of this visible in unit space.  Positions should be between -0.5 and 0.5 for this visible to be rendered inside its parent."""
+        """ Set the position of this visible in unit space.  Positions should be between -0.5 and 0.5 for this visible to be rendered fully inside its parent."""
         if position != self._position:
             self._position = position
             self.updateTransform()
@@ -236,7 +242,7 @@ class Visible(object):
     
     
     def setSize(self, size):
-        """ Set the size of this visible in unit space."""
+        """ Set the size of this visible relative to its parent or in absolute space (depending on the current value of sizeIsAbsolute)."""
         self._size = size
         self.updateTransform()
         dispatcher.send(('set', 'size'), self)
@@ -244,11 +250,38 @@ class Visible(object):
         self.display.Refresh()
     
     
+    def setSizeIsAbsolute(self, sizeIsAbsolute = True):
+        if self.sizeIsAbsolute != sizeIsAbsolute:
+            self.sizeIsAbsolute = sizeIsAbsolute
+            
+            # TODO: convert absolute to relative size or vice versa
+            
+            self.updateTransform()
+            dispatcher.send(('set', 'sizeIsAbsolute'), self)
+            self._arrangeChildren()
+            self.display.Refresh()
+            
+            for ancestor in self.ancestors():
+                if self.sizeIsAbsolute:
+                    dispatcher.connect(self.maintainAbsoluteSize, ('set', 'position'), ancestor)
+                    dispatcher.connect(self.maintainAbsoluteSize, ('set', 'size'), ancestor)
+                    dispatcher.connect(self.maintainAbsoluteSize, ('set', 'rotation'), ancestor)
+                else:
+                    dispatcher.disconnect(self.maintainAbsoluteSize, ('set', 'position'), ancestor)
+                    dispatcher.disconnect(self.maintainAbsoluteSize, ('set', 'size'), ancestor)
+                    dispatcher.disconnect(self.maintainAbsoluteSize, ('set', 'rotation'), ancestor)
+    
+    
+    def maintainAbsoluteSize( self, signal, sender, event=None, value=None, **arguments):
+        self.updateTransform()
+        self._arrangeChildren()
+    
+    
     def worldSize(self):
         # TODO: if a parent is rotated does this screw up?
         # TODO: will OSG do this for us?
         
-        if self.parent is None:
+        if self.parent is None or self.sizeIsAbsolute:
             worldSize = self._size
         else:
             parentSize = self.parent.worldSize()
@@ -292,8 +325,16 @@ class Visible(object):
         childVisible.parent = self
         self.childGroup.addChild(childVisible.sgNode)
         dispatcher.connect(self.childArrangedWeightChanged, ('set', 'arrangedWeight'), childVisible)
+        if childVisible.sizeIsAbsolute:
+            for ancestor in childVisible.ancestors():
+                dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'position'), ancestor)
+                dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'size'), ancestor)
+                dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'rotation'), ancestor)
         self._stateSet.setAttributeAndModes(osg.PolygonMode(osg.PolygonMode.FRONT_AND_BACK, osg.PolygonMode.LINE), osg.StateAttribute.ON)
-        self._arrangeChildren()
+        if self.arrangedAxis is None:
+            childVisible.updateTransform()
+        else:
+            self._arrangeChildren()
         dispatcher.send(('set', 'children'), self)
         self.display.Refresh()
     
@@ -314,7 +355,7 @@ class Visible(object):
     
     
     def _arrangeChildren(self, recurse = True):
-        if len(self.children) == 0:
+        if self.arrangedAxis is None or len(self.children) == 0:
             return
         
         worldSize = self.worldSize()
@@ -618,7 +659,7 @@ class Visible(object):
                     w, h, d = self.size()
                     self._glowNode = osg.MatrixTransform(osg.Matrixd.scale(osg.Vec3((w * 1.01) / w, (h * 1.01) / h, (d * 1.01) / d)))
                     clone = osg.Geode()
-                    clone.setName(str(id(self.client)))
+                    clone.setName(str(id(self)))
                     shapeDrawable = osg.ShapeDrawable(Visible.geometries[self._shapeName])
                     clone.addDrawable(shapeDrawable)
                     self._glowNode.addChild(clone)

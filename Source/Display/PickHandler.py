@@ -48,24 +48,36 @@ class PickHandler(osgGA.GUIEventHandler):
     def drag(self, eventAdaptor, viewer):
         eventWasHandled = False
         if viewer.getSceneData():
+            # TODO: This is a major hack.  The intersection code below always picks the composite dragger, even if it isn't being rendered.  So we remove the inactive dragger while picking.
+            # TODO: Figure out how to make the intersection code honor the LOD and get rid of the DraggerCullCallback class.
+            if self._display.draggerLOD is not None:
+                if self._display.activeDragger == self._display.simpleDragger:
+                    self._display.draggerLOD.removeChild(self._display.compositeDragger)
+                if self._display.activeDragger == self._display.compositeDragger:
+                    self._display.draggerLOD.removeChild(self._display.simpleDragger)
             x, y = eventAdaptor.getXnormalized(), eventAdaptor.getYnormalized()
             picker = osgUtil.LineSegmentIntersector(osgUtil.Intersector.PROJECTION, x, y)
             intersectionVisitor = osgUtil.IntersectionVisitor(picker)
+            intersectionVisitor.setTraversalMode(osg.NodeVisitor.TRAVERSE_ACTIVE_CHILDREN)
             viewer.getCamera().accept(intersectionVisitor)
             if picker.containsIntersections():
                 self.pointerInfo.setCamera(viewer.getCamera())
                 self.pointerInfo.setMousePosition(eventAdaptor.getX(), eventAdaptor.getY())
-                # TODO: need to add all intersections to self.pointerInfo?
                 for intersection in picker.getIntersections():
                     localPoint = intersection.getLocalIntersectPoint()  # have to do stupid conversion from Vec3d to Vec3
                     self.pointerInfo.addIntersection(intersection.nodePath, osg.Vec3(localPoint.x(), localPoint.y(), localPoint.z()))
                 intersection = picker.getFirstIntersection()
                 for node in intersection.nodePath:
                     self.dragger = osgManipulator.NodeToDragger(node)
-                    if self.dragger != None:
+                    if self.dragger is not None:
                         self.dragger.handle(self.pointerInfo, eventAdaptor, viewer)
                         eventWasHandled = True
                         break
+            if self._display.draggerLOD is not None:
+                if self._display.activeDragger == self._display.simpleDragger:
+                    self._display.draggerLOD.addChild(self._display.compositeDragger)
+                if self._display.activeDragger == self._display.compositeDragger:
+                    self._display.draggerLOD.addChild(self._display.simpleDragger)
         return eventWasHandled
     
     
@@ -76,12 +88,17 @@ class PickHandler(osgGA.GUIEventHandler):
             intersectionVisitor = osgUtil.IntersectionVisitor(picker)
             viewer.getCamera().accept(intersectionVisitor)
             if picker.containsIntersections():
-                intersection = picker.getFirstIntersection()
-                geode = osg.NodeToGeode(intersection.nodePath[-1])
-                if geode != None:
-                    #print "Picking geode ", geode.getName()
-                    objectID = int(geode.getName())
-                    self._display.selectObject(self._display.network.objectWithId(objectID), self._display.selectionShouldExtend, self._display.findShortestPath)
+                # Loop through all of the hits to find the "deepest" one in the sense of the region hierarchy.  So a child of a region will be picked instead of its parent.
+                deepestVisible = None
+                for intersection in picker.getIntersections():
+                    for node in intersection.nodePath:
+                        geode = osg.NodeToGeode(node)
+                        if geode != None:
+                            visibleID = int(geode.getName())
+                            visible = self._display.visibleIds[visibleID]
+                            if deepestVisible is None or deepestVisible in visible.ancestors():
+                                deepestVisible = visible
+                self._display.selectVisible(deepestVisible, self._display.selectionShouldExtend, self._display.findShortestPath)
             else:
                 self._display.deselectAll()
         return True       

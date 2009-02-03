@@ -23,7 +23,7 @@ class Neuron(Object):
         # Pull out the keyword arguments specific to this class before we call super.
         # We need to do this so we can know if the caller specified an argument or not.
         # For example, the caller might specify a neuron class and one attribute to override.  We need to know which attributes _not_ to set.
-        localAttrNames = ['excitatory', 'function', 'neurotransmitter', 'polarity']
+        localAttrNames = ['excitatory', 'function', 'neurotransmitter', 'polarity', 'region']
         localKeywordArgs = {}
         for attrName in localAttrNames:
             if attrName in keywordArgs:

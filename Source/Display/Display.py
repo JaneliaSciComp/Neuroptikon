@@ -2,6 +2,7 @@ import wx
 import wx.glcanvas
 import osg, osgDB, osgFX, osgGA, osgManipulator, osgViewer
 from PickHandler import PickHandler
+from DraggerCullCallback import DraggerCullCallback
 from Network.Network import Network
 from Network.Region import Region
 from Network.Pathway import Pathway
@@ -39,6 +40,7 @@ class Display(wx.glcanvas.GLCanvas):
 
         self.network = None
         self.visibles = {}
+        self.visibleIds = {}
         self.selectedVisibles = []
         self.highlightedVisibles = []
         self.animatedVisibles = []
@@ -109,8 +111,10 @@ class Display(wx.glcanvas.GLCanvas):
         self._textureTransform = osg.Matrixd.scale(10 / 5000.0,  10 / 5000.0,  10 / 5000.0)
         
         self.dragSelection = None
-        self.miniDragger = None
-        self.dragger = None
+        self.draggerLOD = None
+        self.simpleDragger = None
+        self.compositeDragger = None
+        self.activeDragger = None
         
         self.selectionShouldExtend = False
         self.findShortestPath = False
@@ -148,6 +152,7 @@ class Display(wx.glcanvas.GLCanvas):
                 self.graphicsWindow = self.viewer3D.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
                 self.viewer3D.getCamera().setProjectionMatrixAsPerspective(30.0, width / height, 1.0, 10000.0)
                 self.centerView()
+            self.Refresh()
     
     
     def onViewIn2D(self, event):
@@ -397,6 +402,11 @@ class Display(wx.glcanvas.GLCanvas):
     
     def addVisible(self, visible, object, parentVisible = None):
         self.visibles[self.keyForObject(object)] = visible
+        if isinstance(visible, tuple):
+            self.visibleIds[id(visible[0])] = visible[1]
+            self.visibleIds[id(visible[1])] = visible[1]
+        else:
+            self.visibleIds[id(visible)] = visible
         if parentVisible is None:
             if isinstance(visible, tuple):
                 for subVisible in visible:
@@ -437,10 +447,11 @@ class Display(wx.glcanvas.GLCanvas):
                 visible = Visible(self, object)
                 visible.setShape("ball")
                 visible.setSize((.01, .01, .01))
+                visible.setSizeIsAbsolute(True)
                 visible.setColor(neuralTissueColor)
                 if self._showNeuronNames:
                     visible.setLabel(object.abbreviation or object.name)
-                self.addVisible(visible, object)
+                self.addVisible(visible, object, self.visibleForObject(object.region))
             elif isinstance(object, Muscle):
                 visible = Visible(self, object)
                 visible.setShape('capsule')
@@ -663,39 +674,6 @@ class Display(wx.glcanvas.GLCanvas):
         visible.setPath(path, startVisible, endVisible)
     
     
-    def clearDragger(self):
-        if self.dragSelection != None:
-            visible = self.selectedVisibles[0]
-            if isinstance(visible.client, Stimulus):
-                visible = self.visibleForObject(visible.client)
-            
-            if visible.parent is None:
-                rootNode = self.rootNode
-            else:
-                rootNode = visible.parent.sgNode
-            
-            #self.commandMgr.disconnect(self.miniDragger)
-            self.commandMgr.disconnect(self.dragger)
-            self.commandMgr = None
-            
-            self.dragSelection.removeChild(visible.sgNode)
-            rootNode.removeChild(self.dragSelection)
-            self.dragSelection = None
-            
-            rootNode.addChild(visible.sgNode)
-            self.visibleWasDragged()
-            
-            if True:
-                rootNode.removeChild(self.dragger)                                self.dragger = None            else:
-                rootNode.removeChild(self.draggerLOD)
-                
-                self.miniDragger.setUpdateCallback(None)
-                self.miniDragger = None
-                self.dragger.setUpdateCallback(None)
-                self.dragger = None
-                self.draggerLOD = None
-    
-    
     def highlightObject(self, object, highlight=True):
         visible = self.visibleForObject(object)
         if highlight:
@@ -872,47 +850,7 @@ class Display(wx.glcanvas.GLCanvas):
                 visible = self.visibleForObject(visible.client)
             
             if visible.isDraggable():
-                if visible.parent is None:
-                    rootNode = self.rootNode
-                else:
-                    rootNode = visible.parent.sgNode
-                    
-                rootNode.removeChild(visible.sgNode)
-                
-                self.dragSelection = osgManipulator.Selection()
-                self.dragSelection.addChild(visible.sgNode)
-                rootNode.addChild(self.dragSelection)
-                
-                if True:
-                    if self.viewDimensions == 2:                        self.dragger = osgManipulator.TranslatePlaneDragger()                        self.draggerZOffset = visible.size()[2]                        self.draggerScale = 1.0                        self.dragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * visible.sgNode.getMatrix() * osg.Matrixd.translate(0, 0, self.draggerZOffset))                    elif self.viewDimensions == 3:                        self.dragger = osgManipulator.TabBoxDragger()                        self.draggerZOffset = 0                        self.draggerScale = 1.02                        self.dragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * visible.sgNode.getMatrix())                    self.dragger.setupDefaultGeometry()                    # TODO: should scale so that increase in size is fixed and greater than glow increase (14).  Probably should use a ComputeBoundsVisitor...                    rootNode.addChild(self.dragger)                                        self.commandMgr = osgManipulator.CommandManager()                    self.commandMgr.connect(self.dragger, self.dragSelection)                else:
-                    self.draggerLOD = osg.LOD()
-                    self.draggerLOD.setRangeMode(osg.LOD.PIXEL_SIZE_ON_SCREEN)
-                    if self.viewDimensions == 2:
-                        self.draggerZOffset = visible.size()[2]
-                        self.draggerScale = 1.0
-                        self.miniDragger = osgManipulator.TranslatePlaneDragger()
-                        self.miniDragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * visible.sgNode.getMatrix() * osg.Matrixd.translate(0, 0, self.draggerZOffset))
-                        self.dragger = osgManipulator.TabPlaneDragger()
-                        self.dragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * visible.sgNode.getMatrix() * osg.Matrixd.translate(0, 0, self.draggerZOffset))
-                    elif self.viewDimensions == 3:
-                        self.draggerZOffset = 0
-                        self.draggerScale = 1.02
-                        self.miniDragger = osgManipulator.TranslateAxisDragger()
-                        self.miniDragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * visible.sgNode.getMatrix())
-                        self.dragger = osgManipulator.TabBoxDragger()
-                        self.dragger.setMatrix(osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * visible.sgNode.getMatrix())
-                    self.miniDragger.setupDefaultGeometry()
-                    self.draggerLOD.addChild(self.miniDragger, 0.0, 100.0)
-                    self.dragger.setupDefaultGeometry()
-                    self.draggerLOD.addChild(self.dragger, 100.0, 10000.0)
-                    # TODO: should scale so that increase in size is fixed and greater than glow increase (14).  Probably should use a ComputeBoundsVisitor...
-                    rootNode.addChild(self.draggerLOD)
-                    
-                    self.commandMgr = osgManipulator.CommandManager()
-                    self.commandMgr.connect(self.miniDragger, self.dragSelection)
-                    self.commandMgr.connect(self.dragger, self.dragSelection)
-                
-            # TODO: observe the visible's 'positionIsFixed' attribute and add/remove the draggers as needed
+                self.addDragger(visible)
         elif len(self.selectedVisibles) > 1:
             # Turn off highlighting/animation for visibles that aren't selected or that aren't direct connections between the selected visibles.
             tempList = list(self.highlightedVisibles)
@@ -1002,15 +940,104 @@ class Display(wx.glcanvas.GLCanvas):
             dispatcher.send(('set', 'selection'), self)
     
     
+    def addDragger(self, visible):
+        if visible.parent is None:
+            rootNode = self.rootNode
+        else:
+            rootNode = visible.parent.sgNode
+        
+        rootNode.removeChild(visible.sgNode)
+        
+        self.dragSelection = osgManipulator.Selection()
+        self.dragSelection.addChild(visible.sgNode)
+        rootNode.addChild(self.dragSelection)
+        
+        self.draggerLOD = osg.LOD()
+        self.draggerLOD.setRangeMode(osg.LOD.PIXEL_SIZE_ON_SCREEN)
+        if self.viewDimensions == 2:
+            self.draggerZOffset = visible.size()[2]
+            if visible.parent is not None and visible.sizeIsAbsolute:
+                self.draggerZOffset /= visible.parent.worldSize()[2]
+            self.draggerScale = 1.0
+            self.simpleDragger = osgManipulator.TranslatePlaneDragger()
+            self.compositeDragger = osgManipulator.TabPlaneDragger()
+            pixelCutOff = 100.0
+        elif self.viewDimensions == 3:
+            self.draggerZOffset = 0.0
+            self.draggerScale = 1.02
+            self.simpleDragger = osgManipulator.TranslateAxisDragger()
+            self.compositeDragger = osgManipulator.TabBoxDragger()
+            pixelCutOff = 400.0
+        # TODO: should scale so that increase in size is fixed and greater than glow increase (14).  Probably should use a ComputeBoundsVisitor...
+        draggerMatrix = osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * \
+                        osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * \
+                        visible.sgNode.getMatrix() * \
+                        osg.Matrixd.translate(0, 0, self.draggerZOffset)
+        self.simpleDragger.setMatrix(draggerMatrix)        self.simpleDragger.setupDefaultGeometry()
+        self.draggerLOD.addChild(self.simpleDragger, 0.0, pixelCutOff)
+        self.compositeDragger.setMatrix(draggerMatrix)        self.compositeDragger.setupDefaultGeometry()
+        self.draggerLOD.addChild(self.compositeDragger, pixelCutOff, 10000.0)
+        rootNode.addChild(self.draggerLOD)
+        
+        # TODO: This is a serious hack.  The existing picking code in PickHandler doesn't handle the dragger LOD correctly.  It always picks the composite dragger.  Cull callbacks are added here so that we can know which dragger was most recently rendered.
+        self.activeDragger = None
+        self.simpleDragger.setCullCallback(DraggerCullCallback(self, self.simpleDragger).__disown__())
+        self.compositeDragger.setCullCallback(DraggerCullCallback(self, self.compositeDragger).__disown__())
+        
+        self.commandMgr = osgManipulator.CommandManager()
+        self.commandMgr.connect(self.simpleDragger, self.dragSelection)
+        self.commandMgr.connect(self.compositeDragger, self.dragSelection)
+        
+        # TODO: observe the visible's 'positionIsFixed' attribute and add/remove the draggers as needed
+    
+    
     def visibleWasDragged(self):
+        # TODO: It would be nice to constrain dragging if the visible has a parent.  "Resistance" would be added when the child reached the parent border so that dragging slowed or stopped but if dragged far enough the child could force its way through.
         visible = self.selectedVisibles[0]
         if isinstance(visible.client, Stimulus):
             visible = self.visibleForObject(visible.client)
-        matrix = self.dragger.getMatrix()
+        matrix = self.activeDragger.getMatrix()
         position = matrix.getTrans()
         size = matrix.getScale()
-        visible.setPosition((position.x(), position.y(), position.z() - self.draggerZOffset))
-        visible.setSize((size.x() / self.draggerScale, size.y() / self.draggerScale, size.z() / self.draggerScale))
+        if visible.parent is None or not visible.sizeIsAbsolute:
+            parentSize = (1.0, 1.0, 1.0)
+        else:
+            parentSize = visible.parent.worldSize()
+        visible.setPosition((position.x() * parentSize[0], position.y() * parentSize[1], position.z() - self.draggerZOffset))
+        visible.setSize((size.x() * parentSize[0] / self.draggerScale, size.y() * parentSize[1] / self.draggerScale, size.z() * parentSize[2] / self.draggerScale))
+    
+    
+    def clearDragger(self):
+        if self.dragSelection != None:
+            visible = self.selectedVisibles[0]
+            if isinstance(visible.client, Stimulus):
+                visible = self.visibleForObject(visible.client)
+            
+            if visible.parent is None:
+                rootNode = self.rootNode
+            else:
+                rootNode = visible.parent.sgNode
+            
+            self.commandMgr.disconnect(self.simpleDragger)
+            self.commandMgr.disconnect(self.compositeDragger)
+            self.commandMgr = None
+            
+            self.dragSelection.removeChild(visible.sgNode)
+            rootNode.removeChild(self.dragSelection)
+            self.dragSelection = None
+            
+            rootNode.addChild(visible.sgNode)
+            self.visibleWasDragged()
+            
+            if False:
+                rootNode.removeChild(self.compositeDragger)                                self.compositeDragger = None            else:
+                rootNode.removeChild(self.draggerLOD)
+                
+                self.simpleDragger.setUpdateCallback(None)
+                self.simpleDragger = None
+                self.compositeDragger.setUpdateCallback(None)
+                self.compositeDragger = None
+                self.draggerLOD = None
     
     
     def onAutoLayout(self, event):
