@@ -20,20 +20,20 @@ class ArborizationInspector( ObjectInspector ):
             self._sizer = wx.FlexGridSizer(2, 2, 8, 8)
             self._sizer.SetFlexibleDirection(wx.HORIZONTAL)
             
-            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, _('Sends output to region:')))
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Sends output to region:')))
             self._sendsOutputChoice = wx.Choice(parentWindow, wx.ID_ANY)
-            self._sendsOutputChoice.Append(_('Yes'), True)
-            self._sendsOutputChoice.Append(_('No'), False)
-            self._sendsOutputChoice.Append(_('Unknown'), None)
+            self._sendsOutputChoice.Append(gettext('Yes'), True)
+            self._sendsOutputChoice.Append(gettext('No'), False)
+            self._sendsOutputChoice.Append(gettext('Unknown'), None)
             self._multipleSendsOuputsId = wx.NOT_FOUND
             self._sizer.Add(self._sendsOutputChoice)
             parentWindow.Bind(wx.EVT_CHOICE, self.onChooseSendsOutput, self._sendsOutputChoice)
             
-            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, _('Receives input from region:')))
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Receives input from region:')))
             self._receivesInputChoice = wx.Choice(parentWindow, wx.ID_ANY)
-            self._receivesInputChoice.Append(_('Yes'), True)
-            self._receivesInputChoice.Append(_('No'), False)
-            self._receivesInputChoice.Append(_('Unknown'), None)
+            self._receivesInputChoice.Append(gettext('Yes'), True)
+            self._receivesInputChoice.Append(gettext('No'), False)
+            self._receivesInputChoice.Append(gettext('Unknown'), None)
             self._multipleReceivesInputsId = wx.NOT_FOUND
             self._sizer.Add(self._receivesInputChoice)
             parentWindow.Bind(wx.EVT_CHOICE, self.onChooseReceievesInput, self._receivesInputChoice)
@@ -51,7 +51,7 @@ class ArborizationInspector( ObjectInspector ):
                 else:
                     self._sendsOutputChoice.SetSelection(1)
             else:
-                self._multipleSendsOuputsId = self._sendsOutputChoice.Append(_('Multiple values'))
+                self._multipleSendsOuputsId = self._sendsOutputChoice.Append(gettext('Multiple values'))
                 self._sendsOutputChoice.SetSelection(3)
         
         if attribute is None or attribute == 'receivesInput':
@@ -63,7 +63,7 @@ class ArborizationInspector( ObjectInspector ):
                 else:
                     self._receivesInputChoice.SetSelection(1)
             else:
-                self._multipleReceivesInputsId = self._receivesInputChoice.Append(_('Multiple values'))
+                self._multipleReceivesInputsId = self._receivesInputChoice.Append(gettext('Multiple values'))
                 self._receivesInputChoice.SetSelection(3)
         
         self._sizer.Layout()

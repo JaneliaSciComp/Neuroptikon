@@ -10,7 +10,7 @@ class VisibleInspector(Inspector):
     
     @classmethod
     def name(cls):
-        return _('Visible')
+        return gettext('Visible')
     
     
     @classmethod
@@ -37,45 +37,45 @@ class VisibleInspector(Inspector):
             # Add a color picker for our fill color.
             self._colorPicker = wx.lib.colourselect.ColourSelect(self._window, wx.ID_ANY)
             self._window.Bind(wx.lib.colourselect.EVT_COLOURSELECT, self.onSetColor, self._colorPicker)
-            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, _('Color:')), 0)
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Color:')), 0)
             gridSizer.Add(self._colorPicker, 1)
             
             # Add a check box for fixing the position.
-            self.fixedPositionCheckBox = wx.CheckBox(self._window, wx.ID_ANY, _('Fixed'), style=wx.CHK_3STATE)
+            self.fixedPositionCheckBox = wx.CheckBox(self._window, wx.ID_ANY, gettext('Fixed'), style=wx.CHK_3STATE)
             self._window.Bind(wx.EVT_CHECKBOX, self.onSetPositionIsFixed)
-            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, _('Position:')), 0)
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Position:')), 0)
             gridSizer.Add(self.fixedPositionCheckBox, 1)
             
             # Add a slider for setting the arrangement weight within our parent.
             self._arrangedWeightSlider = wx.Slider(self._window, wx.ID_ANY, 50, 1, 100, style=wx.SL_HORIZONTAL)
             self._arrangedWeightSlider.Bind(wx.EVT_SCROLL, self.onSetArrangedWeight)
-            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, _('Arranged weight:')), 0)
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Arranged weight:')), 0)
             gridSizer.Add(self._arrangedWeightSlider, 1)
             
             # Add a pop-up for choosing the child arrangement.
             self._arrangedAxisChoice = wx.Choice(self._window, wx.ID_ANY)
-            self._arrangedAxisChoice.Append(_('None'), None)
-            self._arrangedAxisChoice.Append(_('Largest'), 'largest')
-            self._arrangedAxisChoice.Append(_('X'), 'X')
-            self._arrangedAxisChoice.Append(_('Y'), 'Y')
-            self._arrangedAxisChoice.Append(_('Z'), 'Z')
+            self._arrangedAxisChoice.Append(gettext('None'), None)
+            self._arrangedAxisChoice.Append(gettext('Largest'), 'largest')
+            self._arrangedAxisChoice.Append(gettext('X'), 'X')
+            self._arrangedAxisChoice.Append(gettext('Y'), 'Y')
+            self._arrangedAxisChoice.Append(gettext('Z'), 'Z')
             self._multipleArrangedAxesId = wx.NOT_FOUND
-            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, _('Arrange children along axis:')), 0)
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Arrange children along axis:')), 0)
             gridSizer.Add(self._arrangedAxisChoice, 0)
             parentWindow.Bind(wx.EVT_CHOICE, self.onSetArrangedAxis, self._arrangedAxisChoice)
             
             # Add a slider for setting the arrangement spacing.
             self._arrangedSpacingSlider = wx.Slider(self._window, wx.ID_ANY, 20, 0, 249, style=wx.SL_HORIZONTAL)
             self._arrangedSpacingSlider.Bind(wx.EVT_SCROLL, self.onSetArrangedSpacing, self._arrangedSpacingSlider)
-            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, _('Arranged spacing:')), 0)
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Arranged spacing:')), 0)
             gridSizer.Add(self._arrangedSpacingSlider, 1)
             
             # Add a pop-up for choosing the shape.
             self._shapeChoice = wx.Choice(self._window, wx.ID_ANY)
             for geometryName in sorted(Visible.geometries.keys()):
-                self._shapeChoice.Append(_(geometryName), geometryName)
+                self._shapeChoice.Append(gettext(geometryName), geometryName)
             self._multipleShapesId = wx.NOT_FOUND
-            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, _('Shape:')), 0)
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Shape:')), 0)
             gridSizer.Add(self._shapeChoice, 0)
             parentWindow.Bind(wx.EVT_CHOICE, self.onSetShape, self._shapeChoice)
             
@@ -114,10 +114,10 @@ class VisibleInspector(Inspector):
             if self.visibles.haveEqualAttr('color'):
                 red, green, blue = self.visibles[0].color()
                 self._colorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, 255))
-                self._colorPicker.SetLabel(_(''))
+                self._colorPicker.SetLabel(gettext(''))
             else:
                 self._colorPicker.SetColour(wx.NamedColour('GRAY'))  # TODO: be clever and pick the average color?
-                self._colorPicker.SetLabel(_('Multiple values'))
+                self._colorPicker.SetLabel(gettext('Multiple values'))
         
         if updatedAttribute is None or updatedAttribute == 'positionIsFixed':
             if self.visibles.haveEqualAttr('positionIsFixed'):
@@ -135,7 +135,7 @@ class VisibleInspector(Inspector):
                         self._shapeChoice.SetSelection(index)
                         break
             else:
-                self._multipleShapesId = self._shapeChoice.Append(_('Multiple values'), None)
+                self._multipleShapesId = self._shapeChoice.Append(gettext('Multiple values'), None)
                 self._shapeChoice.SetSelection(self._multipleShapesId)
         
         if updatedAttribute is None or updatedAttribute == 'arrangedWeight':
@@ -145,7 +145,7 @@ class VisibleInspector(Inspector):
                     self._arrangedWeightSlider.SetLabel('')
                     self._arrangedWeightSlider.SetValue(self.visibles[0].arrangedWeight)
                 else:
-                    self._arrangedWeightSlider.SetLabel(_('Multiple values'))
+                    self._arrangedWeightSlider.SetLabel(gettext('Multiple values'))
                     self._arrangedWeightSlider.SetValue(50)
             else:
                 self._arrangedWeightSlider.Disable()
@@ -159,7 +159,7 @@ class VisibleInspector(Inspector):
                             self._arrangedAxisChoice.SetSelection(index)
                             break
                 else:
-                    self._multipleArrangedAxesId = self._arrangedAxisChoice.Append(_('Multiple values'), None)
+                    self._multipleArrangedAxesId = self._arrangedAxisChoice.Append(gettext('Multiple values'), None)
                     self._arrangedAxisChoice.SetSelection(self._multipleArrangedAxesId)
             else:
                 self._arrangedAxisChoice.Disable()
@@ -171,7 +171,7 @@ class VisibleInspector(Inspector):
                     self._arrangedSpacingSlider.SetLabel('')
                     self._arrangedSpacingSlider.SetValue(self.visibles[0].arrangedSpacing * 1000.0)
                 else:
-                    self._arrangedSpacingSlider.SetLabel(_('Multiple values'))
+                    self._arrangedSpacingSlider.SetLabel(gettext('Multiple values'))
                     self._arrangedSpacingSlider.SetValue(20)
             else:
                 self._arrangedSpacingSlider.Disable()

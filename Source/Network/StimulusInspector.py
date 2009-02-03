@@ -19,11 +19,11 @@ class StimulusInspector( ObjectInspector ):
         if not hasattr(self, '_sizer'):
             self._sizer = wx.FlexGridSizer(1, 2, 8, 8)
             self._sizer.SetFlexibleDirection(wx.HORIZONTAL)
-            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, _('Modality') + ":"))
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Modality') + ":"))
             self._modalityChoice = wx.Choice(parentWindow, wx.ID_ANY)
             for modality in wx.GetApp().library.modalities():
                 self._modalityChoice.Append(modality.name, modality)
-            self._unknownModalityId = self._modalityChoice.Append(_('Unknown'), None)
+            self._unknownModalityId = self._modalityChoice.Append(gettext('Unknown'), None)
             self._multipleModalitiesId = wx.NOT_FOUND
             self._sizer.Add(self._modalityChoice)
             parentWindow.Bind(wx.EVT_CHOICE, self.onChooseModality, self._modalityChoice)
@@ -40,7 +40,7 @@ class StimulusInspector( ObjectInspector ):
                 else:
                     self._modalityChoice.SetStringSelection(self.objects[0].modality.name)
             else:
-                self._multipleModalitiesId = self._modalityChoice.Append(_('Multiple values'), None)
+                self._multipleModalitiesId = self._modalityChoice.Append(gettext('Multiple values'), None)
                 self._modalityChoice.SetSelection(self._multipleModalitiesId)
         
         self._sizer.Layout()

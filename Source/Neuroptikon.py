@@ -38,8 +38,8 @@ if os.access(fdpPath, os.F_OK):
     os.chmod(fdpPath, os.stat(fdpPath).st_mode | stat.S_IXUSR)
 
 # Set up for internationalization.
-import gettext
-gettext.install('Neuroptikon')
+import gettext as gettext_module, __builtin__
+__builtin__.gettext = gettext_module.translation('Neuroptikon', fallback = True).lgettext
 
 import wx
 import wx.lib.mixins.inspection
@@ -93,35 +93,36 @@ if __name__ == "__main__":
         
         
         def _loadDefaultLibraryItems(self):
-            self.library.add(Neurotransmitter('acetylcholine', _('Acetylcholine')))
-            self.library.add(Neurotransmitter('dopamine', _('Dopamine')))
-            self.library.add(Neurotransmitter('epinephrine', _('Epinephrine')))
-            self.library.add(Neurotransmitter('GABA', _('Gamma-aminobutyric acid'), _('GABA')))
-            self.library.add(Neurotransmitter('glutamate', _('Glutamate')))
-            self.library.add(Neurotransmitter('glycine', _('Glycine')))
-            self.library.add(Neurotransmitter('histamine', _('Histamine')))
-            self.library.add(Neurotransmitter('norepinephrine', _('Norepinephrine')))
-            self.library.add(Neurotransmitter('serotonin', _('Serotonin')))
+            self.library.add(Neurotransmitter('acetylcholine', gettext('Acetylcholine')))
+            self.library.add(Neurotransmitter('dopamine', gettext('Dopamine')))
+            self.library.add(Neurotransmitter('epinephrine', gettext('Epinephrine')))
+            self.library.add(Neurotransmitter('GABA', gettext('Gamma-aminobutyric acid'), gettext('GABA')))
+            self.library.add(Neurotransmitter('glutamate', gettext('Glutamate')))
+            self.library.add(Neurotransmitter('glycine', gettext('Glycine')))
+            self.library.add(Neurotransmitter('histamine', gettext('Histamine')))
+            self.library.add(Neurotransmitter('norepinephrine', gettext('Norepinephrine')))
+            self.library.add(Neurotransmitter('serotonin', gettext('Serotonin')))
             
-            self.library.add(NeuronClass(identifier = 'basket', name = _('Basket cell'), polarity = Neuron.Polarity.MULTIPOLAR, function = Neuron.Function.INTERNEURON, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
-            self.library.add(NeuronClass(identifier = 'pyramidal', name = _('Pyramidal cell'), polarity = Neuron.Polarity.MULTIPOLAR, excitatory = True, neurotransmitter = self.library.neurotransmitter('glutamate')))
-            self.library.add(NeuronClass(identifier = 'RSad pyramidal', name = _('RSad Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
-            self.library.add(NeuronClass(identifier = 'RSna pyramidal', name = _('RSna Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
-            self.library.add(NeuronClass(identifier = 'IB pyramidal', name = _('IB Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
-            self.library.add(NeuronClass(identifier = 'betz', name = _('Betz cell'), parentClass = self.library.neuronClass('pyramidal'), function = Neuron.Function.MOTOR))
-            self.library.add(NeuronClass(identifier = 'medium spiny', name = _('Medium spiny neuron'), polarity = Neuron.Polarity.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
-            self.library.add(NeuronClass(identifier = 'purkinje', name = _('Purkinje cell'), polarity = Neuron.Polarity.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
-            self.library.add(NeuronClass(identifier = 'renshaw', name = _('Renshaw cell'), polarity = Neuron.Polarity.MULTIPOLAR, function = Neuron.Function.INTERNEURON, excitatory = False, neurotransmitter = self.library.neurotransmitter('glycine')))
-            self.library.add(NeuronClass(identifier = 'anterior horn', name = _('Anterior horn cell')))
+            self.library.add(NeuronClass(identifier = 'basket', name = gettext('Basket cell'), polarity = Neuron.Polarity.MULTIPOLAR, function = Neuron.Function.INTERNEURON, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
+            self.library.add(NeuronClass(identifier = 'pyramidal', name = gettext('Pyramidal cell'), polarity = Neuron.Polarity.MULTIPOLAR, excitatory = True, neurotransmitter = self.library.neurotransmitter('glutamate')))
+            self.library.add(NeuronClass(identifier = 'RSad pyramidal', name = gettext('RSad Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
+            self.library.add(NeuronClass(identifier = 'RSna pyramidal', name = gettext('RSna Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
+            self.library.add(NeuronClass(identifier = 'IB pyramidal', name = gettext('IB Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
+            self.library.add(NeuronClass(identifier = 'betz', name = gettext('Betz cell'), parentClass = self.library.neuronClass('pyramidal'), function = Neuron.Function.MOTOR))
+            self.library.add(NeuronClass(identifier = 'medium spiny', name = gettext('Medium spiny neuron'), polarity = Neuron.Polarity.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
+            self.library.add(NeuronClass(identifier = 'purkinje', name = gettext('Purkinje cell'), polarity = Neuron.Polarity.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
+            self.library.add(NeuronClass(identifier = 'renshaw', name = gettext('Renshaw cell'), polarity = Neuron.Polarity.MULTIPOLAR, function = Neuron.Function.INTERNEURON, excitatory = False, neurotransmitter = self.library.neurotransmitter('glycine')))
+            self.library.add(NeuronClass(identifier = 'anterior horn', name = gettext('Anterior horn cell')))
             
-            self.library.add(Modality('light', _('Light')))
-            self.library.add(Modality('odor', _('Odor')))
-            self.library.add(Modality('sound', _('Sound')))
-            self.library.add(Modality('taste', _('Taste')))
+            self.library.add(Modality('light', gettext('Light')))
+            self.library.add(Modality('odor', gettext('Odor')))
+            self.library.add(Modality('sound', gettext('Sound')))
+            self.library.add(Modality('taste', gettext('Taste')))
             
             flyOntology = Ontology('drosophila brain')
             flyOntology.importOBO('Library/flybrain.obo')
             self.library.add(flyOntology)
+
         
         
         def onQuit(self, event):
@@ -146,13 +147,13 @@ if __name__ == "__main__":
         
         
         def onRunScript(self, event):
-            dlg = wx.FileDialog(None, _('Choose a script to run'), 'Scripts', '', '*.py', wx.OPEN)
+            dlg = wx.FileDialog(None, gettext('Choose a script to run'), 'Scripts', '', '*.py', wx.OPEN)
             if dlg.ShowModal() == wx.ID_OK:
                 try:
                     execfile(dlg.GetPath(), self.scriptLocals())
                 except:
                     (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-                    dialog = wx.MessageDialog(self, exceptionValue.message, _('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
+                    dialog = wx.MessageDialog(self, exceptionValue.message, gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
                     dialog.ShowModal()
             dlg.Destroy()
         
@@ -165,7 +166,7 @@ if __name__ == "__main__":
                 fileName = os.path.join(confDir, 'Console.config')
                 self.config = wx.FileConfig(localFilename=fileName)
                 self.config.SetRecordDefaults(True)
-                self._console = py.shell.ShellFrame(title=_('Console'), config=self.config, dataDir=confDir, locals=self.scriptLocals())
+                self._console = py.shell.ShellFrame(title=gettext('Console'), config=self.config, dataDir=confDir, locals=self.scriptLocals())
                 #TODO: need to just hide the console window on close or set up some kind of callback to clear _console when the console closes
             self._console.Show()
         

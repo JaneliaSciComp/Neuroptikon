@@ -26,42 +26,42 @@ class NeuronInspector( ObjectInspector ):
             self._sizer = wx.FlexGridSizer(2, 2, 8, 8)
             self._sizer.SetFlexibleDirection(wx.HORIZONTAL)
             
-            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, _('Class:')))
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Class:')))
             self._neuronClassChoice = wx.Choice(parentWindow, wx.ID_ANY)
             for neuronClass in wx.GetApp().library.neuronClasses():
                 if neuronClass.parentClass is None:
                     self._appendNeuronClass(neuronClass, 0)
-            self._unknownNeuronClassId = self._neuronClassChoice.Append(_('Unknown'), None)
+            self._unknownNeuronClassId = self._neuronClassChoice.Append(gettext('Unknown'), None)
             self._multipleNeuronClassesId = wx.NOT_FOUND
             self._sizer.Add(self._neuronClassChoice)
             parentWindow.Bind(wx.EVT_CHOICE, self.onChooseNeuronClass, self._neuronClassChoice)
             
-            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, _('Function:')))
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Function:')))
             self._functionChoice = wx.Choice(parentWindow, wx.ID_ANY)
-            self._functionChoice.Append(_('Sensory neuron'), Neuron.Function.SENSORY)
-            self._functionChoice.Append(_('Interneuron'), Neuron.Function.INTERNEURON)
-            self._functionChoice.Append(_('Motor neuron'), Neuron.Function.MOTOR)
-            self._unknownFunctionId = self._functionChoice.Append(_('Unknown'), None)
+            self._functionChoice.Append(gettext('Sensory neuron'), Neuron.Function.SENSORY)
+            self._functionChoice.Append(gettext('Interneuron'), Neuron.Function.INTERNEURON)
+            self._functionChoice.Append(gettext('Motor neuron'), Neuron.Function.MOTOR)
+            self._unknownFunctionId = self._functionChoice.Append(gettext('Unknown'), None)
             self._multipleFunctionsId = wx.NOT_FOUND
             self._sizer.Add(self._functionChoice)
             parentWindow.Bind(wx.EVT_CHOICE, self.onChooseFunction, self._functionChoice)
             
-            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, _('Polarity:')))
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Polarity:')))
             self._polarityChoice = wx.Choice(parentWindow, wx.ID_ANY)
-            self._polarityChoice.Append(_('Unipolar'), Neuron.Polarity.UNIPOLAR)
-            self._polarityChoice.Append(_('Bipolar'), Neuron.Polarity.BIPOLAR)
-            self._polarityChoice.Append(_('Pseudo-unipolar'), Neuron.Polarity.PSEUDOUNIPOLAR)
-            self._polarityChoice.Append(_('Multipolar'), Neuron.Polarity.MULTIPOLAR)
-            self._unknownPolarityId = self._polarityChoice.Append(_('Unknown'), None)
+            self._polarityChoice.Append(gettext('Unipolar'), Neuron.Polarity.UNIPOLAR)
+            self._polarityChoice.Append(gettext('Bipolar'), Neuron.Polarity.BIPOLAR)
+            self._polarityChoice.Append(gettext('Pseudo-unipolar'), Neuron.Polarity.PSEUDOUNIPOLAR)
+            self._polarityChoice.Append(gettext('Multipolar'), Neuron.Polarity.MULTIPOLAR)
+            self._unknownPolarityId = self._polarityChoice.Append(gettext('Unknown'), None)
             self._multiplePolaritiesId = wx.NOT_FOUND
             self._sizer.Add(self._polarityChoice)
             parentWindow.Bind(wx.EVT_CHOICE, self.onChoosePolarity, self._polarityChoice)
             
-            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, _('Neurotransmitter:')))
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Neurotransmitter:')))
             self._neurotransmitterChoice = wx.Choice(parentWindow, wx.ID_ANY)
             for neurotransmitter in wx.GetApp().library.neurotransmitters():
                 self._neurotransmitterChoice.Append(neurotransmitter.name, neurotransmitter)
-            self._unknownNeurotransmitterId = self._neurotransmitterChoice.Append(_('Unknown'), None)
+            self._unknownNeurotransmitterId = self._neurotransmitterChoice.Append(gettext('Unknown'), None)
             self._multipleNeurotransmittersId = wx.NOT_FOUND
             self._sizer.Add(self._neurotransmitterChoice)
             parentWindow.Bind(wx.EVT_CHOICE, self.onChooseNeurotransmitter, self._neurotransmitterChoice)
@@ -80,7 +80,7 @@ class NeuronInspector( ObjectInspector ):
                         if self._neuronClassChoice.GetClientData(index) == self.objects[0].neuronClass:
                             self._neuronClassChoice.SetSelection(index)
             else:
-                self._multipleNeuronClassesId = self._neuronClassChoice.Append(_('Multiple values'), None)
+                self._multipleNeuronClassesId = self._neuronClassChoice.Append(gettext('Multiple values'), None)
                 self._neuronClassChoice.SetSelection(self._multipleNeuronClassesId)
         
         if attribute is None or attribute == 'function':
@@ -93,7 +93,7 @@ class NeuronInspector( ObjectInspector ):
                         if self._functionChoice.GetClientData(index) == self.objects[0].function:
                             self._functionChoice.SetSelection(index)
             else:
-                self._multipleFunctionsId = self._functionChoice.Append(_('Multiple values'), None)
+                self._multipleFunctionsId = self._functionChoice.Append(gettext('Multiple values'), None)
                 self._functionChoice.SetSelection(self._multipleFunctionsId)
         
         if attribute is None or attribute == 'polarity':
@@ -106,7 +106,7 @@ class NeuronInspector( ObjectInspector ):
                         if self._polarityChoice.GetClientData(index) == self.objects[0].polarity:
                             self._polarityChoice.SetSelection(index)
             else:
-                self._multiplePolaritiesId = self._polarityChoice.Append(_('Multiple values'), None)
+                self._multiplePolaritiesId = self._polarityChoice.Append(gettext('Multiple values'), None)
                 self._polarityChoice.SetSelection(self._multiplePolaritiesId)
         
         if attribute is None or attribute == 'neurotransmitter':
@@ -117,7 +117,7 @@ class NeuronInspector( ObjectInspector ):
                 else:
                     self._neurotransmitterChoice.SetStringSelection(self.objects[0].neurotransmitter.name)
             else:
-                self._multipleNeurotransmittersId = self._neurotransmitterChoice.Append(_('Multiple values'), None)
+                self._multipleNeurotransmittersId = self._neurotransmitterChoice.Append(gettext('Multiple values'), None)
                 self._neurotransmitterChoice.SetSelection(self._multipleNeurotransmittersId)
         
         self._sizer.Layout()

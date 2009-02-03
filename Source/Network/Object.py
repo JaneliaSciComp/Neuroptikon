@@ -16,7 +16,7 @@ class Object(object):
     
     @classmethod
     def displayName(cls):
-        return _(cls.__name__)
+        return gettext(cls.__name__)
     
     
     @classmethod

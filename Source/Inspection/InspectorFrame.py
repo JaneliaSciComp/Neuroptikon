@@ -6,7 +6,7 @@ import Inspection
 class InspectorFrame( wx.Frame ):
     
     def __init__(self, parent=None):
-        wx.Frame.__init__(self, parent, -1, _("Inspector"), size=(200,300), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
+        wx.Frame.__init__(self, parent, -1, gettext('Inspector'), size=(200,300), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
         
         self.display = None
         self.toolBook = None
@@ -112,7 +112,7 @@ class InspectorFrame( wx.Frame ):
     def onPageChanged(self, event):
         inspector = self.inspectors[event.GetSelection()]
         if inspector is not None:
-            self.SetTitle(inspector.name() + ' ' + _('Inspector'))
+            self.SetTitle(inspector.name() + ' ' + gettext('Inspector'))
         self.toolBook.Layout()
         self.Layout()
         self.Fit()

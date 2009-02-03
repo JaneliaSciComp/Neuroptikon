@@ -96,9 +96,9 @@ class ObjectInspector(Inspector):
     
     def populateNameField(self):
         if self.objects.haveEqualAttr('name'):
-            self.titleField.SetLabel(self.objects[0].name or ("<" + _("unnamed ") + self.__class__.objectClass().displayName().lower() + ">"))
+            self.titleField.SetLabel(self.objects[0].name or ('<' + gettext('unnamed ') + self.__class__.objectClass().displayName().lower() + '>'))
         else:
-            self.titleField.SetLabel(_("Multiple names"))
+            self.titleField.SetLabel(gettext('Multiple names'))
     
     
     def populateObjectSizer(self, attribute = None):

@@ -16,7 +16,7 @@ class LibraryItem(object):
         object.__init__(self, *args, **keywordsArgs)
         
         if identifier is None:
-            raise ValueError, _('Library items must have an identifier.')
+            raise ValueError, gettext('Library items must have an identifier.')
         
         self.identifier = identifier
         self.name = name

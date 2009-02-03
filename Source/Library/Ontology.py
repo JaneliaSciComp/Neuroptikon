@@ -40,7 +40,7 @@ class Ontology(LibraryItem, dict):
             if term.partOf not in self:
                 self.rootTerms = []
                 self.clear()
-                raise ValueError, _("The parent (%s) of term '%s' (%s) is not in the ontology.") % (term.partOf, term.name, term.identifier)
+                raise ValueError, gettext('The parent (%s) of term "%s" (%s) is not in the ontology.') % (term.partOf, term.name, term.identifier)
             parent = self[term.partOf]
             term.partOf = parent
             parent.parts.append(term)

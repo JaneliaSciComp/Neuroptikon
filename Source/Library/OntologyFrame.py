@@ -6,7 +6,7 @@ class OntologyFrame( wx.Frame ):
     
     def __init__(self, ontology):
         
-        wx.Frame.__init__(self, None, -1, _('Ontology: %s') % (ontology.name or ontology.identifier), size=(300, 400), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
+        wx.Frame.__init__(self, None, -1, gettext('Ontology: %s') % (ontology.name or ontology.identifier), size=(300, 400), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
         self.Bind(wx.EVT_CLOSE, self.Close)
         
         self.ontology = ontology

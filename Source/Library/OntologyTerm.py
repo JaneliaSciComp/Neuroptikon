@@ -6,7 +6,7 @@ class OntologyTerm(object):
         object.__init__(self, *args, **keywordArgs)
         
         if not isinstance(ontology, Ontology.Ontology):
-            raise ValueError, _('The first argument must be an Ontology instance')
+            raise ValueError, gettext('The first argument must be an Ontology instance')
         
         self.ontology = ontology
         self.oboStanza = oboStanza

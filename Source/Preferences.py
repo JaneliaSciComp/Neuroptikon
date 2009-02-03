@@ -4,7 +4,7 @@ import wx, wx.lib.colourselect
 class Preferences( wx.Frame ):
     
     def __init__(self, parent=None):
-        wx.Frame.__init__(self, parent, -1, _('Preferences'), size = (200,300), pos = (-1,-1))
+        wx.Frame.__init__(self, parent, -1, gettext('Preferences'), size = (200,300), pos = (-1,-1))
         
         # Build the UI
         config = wx.Config('Neuroptikon')
@@ -15,7 +15,7 @@ class Preferences( wx.Frame ):
         self.colorPicker = wx.lib.colourselect.ColourSelect(self, -1, "", backgroundColor)    #wx.ColourPickerCtrl(self, -1, backgroundColor)
         self.Bind(wx.lib.colourselect.EVT_COLOURSELECT, self.onColorChanged)
         colorBox = wx.BoxSizer(wx.HORIZONTAL)
-        colorBox.Add(wx.StaticText(self, -1, _('Default Background Color:')), 0, wx.EXPAND)
+        colorBox.Add(wx.StaticText(self, -1, gettext('Default Background Color:')), 0, wx.EXPAND)
         colorBox.AddSpacer(8)
         colorBox.Add(self.colorPicker, 1, wx.EXPAND)
         

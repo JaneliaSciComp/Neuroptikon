@@ -7,7 +7,7 @@ class DisplayInspector(Inspector):
     
     @classmethod
     def name(cls):
-        return _('Display')
+        return gettext('Display')
     
     
     @classmethod
@@ -26,7 +26,7 @@ class DisplayInspector(Inspector):
             self.backgroundColorPicker = wx.lib.colourselect.ColourSelect(self._window, wx.ID_ANY)
             self._window.Bind(wx.lib.colourselect.EVT_COLOURSELECT, self.onColorChanged, self.backgroundColorPicker)
             colorBox = wx.BoxSizer(wx.HORIZONTAL)
-            colorBox.Add(wx.StaticText(self._window, wx.ID_ANY, _('Background Color:')), 0, wx.EXPAND)
+            colorBox.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Background Color:')), 0, wx.EXPAND)
             colorBox.AddSpacer(8)
             colorBox.Add(self.backgroundColorPicker, 1, wx.EXPAND)
             

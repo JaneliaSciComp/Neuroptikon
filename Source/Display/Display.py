@@ -973,9 +973,11 @@ class Display(wx.glcanvas.GLCanvas):
                         osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * \
                         visible.sgNode.getMatrix() * \
                         osg.Matrixd.translate(0, 0, self.draggerZOffset)
-        self.simpleDragger.setMatrix(draggerMatrix)        self.simpleDragger.setupDefaultGeometry()
+        self.simpleDragger.setMatrix(draggerMatrix)
+        self.simpleDragger.setupDefaultGeometry()
         self.draggerLOD.addChild(self.simpleDragger, 0.0, pixelCutOff)
-        self.compositeDragger.setMatrix(draggerMatrix)        self.compositeDragger.setupDefaultGeometry()
+        self.compositeDragger.setMatrix(draggerMatrix)
+        self.compositeDragger.setupDefaultGeometry()
         self.draggerLOD.addChild(self.compositeDragger, pixelCutOff, 10000.0)
         rootNode.addChild(self.draggerLOD)
         
@@ -1030,7 +1032,10 @@ class Display(wx.glcanvas.GLCanvas):
             self.visibleWasDragged()
             
             if False:
-                rootNode.removeChild(self.compositeDragger)                                self.compositeDragger = None            else:
+                rootNode.removeChild(self.compositeDragger)
+                
+                self.compositeDragger = None
+            else:
                 rootNode.removeChild(self.draggerLOD)
                 
                 self.simpleDragger.setUpdateCallback(None)
@@ -1226,7 +1231,7 @@ class Display(wx.glcanvas.GLCanvas):
             if wildcard != '':
                 wildcard += '|'
             wildcard += fileTypes[index] + '|' + fileExtensions[index]
-        fileDialog = wx.FileDialog(None, _('Save As:'), '', '', wildcard, wx.FD_SAVE)
+        fileDialog = wx.FileDialog(None, gettext('Save As:'), '', '', wildcard, wx.FD_SAVE)
         if fileDialog.ShowModal() == wx.ID_OK:
             extension = fileExtensions[fileDialog.GetFilterIndex()]
             savePath = str(fileDialog.GetPath())

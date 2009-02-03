@@ -7,7 +7,7 @@ class GroupInspector(Inspector):
     
     @classmethod
     def name(cls):
-        return _('Group')
+        return gettext('Group')
     
     
     @classmethod
@@ -57,15 +57,15 @@ class GroupInspector(Inspector):
                 scaledImage = image.Rescale(16, 16)
                 bitmap.SetBitmap(wx.BitmapFromImage(scaledImage))
             self.gridSizer.Add(bitmap)
-            self.gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, visible.client.name or _("Unnamed ") + visible.client.__class__.__name__))
-            selectButton = wx.Button(self._window, wx.ID_ANY, _("Select"), wx.DefaultPosition, wx.DefaultSize, wx.BU_EXACTFIT)
+            self.gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, visible.client.name or gettext('Unnamed ') + visible.client.__class__.__name__))
+            selectButton = wx.Button(self._window, wx.ID_ANY, gettext('Select'), wx.DefaultPosition, wx.DefaultSize, wx.BU_EXACTFIT)
             selectButton.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
             selectButton.SetSize(wx.Size(50, selectButton.GetSize().GetHeight()))
             selectButton.SetMinSize(selectButton.GetSize())
             self._window.Bind(wx.EVT_BUTTON, self.onSelectVisible)
             self.gridSizer.Add(selectButton, 0, 0, 0, visible)
         
-        self.groupSizeField.SetLabel(str(len(selection)) + _(' items selected'))
+        self.groupSizeField.SetLabel(str(len(selection)) + gettext(' items selected'))
         
         self._window.Layout()
     
