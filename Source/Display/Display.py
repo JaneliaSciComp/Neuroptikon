@@ -922,6 +922,23 @@ class Display(wx.glcanvas.GLCanvas):
         return selection
     
     
+    def selectAll(self, report = True):
+        self.deselectAll(report = False)
+        for visible in self.visibles.itervalues():
+            if isinstance(visible, tuple):
+                visible = visible[1]    #stimulus tuple
+            
+            self.selectedVisibles.append(visible)
+            visible.setGlowColor(self._primarySelectionColor)
+            self.highlightedVisibles.append(visible)
+            visible.setOpacity(1)
+            if visible.pathStart is not None:
+                visible.animateFlow()
+                self.animatedVisibles.append(visible)
+        dispatcher.send(('set', 'selection'), self)
+            
+        
+    
     def deselectAll(self, report = True):
         self.clearDragger()
         while len(self.highlightedVisibles) > 0:
@@ -968,7 +985,6 @@ class Display(wx.glcanvas.GLCanvas):
             self.simpleDragger = osgManipulator.TranslateAxisDragger()
             self.compositeDragger = osgManipulator.TabBoxDragger()
             pixelCutOff = 400.0
-        # TODO: should scale so that increase in size is fixed and greater than glow increase (14).  Probably should use a ComputeBoundsVisitor...
         draggerMatrix = osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * \
                         osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * \
                         visible.sgNode.getMatrix() * \

@@ -76,6 +76,7 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_MENU, self.onCopy, self.copyMenuItem)
         self.pasteMenuItem = editMenu.Append(wx.NewId(), gettext('Paste\tCtrl-V'), gettext('Paste the contents of the clipboard'))
         self.Bind(wx.EVT_MENU, self.onPaste, self.pasteMenuItem)
+        self.Bind(wx.EVT_MENU, self.onSelectAll, editMenu.Append(wx.NewId(), gettext('Select All\tCtrl-A'), gettext('Select all objects in the window')))
         editMenu.AppendSeparator()
         self.pasteMenuItem = editMenu.Append(wx.NewId(), gettext('Find\tCtrl-F'), gettext('Find objects in the network'))
         self.Bind(wx.EVT_MENU, self.onFind, self.pasteMenuItem)
@@ -150,6 +151,10 @@ class NeuroptikonFrame( wx.Frame ):
     
     def onPaste(self, event):
         pass    # TODO
+    
+    
+    def onSelectAll(self, event):
+        self.display.selectAll()
     
     
     def onFind(self, event):
