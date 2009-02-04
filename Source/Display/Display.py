@@ -961,7 +961,7 @@ class Display(wx.glcanvas.GLCanvas):
         if visible.parent is None:
             rootNode = self.rootNode
         else:
-            rootNode = visible.parent.sgNode
+            rootNode = visible.parent.childGroup
         
         rootNode.removeChild(visible.sgNode)
         
@@ -1017,11 +1017,7 @@ class Display(wx.glcanvas.GLCanvas):
         matrix = self.activeDragger.getMatrix()
         position = matrix.getTrans()
         size = matrix.getScale()
-        if visible.parent is None or not visible.sizeIsAbsolute:
-            parentSize = (1.0, 1.0, 1.0)
-        else:
-            parentSize = visible.parent.worldSize()
-        visible.setPosition((position.x() * parentSize[0], position.y() * parentSize[1], position.z() - self.draggerZOffset))
+        if visible.parent is None or not visible.sizeIsAbsolute:            parentSize = (1.0, 1.0, 1.0)        else:            parentSize = visible.parent.worldSize()        visible.setPosition((position.x(), position.y(), position.z() - self.draggerZOffset))
         visible.setSize((size.x() * parentSize[0] / self.draggerScale, size.y() * parentSize[1] / self.draggerScale, size.z() * parentSize[2] / self.draggerScale))
     
     
@@ -1034,7 +1030,7 @@ class Display(wx.glcanvas.GLCanvas):
             if visible.parent is None:
                 rootNode = self.rootNode
             else:
-                rootNode = visible.parent.sgNode
+                rootNode = visible.parent.childGroup
             
             self.commandMgr.disconnect(self.simpleDragger)
             self.commandMgr.disconnect(self.compositeDragger)
@@ -1047,18 +1043,13 @@ class Display(wx.glcanvas.GLCanvas):
             rootNode.addChild(visible.sgNode)
             self.visibleWasDragged()
             
-            if False:
-                rootNode.removeChild(self.compositeDragger)
-                
-                self.compositeDragger = None
-            else:
-                rootNode.removeChild(self.draggerLOD)
-                
-                self.simpleDragger.setUpdateCallback(None)
-                self.simpleDragger = None
-                self.compositeDragger.setUpdateCallback(None)
-                self.compositeDragger = None
-                self.draggerLOD = None
+            rootNode.removeChild(self.draggerLOD)
+            
+            self.simpleDragger.setUpdateCallback(None)
+            self.simpleDragger = None
+            self.compositeDragger.setUpdateCallback(None)
+            self.compositeDragger = None
+            self.draggerLOD = None
     
     
     def onAutoLayout(self, event):
