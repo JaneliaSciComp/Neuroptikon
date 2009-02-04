@@ -32,7 +32,7 @@ class RegionInspector( ObjectInspector ):
             ontologySizer.Add(self._ontologyField, 1, wx.LEFT, 2)
             self._browseOntologyButton = wx.Button(parentWindow, wx.ID_ANY, gettext('Browse'), style = wx.BU_EXACTFIT)
             self._browseOntologyButton.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
-            self._browseOntologyButton.SetSize(wx.Size(50, self._browseOntologyButton.GetSize().GetHeight()))
+            self._browseOntologyButton.SetSize(wx.Size(60, self._browseOntologyButton.GetSize().GetHeight()))
             self._browseOntologyButton.SetMinSize(self._browseOntologyButton.GetSize())
             self._window.Bind(wx.EVT_BUTTON, self.onBrowseOntology, self._browseOntologyButton)
             ontologySizer.Add(self._browseOntologyButton, 0, wx.LEFT, 8)
@@ -52,14 +52,16 @@ class RegionInspector( ObjectInspector ):
             self._sizer.Add(parentSizer)
             
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Sub-regions:')))
+            self._subRegionsOptions = wx.BoxSizer(wx.VERTICAL)
             self._subRegionsField = wx.StaticText(parentWindow, wx.ID_ANY)
-            self._sizer.Add(self._subRegionsField, 1, wx.EXPAND | wx.ALL, 5)
+            self._subRegionsOptions.Add(self._subRegionsField, 1, wx.EXPAND)
             self._subRegionsSizer = wx.FlexGridSizer(0, 3, 2, 5)
             self._subRegionsSizer.SetFlexibleDirection(wx.HORIZONTAL)
-            self._sizer.Add(self._subRegionsSizer, 1, wx.EXPAND)
+            self._subRegionsOptions.Add(self._subRegionsSizer, 1, wx.EXPAND)
             self._addSubRegionsButton = wx.Button(parentWindow, wx.ID_ANY, gettext('Add sub-regions from ontology'), style = wx.BU_EXACTFIT)
             self._window.Bind(wx.EVT_BUTTON, self.onAddSubRegions, self._addSubRegionsButton)
-            self._sizer.Add(self._addSubRegionsButton, 0, wx.ALL, 5)
+            self._subRegionsOptions.Add(self._addSubRegionsButton, 0, wx.EXPAND)
+            self._sizer.Add(self._subRegionsOptions)
             
             self._parentWindow = parentWindow
         
@@ -95,10 +97,12 @@ class RegionInspector( ObjectInspector ):
         if len(self.objects) > 1:
             self._subRegionsField.Show()
             self._subRegionsField.SetLabel(gettext('Multiple values'))
+            self._subRegionsOptions.Hide(self._subRegionsSizer)
             self._addSubRegionsButton.Hide()
         else:
             region = self.objects[0]
             if len(region.subRegions) == 0:
+                self._subRegionsOptions.Hide(self._subRegionsSizer)
                 if region.ontologyTerm is not None and len(region.ontologyTerm.parts) > 0:
                     self._subRegionsField.Hide()
                     self._addSubRegionsButton.Show()
@@ -109,6 +113,7 @@ class RegionInspector( ObjectInspector ):
             else:
                 self._subRegionsField.Hide()
                 self._addSubRegionsButton.Hide()
+                self._subRegionsOptions.Show(self._subRegionsSizer)
                 for subRegion in self.objects[0].subRegions:
                     self._subRegionsSizer.Add(wx.StaticBitmap(self._parentWindow, wx.ID_ANY, self._regionBitmap))
                     self._subRegionsSizer.Add(wx.StaticText(self._parentWindow, wx.ID_ANY, subRegion.name or gettext('Unnamed region')))
