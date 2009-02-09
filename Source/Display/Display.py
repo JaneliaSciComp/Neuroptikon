@@ -963,38 +963,47 @@ class Display(wx.glcanvas.GLCanvas):
         else:
             rootNode = visible.parent.childGroup
         
+        lodBound = visible.sgNode.getBound()
         rootNode.removeChild(visible.sgNode)
         
         self.dragSelection = osgManipulator.Selection()
         self.dragSelection.addChild(visible.sgNode)
         rootNode.addChild(self.dragSelection)
         
-        self.draggerLOD = osg.LOD()
-        self.draggerLOD.setRangeMode(osg.LOD.PIXEL_SIZE_ON_SCREEN)
         if self.viewDimensions == 2:
             self.draggerZOffset = visible.size()[2]
-            if visible.parent is not None and visible.sizeIsAbsolute:
-                self.draggerZOffset /= visible.parent.worldSize()[2]
             self.draggerScale = 1.0
             self.simpleDragger = osgManipulator.TranslatePlaneDragger()
             self.compositeDragger = osgManipulator.TabPlaneDragger()
-            pixelCutOff = 100.0
+            if visible.parent is not None and visible.sizeIsAbsolute:
+                self.draggerZOffset /= visible.parent.worldSize()[2]
+                pixelCutOff = 200.0 / visible.parent.worldSize()[0]
+            else:
+                pixelCutOff = 200.0
         elif self.viewDimensions == 3:
             self.draggerZOffset = 0.0
             self.draggerScale = 1.02
             self.simpleDragger = osgManipulator.TranslateAxisDragger()
             self.compositeDragger = osgManipulator.TabBoxDragger()
-            pixelCutOff = 400.0
+            if visible.parent is not None and visible.sizeIsAbsolute:
+                pixelCutOff = 200.0 / visible.parent.worldSize()[0]
+            else:
+                pixelCutOff = 200.0
         draggerMatrix = osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * \
                         osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * \
                         visible.sgNode.getMatrix() * \
                         osg.Matrixd.translate(0, 0, self.draggerZOffset)
         self.simpleDragger.setMatrix(draggerMatrix)
         self.simpleDragger.setupDefaultGeometry()
-        self.draggerLOD.addChild(self.simpleDragger, 0.0, pixelCutOff)
         self.compositeDragger.setMatrix(draggerMatrix)
         self.compositeDragger.setupDefaultGeometry()
+        
+        self.draggerLOD = osg.LOD()
+        self.draggerLOD.setRangeMode(osg.LOD.PIXEL_SIZE_ON_SCREEN)
+        self.draggerLOD.addChild(self.simpleDragger, 0.0, pixelCutOff)
         self.draggerLOD.addChild(self.compositeDragger, pixelCutOff, 10000.0)
+        self.draggerLOD.setCenter(lodBound.center())
+        self.draggerLOD.setRadius(lodBound.radius())
         rootNode.addChild(self.draggerLOD)
         
         # TODO: This is a serious hack.  The existing picking code in PickHandler doesn't handle the dragger LOD correctly.  It always picks the composite dragger.  Cull callbacks are added here so that we can know which dragger was most recently rendered.
@@ -1017,7 +1026,11 @@ class Display(wx.glcanvas.GLCanvas):
         matrix = self.activeDragger.getMatrix()
         position = matrix.getTrans()
         size = matrix.getScale()
-        if visible.parent is None or not visible.sizeIsAbsolute:            parentSize = (1.0, 1.0, 1.0)        else:            parentSize = visible.parent.worldSize()        visible.setPosition((position.x(), position.y(), position.z() - self.draggerZOffset))
+        if visible.parent is None or not visible.sizeIsAbsolute:
+            parentSize = (1.0, 1.0, 1.0)
+        else:
+            parentSize = visible.parent.worldSize()
+        visible.setPosition((position.x(), position.y(), position.z() - self.draggerZOffset))
         visible.setSize((size.x() * parentSize[0] / self.draggerScale, size.y() * parentSize[1] / self.draggerScale, size.z() * parentSize[2] / self.draggerScale))
     
     
