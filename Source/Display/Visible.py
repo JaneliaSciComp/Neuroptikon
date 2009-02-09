@@ -154,13 +154,14 @@ class Visible(object):
             opacity = 0
         elif opacity > 1:
             opacity = 1
-        self._material.setAlpha(osg.Material.FRONT_AND_BACK, opacity)
-        if opacity == 1:
-            self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.OPAQUE_BIN)
-            self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
-        else:
-            self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
-            self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+        if self._shapeDrawable is not None:
+            self._material.setAlpha(osg.Material.FRONT_AND_BACK, opacity)
+            if opacity == 1:
+                self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.OPAQUE_BIN)
+                self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
+            else:
+                self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
+                self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
         
         if self._textDrawable is not None:
             self._textDrawable.setColor(osg.Vec4(0, 0, 0, opacity))

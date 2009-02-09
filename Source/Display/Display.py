@@ -901,14 +901,21 @@ class Display(wx.glcanvas.GLCanvas):
         if self._useGhosts:
             # Dim everything that isn't selected or connected to the selection.
             for key, visible in self.visibles.iteritems():
-                if isinstance(visible, Visible):
-                    ghost = True
+                ghost = True
+                if isinstance(visible, tuple):
+                    ancestors = [visible[0], visible[1]]
+                    ancestors.extend(visible[0].ancestors())
+                else:
                     ancestors = [visible]
                     ancestors.extend(visible.ancestors())
-                    for ancestor in ancestors:
-                        if ancestor in self.highlightedVisibles or ancestor in self.animatedVisibles:
-                            ghost = False
-                    if ghost:
+                for ancestor in ancestors:
+                    if ancestor in self.highlightedVisibles or ancestor in self.animatedVisibles:
+                        ghost = False
+                if ghost:
+                    if isinstance(visible, tuple):
+                        visible[0].setOpacity(0.1)
+                        visible[1].setOpacity(0.1)
+                    else:
                         visible.setOpacity(0.1)
     
     
@@ -950,7 +957,10 @@ class Display(wx.glcanvas.GLCanvas):
         if self._useGhosts:
             # Restore all visibles to full opacity.
             for key, visible in self.visibles.iteritems():
-                if isinstance(visible, Visible):
+                if isinstance(visible, tuple):
+                    visible[0].setOpacity(1)
+                    visible[1].setOpacity(1)
+                else:
                     visible.setOpacity(1)
         
         if report:
