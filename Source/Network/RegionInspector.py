@@ -87,7 +87,7 @@ class RegionInspector( ObjectInspector ):
                     self._parentNameField.SetLabel(gettext('None'))
                     self._selectParentButton.Disable()
                 else:
-                    self._parentNameField.SetLabel(self.objects[0].parentRegion.name)
+                    self._parentNameField.SetLabel(self.objects[0].parentRegion.name or gettext('Unnamed region'))
                     self._selectParentButton.Enable()
             else:
                 self._parentNameField.SetLabel(gettext('Multiple values'))
