@@ -128,8 +128,7 @@ class RegionInspector( ObjectInspector ):
     
     
     def onBrowseOntology(self, event):
-        term = self.objects[0].ontologyTerm
-        term.ontology.browse(term)
+        self.objects[0].ontologyTerm.browse()
     
     
     def onSelectParentRegion(self, event):

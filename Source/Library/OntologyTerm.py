@@ -42,3 +42,10 @@ class OntologyTerm(object):
             if self.oboStanza.definition is not None and self.oboStanza.definition.value == 'Obsolete.':
                self.obsolete = True
     
+    
+    
+    def browse(self):
+        # Make sure the ontology is open
+        self.ontology.browse()
+        
+        self.ontology.frame.selectTerm(self)

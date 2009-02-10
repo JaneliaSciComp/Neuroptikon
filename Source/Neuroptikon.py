@@ -119,7 +119,7 @@ if __name__ == "__main__":
             self.library.add(Modality('sound', gettext('Sound')))
             self.library.add(Modality('taste', gettext('Taste')))
             
-            flyOntology = Ontology('drosophila brain')
+            flyOntology = Ontology('drosophila brain', name = gettext('Drosophila brain'))
             flyOntology.importOBO('Library/flybrain.obo')
             self.library.add(flyOntology)
 
@@ -232,6 +232,10 @@ if __name__ == "__main__":
         def onOpenPreferences(self, event):
             self.preferences.Show(True)
             return self.preferences
+        
+        
+        def onBrowseLibrary(self, event):
+            self.library.browse()
         
         
         def onOpenInspector(self, event):

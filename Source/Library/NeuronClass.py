@@ -1,4 +1,6 @@
+import wx
 from LibraryItem import LibraryItem
+from Network.Neuron import Neuron
 
 class NeuronClass(LibraryItem):
     
@@ -10,6 +12,15 @@ class NeuronClass(LibraryItem):
     @classmethod
     def lookupProperty(cls):
         return 'neuronClass'
+    
+    
+    @classmethod
+    def bitmap(cls):
+        image = Neuron.image()
+        if image is None or not image.IsOk():
+            return None
+        else:
+            return wx.BitmapFromImage(image)
     
     
     def __init__(self, parentClass = None, *args, **keywordArgs):

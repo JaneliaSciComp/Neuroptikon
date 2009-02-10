@@ -1,18 +1,15 @@
 import wx
 import cPickle
-import Library
+from LibraryItemFrame import LibraryItemFrame
 
-class OntologyFrame( wx.Frame ):
+class OntologyFrame( LibraryItemFrame ):
     
     def __init__(self, ontology):
         
-        wx.Frame.__init__(self, None, -1, gettext('Ontology: %s') % (ontology.name or ontology.identifier), size=(300, 400), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
-        self.Bind(wx.EVT_CLOSE, self.Close)
-        
-        self.ontology = ontology
+        LibraryItemFrame.__init__(self, ontology)
         
         self.treeCtrl = wx.TreeCtrl(self, wx.ID_ANY)
-        for rootTerm in self.ontology.rootTerms:
+        for rootTerm in ontology.rootTerms:
             rootItem = self.treeCtrl.AddRoot(rootTerm.name)
             self.treeCtrl.SetPyData(rootItem, rootTerm)
             if rootTerm.obsolete:
@@ -90,9 +87,4 @@ class OntologyFrame( wx.Frame ):
             
             if termItem is not None:
                 self.treeCtrl.SelectItem(termItem)
-    
-    
-    def Close(self, event=None):
-        self.Hide()
-        return True
     

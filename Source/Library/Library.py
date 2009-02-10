@@ -1,27 +1,33 @@
 from LibraryItem import LibraryItem
+from LibraryFrame import LibraryFrame
 
 class Library(object):
     
     def __init__(self):
         self._library = {}
+        self._frame = LibraryFrame()
     
     
     def add(self, item):
         if not issubclass(item.__class__, LibraryItem):
             raise ValueError, 'Library items must be instances of a subclass of LibraryItem'
         
-        classKey = "_" + item.__class__.__name__.lower() + "Dict"
-        if self._library.has_key(classKey):
+        if item.__class__.__name__ in self._library:
             # This class of item has been added before.
-            dict = self._library[classKey]
+            dict = self._library[item.__class__.__name__]
         else:
             # Create and retain a new dictionary for this class of item.
             dict = {}
-            self._library[classKey] = dict
+            self._library[item.__class__.__name__] = dict
             # Add a method to ourself that returns the full list of items of this class.
             setattr(self, item.__class__.listProperty(), lambda: sorted(dict.values(), cmp=lambda x,y: cmp(x.name.lower(), y.name.lower())))
             # Add a method to ourself that performs a lookup of items of this class.
-            setattr(self, item.__class__.lookupProperty(), lambda itemId: dict[itemId] if dict.has_key(itemId) else None)
+            setattr(self, item.__class__.lookupProperty(), lambda itemId: dict[itemId] if itemId in dict else None)
+            self._frame.addItemClass(item.__class__)
         
         dict[item.identifier] = item
+    
+    
+    def browse(self):
+        self._frame.Show()
     

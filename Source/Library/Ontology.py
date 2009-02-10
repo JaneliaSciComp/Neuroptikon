@@ -1,9 +1,16 @@
+import wx
+import os
 from LibraryItem import LibraryItem
 from OntologyTerm import OntologyTerm
 from OntologyFrame import OntologyFrame
 import obitools.obo.parser as obo
 
 class Ontology(LibraryItem, dict):
+    
+    @classmethod
+    def displayName(cls):
+        return gettext('Ontology')
+    
     
     @classmethod
     def listProperty(cls):
@@ -15,10 +22,26 @@ class Ontology(LibraryItem, dict):
         return 'ontology'
     
     
+    @classmethod
+    def bitmap(cls):
+        bitmap = None
+        try:
+            image = wx.Image("Library" + os.sep + "Ontology.png")
+            if image is not None and image.IsOk():
+                bitmap = wx.BitmapFromImage(image)
+        except:
+            pass
+        return bitmap
+    
+    
+    @classmethod
+    def frameClass(cls):
+        return OntologyFrame
+    
+    
     def __init__(self, identifier = None, *args, **keywordArgs):
         LibraryItem.__init__(self, identifier, *args, **keywordArgs)
         self.rootTerms = []
-        self.frame = None
     
     
     def importOBO(self, filePath):
@@ -67,11 +90,4 @@ class Ontology(LibraryItem, dict):
                 matchingTerms.append(term)
         
         return matchingTerms
-    
-    
-    def browse(self, term = None):
-        if self.frame is None:
-            self.frame = OntologyFrame(self)
-        self.frame.Show()
-        self.frame.selectTerm(term)
     

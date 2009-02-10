@@ -1,4 +1,6 @@
+import wx
 from LibraryItem import LibraryItem
+from Network.Stimulus import Stimulus
 
 class Modality(LibraryItem):
     
@@ -10,6 +12,16 @@ class Modality(LibraryItem):
     @classmethod
     def lookupProperty(cls):
         return 'modality'
+    
+    
+    @classmethod
+    def bitmap(cls):
+        image = Stimulus.image()
+        if image is None or not image.IsOk():
+            return None
+        else:
+            return wx.BitmapFromImage(image)
+    
     
 
 # Possible additional attributes for the future:  
