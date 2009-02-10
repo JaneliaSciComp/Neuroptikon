@@ -1,6 +1,6 @@
 import wx
 import sys
-from pydispatch import dispatcher
+from wx.py import dispatcher
 import Inspection
 
 class InspectorFrame( wx.Frame ):

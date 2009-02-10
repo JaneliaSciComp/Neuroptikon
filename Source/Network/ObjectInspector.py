@@ -2,7 +2,7 @@ import wx
 from Inspection.Inspector import Inspector
 from Object import Object
 from ObjectList import ObjectList
-from pydispatch import dispatcher
+from wx.py import dispatcher
 
 
 class ObjectInspector(Inspector):

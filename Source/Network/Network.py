@@ -1,5 +1,5 @@
 from networkx import *
-from pydispatch import dispatcher
+from wx.py import dispatcher
 from Region import Region
 from Pathway import Pathway
 from Neuron import Neuron
@@ -76,7 +76,7 @@ class Network:
             self.graph.add_edge(id(object), id(object.target), object)
         elif isinstance(object, Region) or isinstance(object, Neuron) or isinstance(object, Muscle):
             self.graph.add_node(id(object))
-        dispatcher.send("addition", self, [object])
+        dispatcher.send('addition', self, affectedObjects = [object])
     
     
     def objectWithId(self, node):

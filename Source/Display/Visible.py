@@ -8,7 +8,7 @@ from Network.Stimulus import Stimulus
 from Network.Innervation import Innervation
 from AnimatedTextureCallback import AnimatedTextureCallback
 
-from pydispatch import dispatcher
+from wx.py import dispatcher
 from math import atan2, pi, sqrt
 import random
 

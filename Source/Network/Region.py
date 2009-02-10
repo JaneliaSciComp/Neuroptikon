@@ -1,6 +1,6 @@
 from Object import *
 from Pathway import Pathway
-from pydispatch import dispatcher
+from wx.py import dispatcher
 
 
 class Region(Object):

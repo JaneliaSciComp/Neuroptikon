@@ -1,6 +1,6 @@
 import wx, wx.lib.colourselect
 import os, sys
-from pydispatch import dispatcher
+from wx.py import dispatcher
 from Inspection.Inspector import Inspector
 from Network.ObjectList import ObjectList
 from Visible import Visible

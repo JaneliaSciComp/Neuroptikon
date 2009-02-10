@@ -16,7 +16,7 @@ from Network.Muscle import Muscle
 from Network.Innervation import Innervation
 from Network.ObjectList import ObjectList
 from Visible import Visible
-from pydispatch import dispatcher
+from wx.py import dispatcher
 from networkx import *
 from math import pi, fabs
 from numpy import diag, mat, sign, inner, isinf, zeros

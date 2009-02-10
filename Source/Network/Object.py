@@ -1,6 +1,6 @@
 import wx
 import os
-from pydispatch import dispatcher
+from wx.py import dispatcher
 from networkx import shortest_path
 
 class Object(object):
