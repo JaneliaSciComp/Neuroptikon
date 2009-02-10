@@ -61,18 +61,19 @@ class PickHandler(osgGA.GUIEventHandler):
             intersectionVisitor.setTraversalMode(osg.NodeVisitor.TRAVERSE_ACTIVE_CHILDREN)
             viewer.getCamera().accept(intersectionVisitor)
             if picker.containsIntersections():
+                # Add all intersections from the first dragger hit onward to the pointer info.  This allows dragging of nested regions.
                 self.pointerInfo.setCamera(viewer.getCamera())
                 self.pointerInfo.setMousePosition(eventAdaptor.getX(), eventAdaptor.getY())
                 for intersection in picker.getIntersections():
-                    localPoint = intersection.getLocalIntersectPoint()  # have to do stupid conversion from Vec3d to Vec3
-                    self.pointerInfo.addIntersection(intersection.nodePath, osg.Vec3(localPoint.x(), localPoint.y(), localPoint.z()))
-                intersection = picker.getFirstIntersection()
-                for node in intersection.nodePath:
-                    self.dragger = osgManipulator.NodeToDragger(node)
-                    if self.dragger is not None:
-                        self.dragger.handle(self.pointerInfo, eventAdaptor, viewer)
-                        eventWasHandled = True
-                        break
+                    for node in intersection.nodePath:
+                        if self.dragger is None:
+                            self.dragger = osgManipulator.NodeToDragger(node)
+                        if self.dragger is not None:
+                            localPoint = intersection.getLocalIntersectPoint()  # have to do stupid conversion from Vec3d to Vec3
+                            self.pointerInfo.addIntersection(intersection.nodePath, osg.Vec3(localPoint.x(), localPoint.y(), localPoint.z()))
+                if self.dragger is not None:
+                    self.dragger.handle(self.pointerInfo, eventAdaptor, viewer)
+                    eventWasHandled = True
             if self._display.draggerLOD is not None:
                 if self._display.activeDragger == self._display.simpleDragger:
                     self._display.draggerLOD.addChild(self._display.compositeDragger)
