@@ -53,3 +53,4 @@ class LibraryItem(object):
             if self.frame is None:
                 self.frame = self.__class__.frameClass()(self)
             self.frame.Show()
+            self.frame.Raise()

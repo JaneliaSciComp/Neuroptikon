@@ -169,6 +169,7 @@ if __name__ == "__main__":
                 self._console = py.shell.ShellFrame(title=gettext('Console'), config=self.config, dataDir=confDir, locals=self.scriptLocals())
                 #TODO: need to just hide the console window on close or set up some kind of callback to clear _console when the console closes
             self._console.Show()
+            self._console.Raise()
         
         
         def onNewNetwork(self, event=None):
@@ -191,6 +192,7 @@ if __name__ == "__main__":
             frame = NeuroptikonFrame(None)
             frame.display.setNetwork(network)
             frame.Show(True)
+            frame.Raise()
             self._frames.append(frame)
             return frame.display
         
@@ -231,6 +233,7 @@ if __name__ == "__main__":
         
         def onOpenPreferences(self, event):
             self.preferences.Show(True)
+            self.preferences.Raise()
             return self.preferences
         
         
@@ -240,6 +243,7 @@ if __name__ == "__main__":
         
         def onOpenInspector(self, event):
             self.inspector.Show(True)
+            self.inspector.Raise()
             return self.inspector
         
         

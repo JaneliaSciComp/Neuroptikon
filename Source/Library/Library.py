@@ -30,4 +30,5 @@ class Library(object):
     
     def browse(self):
         self._frame.Show()
+        self._frame.Raise()
     
