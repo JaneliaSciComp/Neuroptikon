@@ -189,8 +189,7 @@ if __name__ == "__main__":
         
         
         def displayNetwork(self, network):
-            frame = NeuroptikonFrame(None)
-            frame.display.setNetwork(network)
+            frame = NeuroptikonFrame(network)
             frame.Show(True)
             frame.Raise()
             self._frames.append(frame)

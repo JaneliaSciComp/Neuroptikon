@@ -6,8 +6,8 @@ from Search.Finder import Finder
 
 
 class NeuroptikonFrame( wx.Frame ):
-    def __init__(self, parent, id=wx.ID_ANY, title=gettext('Neuroptikon')):
-        wx.Frame.__init__(self, parent, id, title, size=(800,600), style=wx.DEFAULT_FRAME_STYLE|wx.FULL_REPAINT_ON_RESIZE)
+    def __init__(self, network, id=wx.ID_ANY, title=gettext('Neuroptikon')):
+        wx.Frame.__init__(self, None, id, title, size=(800,600), style=wx.DEFAULT_FRAME_STYLE|wx.FULL_REPAINT_ON_RESIZE)
         
         self.Bind(wx.EVT_ACTIVATE, self.onActivate)
         self.Bind(wx.EVT_CLOSE, self.onCloseWindow)
@@ -16,6 +16,7 @@ class NeuroptikonFrame( wx.Frame ):
         
         width, height = self.GetClientSize()
         self.display = Display(splitter, wx.ID_ANY, 0, 0, width, height)
+        self.display.setNetwork(network)
         
         self._console = wx.py.shell.Shell(splitter, wx.ID_ANY, locals = self.scriptLocals(), introText=gettext('Welcome to Neuroptikon.'))
         
