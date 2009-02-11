@@ -118,6 +118,9 @@ class Display(wx.glcanvas.GLCanvas):
         
         self.selectionShouldExtend = False
         self.findShortestPath = False
+        self.hoverSelect = True
+        self.hoverSelecting = False
+        self.hoverSelected = False  # set to True if the current selection was made by hovering
         
         self.graphicsWindow = self.viewer2D.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
         
@@ -285,13 +288,15 @@ class Display(wx.glcanvas.GLCanvas):
         if event.ButtonDown():
             self.selectionShouldExtend = event.ShiftDown()
             self.findShortestPath = event.AltDown()
-            button = event.GetButton()
-            self.graphicsWindow.getEventQueue().mouseButtonPress(event.GetX(), event.GetY(), button)
+            self.graphicsWindow.getEventQueue().mouseButtonPress(event.GetX(), event.GetY(), event.GetButton())
         elif event.ButtonUp():
-            button = event.GetButton()
-            self.graphicsWindow.getEventQueue().mouseButtonRelease(event.GetX(), event.GetY(), button)
+            self.graphicsWindow.getEventQueue().mouseButtonRelease(event.GetX(), event.GetY(), event.GetButton())
         elif event.Dragging():
             self.graphicsWindow.getEventQueue().mouseMotion(event.GetX(), event.GetY())
+        elif event.Moving() and self.hoverSelect:
+            self.hoverSelecting = True
+            self.graphicsWindow.getEventQueue().mouseButtonPress(event.GetX(), event.GetY(), wx.MOUSE_BTN_LEFT)
+            self.graphicsWindow.getEventQueue().mouseButtonRelease(event.GetX(), event.GetY(), wx.MOUSE_BTN_LEFT)
         self.Refresh()
     
     
@@ -749,8 +754,8 @@ class Display(wx.glcanvas.GLCanvas):
                     if pathVisible is not None:
                         self.selectVisible(pathVisible, extend = True)
                 return
-                
-            if not extend or visible not in self.selectedVisibles:
+            
+            if not extend or visible not in self.selectedVisibles or (self.hoverSelected and not self.hoverSelecting):  # and self.selectedVisibles == [visible]):
                 if isinstance(object, Arborization) and not self.objectIsSelected(object.neurite.neuron()):
                     object = object.neurite.neuron()
                 elif isinstance(object, Synapse) and not self.objectIsSelected(object.presynapticNeurite.neuron()):
@@ -759,6 +764,8 @@ class Display(wx.glcanvas.GLCanvas):
                     object = list(object.neurites)[0].neuron()
                 if not extend:
                     self.deselectAll(report = False)
+                self.hoverSelected = self.hoverSelecting
+                self.hoverSelecting = False
                 # TODO: highlight via display filters
                 # TODO: handle stimulus tuple
                 self.selectedVisibles.append(visible)
@@ -843,60 +850,67 @@ class Display(wx.glcanvas.GLCanvas):
         dispatcher.send(('set', 'selection'), self)
         
         # Update visible attributes based on the new selection.
-        if len(self.selectedVisibles) == 1:
-            # Add a dragger to the selected visible.
-            visible = self.selectedVisibles[0]
-            if isinstance(visible.client, Stimulus):
-                visible = self.visibleForObject(visible.client)
-            
-            if visible.isDraggable():
-                self.addDragger(visible)
-        elif len(self.selectedVisibles) > 1:
-            # Turn off highlighting/animation for visibles that aren't selected or that aren't direct connections between the selected visibles.
-            tempList = list(self.highlightedVisibles)
-            for highlightedVisible in tempList:
-                if highlightedVisible not in self.selectedVisibles:
-                    highlightedObject = highlightedVisible.client
-                    removeHighlight = True
-                    if isinstance(highlightedObject, Region):
-                        pass
-                    elif isinstance(highlightedObject, Neuron):
-                        inputs = []
-                        outputs = []
-                        for arborization in highlightedObject.arborizations():
-                            if self.objectIsSelected(arborization.region):
-                                if arborization.receivesInput:
-                                   inputs.append(arborization.region)
-                                if arborization.sendsOutput:
-                                   outputs.append(arborization.region)
-                        if len(inputs) > 0 and len(outputs) > 0 and inputs != outputs:
-                            removeHighlight = False
-                    if removeHighlight:
-                        self.highlightObject(highlightedObject, False)
-            tempList = list(self.animatedVisibles)
-            for animatedVisible in tempList:
-                removeAnimation = False
-                animatedObject = animatedVisible.client
-                if isinstance(animatedObject, Arborization):
-                    removeAnimation = True
-                    if self.objectIsSelected(animatedObject.region):
-                        if self.objectIsSelected(animatedObject.neurite.neuron()) and animatedObject.sendsOutput and animatedObject.receivesInput:
-                            removeAnimation = False
-                        else:
-                            neuron = animatedObject.neurite.neuron()
-                            for secondaryArborization in neuron.arborizations():
-                                if secondaryArborization != animatedObject and self.objectIsSelected(secondaryArborization.region) and \
-                                    ((animatedObject.sendsOutput and secondaryArborization.receivesInput) or (animatedObject.receivesInput and secondaryArborization.sendsOutput)):
-                                    removeAnimation = False
-                elif isinstance(animatedObject, Synapse):
-                    if not self.objectIsSelected(animatedObject.presynapticNeurite.neuron()) or not self.objectIsSelected(animatedObject.postsynapticNeurites[0].neuron()):
+        if len(self.selectedVisibles) == 0:
+            self.hoverSelect = True
+            self.hoverSelected = False
+        else:
+            if not self.hoverSelected:
+                self.hoverSelect = False
+            if len(self.selectedVisibles) == 1:
+                if not self.hoverSelected:
+                    # Add a dragger to the selected visible.
+                    visible = self.selectedVisibles[0]
+                    if isinstance(visible.client, Stimulus):
+                        visible = self.visibleForObject(visible.client)
+                    
+                    if visible.isDraggable():
+                        self.addDragger(visible)
+            elif len(self.selectedVisibles) > 1:
+                # Turn off highlighting/animation for visibles that aren't selected or that aren't direct connections between the selected visibles.
+                tempList = list(self.highlightedVisibles)
+                for highlightedVisible in tempList:
+                    if highlightedVisible not in self.selectedVisibles:
+                        highlightedObject = highlightedVisible.client
+                        removeHighlight = True
+                        if isinstance(highlightedObject, Region):
+                            pass
+                        elif isinstance(highlightedObject, Neuron):
+                            inputs = []
+                            outputs = []
+                            for arborization in highlightedObject.arborizations():
+                                if self.objectIsSelected(arborization.region):
+                                    if arborization.receivesInput:
+                                       inputs.append(arborization.region)
+                                    if arborization.sendsOutput:
+                                       outputs.append(arborization.region)
+                            if len(inputs) > 0 and len(outputs) > 0 and inputs != outputs:
+                                removeHighlight = False
+                        if removeHighlight:
+                            self.highlightObject(highlightedObject, False)
+                tempList = list(self.animatedVisibles)
+                for animatedVisible in tempList:
+                    removeAnimation = False
+                    animatedObject = animatedVisible.client
+                    if isinstance(animatedObject, Arborization):
                         removeAnimation = True
-                elif isinstance(animatedObject, GapJunction):
-                    neurites = list(animatedObject.neurites)
-                    if not self.objectIsSelected(neurites[0].neuron()) or not self.objectIsSelected(neurites[1].neuron()):
-                        removeAnimation = True
-                if removeAnimation:
-                    self.animateObjectFlow(animatedObject, False)
+                        if self.objectIsSelected(animatedObject.region):
+                            if self.objectIsSelected(animatedObject.neurite.neuron()) and animatedObject.sendsOutput and animatedObject.receivesInput:
+                                removeAnimation = False
+                            else:
+                                neuron = animatedObject.neurite.neuron()
+                                for secondaryArborization in neuron.arborizations():
+                                    if secondaryArborization != animatedObject and self.objectIsSelected(secondaryArborization.region) and \
+                                        ((animatedObject.sendsOutput and secondaryArborization.receivesInput) or (animatedObject.receivesInput and secondaryArborization.sendsOutput)):
+                                        removeAnimation = False
+                    elif isinstance(animatedObject, Synapse):
+                        if not self.objectIsSelected(animatedObject.presynapticNeurite.neuron()) or not self.objectIsSelected(animatedObject.postsynapticNeurites[0].neuron()):
+                            removeAnimation = True
+                    elif isinstance(animatedObject, GapJunction):
+                        neurites = list(animatedObject.neurites)
+                        if not self.objectIsSelected(neurites[0].neuron()) or not self.objectIsSelected(neurites[1].neuron()):
+                            removeAnimation = True
+                    if removeAnimation:
+                        self.animateObjectFlow(animatedObject, False)
         
         if self._useGhosts:
             # Dim everything that isn't selected or connected to the selection.
@@ -972,6 +986,9 @@ class Display(wx.glcanvas.GLCanvas):
                     visible[1].setOpacity(1)
                 else:
                     visible.setOpacity(1)
+        
+        self.hoverSelected = False
+        self.hoverSelect = True
         
         if report:
             dispatcher.send(('set', 'selection'), self)
