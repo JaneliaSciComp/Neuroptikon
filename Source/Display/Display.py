@@ -929,6 +929,16 @@ class Display(wx.glcanvas.GLCanvas):
         return selection
     
     
+    def selectedObjects(self):
+        selection = []
+        for visible in self.selectedVisibles:
+            if isinstance(visible, tuple):
+                selection.append(visible[0].client)    #stimulus tuple
+            else:
+                selection.append(visible.client)
+        return selection
+    
+    
     def selectAll(self, report = True):
         self.deselectAll(report = False)
         for visible in self.visibles.itervalues():
