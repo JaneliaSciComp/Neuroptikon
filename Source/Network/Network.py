@@ -21,7 +21,6 @@ class Network:
     
     def __init__(self):
         self.graph = XGraph()
-        self.displayFilters = []
         self.objects = []
         self.idDict = {}   # TODO: weak ref dict?
         self.displays = []
@@ -67,8 +66,7 @@ class Network:
             neurites = list(object.neurites)
             self.graph.add_edge(id(neurites[0].neuron()), id(neurites[1].neuron()), object)
         elif isinstance(object, Pathway):
-            regions = list(object.regions)
-            self.graph.add_edge(id(regions[0]), id(regions[1]), object)
+            self.graph.add_edge(id(object.terminus1.region), id(object.terminus2.region), object)
         elif isinstance(object, Innervation):
             self.graph.add_edge(id(object.neurite.neuron()), id(object.muscle), object)
         elif isinstance(object, Stimulus):

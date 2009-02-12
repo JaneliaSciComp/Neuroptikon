@@ -442,9 +442,8 @@ class Display(wx.glcanvas.GLCanvas):
                 visible.setColor(neuralTissueColor)
                 visible.setTexture(self._pathwayTexture)
                 visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
-                regions = list(object.regions)
-                region1 = self.visibleForObject(regions[0])
-                region2 = self.visibleForObject(regions[1])
+                region1 = self.visibleForObject(object.terminus1.region)
+                region2 = self.visibleForObject(object.terminus2.region)
                 visible.setFlowDirection(region1, region2, False, False)
                 visible.setPath([region1.position, region2.position], region1, region2)
                 self.addVisible(visible, object)
@@ -788,8 +787,8 @@ class Display(wx.glcanvas.GLCanvas):
                                     self.highlightObject(secondaryArborization.region)
                         # TODO: synapses too?
                 elif isinstance(object, Pathway):
-                    for region in object.regions:
-                        self.highlightObject(region)
+                    self.highlightObject(object.terminus1.region)
+                    self.highlightObject(object.terminus2.region)
                 elif isinstance(object, Neuron):
                     for synapse in object.incomingSynapses():
                         if not extend or self.objectIsSelected(synapse.presynapticNeurite.neuron()):

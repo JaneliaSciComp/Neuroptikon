@@ -74,8 +74,14 @@ class ObjectInspector(Inspector):
             if visible.client.__class__ == self.__class__.objectClass():
                 self.objects.append(visible.client)
                 dispatcher.connect(self.nameChanged, ('set', 'name'), visible.client)
-                for attribute in self.inspectedAttributes():
-                    dispatcher.connect(self.inspectedAttributeChanged, ('set', attribute), visible.client)
+                for attributePath in self.inspectedAttributes():
+                    if '.' in attributePath:
+                        (subObject, attribute) = attributePath.split('.')
+                        object = getattr(visible.client, subObject)
+                    else:
+                        object = visible.client
+                        attribute = attributePath
+                    dispatcher.connect(self.inspectedAttributeChanged, ('set', attribute), object)
         
         # Set the icon
         image = self.objects[0].__class__.image()
@@ -109,7 +115,7 @@ class ObjectInspector(Inspector):
         self.populateNameField()
     
     
-    def inspectedAttributeChanged(self, signal, sender, event=None, value=None, **arguments):
+    def inspectedAttributeChanged(self, signal, sender, **arguments):
         self.populateObjectSizer(signal[1])
     
     
