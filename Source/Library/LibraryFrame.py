@@ -7,9 +7,10 @@ import Library
 class LibraryFrame( wx.Frame ):
     
     def __init__(self, parent=None):
-        wx.Frame.__init__(self, parent, -1, gettext('Library'), size=(320, 250), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
+        wx.Frame.__init__(self, parent, -1, gettext('Library'), size=(364, 250), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
         
         self.itemClasses = {}
+        self._currentItemClass = None
         
         toolbar = wx.ToolBar(self, style = wx.TB_TEXT)
         toolbar.SetToolBitmapSize(wx.Size(32, 32))        toolbar.Realize()
@@ -35,15 +36,29 @@ class LibraryFrame( wx.Frame ):
                 bitmap = wx.BitmapFromImage(image)
             self.GetToolBar().AddRadioLabelTool(actionID, itemClass.displayName() or '', bitmap)
             self.GetToolBar().Realize()
+            
+            if len(self.itemClasses) == 1:
+                self.showItemClass(itemClass)
+            
+            dispatcher.connect(self.libraryWasUpdated, ('addition', itemClass), wx.GetApp().library)
+    
+    
+    def libraryWasUpdated(self, signal):
+        if signal[1] == self._currentItemClass:
+            self.showItemClass(signal[1])
+    
+    
+    def showItemClass(self, itemClass):
+        self._currentItemClass = itemClass
+        libraryItems = getattr(wx.GetApp().library, itemClass.listProperty())()
+        self.listBox.Clear()
+        for libraryItem in libraryItems:
+            self.listBox.Append(libraryItem.name or libraryItem.identifier, libraryItem)
     
     
     def onShowItemClass(self, event):
         if event.GetId() in self.itemClasses:
-            itemClass = self.itemClasses[event.GetId()]
-            libraryItems = getattr(wx.GetApp().library, itemClass.listProperty())()
-            self.listBox.Clear()
-            for libraryItem in libraryItems:
-                self.listBox.Append(libraryItem.name or libraryItem.identifier, libraryItem)
+            self.showItemClass(self.itemClasses[event.GetId()])
         event.Skip()
     
     

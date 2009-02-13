@@ -1,5 +1,6 @@
 from LibraryItem import LibraryItem
 from LibraryFrame import LibraryFrame
+from wx.py import dispatcher
 
 class Library(object):
     
@@ -26,6 +27,8 @@ class Library(object):
             self._frame.addItemClass(item.__class__)
         
         dict[item.identifier] = item
+        
+        dispatcher.send(('addition', item.__class__), self)
     
     
     def browse(self):
