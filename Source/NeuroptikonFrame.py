@@ -86,6 +86,8 @@ class NeuroptikonFrame( wx.Frame ):
         
         viewMenu = wx.Menu()
         self.Bind(wx.EVT_MENU, wx.GetApp().onOpenInspector, viewMenu.Append(wx.NewId(), gettext('Open Inspector Window\tCtrl-I'), gettext('Open the inspector window')))
+        self.hoverSelectItem = viewMenu.Append(wx.NewId(), gettext('Use Mouse-Over Highlighting'), gettext('Automatically select the object under the mouse'), True)
+        self.Bind(wx.EVT_MENU, self.onUseHoverSelect, self.hoverSelectItem)
         viewMenu.AppendSeparator()
         self.showRegionNamesMenuItem = viewMenu.Append(wx.NewId(), gettext('Show Region Names'), gettext('Show/hide the region names'), True)
         self.showRegionNamesMenuItem.Check(True)
@@ -165,6 +167,10 @@ class NeuroptikonFrame( wx.Frame ):
         
         if self.finder.ShowModal() == wx.ID_OK:
             self.display.selectObjectsMatching(self.finder.predicate)
+    
+    
+    def onUseHoverSelect(self, event):
+        self.display.useHoverSelect = not self.display.useHoverSelect
     
     
     def onShowHideRegionNames(self, event):

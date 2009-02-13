@@ -122,6 +122,8 @@ class Display(wx.glcanvas.GLCanvas):
         
         self.selectionShouldExtend = False
         self.findShortestPath = False
+        
+        self.useHoverSelect = False
         self.hoverSelect = True
         self.hoverSelecting = False
         self.hoverSelected = False  # set to True if the current selection was made by hovering
@@ -297,7 +299,7 @@ class Display(wx.glcanvas.GLCanvas):
             self.graphicsWindow.getEventQueue().mouseButtonRelease(event.GetX(), event.GetY(), event.GetButton())
         elif event.Dragging():
             self.graphicsWindow.getEventQueue().mouseMotion(event.GetX(), event.GetY())
-        elif event.Moving() and self.hoverSelect:
+        elif event.Moving() and self.useHoverSelect and self.hoverSelect:
             self.hoverSelecting = True
             self.graphicsWindow.getEventQueue().mouseButtonPress(event.GetX(), event.GetY(), wx.MOUSE_BTN_LEFT)
             self.graphicsWindow.getEventQueue().mouseButtonRelease(event.GetX(), event.GetY(), wx.MOUSE_BTN_LEFT)
@@ -564,6 +566,7 @@ class Display(wx.glcanvas.GLCanvas):
         if signal == 'addition':
             for object in affectedObjects:
                 self.visualizeObject(object)
+            self.Refresh()
         elif signal == 'deletion':
             # TODO: untested
             for object in affectedObjects:
