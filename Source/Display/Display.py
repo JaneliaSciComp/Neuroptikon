@@ -27,6 +27,10 @@ try:
     import pygraphviz
 except ImportError:
     pygraphviz = None
+    try:
+        import pydot
+    except ImportError:
+        pydot = None
 
 
 class Display(wx.glcanvas.GLCanvas):
@@ -548,7 +552,7 @@ class Display(wx.glcanvas.GLCanvas):
         
         if network != None:
             for object in network.objects:
-                visualizeObject(object)
+                self.visualizeObject(object)
             try:
                 dispatcher.connect(receiver=self.networkChanged, signal=dispatcher.Any, sender=self.network)
             except DispatcherTypeError:
@@ -1184,98 +1188,86 @@ class Display(wx.glcanvas.GLCanvas):
                 path_3D.append(visible0.position())
                 path_3D.append(visible1.position())
                 self.setVisiblePath(edge[2], path_3D, visible0, visible1)
-        elif method == "graphviz":
+        elif method == "graphviz" and (pygraphviz is not None or pydot is not None):
             visibles = {}
             edgeVisibles = []
             if pygraphviz is not None:  # Use pygraphviz if it's available as it's faster than pydot.
                 mainGraph = pygraphviz.AGraph(strict = False, overlap = 'vpsc', sep = '+1', splines = 'polyline')
-                for key, visible in self.visibles.iteritems():
-                    if isinstance(visible, tuple):
-                        visibles[str(id(visible[0]))] = visible[0]
+            else:
+                mainGraph = pydot.Dot(graph_type = 'graph', overlap = 'vpsc', sep = '+1', splines = 'polyline')
+            for key, visible in self.visibles.iteritems():
+                if isinstance(visible, tuple):
+                    visibles[str(id(visible[0]))] = visible[0]
+                    if pygraphviz is not None:
                         mainGraph.add_node(id(visible[0]), **visible[0].graphvizAttributes())
-                        edgeVisibles.append(visible[1])
                     else:
-                        if visible.pathStart is not None:
-                            edgeVisibles.append(visible)   # don't add edges until all the nodes have been added
-                        elif len(visible.children) == 0:    #visible.parent is None:
-                            visibles[str(id(visible))] = visible
+                        mainGraph.add_node(pydot.Node(str(id(visible[0])), **visible[0].graphvizAttributes()))
+                    edgeVisibles.append(visible[1])
+                else:
+                    if visible.pathStart is not None:
+                        edgeVisibles.append(visible)   # don't add edges until all the nodes have been added
+                    elif len(visible.children) == 0:    #visible.parent is None:
+                        visibles[str(id(visible))] = visible
+                        if pygraphviz is not None:
                             mainGraph.add_node(id(visible), **visible.graphvizAttributes())
-                for edgeVisible in edgeVisibles:
-                    visibles[str(id(edgeVisible))] = edgeVisible
-                    if True:
-                        mainGraph.add_edge(str(id(edgeVisible.pathStart)), str(id(edgeVisible.pathEnd)), str(id(edgeVisible)))
-                    else:
-                        startKey = str(id(edgeVisible.pathStart.rootVisible()))
-                        endKey = str(id(edgeVisible.pathEnd.rootVisible()))
-                        edgeAttrs = {}
-                        if edgeVisible.pathStart.parent is not None:
-                            worldX, worldY, worldZ = edgeVisible.pathStart.worldPosition()
-                            rootX, rootY, rootZ = edgeVisible.pathStart.rootVisible().position()
-                            rootWidth, rootHeight, rootDepth = edgeVisible.pathStart.rootVisible().size()
-                            subX = int((worldX - rootX) / rootWidth * 9.0) + 4
-                            subY = int((worldY - rootY) / rootHeight * 9.0) + 4
-                            startKey += ':' + str(subX) + str(subY)
-                            edgeAttrs['tailport'] = str(subX) + str(subY)
-                        if edgeVisible.pathEnd.parent is not None:
-                            worldX, worldY, worldZ = edgeVisible.pathEnd.worldPosition()
-                            rootX, rootY, rootZ = edgeVisible.pathEnd.rootVisible().position()
-                            rootWidth, rootHeight, rootDepth = edgeVisible.pathEnd.rootVisible().size()
-                            subX = int((worldX - rootX) / rootWidth * 9.0) + 4
-                            subY = int((worldY - rootY) / rootHeight * -9.0) + 4
-                            edgeAttrs['headport'] = str(subX) + str(subY)
-                        mainGraph.add_edge(startKey, endKey, str(id(edgeVisible)), **edgeAttrs)
-                
+                        else:
+                            mainGraph.add_node(pydot.Node(str(id(visible)), **visible.graphvizAttributes()))
+            for edgeVisible in edgeVisibles:
+                visibles[str(id(edgeVisible))] = edgeVisible
+                if pygraphviz is not None:
+                    mainGraph.add_edge(str(id(edgeVisible.pathStart)), str(id(edgeVisible.pathEnd)), str(id(edgeVisible)))
+                else:
+                    mainGraph.add_edge(pydot.Edge(str(id(edgeVisible.pathStart)), str(id(edgeVisible.pathEnd)), tooltip = str(id(edgeVisible))))
+            
+            if pygraphviz is not None:
                 #print mainGraph.to_string()
                 mainGraph.layout(prog='fdp')
-                
-                # Get the bounding box of the entire graph so we can center it in the display.
-                # The 'bb' attribute doesn't seem to be exposed by pygraphviz so we have to hack it out of the text dump.
-                import re
-                matches = re.search('bb="([0-9,]+)"', mainGraph.to_string())
-                bbx1, bby1, bbx2, bby2 = matches.group(1).split(',')
-                width, height = (float(bbx2) - float(bbx1), float(bby2) - float(bby1))
-                dx, dy = ((float(bbx2) + float(bbx1)) / 2.0, (float(bby2) + float(bby1)) / 2.0)
-                for visibleId in mainGraph.nodes():
-                    visible = visibles[visibleId]
-                    if visible.parent is None:
-                        pynode = pygraphviz.Node(mainGraph, visibleId) 
-                        try: 
-                            x, y = pynode.attr['pos'].split(',') 
+                graphData = mainGraph.to_string()
+            else:
+                graphData = mainGraph.create_dot(prog='fdp')
+                pydotGraph = pydot.graph_from_dot_data(graphData)
+            
+            # Get the bounding box of the entire graph so we can center it in the display.
+            # The 'bb' attribute doesn't seem to be exposed by pygraphviz so we have to hack it out of the text dump.
+            import re
+            matches = re.search('bb="([0-9,]+)"', graphData)
+            bbx1, bby1, bbx2, bby2 = matches.group(1).split(',')
+            width, height = (float(bbx2) - float(bbx1), float(bby2) - float(bby1))
+            dx, dy = ((float(bbx2) + float(bbx1)) / 2.0, (float(bby2) + float(bby1)) / 2.0)
+            for visibleId, visible in visibles.iteritems():
+                if visible.parent is None:
+                    pos = None
+                    if visible.pathStart is None:
+                        # Set the position of a node
+                        if pygraphviz is not None:
+                            node = pygraphviz.Node(mainGraph, visibleId) 
+                            if 'pos' in node.attr:
+                                pos = node.attr['pos']
+                        else:
+                            node = pydotGraph.get_node(visibleId)
+                            if isinstance(node, pydot.Node):
+                                pos = node.get_pos()[1:-1] 
+                        if pos is not None:
+                            x, y = pos.split(',') 
                             # TODO: convert to local coordinates?
                             visible.setPosition(((float(x) - dx) / width, (float(y) - dy) / height, 0))
-                        except: 
-                            pass
-                for edge in mainGraph.edges():
-                    try:
-                        path_3D = []
-                        pathStart = visibles[edge[0]]
-                        pathEnd = visibles[edge[1]]
-                        visible = visibles[edge[2]]
-                        if False:
-                           pyedge = pygraphviz.Edge(mainGraph, edge[0], edge[1])
-                           path = pyedge.attr['pos'].split(' ')
-                           for pathElement in path:
-                              x, y = pathElement.split(',')
-                              path_3D.append(((float(x) - dx) / width, (float(y) - dy) / height, 0))
+                    elif False:
+                        # Set the path of an edge
+                        if pygraphviz is not None:
+                            edge = pygraphviz.Edge(mainGraph, visible)
+                            pathStart = visibles[edge[0]]
+                            pathEnd = visibles[edge[1]]
+                            if 'pos' in edge.attr:
+                                pos = edge.attr['pos']
                         else:
-                            path_3D.append(pathStart.worldPosition())
-                            path_3D.append(pathEnd.worldPosition())
-                        visible.setPath(path_3D, visible.pathStart, visible.pathEnd)
-                    except:
-                        pass
-            else:  # Fall back to using pydot.
-                pydotGraph = self.network.to_pydot(graph_attr=graphAttr, node_attr=nodeAttr)
-                if pydotGraph is not None:
-                    graphData = pydotGraph.create_dot(prog='fdp')
-                    pydotGraph = pydot.graph_from_dot_data(graphData)
-                    for node in graph.nodes(): 
-                       visible = self.visibleForObject(self.network.objectWithId(node))
-                       pyNode = pydotGraph.get_node(str(node))
-                       pos = pyNode.get_pos()[1:-1] 
-                       if pos != None:
-                          x, y = pos.split(',')
-                          visible.setPosition((float(x), float(y), 0))
-                    # TODO: extract path segments
+                            pass    # TODO
+                        if pos is not None:
+                            path_3D = []
+                            path = pos.split(' ')
+                            for pathElement in path:
+                                x, y = pathElement.split(',')
+                                path_3D.append(((float(x) - dx) / width, (float(y) - dy) / height, 0))
+                            visible.setPath(path_3D, visible.pathStart, visible.pathEnd)
         self.centerView()
     
     
