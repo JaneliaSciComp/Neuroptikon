@@ -5,6 +5,10 @@ from Network.Neuron import Neuron
 class NeuronClass(LibraryItem):
     
     @classmethod
+    def displayName(cls):
+        return gettext('Neuron Class')
+    
+    @classmethod
     def listProperty(cls):
         return 'neuronClasses'
     
