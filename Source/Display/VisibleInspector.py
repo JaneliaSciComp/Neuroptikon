@@ -40,6 +40,12 @@ class VisibleInspector(Inspector):
             gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Color:')), 0)
             gridSizer.Add(self._colorPicker, 1)
             
+            # Add a slider for setting the opacity.
+            self._opacitySlider = wx.Slider(self._window, wx.ID_ANY, 100, 0, 100)
+            self._opacitySlider.Bind(wx.EVT_SCROLL, self.onSetOpacity, self._opacitySlider)
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Opacity:')), 0)
+            gridSizer.Add(self._opacitySlider, 1)
+            
             # Add a check box for fixing the position.
             self.fixedPositionCheckBox = wx.CheckBox(self._window, wx.ID_ANY, gettext('Fixed'), style=wx.CHK_3STATE)
             self._window.Bind(wx.EVT_CHECKBOX, self.onSetPositionIsFixed)
@@ -47,7 +53,7 @@ class VisibleInspector(Inspector):
             gridSizer.Add(self.fixedPositionCheckBox, 1)
             
             # Add a slider for setting the arrangement weight within our parent.
-            self._arrangedWeightSlider = wx.Slider(self._window, wx.ID_ANY, 50, 1, 100, style=wx.SL_HORIZONTAL)
+            self._arrangedWeightSlider = wx.Slider(self._window, wx.ID_ANY, 50, 1, 100)
             self._arrangedWeightSlider.Bind(wx.EVT_SCROLL, self.onSetArrangedWeight)
             gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Arranged weight:')), 0)
             gridSizer.Add(self._arrangedWeightSlider, 1)
@@ -91,7 +97,7 @@ class VisibleInspector(Inspector):
     def inspectDisplay(self, display):
         self.visibles = display.selection()
         for visible in self.visibles:
-            for attributeName in ['color', 'positionIsFixed', 'shape', 'children', 'arrangedWeight', 'arrangedAxis', 'arrangedSpacing']:
+            for attributeName in ['color', 'opacity', 'positionIsFixed', 'shape', 'children', 'arrangedWeight', 'arrangedAxis', 'arrangedSpacing']:
                 dispatcher.connect(self.refreshGUI, ('set', attributeName), visible)
         self.refreshGUI()
     
@@ -118,6 +124,14 @@ class VisibleInspector(Inspector):
             else:
                 self._colorPicker.SetColour(wx.NamedColour('GRAY'))  # TODO: be clever and pick the average color?
                 self._colorPicker.SetLabel(gettext('Multiple values'))
+        
+        if updatedAttribute is None or updatedAttribute == 'opacity':
+            if self.visibles.haveEqualAttr('opacity'):
+                self._opacitySlider.SetLabel('')
+                self._opacitySlider.SetValue(self.visibles[0].opacity() * 100.0)
+            else:
+                self._opacitySlider.SetLabel(gettext('Multiple values'))
+                self._opacitySlider.SetValue(100)
         
         if updatedAttribute is None or updatedAttribute == 'positionIsFixed':
             if self.visibles.haveEqualAttr('positionIsFixed'):
@@ -184,6 +198,12 @@ class VisibleInspector(Inspector):
         colorTuple = (wxColor.Red() / 255.0, wxColor.Green() / 255.0, wxColor.Blue() / 255.0)
         for visible in self.visibles:
             visible.setColor(colorTuple)
+        
+    
+    def onSetOpacity(self, event):
+        newOpacity = self._opacitySlider.GetValue() / 100.0
+        for visible in self.visibles:
+            visible.setOpacity(newOpacity)
     
     
     def onSetPositionIsFixed(self, event):
