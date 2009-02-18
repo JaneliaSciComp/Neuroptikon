@@ -640,11 +640,13 @@ class Visible(object):
         if endVisible is not None:
             self.addDependency(endVisible, 'position')
         
-        path[0] = self.pathStart.worldPosition()
-        path[-1] = self.pathEnd.worldPosition()
-        
         self._path = path
-        if True:    #len(path) == 2:
+        
+        path = list(path)
+        path.insert(0, self.pathStart.worldPosition())
+        path.append(self.pathEnd.worldPosition())
+        
+        if len(path) == 2:
             # Create a straight connection from start to end
             # TODO: Will this object ever have a parent?  If so then we'll have to translate world to local coordinates here.
             position, size, rotation = self.positionSizeRotation(path[0], path[-1])

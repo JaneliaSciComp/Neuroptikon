@@ -452,7 +452,7 @@ class Display(wx.glcanvas.GLCanvas):
                 region1 = self.visibleForObject(object.terminus1.region)
                 region2 = self.visibleForObject(object.terminus2.region)
                 visible.setFlowDirection(region1, region2, False, False)
-                visible.setPath([region1.position, region2.position], region1, region2)
+                visible.setPath([], region1, region2)
                 self.addVisible(visible, object)
             elif isinstance(object, Neuron):
                 visible = Visible(self, object)
@@ -482,7 +482,7 @@ class Display(wx.glcanvas.GLCanvas):
                 visible.setFlowDirection(neuronVis, regionVis, object.sendsOutput, object.receivesInput)
                 dispatcher.connect(self.arborizationChangedFlow, ('set', 'sendsOutput'), object)
                 dispatcher.connect(self.arborizationChangedFlow, ('set', 'receivesInput'), object)
-                visible.setPath([neuronVis.position, regionVis.position], neuronVis, regionVis)
+                visible.setPath([], neuronVis, regionVis)
                 if self._showFlow:
                     visible.animateFlow()
                 self.addVisible(visible, object)
@@ -495,7 +495,7 @@ class Display(wx.glcanvas.GLCanvas):
                     visible.setColor(neuralTissueColor)
                     postNeuronVis = self.visibleForObject(neurite.neuron())
                     visible.setFlowDirection(preNeuronVis, postNeuronVis)
-                    visible.setPath([preNeuronVis.position, postNeuronVis.position], preNeuronVis, postNeuronVis)
+                    visible.setPath([], preNeuronVis, postNeuronVis)
                     if self._showFlow:
                         visible.animateFlow()
                     self.addVisible(visible, object)
@@ -507,7 +507,7 @@ class Display(wx.glcanvas.GLCanvas):
                 neuron1 = self.visibleForObject(neurites[0].neuron())
                 neuron2 = self.visibleForObject(neurites[1].neuron())
                 visible.setFlowDirection(neuron1, neuron2, True, True)
-                visible.setPath([neuron1.position, neuron2.position], neuron1, neuron2)
+                visible.setPath([], neuron1, neuron2)
                 self.addVisible(visible, object)
             elif isinstance(object, Innervation):
                 visible = Visible(self, object)
@@ -516,7 +516,7 @@ class Display(wx.glcanvas.GLCanvas):
                 neuronVis = self.visibleForObject(object.neurite.neuron())
                 muscleVis = self.visibleForObject(object.muscle)
                 visible.setFlowDirection(neuronVis, muscleVis)
-                visible.setPath([neuronVis.position, muscleVis.position], neuronVis, muscleVis)
+                visible.setPath([], neuronVis, muscleVis)
                 if self._showFlow:
                     visible.animateFlow()
                 self.addVisible(visible, object)
@@ -529,7 +529,7 @@ class Display(wx.glcanvas.GLCanvas):
                 edge.setWeight(5)
                 edge.setColor((0.5, 0.5, 0.5))
                 edge.setFlowDirection(node, self.visibleForObject(object.target))
-                edge.setPath([node.position, self.visibleForObject(object.target).position], node, self.visibleForObject(object.target))
+                edge.setPath([], node, self.visibleForObject(object.target))
                 if self._showFlow:
                     edge.animateFlow()
                 self.addVisible((node, edge), object)
@@ -1139,8 +1139,8 @@ class Display(wx.glcanvas.GLCanvas):
     def autoLayout(self, method=None):
         """Automatically layout the displayed network without moving visibles with fixed positions (much)"""
         self.deselectAll()
-        graph = self.network.graph
         if method == 'spectral' or (method is None and self.viewDimensions == 3):
+            graph = self.network.graph
             nodes = graph.nodes()
             n=len(nodes)
             A = zeros((n, n))
@@ -1205,16 +1205,16 @@ class Display(wx.glcanvas.GLCanvas):
             visibles = {}
             edgeVisibles = []
             if pygraphviz is not None:  # Use pygraphviz if it's available as it's faster than pydot.
-                mainGraph = pygraphviz.AGraph(strict = False, overlap = 'vpsc', sep = '+1', splines = 'polyline')
+                graph = pygraphviz.AGraph(strict = False, overlap = 'vpsc', sep = '+1', splines = 'polyline')
             else:
-                mainGraph = pydot.Dot(graph_type = 'graph', overlap = 'vpsc', sep = '+1', splines = 'polyline')
+                graph = pydot.Dot(graph_type = 'graph', overlap = 'vpsc', sep = '+1', splines = 'polyline')
             for key, visible in self.visibles.iteritems():
                 if isinstance(visible, tuple):
                     visibles[str(id(visible[0]))] = visible[0]
                     if pygraphviz is not None:
-                        mainGraph.add_node(id(visible[0]), **visible[0].graphvizAttributes())
+                        graph.add_node(id(visible[0]), **visible[0].graphvizAttributes())
                     else:
-                        mainGraph.add_node(pydot.Node(str(id(visible[0])), **visible[0].graphvizAttributes()))
+                        graph.add_node(pydot.Node(str(id(visible[0])), **visible[0].graphvizAttributes()))
                     edgeVisibles.append(visible[1])
                 else:
                     if visible.pathStart is not None:
@@ -1222,23 +1222,23 @@ class Display(wx.glcanvas.GLCanvas):
                     elif len(visible.children) == 0:    #visible.parent is None:
                         visibles[str(id(visible))] = visible
                         if pygraphviz is not None:
-                            mainGraph.add_node(id(visible), **visible.graphvizAttributes())
+                            graph.add_node(id(visible), **visible.graphvizAttributes())
                         else:
-                            mainGraph.add_node(pydot.Node(str(id(visible)), **visible.graphvizAttributes()))
+                            graph.add_node(pydot.Node(str(id(visible)), **visible.graphvizAttributes()))
             for edgeVisible in edgeVisibles:
                 visibles[str(id(edgeVisible))] = edgeVisible
                 if pygraphviz is not None:
-                    mainGraph.add_edge(str(id(edgeVisible.pathStart)), str(id(edgeVisible.pathEnd)), str(id(edgeVisible)))
+                    graph.add_edge(str(id(edgeVisible.pathStart)), str(id(edgeVisible.pathEnd)), str(id(edgeVisible)))
                 else:
-                    mainGraph.add_edge(pydot.Edge(str(id(edgeVisible.pathStart)), str(id(edgeVisible.pathEnd)), tooltip = str(id(edgeVisible))))
+                    graph.add_edge(pydot.Edge(str(id(edgeVisible.pathStart)), str(id(edgeVisible.pathEnd)), tooltip = str(id(edgeVisible))))
             
             if pygraphviz is not None:
                 #print mainGraph.to_string()
-                mainGraph.layout(prog='fdp')
-                graphData = mainGraph.to_string()
+                graph.layout(prog='fdp')
+                graphData = graph.to_string()
             else:
-                graphData = mainGraph.create_dot(prog='fdp')
-                pydotGraph = pydot.graph_from_dot_data(graphData)
+                graphData = graph.create_dot(prog='fdp')
+                graph = pydot.graph_from_dot_data(graphData)
             
             # Get the bounding box of the entire graph so we can center it in the display.
             # The 'bb' attribute doesn't seem to be exposed by pygraphviz so we have to hack it out of the text dump.
@@ -1246,42 +1246,64 @@ class Display(wx.glcanvas.GLCanvas):
             matches = re.search('bb="([0-9,]+)"', graphData)
             bbx1, bby1, bbx2, bby2 = matches.group(1).split(',')
             width, height = (float(bbx2) - float(bbx1), float(bby2) - float(bby1))
+            if width > height:
+                scale = 1.0 / width
+            else:
+                scale = 1.0 / height
             dx, dy = ((float(bbx2) + float(bbx1)) / 2.0, (float(bby2) + float(bby1)) / 2.0)
             for visibleId, visible in visibles.iteritems():
                 if visible.parent is None:
                     pos = None
                     if visible.pathStart is None:
                         # Set the position of a node
-                        if pygraphviz is not None:
-                            node = pygraphviz.Node(mainGraph, visibleId) 
-                            if 'pos' in node.attr:
-                                pos = node.attr['pos']
-                        else:
-                            node = pydotGraph.get_node(visibleId)
-                            if isinstance(node, pydot.Node):
-                                pos = node.get_pos()[1:-1] 
+                        pos = self._graphvizNodePos(graph, visibleId)
                         if pos is not None:
                             x, y = pos.split(',') 
                             # TODO: convert to local coordinates?
-                            visible.setPosition(((float(x) - dx) / width, (float(y) - dy) / height, 0))
+                            visible.setPosition(((float(x) - dx) * scale, (float(y) - dy) * scale, 0))
                     elif False:
                         # Set the path of an edge
                         if pygraphviz is not None:
-                            edge = pygraphviz.Edge(mainGraph, visible)
-                            pathStart = visibles[edge[0]]
-                            pathEnd = visibles[edge[1]]
+                            edge = pygraphviz.Edge(graph, str(id(visible.pathStart)), str(id(visible.pathEnd)))
                             if 'pos' in edge.attr:
                                 pos = edge.attr['pos']
                         else:
                             pass    # TODO
                         if pos is not None:
+                            (startVisX, startVisY, startVisZ) = visible.pathStart.worldPosition()
+                            (endVisX, endVisY, endVisZ) = visible.pathEnd.worldPosition()
+                            startPos = self._graphvizNodePos(graph, str(id(visible.pathStart)))
+                            startDotX, startDotY = startPos.split(',')
+                            startDotX = float(startDotX)
+                            startDotY = float(startDotY)
+                            endPos = self._graphvizNodePos(graph, str(id(visible.pathEnd)))
+                            endDotX, endDotY = endPos.split(',')
+                            endDotX = float(endDotX)
+                            endDotY = float(endDotY)
+                            scaleX = (startDotX - endDotX) / (startVisX - endVisX)
+                            translateX = startDotX - scaleX * startVisX
+                            scaleY = (startDotY - endDotY) / (startVisY - endVisY)
+                            translateY = startDotY - scaleY * startVisY
                             path_3D = []
                             path = pos.split(' ')
-                            for pathElement in path:
+                            for pathElement in path[1:-1]:
                                 x, y = pathElement.split(',')
-                                path_3D.append(((float(x) - dx) / width, (float(y) - dy) / height, 0))
+                                path_3D.append(((float(x) - translateX) / scaleX, (float(y) - translateY) / scaleY, 0))
                             visible.setPath(path_3D, visible.pathStart, visible.pathEnd)
         self.centerView()
+    
+    
+    def _graphvizNodePos(self, graph, nodeId):
+        pos = None
+        if isinstance(graph, pygraphviz.AGraph):
+            node = pygraphviz.Node(graph, nodeId) 
+            if 'pos' in node.attr:
+                pos = node.attr['pos']
+        else:
+            node = graph.get_node(nodeId)
+            if isinstance(node, pydot.Node):
+                pos = node.get_pos()[1:-1] 
+        return pos
     
     
     def onSaveView(self, event):
