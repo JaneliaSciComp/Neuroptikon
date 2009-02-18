@@ -93,15 +93,15 @@ if __name__ == "__main__":
         
         
         def _loadDefaultLibraryItems(self):
-            self.library.add(Neurotransmitter('acetylcholine', gettext('Acetylcholine')))
-            self.library.add(Neurotransmitter('dopamine', gettext('Dopamine')))
+            self.library.add(Neurotransmitter('ACh', gettext('Acetylcholine')))
+            self.library.add(Neurotransmitter('DA', gettext('Dopamine')))
             self.library.add(Neurotransmitter('epinephrine', gettext('Epinephrine')))
             self.library.add(Neurotransmitter('GABA', gettext('Gamma-aminobutyric acid'), gettext('GABA')))
-            self.library.add(Neurotransmitter('glutamate', gettext('Glutamate')))
+            self.library.add(Neurotransmitter('GLU', gettext('Glutamate')))
             self.library.add(Neurotransmitter('glycine', gettext('Glycine')))
             self.library.add(Neurotransmitter('histamine', gettext('Histamine')))
             self.library.add(Neurotransmitter('norepinephrine', gettext('Norepinephrine')))
-            self.library.add(Neurotransmitter('serotonin', gettext('Serotonin')))
+            self.library.add(Neurotransmitter('5-HT', gettext('Serotonin')))
             
             self.library.add(NeuronClass(identifier = 'basket', name = gettext('Basket cell'), polarity = Neuron.Polarity.MULTIPOLAR, function = Neuron.Function.INTERNEURON, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
             self.library.add(NeuronClass(identifier = 'pyramidal', name = gettext('Pyramidal cell'), polarity = Neuron.Polarity.MULTIPOLAR, excitatory = True, neurotransmitter = self.library.neurotransmitter('glutamate')))
