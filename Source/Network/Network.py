@@ -26,6 +26,14 @@ class Network:
         self.displays = []
     
     
+    def findObject(self, objectClass, name = None):
+        if name is not None:
+            for object in self.objects:
+                if isinstance(object, objectClass) and object.name == name:
+                    return object
+        return None
+    
+    
     def createRegion(self, addSubTerms = False, *args, **keywordArgs):
         region = Region(self, *args, **keywordArgs)
         self.addObject(region)
@@ -37,10 +45,26 @@ class Network:
         return region
     
     
+    def findRegion(self, name = None):
+        return self.findObject(Region, name)
+    
+    
+    def regions(self):
+        return self.objectsOfClass(Region)
+    
+    
     def createNeuron(self, *args, **keywordArgs):
         neuron = Neuron(self, *args, **keywordArgs)
         self.addObject(neuron)
         return neuron
+    
+    
+    def findNeuron(self, name = None):
+        return self.findObject(Neuron, name)
+    
+    
+    def neurons(self):
+        return self.objectsOfClass(Neuron)
     
     
     def createStimulus(self, *args, **keywordArgs):
@@ -49,10 +73,26 @@ class Network:
         return stimulus
     
     
+    def findStimulus(self, name = None):
+        return self.findObject(Stimulus, name)
+    
+    
+    def stimuli(self):
+        return self.objectsOfClass(Stimulus)
+    
+    
     def createMuscle(self, *args, **keywordArgs):
         muscle = Muscle(self, *args, **keywordArgs)
         self.addObject(muscle)
         return muscle
+    
+    
+    def findMuscle(self, name = None):
+        return self.findObject(Muscle, name)
+    
+    
+    def muscles(self):
+        return self.objectsOfClass(Muscle)
     
     
     def addObject(self, object):
