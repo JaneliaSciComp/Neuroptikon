@@ -52,4 +52,4 @@ for rowNum in range(1, sheet.nrows):
                 neurites[0].gapJunctionWith(neurites[1])
 
 display.setViewDimensions(3)
-display.autoLayout("spectral-mitya")
+display.autoLayout('spectral')
