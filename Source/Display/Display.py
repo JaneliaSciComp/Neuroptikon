@@ -43,6 +43,7 @@ class Display(wx.glcanvas.GLCanvas):
         wx.glcanvas.GLCanvas.__init__(self, parent, id, wx.DefaultPosition, wx.DefaultSize, style, "", attribList)
 
         self.network = None
+        self.autoVisualize = True
         self.visibles = {}
         self.visibleIds = {}
         self.selectedVisibles = []
@@ -431,7 +432,7 @@ class Display(wx.glcanvas.GLCanvas):
     def visualizeObject(self, object):
         visible = self.visibleForObject(object)
         if visible == None:
-            # TODO: replace this whole block with display filters
+            # TODO: replace this whole block with display rules
             neuralTissueColor = (0.85, 0.75, 0.6)
             if isinstance(object, Region):
                 visible = Visible(self, object)
@@ -462,6 +463,7 @@ class Display(wx.glcanvas.GLCanvas):
                 if self._showNeuronNames:
                     visible.setLabel(object.abbreviation or object.name)
                 self.addVisible(visible, object, self.visibleForObject(object.region))
+                #TODO: dispatcher.connect(self.neuronRegionChanged, ('set', 'region'), object)
             elif isinstance(object, Muscle):
                 visible = Visible(self, object)
                 visible.setShape('capsule')
@@ -506,8 +508,6 @@ class Display(wx.glcanvas.GLCanvas):
                 neuron2 = self.visibleForObject(neurites[1].neuron())
                 visible.setFlowDirection(neuron1, neuron2, True, True)
                 visible.setPath([neuron1.position, neuron2.position], neuron1, neuron2)
-                if self._showFlow:
-                    visible.animateFlow()
                 self.addVisible(visible, object)
             elif isinstance(object, Innervation):
                 visible = Visible(self, object)
@@ -563,7 +563,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     def networkChanged(self, affectedObjects=None, **arguments):
         signal = arguments["signal"]
-        if signal == 'addition':
+        if signal == 'addition' and self.autoVisualize:
             for object in affectedObjects:
                 self.visualizeObject(object)
             self.Refresh()
@@ -574,6 +574,17 @@ class Display(wx.glcanvas.GLCanvas):
                 # TODO: remove the visible from the scene graph
         else:
             pass    # TODO: anything?
+    
+    
+    def neuronRegionChanged(self, signal, sender):
+        # TODO: untested method
+        visible = self.visibleForObject(sender)
+        if visible.parent is not None:
+            visible.parent.removeChildVisible(visible)
+        if neuron.region is not None:
+            newParent = self.visibleForObject(neuron.region)
+            if newParent is not None:
+                newParent.addChildVisible(visible)
     
     
     def setShowRegionNames(self, flag):
@@ -611,7 +622,7 @@ class Display(wx.glcanvas.GLCanvas):
             for key, visible in self.visibles.iteritems():
                 if isinstance(visible, tuple):
                     visible = visible[1]
-                if isinstance(visible.client, Arborization) or isinstance(visible.client, Synapse) or isinstance(visible.client, GapJunction) or isinstance(visible.client, Stimulus) or isinstance(visible.client, Innervation):
+                if isinstance(visible.client, Arborization) or isinstance(visible.client, Synapse) or isinstance(visible.client, Stimulus) or isinstance(visible.client, Innervation):
                     visible.animateFlow(flag)
             self._showFlow = flag
     
@@ -638,18 +649,27 @@ class Display(wx.glcanvas.GLCanvas):
     
     def setLabel(self, object, label):
         visible = self.visibleForObject(object)
-        visible.setLabel(label)
+        if visible is not None:
+            visible.setLabel(label)
     
     
     def setVisiblePosition(self, object, position, fixed=False):
         visible = self.visibleForObject(object)
-        visible.setPosition(position)
-        visible.setPositionIsFixed(fixed)
+        if visible is not None:
+            visible.setPosition(position)
+            visible.setPositionIsFixed(fixed)
     
     
     def setVisibleSize(self, object, size):
         visible = self.visibleForObject(object)
-        visible.setSize(size)
+        if visible is not None:
+            visible.setSize(size)
+    
+    
+    def setVisibleColor(self, object, color):
+        visible = self.visibleForObject(object)
+        if visible is not None:
+            visible.setColor(color)
     
     
     def setArrangedAxis(self, object, axis = 'largest', recurse = False):
@@ -687,45 +707,47 @@ class Display(wx.glcanvas.GLCanvas):
     
     def highlightObject(self, object, highlight=True):
         visible = self.visibleForObject(object)
-        if highlight:
-            if visible not in self.highlightedVisibles:
-                visible.setGlowColor(self._secondarySelectionColor)
-                visible.setOpacity(1)
-                self.highlightedVisibles.append(visible)
-        else:
-            if visible in self.highlightedVisibles:
-                visible.setGlowColor(None)
-                self.highlightedVisibles.remove(visible)
+        if visible is not None:
+            if highlight:
+                if visible not in self.highlightedVisibles:
+                    visible.setGlowColor(self._secondarySelectionColor)
+                    visible.setOpacity(1)
+                    self.highlightedVisibles.append(visible)
             else:
-                visible = self.visibleForObject(object, False)
                 if visible in self.highlightedVisibles:
                     visible.setGlowColor(None)
                     self.highlightedVisibles.remove(visible)
+                else:
+                    visible = self.visibleForObject(object, False)
+                    if visible in self.highlightedVisibles:
+                        visible.setGlowColor(None)
+                        self.highlightedVisibles.remove(visible)
     
     
     def animateObjectFlow(self, object, animate=True):
-        wasAnimating = (len(self.animatedVisibles) > 0)
-        
         visible = self.visibleForObject(object)
-        if animate:
-            if visible not in self.animatedVisibles:
-                visible.animateFlow()
-                visible.setOpacity(1)
-                self.animatedVisibles.append(visible)
-        else:
-            if visible in self.animatedVisibles:
-                visible.animateFlow(False)
-                self.animatedVisibles.remove(visible)
+        if visible is not None:
+            wasAnimating = (len(self.animatedVisibles) > 0)
+            
+            if animate:
+                if visible not in self.animatedVisibles:
+                    visible.animateFlow()
+                    visible.setOpacity(1)
+                    self.animatedVisibles.append(visible)
             else:
-                visible = self.visibleForObject(object, False)
                 if visible in self.animatedVisibles:
                     visible.animateFlow(False)
                     self.animatedVisibles.remove(visible)
-        
-        if len(self.animatedVisibles) > 0 and not wasAnimating:
-            self.Bind(wx.EVT_IDLE, self.onIdle)
-        elif len(self.animatedVisibles) == 0 and wasAnimating:
-            self.Unbind(wx.EVT_IDLE)
+                else:
+                    visible = self.visibleForObject(object, False)
+                    if visible in self.animatedVisibles:
+                        visible.animateFlow(False)
+                        self.animatedVisibles.remove(visible)
+            
+            if len(self.animatedVisibles) > 0 and not wasAnimating:
+                self.Bind(wx.EVT_IDLE, self.onIdle)
+            elif len(self.animatedVisibles) == 0 and wasAnimating:
+                self.Unbind(wx.EVT_IDLE)
     
     
     def selectObjectsMatching(self, predicate):
@@ -819,7 +841,7 @@ class Display(wx.glcanvas.GLCanvas):
                         else:
                             adjacentNeuron = neurites[0].neuron()
                         if not extend or self.objectIsSelected(adjacentNeuron):
-                            self.animateObjectFlow(gapJunction)
+                            self.highlightObject(gapJunction)
                             if self.selectConnectedVisibles:
                                 self.highlightObject(adjacentNeuron)
                     for innervation in object.innervations():
@@ -891,6 +913,11 @@ class Display(wx.glcanvas.GLCanvas):
                                        outputs.append(arborization.region)
                             if len(inputs) > 0 and len(outputs) > 0 and inputs != outputs:
                                 removeHighlight = False
+                        elif isinstance(highlightedObject, GapJunction):
+                            removeHighlight = False
+                            for neurite in highlightedObject.neurites:
+                                if not self.objectIsSelected(neurite.neuron()):
+                                    removeHighlight = True
                         if removeHighlight:
                             self.highlightObject(highlightedObject, False)
                 tempList = list(self.animatedVisibles)
@@ -910,10 +937,6 @@ class Display(wx.glcanvas.GLCanvas):
                                         removeAnimation = False
                     elif isinstance(animatedObject, Synapse):
                         if not self.objectIsSelected(animatedObject.presynapticNeurite.neuron()) or not self.objectIsSelected(animatedObject.postsynapticNeurites[0].neuron()):
-                            removeAnimation = True
-                    elif isinstance(animatedObject, GapJunction):
-                        neurites = list(animatedObject.neurites)
-                        if not self.objectIsSelected(neurites[0].neuron()) or not self.objectIsSelected(neurites[1].neuron()):
                             removeAnimation = True
                     if removeAnimation:
                         self.animateObjectFlow(animatedObject, False)
@@ -1066,15 +1089,16 @@ class Display(wx.glcanvas.GLCanvas):
         visible = self.selectedVisibles[0]
         if isinstance(visible.client, Stimulus):
             visible = self.visibleForObject(visible.client)
-        matrix = self.activeDragger.getMatrix()
-        position = matrix.getTrans()
-        size = matrix.getScale()
-        if visible.parent is None or not visible.sizeIsAbsolute:
-            parentSize = (1.0, 1.0, 1.0)
-        else:
-            parentSize = visible.parent.worldSize()
-        visible.setPosition((position.x(), position.y(), position.z() - self.draggerZOffset))
-        visible.setSize((size.x() * parentSize[0] / self.draggerScale, size.y() * parentSize[1] / self.draggerScale, size.z() * parentSize[2] / self.draggerScale))
+        if self.activeDragger is not None:
+            matrix = self.activeDragger.getMatrix()
+            position = matrix.getTrans()
+            size = matrix.getScale()
+            if visible.parent is None or not visible.sizeIsAbsolute:
+                parentSize = (1.0, 1.0, 1.0)
+            else:
+                parentSize = visible.parent.worldSize()
+            visible.setPosition((position.x(), position.y(), position.z() - self.draggerZOffset))
+            visible.setSize((size.x() * parentSize[0] / self.draggerScale, size.y() * parentSize[1] / self.draggerScale, size.z() * parentSize[2] / self.draggerScale))
     
     
     def clearDragger(self):
@@ -1112,11 +1136,11 @@ class Display(wx.glcanvas.GLCanvas):
         self.autoLayout()
     
     
-    def autoLayout(self, method="graphviz"):
+    def autoLayout(self, method=None):
         """Automatically layout the displayed network without moving visibles with fixed positions (much)"""
         self.deselectAll()
         graph = self.network.graph
-        if method == "spectral-mitya":
+        if method == 'spectral' or (method is None and self.viewDimensions == 3):
             nodes = graph.nodes()
             n=len(nodes)
             A = zeros((n, n))
@@ -1177,21 +1201,7 @@ class Display(wx.glcanvas.GLCanvas):
                     path_3D.append(visible1.position())
                     self.setVisiblePath(edge[2], path_3D, visible0, visible1)
                     visitedEdges.append(edgeVisible)
-        elif method == "spectral":
-            layout = drawing.layout.spectral_layout(graph, dim=3)
-            #print layout
-            for node in graph.nodes(): 
-                visible = self.visibleForObject(self.network.objectWithId(node))
-                position = layout[node]
-                visible.setPosition((position[0]*100.0, position[1]*100.0, position[2]*100.0))
-            for edge in graph.edges():
-                path_3D = []
-                visible0 = self.visibleForObject(self.network.objectWithId(edge[0]))
-                visible1 = self.visibleForObject(self.network.objectWithId(edge[1]))
-                path_3D.append(visible0.position())
-                path_3D.append(visible1.position())
-                self.setVisiblePath(edge[2], path_3D, visible0, visible1)
-        elif method == "graphviz" and (pygraphviz is not None or pydot is not None):
+        elif (method == 'graphviz' or (method is None and self.viewDimensions == 2)) and (pygraphviz is not None or pydot is not None):
             visibles = {}
             edgeVisibles = []
             if pygraphviz is not None:  # Use pygraphviz if it's available as it's faster than pydot.
