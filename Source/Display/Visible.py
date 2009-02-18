@@ -136,13 +136,15 @@ class Visible(object):
     
     
     def setColor(self, color):
-        colorVec = osg.Vec4(color[0], color[1], color[2], 1)
-        self._material.setDiffuse(osg.Material.FRONT_AND_BACK, colorVec)
-        self._material.setAmbient(osg.Material.FRONT_AND_BACK, colorVec)
-        if self._shapeDrawable is not None:
-            self._shapeDrawable.setColor(colorVec)
-        self._color = color
-        self.display.Refresh()
+        if color != self._color:
+            colorVec = osg.Vec4(color[0], color[1], color[2], 1)
+            self._material.setDiffuse(osg.Material.FRONT_AND_BACK, colorVec)
+            self._material.setAmbient(osg.Material.FRONT_AND_BACK, colorVec)
+            if self._shapeDrawable is not None:
+                self._shapeDrawable.setColor(colorVec)
+            self._color = color
+            self.display.Refresh()
+            dispatcher.send(('set', 'color'), self)
     
     
     def color(self):
@@ -150,24 +152,27 @@ class Visible(object):
     
     
     def setOpacity(self, opacity):
-        if opacity < 0:
-            opacity = 0
-        elif opacity > 1:
-            opacity = 1
-        if self._shapeDrawable is not None:
-            self._material.setAlpha(osg.Material.FRONT_AND_BACK, opacity)
-            if opacity == 1:
-                self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.OPAQUE_BIN)
-                self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
-            else:
-                self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
-                self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+        if opacity < 0.0:
+            opacity = 0.0
+        elif opacity > 1.0:
+            opacity = 1.0
         
-        if self._textDrawable is not None:
-            self._textDrawable.setColor(osg.Vec4(0, 0, 0, opacity))
-        
-        self._opacity = opacity
-        self.display.Refresh()
+        if opacity != self.opacity:
+            if self._shapeDrawable is not None:
+                self._material.setAlpha(osg.Material.FRONT_AND_BACK, opacity)
+                if opacity == 1.0:
+                    self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.OPAQUE_BIN)
+                    self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
+                else:
+                    self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
+                    self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+            
+            if self._textDrawable is not None:
+                self._textDrawable.setColor(osg.Vec4(0, 0, 0, opacity))
+            
+            self._opacity = opacity
+            self.display.Refresh()
+            dispatcher.send(('set', 'opacity'), self)
     
     
     def opacity(self):
@@ -340,6 +345,27 @@ class Visible(object):
         self.display.Refresh()
     
     
+    def removeChildVisible(self, childVisible):
+        if childVisible in self.children:
+            if childVisible.sizeIsAbsolute:
+                for ancestor in childVisible.ancestors():
+                    dispatcher.disconnect(childVisible.maintainAbsoluteSize, ('set', 'position'), ancestor)
+                    dispatcher.disconnect(childVisible.maintainAbsoluteSize, ('set', 'size'), ancestor)
+                    dispatcher.disconnect(childVisible.maintainAbsoluteSize, ('set', 'rotation'), ancestor)
+            dispatcher.disconnect(self.childArrangedWeightChanged, ('set', 'arrangedWeight'), childVisible)
+            self.childGroup.removeChild(childVisible.sgNode)
+            childVisible.parent = None
+            self.children.remove(childVisible)
+            if len(self.children) == 0:
+                pass    # TODO: opposite of self._stateSet.setAttributeAndModes(osg.PolygonMode(osg.PolygonMode.FRONT_AND_BACK, osg.PolygonMode.LINE), osg.StateAttribute.ON)
+            if self.arrangedAxis is None:
+                childVisible.updateTransform()
+            else:
+                self._arrangeChildren()
+            dispatcher.send(('set', 'children'), self)
+            self.display.Refresh()
+    
+    
     def rootVisible(self):
         if self.parent is None:
             return self
@@ -385,7 +411,8 @@ class Visible(object):
                 child = self.children[index]
                 childWidth = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight
                 child.setPosition((curX + childWidth / 2.0, 0.0, 0.0))
-                child.setSize((childWidth, max(ySize, 0.5), max(zSize, 0.5)))
+                if not child.sizeIsAbsolute:
+                    child.setSize((childWidth, max(ySize, 0.5), max(zSize, 0.5)))
                 child.setPositionIsFixed(True)
                 curX += childWidth + self.arrangedSpacing
         elif axisToUse == 'Y':
@@ -397,7 +424,8 @@ class Visible(object):
                 child = self.children[index]
                 childHeight = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight
                 child.setPosition((0.0, curY - childHeight / 2.0, 0.0))
-                child.setSize((max(xSize, 0.5), childHeight, max(zSize, 0.5)))
+                if not child.sizeIsAbsolute:
+                    child.setSize((max(xSize, 0.5), childHeight, max(zSize, 0.5)))
                 child.setPositionIsFixed(True)
                 curY -= childHeight + self.arrangedSpacing
         else:   # axisToUse == 'Z'
@@ -409,7 +437,8 @@ class Visible(object):
                 child = self.children[index]
                 childDepth = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight
                 child.setPosition((0.0, 0.0, curZ + childDepth / 2.0))
-                child.setSize((max(xSize, 0.5), max(ySize, 0.5), childDepth))
+                if not child.sizeIsAbsolute:
+                    child.setSize((max(xSize, 0.5), max(ySize, 0.5), childDepth))
                 child.setPositionIsFixed(True)
                 curZ += childDepth + self.arrangedSpacing
         
