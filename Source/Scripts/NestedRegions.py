@@ -25,4 +25,4 @@ neuron2.arborize(vln)
 
 display.setVisibleSize(ellipsoidBody, (0.1, 0.2, 0.1))
 display.setViewDimensions(3)
-display.autoLayout()
+display.autoLayout(method = 'graphviz')
