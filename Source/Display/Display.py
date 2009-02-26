@@ -255,8 +255,9 @@ class Display(wx.glcanvas.GLCanvas):
             self.orthoZoom = 0
             self.resetView()
         elif self.viewDimensions == 3:
-            self.trackball.setCenter(osg.Vec3d(*self.visiblesCenter)) #computeHomePosition()
-            self.trackball.home(0)
+            self.trackball.setNode(node)
+            self.trackball.computeHomePosition()
+            self.viewer3D.home()
             self.trackball.setRotation(osg.Quat(0, 0, 0, 1))
         
         #osgDB.writeNodeFile(self.rootNode, "test.osg");
@@ -1140,15 +1141,24 @@ class Display(wx.glcanvas.GLCanvas):
         """Automatically layout the displayed network without moving visibles with fixed positions (much)"""
         self.deselectAll()
         if method == 'spectral' or (method is None and self.viewDimensions == 3):
-            graph = self.network.graph
-            nodes = graph.nodes()
+            nodes = []
+            edges = []
+            for key, visible in self.visibles.iteritems():
+                if isinstance(visible, tuple):
+                    nodes.append(visible[0])
+                    edges.append(visible[1])
+                else:
+                    if visible.pathStart is not None:
+                        edges.append(visible)
+                    elif visible.parent is None:
+                        nodes.append(visible)
             n=len(nodes)
             A = zeros((n, n))
-            for edge in graph.edges():
-                n1 = nodes.index(edge[0])
-                n2 = nodes.index(edge[1])
+            for edge in edges:
+                n1 = nodes.index(edge.pathStart.rootVisible())
+                n2 = nodes.index(edge.pathEnd.rootVisible())
                 A[n1, n2] = A[n1, n2] + 1
-                if isinstance(edge[2], GapJunction):
+                if isinstance(edge.client, GapJunction):
                     A[n2, n1] = A[n2, n1] + 1
             #print A
             A_prime = A.T   #conj().transpose()?
@@ -1184,23 +1194,7 @@ class Display(wx.glcanvas.GLCanvas):
             zScale = 1.0 / (zMax - zMin)
             zOff = (zMax + zMin) / 2.0
             for i in range(n):
-                node = nodes[i]
-                visible = self.visibleForObject(self.network.objectWithId(node))
-                if isinstance(visible, tuple):
-                    visible = visible[0]
-                #visible.setPosition((x[i,0], y[i,0], z[i,0]))
-                visible.setPosition(((x[i,0] - xOff) * xScale, (y[i,0] - yOff) * yScale, (z[i,0] - zOff) * zScale))
-            visitedEdges = []
-            for edge in graph.edges():
-                edgeVisible = self.visibleForObject(edge[2], False)
-                if edgeVisible not in visitedEdges:
-                    path_3D = []
-                    visible0 = self.visibleForObject(self.network.objectWithId(edge[0]))
-                    visible1 = self.visibleForObject(self.network.objectWithId(edge[1]))
-                    path_3D.append(visible0.position())
-                    path_3D.append(visible1.position())
-                    self.setVisiblePath(edge[2], path_3D, visible0, visible1)
-                    visitedEdges.append(edgeVisible)
+                nodes[i].setPosition(((x[i,0] - xOff) * xScale, (y[i,0] - yOff) * yScale, (z[i,0] - zOff) * zScale))
         elif (method == 'graphviz' or (method is None and self.viewDimensions == 2)) and (pygraphviz is not None or pydot is not None):
             visibles = {}
             edgeVisibles = []
@@ -1212,7 +1206,7 @@ class Display(wx.glcanvas.GLCanvas):
                 if isinstance(visible, tuple):
                     visibles[str(id(visible[0]))] = visible[0]
                     if pygraphviz is not None:
-                        graph.add_node(id(visible[0]), **visible[0].graphvizAttributes())
+                        graph.add_node(str(id(visible[0])), **visible[0].graphvizAttributes())
                     else:
                         graph.add_node(pydot.Node(str(id(visible[0])), **visible[0].graphvizAttributes()))
                     edgeVisibles.append(visible[1])
@@ -1222,7 +1216,7 @@ class Display(wx.glcanvas.GLCanvas):
                     elif len(visible.children) == 0:    #visible.parent is None:
                         visibles[str(id(visible))] = visible
                         if pygraphviz is not None:
-                            graph.add_node(id(visible), **visible.graphvizAttributes())
+                            graph.add_node(str(id(visible)), **visible.graphvizAttributes())
                         else:
                             graph.add_node(pydot.Node(str(id(visible)), **visible.graphvizAttributes()))
             for edgeVisible in edgeVisibles:
@@ -1255,12 +1249,13 @@ class Display(wx.glcanvas.GLCanvas):
                 if visible.parent is None:
                     pos = None
                     if visible.pathStart is None:
-                        # Set the position of a node
-                        pos = self._graphvizNodePos(graph, visibleId)
-                        if pos is not None:
-                            x, y = pos.split(',') 
-                            # TODO: convert to local coordinates?
-                            visible.setPosition(((float(x) - dx) * scale, (float(y) - dy) * scale, 0))
+                        if not visible.positionIsFixed():
+                            # Set the position of a node
+                            pos = self._graphvizNodePos(graph, visibleId)
+                            if pos is not None:
+                                x, y = pos.split(',') 
+                                # TODO: convert to local coordinates?
+                                visible.setPosition(((float(x) - dx) * scale, (float(y) - dy) * scale, 0))
                     elif False:
                         # Set the path of an edge
                         if pygraphviz is not None:
