@@ -90,6 +90,20 @@ class PickHandler(osgGA.GUIEventHandler):
             viewer.getCamera().accept(intersectionVisitor)
             if picker.containsIntersections():
                 # Loop through all of the hits to find the "deepest" one in the sense of the region hierarchy.  So a child of a region will be picked instead of its parent.
+                if self._display.useGhosts():
+                    # Make a first pass only picking non-ghosted items.
+                    deepestVisible = None
+                    for intersection in picker.getIntersections():
+                        for node in intersection.nodePath:
+                            geode = osg.NodeToGeode(node)
+                            if geode != None:
+                                visibleID = int(geode.getName())
+                                visible = self._display.visibleIds[visibleID]
+                                if visible.opacity() == 1.0 and (deepestVisible is None or deepestVisible in visible.ancestors()):
+                                    deepestVisible = visible
+                    if deepestVisible is not None:
+                        self._display.selectVisible(deepestVisible, self._display.selectionShouldExtend, self._display.findShortestPath)
+                        return True
                 deepestVisible = None
                 for intersection in picker.getIntersections():
                     for node in intersection.nodePath:
