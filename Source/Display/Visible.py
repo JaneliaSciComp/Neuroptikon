@@ -714,3 +714,8 @@ class Visible(object):
             self._glowColor = color
             self.display.Refresh()
     
+    
+    def __del__(self):
+        self.children = []
+    
+    
