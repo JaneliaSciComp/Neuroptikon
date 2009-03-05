@@ -44,7 +44,7 @@ __builtin__.gettext = gettext_module.translation('Neuroptikon', fallback = True)
 import wx
 import wx.lib.mixins.inspection
 from wx import py
-from NeuroptikonFrame import NeuroptikonFrame
+import xml.etree.ElementTree as ElementTreefrom NeuroptikonFrame import NeuroptikonFrame
 from Network.Network import Network
 from Network.Neuron import Neuron
 from Library.Library import Library
@@ -103,15 +103,15 @@ if __name__ == "__main__":
             self.library.add(Neurotransmitter('norepinephrine', gettext('Norepinephrine')))
             self.library.add(Neurotransmitter('5-HT', gettext('Serotonin')))
             
-            self.library.add(NeuronClass(identifier = 'basket', name = gettext('Basket cell'), polarity = Neuron.Polarity.MULTIPOLAR, function = Neuron.Function.INTERNEURON, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
-            self.library.add(NeuronClass(identifier = 'pyramidal', name = gettext('Pyramidal cell'), polarity = Neuron.Polarity.MULTIPOLAR, excitatory = True, neurotransmitter = self.library.neurotransmitter('glutamate')))
+            self.library.add(NeuronClass(identifier = 'basket', name = gettext('Basket cell'), polarity = Neuron.Polarity.MULTIPOLAR, function = Neuron.Function.INTERNEURON, activation = 'inhibitory', neurotransmitter = self.library.neurotransmitter('GABA')))
+            self.library.add(NeuronClass(identifier = 'pyramidal', name = gettext('Pyramidal cell'), polarity = Neuron.Polarity.MULTIPOLAR, activation = 'excitatory', neurotransmitter = self.library.neurotransmitter('glutamate')))
             self.library.add(NeuronClass(identifier = 'RSad pyramidal', name = gettext('RSad Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
             self.library.add(NeuronClass(identifier = 'RSna pyramidal', name = gettext('RSna Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
             self.library.add(NeuronClass(identifier = 'IB pyramidal', name = gettext('IB Pyramidal cell'), parentClass = self.library.neuronClass('pyramidal')))
             self.library.add(NeuronClass(identifier = 'betz', name = gettext('Betz cell'), parentClass = self.library.neuronClass('pyramidal'), function = Neuron.Function.MOTOR))
-            self.library.add(NeuronClass(identifier = 'medium spiny', name = gettext('Medium spiny neuron'), polarity = Neuron.Polarity.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
-            self.library.add(NeuronClass(identifier = 'purkinje', name = gettext('Purkinje cell'), polarity = Neuron.Polarity.MULTIPOLAR, excitatory = False, neurotransmitter = self.library.neurotransmitter('GABA')))
-            self.library.add(NeuronClass(identifier = 'renshaw', name = gettext('Renshaw cell'), polarity = Neuron.Polarity.MULTIPOLAR, function = Neuron.Function.INTERNEURON, excitatory = False, neurotransmitter = self.library.neurotransmitter('glycine')))
+            self.library.add(NeuronClass(identifier = 'medium spiny', name = gettext('Medium spiny neuron'), polarity = Neuron.Polarity.MULTIPOLAR, activation = 'inhibitory', neurotransmitter = self.library.neurotransmitter('GABA')))
+            self.library.add(NeuronClass(identifier = 'purkinje', name = gettext('Purkinje cell'), polarity = Neuron.Polarity.MULTIPOLAR, activation = 'inhibitory', neurotransmitter = self.library.neurotransmitter('GABA')))
+            self.library.add(NeuronClass(identifier = 'renshaw', name = gettext('Renshaw cell'), polarity = Neuron.Polarity.MULTIPOLAR, function = Neuron.Function.INTERNEURON, activation = 'inhibitory', neurotransmitter = self.library.neurotransmitter('glycine')))
             self.library.add(NeuronClass(identifier = 'anterior horn', name = gettext('Anterior horn cell')))
             
             self.library.add(Modality('light', gettext('Light')))
@@ -182,6 +182,36 @@ if __name__ == "__main__":
             self._networks.append(network)
             #TODO: implement doc/view framework
             return network
+        
+        
+        def onOpenNetwork(self, event):
+            dlg = wx.FileDialog(None, gettext('Choose a saved network to open:'), '', '', '*.xml', wx.OPEN)
+            if dlg.ShowModal() == wx.ID_OK:
+                path = dlg.GetPath()
+                try:
+                    xmlTree = ElementTree.parse(path)
+                    
+                    # Instantiate the network
+                    networkElement = xmlTree.find('Network')
+                    network = Network.fromXMLElement(networkElement)
+                    if network is None:
+                        raise ValueError, gettext('Could not load the network')
+                    else:
+                        network.savePath = path
+                    
+                    # Instantiate any displays
+#                    for displayElement in xmlTree.findall('Display'):
+#                        display = NeuroptikonFrame.fromXMLElement(displayElement)
+#                        if display is None:
+#                            raise ValueError, gettext('Could not create one of the displays')
+#                        display.Show(True)
+#                        display.Raise()
+#                        self._frames.append(display)
+                    
+                    if len(network.displays) == 0:
+                        self.displayNetwork(network)
+                except:
+                    raise
         
         
         def networks(self):

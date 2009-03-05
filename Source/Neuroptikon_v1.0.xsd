@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	
+	<xs:complexType name="Neuroptikon">
+		<xs:sequence>
+			<xs:element name="Network" type="Network"/>
+			<xs:element name="Display" type="Display" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="Network">
+		<xs:sequence minOccurs="0" maxOccurs="unbounded">
+			<xs:choice>
+				<xs:element name="Region" type="Region" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="Pathway" type="Pathway" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="Neuron" type="Neuron" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="Muscle" type="Muscle" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="Arborization" type="Arborization" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="Innervation" type="Innervation" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="GapJunction" type="GapJunction" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="Synapse" type="Synapse" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="Stimulus" type="Stimulus" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:choice>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:simpleType name="AttributeType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="string"/>
+			<xs:enumeration value="integer"/>
+			<xs:enumeration value="double"/>
+			<xs:enumeration value="boolean"/>
+			<xs:enumeration value="duration"/>
+			<xs:enumeration value="dateTime"/>
+			<xs:enumeration value="date"/>
+			<xs:enumeration value="time"/>
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:simpleType name="AttributeValue">
+		<xs:union memberTypes="xs:string xs:integer xs:double xs:boolean xs:duration xs:dateTime xs:date xs:time"/>
+	</xs:simpleType>
+	
+	<xs:complexType name="Attribute">
+		<xs:sequence>
+			<xs:element name="name" type="xs:string"/>
+			<xs:element name="value" type="AttributeValue"/>
+		</xs:sequence>
+		<xs:attribute name="type" type="AttributeType"/>
+	</xs:complexType>
+	
+	<xs:complexType name="Link">
+		<xs:sequence>
+			<xs:element name="URI" type="xs:anyURI"/>
+			<xs:element name="text" type="xs:string" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="Note">
+		<xs:sequence>
+			<xs:element name="title" type="xs:string"/>
+			<xs:element name="text" type="xs:string" minOccurs="0"/>
+			<xs:element name="created" type="xs:dateTime"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="Object" abstract="true">
+		<xs:sequence>
+			<xs:element name="name" type="xs:string" minOccurs="0"/>
+			<xs:element name="abbreviation" type="xs:string" minOccurs="0"/>
+			<xs:element name="description" type="xs:string" minOccurs="0"/>
+			<xs:element name="attribute" type="Attribute" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="link" type="Link" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="note" type="Note" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:attribute name="id" type="xs:nonNegativeInteger"/>
+	</xs:complexType>
+	
+	<xs:complexType name="OntologyTerm">
+		<xs:attribute name="ontologyId" type="xs:string"/>
+		<xs:attribute name="ontologyTermId" type="xs:string"/>
+	</xs:complexType>
+	
+	<xs:complexType name="Region">
+		<xs:complexContent>
+			<xs:extension base="Object">
+				<xs:sequence>
+					<xs:element name="OntologyTerm" type="OntologyTerm" minOccurs="0"/>
+					<xs:element name="Region" type="Region" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="PathwayTerminus">
+		<xs:attribute name="regionId" type="xs:integer"/>
+		<xs:attribute name="sends" type="xs:string"/>
+		<xs:attribute name="receives" type="xs:string"/>
+	</xs:complexType>
+	
+	<xs:complexType name="Pathway">
+		<xs:complexContent>
+			<xs:extension base="Object">
+				<xs:sequence>
+					<xs:element name="PathwayTerminus" type="PathwayTerminus"/>
+					<xs:element name="PathwayTerminus" type="PathwayTerminus"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="Neuron">
+		<xs:complexContent>
+			<xs:extension base="Object">
+				<xs:sequence>
+					<xs:element name="class" type="xs:string" minOccurs="0"/>
+					<xs:element name="neurotransmitter" type="xs:string" minOccurs="0"/>
+					<xs:element name="activation" type="xs:string" minOccurs="0"/>
+					<xs:element name="function" type="xs:string" minOccurs="0"/>
+					<xs:element name="polarity" type="xs:string" minOccurs="0"/>
+					<xs:element name="somaRegionId" type="xs:integer" minOccurs="0"/>
+					<xs:element name="Neurite" type="Neurite" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="Neurite">
+		<xs:complexContent>
+			<xs:extension base="Object">
+				<xs:sequence>
+					<xs:element name="pathwayId" type="xs:integer" minOccurs="0"/>
+					<xs:element name="neurite" type="Neurite" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="Muscle">
+		<xs:complexContent>
+			<xs:extension base="Object"/>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="Arborization">
+		<xs:complexContent>
+			<xs:extension base="Object">
+				<xs:attribute name="neuriteId" type="xs:integer"/>
+				<xs:attribute name="regionId" type="xs:integer"/>
+				<xs:attribute name="sends" type="xs:boolean"/>
+				<xs:attribute name="receives" type="xs:boolean"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="Innervation">
+		<xs:complexContent>
+			<xs:extension base="Object">
+				<xs:attribute name="neuriteId" type="xs:integer"/>
+				<xs:attribute name="muscleId" type="xs:integer"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="GapJunction">
+		<xs:complexContent>
+			<xs:extension base="Object">
+				<xs:attribute name="neurite1Id" type="xs:integer"/>
+				<xs:attribute name="neurite2Id" type="xs:integer"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="Synapse">
+		<xs:complexContent>
+			<xs:extension base="Object">
+				<xs:sequence>
+					<xs:element name="preSynapticNeuriteId" type="xs:integer"/>
+					<xs:element name="postSynapticNeuriteId" type="xs:integer" minOccurs="1" maxOccurs="unbounded"/>
+					<xs:element name="activation" type="xs:string" minOccurs="0"/>
+				</xs:sequence>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="Stimulus">
+		<xs:complexContent>
+			<xs:extension base="Object">
+				<xs:attribute name="targetId" type="xs:integer"/>
+				<xs:attribute name="modality" type="xs:string"/>
+			</xs:extension>
+		</xs:complexContent>
+	</xs:complexType>
+	
+	<xs:complexType name="Display">
+		<xs:sequence>
+			<xs:element name="DisplayRule" type="DisplayRule" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="Visible" type="Visible" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:attribute name="dimensions" type="xs:nonNegativeInteger"/>
+	</xs:complexType>
+	
+	<xs:complexType name="DisplayRule">
+		<xs:sequence>
+			<xs:element name="name" type="xs:string"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="Visible">
+		<xs:sequence>
+			<xs:element name="objectId" type="xs:nonNegativeInteger"/>
+			<!--xs:complexType name="position">
+				<xs:attribute name="x" type="xs:float"/>
+				<xs:attribute name="y" type="xs:float"/>
+				<xs:attribute name="z" type="xs:float"/>
+				<xs:attribute name="fixed" type="xs:boolean"/>
+			</xs:complexType>
+			<xs:complexType name="size">
+				<xs:attribute name="width" type="xs:float"/>
+				<xs:attribute name="height" type="xs:float"/>
+				<xs:attribute name="depth" type="xs:float"/>
+				<xs:attribute name="absolute" type="xs:boolean"/>
+			</xs:complexType>
+			<xs:complexType name="rotation">
+				<xs:attribute name="x" type="xs:float"/>
+				<xs:attribute name="y" type="xs:float"/>
+				<xs:attribute name="z" type="xs:float"/>
+				<xs:attribute name="angle" type="xs:float"/>
+			</xs:complexType>
+			<xs:element name="label" type="xs:string"/>
+			<xs:element name="shape" type="xs:string"/>
+			<xs:complexType name="color">
+				<xs:attribute name="r" type="xs:float"/>
+				<xs:attribute name="g" type="xs:float"/>
+				<xs:attribute name="b" type="xs:float"/>
+			</xs:complexType>
+			<xs:element name="opacity" type="xs:float"/>
+			<xs:complexType name="path">
+				<xs:attribute name="startVisibleId" type="xs:nonNegativeInteger"/>
+				<xs:attribute name="endVisibleId" type="xs:nonNegativeInteger"/>
+			</xs:complexType>
+			<xs:complexType name="arrangement">
+				<xs:attribute name="axis" type="xs:string"/>
+				<xs:attribute name="spacing" type="xs:float"/>
+				<xs:attribute name="weight" type="xs:float"/>
+			</xs:complexType>
+			glow color?
+			texture?
+			texture transform?
+			animate flow?
+			<xs:element name="Visible" type="Visible" minOccurs="0" maxOccurs="unbounded"/-->
+		</xs:sequence>
+		<xs:attribute name="id" type="xs:nonNegativeInteger"/>
+		<xs:attribute name="weight" type="xs:float"/>
+	</xs:complexType>
+	
+	<xs:element name="Neuroptikon" type="Neuroptikon"/>
+	
+</xs:schema>

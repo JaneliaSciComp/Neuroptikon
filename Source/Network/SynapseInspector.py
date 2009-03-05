@@ -12,7 +12,7 @@ class SynapseInspector( ObjectInspector ):
     
     @classmethod
     def inspectedAttributes(cls):
-        return ['excitatory']
+        return ['activation']
     
     
     def objectSizer(self, parentWindow):
@@ -39,11 +39,11 @@ class SynapseInspector( ObjectInspector ):
     
     
     def populateObjectSizer(self, attribute = None):
-        if attribute is None or attribute == 'excitatory':
-            if self.objects.haveEqualAttr('excitatory'):
-                self.excitatoryButton.SetValue(self.objects[0].excitatory is not None and self.objects[0].excitatory)
-                self.inhibitoryButton.SetValue(self.objects[0].excitatory is not None and not self.objects[0].excitatory)
-                self.unknownActivationButton.SetValue(self.objects[0].excitatory is None)
+        if attribute is None or attribute == 'activation':
+            if self.objects.haveEqualAttr('activation'):
+                self.excitatoryButton.SetValue(self.objects[0].activation is not None and self.objects[0].activation == 'excitatory')
+                self.inhibitoryButton.SetValue(self.objects[0].activation is not None and self.objects[0].activation == 'inhibitory')
+                self.unknownActivationButton.SetValue(self.objects[0].activation is None)
                 self.multipleActivationsButton.SetValue(False)
                 self.multipleActivationsButton.Hide()
             else:
@@ -58,13 +58,13 @@ class SynapseInspector( ObjectInspector ):
     
     def onSetActivation(self, event):
         if self.excitatoryButton.GetValue():
-            newValue = True
+            newValue = 'excitatory'
         elif self.inhibitoryButton.GetValue():
-            newValue = False
+            newValue = 'inhibitory'
         elif self.unknownActivationButton.GetValue():
             newValue = None
         else:
             return
         
         for object in self.objects:
-            object.excitatory = newValue
+            object.activation = newValue

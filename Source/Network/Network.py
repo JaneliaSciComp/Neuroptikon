@@ -1,6 +1,7 @@
 from networkx import *
+import sys
 from wx.py import dispatcher
-from Region import Region
+import xml.etree.ElementTree as ElementTreefrom Region import Region
 from Pathway import Pathway
 from Neuron import Neuron
 from Neurite import Neurite
@@ -24,6 +25,37 @@ class Network:
         self.objects = []
         self.idDict = {}   # TODO: weak ref dict?
         self.displays = []
+        self._nextUniqueId = -1
+        self.savePath = None
+    
+    
+    @classmethod
+    def fromXMLElement(cls, xmlElement):
+        network = cls()
+        # Load the classes in such an order that any referenced objects are guaranteed to have already been created.
+        for className in ['Region', 'Pathway', 'Neuron', 'Muscle', 'Arborization', 'Innervation', 'GapJunction', 'Synapse', 'Stimulus']:
+            elementModule = getattr(sys.modules['Network'], className)
+            elementClass = getattr(elementModule, className)
+            for element in xmlElement.findall(className):
+                object = elementClass.fromXMLElement(network, element)
+                if object is not None:
+                    network.addObject(object)
+        return network
+    
+    
+    def toXMLElement(self, parentElement):
+        networkElement = ElementTree.SubElement(parentElement, 'Network')
+        for object in self.objects:
+            if not (isinstance(object, Region) and object.parentRegion is not None) and not isinstance(object, Neurite):
+                objectElement = object.toXMLElement(networkElement)
+                if objectElement is None:
+                    pass    # TODO: are there any cases where this is NOT an error?
+        return networkElement
+    
+    
+    def nextUniqueId(self):
+        self._nextUniqueId += 1
+        return self._nextUniqueId
     
     
     def findObject(self, objectClass, name = None):
@@ -96,29 +128,39 @@ class Network:
     
     
     def addObject(self, object):
+        if object.networkId in self.idDict:
+            raise ValueError, gettext('All objects in a network must have unique identifiers.')
+        
         self.objects.append(object)
-        self.idDict[id(object)] = object
+        self.idDict[object.networkId] = object
+        
+        if object.networkId > self._nextUniqueId:
+            self._nextUniqueId = object.networkId
+        
         if isinstance(object, Arborization):
-            self.graph.add_edge(id(object.neurite.neuron()), id(object.region), object)
+            self.graph.add_edge(object.neurite.neuron().networkId, object.region.networkId, object)
         elif isinstance(object, Synapse):
-            self.graph.add_edge(id(object.presynapticNeurite.neuron()), id(object.postsynapticNeurites[0].neuron()), object) # TODO: need to handle hyper-edges?
+            self.graph.add_edge(object.preSynapticNeurite.neuron().networkId, object.postSynapticNeurites[0].neuron().networkId, object) # TODO: need to handle hyper-edges?
         elif isinstance(object, GapJunction):
             neurites = list(object.neurites)
-            self.graph.add_edge(id(neurites[0].neuron()), id(neurites[1].neuron()), object)
+            self.graph.add_edge(neurites[0].neuron().networkId, neurites[1].neuron().networkId, object)
         elif isinstance(object, Pathway):
-            self.graph.add_edge(id(object.terminus1.region), id(object.terminus2.region), object)
+            self.graph.add_edge(object.terminus1.region.networkId, object.terminus2.region.networkId, object)
         elif isinstance(object, Innervation):
-            self.graph.add_edge(id(object.neurite.neuron()), id(object.muscle), object)
+            self.graph.add_edge(object.neurite.neuron().networkId, object.muscle.networkId, object)
         elif isinstance(object, Stimulus):
-            self.graph.add_node(id(object))
-            self.graph.add_edge(id(object), id(object.target), object)
+            self.graph.add_node(object.networkId)
+            self.graph.add_edge(object.networkId, object.target.networkId, object)
         elif isinstance(object, Region) or isinstance(object, Neuron) or isinstance(object, Muscle):
-            self.graph.add_node(id(object))
+            self.graph.add_node(object.networkId)
         dispatcher.send('addition', self, affectedObjects = [object])
     
     
-    def objectWithId(self, node):
-        return self.idDict[node]
+    def objectWithId(self, objectId):
+        if (isinstance(objectId, str) or isinstance(objectId, unicode)) and objectId.isdigit():
+            objectId = int(objectId)
+        
+        return self.idDict[objectId] if objectId in self.idDict else None
     
     
     def objectsOfClass(self, objectClass):
@@ -185,3 +227,4 @@ class Network:
             pass
 
         return P
+    

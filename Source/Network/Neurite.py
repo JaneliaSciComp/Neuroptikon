@@ -3,6 +3,7 @@ from Arborization import Arborization
 from Synapse import Synapse
 from GapJunction import GapJunction
 from Innervation import Innervation
+import xml.etree.ElementTree as ElementTree
 
 class Neurite(Object):
     
@@ -16,6 +17,37 @@ class Neurite(Object):
         self._innervations = []
         self.pathway = None
         #self.isStretchReceptor ???
+    
+    
+    @classmethod
+    def fromXMLElement(cls, network, xmlElement):
+        object = super(Neurite, cls).fromXMLElement(network, xmlElement)
+        pathwayId = xmlElement.get('pathwayId')
+        object.pathway = network.objectWithId(pathwayId)
+        if pathwayId is not None and object.pathway is None:
+            raise ValueError, gettext('Pathway with id "%s" does not exist') % (pathwayId)
+        object._neurites = []
+        for neuriteElement in xmlElement.findall('Neurite'):
+            neurite = Neurite.fromXMLElement(network, neuriteElement)
+            if neurite is None:
+                raise ValueError, gettext('Could not create neurite')
+            neurite.root = object
+            object._neurites.append(neurite)
+            network.addObject(neurite)
+        object.arborization = None
+        object.synapses = []
+        object._gapJunctions = []
+        object._innervations = []
+        return object
+    
+    
+    def toXMLElement(self, parentElement):
+        neuriteElement = Object.toXMLElement(self, parentElement)
+        if self.pathway is not None:
+            ElementTree.SubElement(neuriteElement, 'pathwayId').text = str(self.pathway.networkId)
+        for neurite in self._neurites:
+            neurite.toXMLElement(neuriteElement)
+        return neuriteElement
     
     
     def neuron(self):
@@ -39,8 +71,8 @@ class Neurite(Object):
         self.network.addObject(self.arborization)
     
     
-    def synapseOn(self, neurite, excitatory = None):
-        synapse = Synapse(self.network, self, [neurite], excitatory)
+    def synapseOn(self, neurite, activation = None):
+        synapse = Synapse(self.network, self, [neurite], activation)
         self.synapses.append(synapse)
         neurite.synapses.append(synapse)
         self.network.addObject(synapse)
@@ -50,7 +82,7 @@ class Neurite(Object):
     def incomingSynapses(self):
         incomingSynapses = []
         for synapse in self.synapses:
-            if synapse.presynapticNeurite is not self:
+            if synapse.preSynapticNeurite is not self:
                 incomingSynapses.append(synapse)
         return incomingSynapses
     
@@ -58,7 +90,7 @@ class Neurite(Object):
     def outgoingSynapses(self):
         outgoingSynapses = []
         for synapse in self.synapses:
-            if synapse.presynapticNeurite is self:
+            if synapse.preSynapticNeurite is self:
                 outgoingSynapses.append(synapse)
         return outgoingSynapses
 
@@ -110,7 +142,7 @@ class Neurite(Object):
         if self.arborization is not None and self.arborization.receivesInput:
             inputs.append(self.arborization)
         for synapse in self.incomingSynapses():
-            inputs.append(synapse.presynapticNeurite)
+            inputs.append(synapse.preSynapticNeurite)
         inputs.extend(self._gapJunctions)
         for neurite in self._neurites:
             inputs.extend(neurite.inputs())
@@ -123,7 +155,7 @@ class Neurite(Object):
         if self.arborization is not None and self.arborization.sendsOutput:
             outputs.append(self.arborization)
         for synapse in self.outgoingSynapses():
-            outputs.extend(synapse.postsynapticNeurites)
+            outputs.extend(synapse.postSynapticNeurites)
         outputs.extend(self._gapJunctions)
         outputs.extend(self._innervations)
         for neurite in self._neurites:

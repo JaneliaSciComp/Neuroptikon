@@ -1,6 +1,8 @@
 from Object import *
 from Pathway import Pathway
+import wx
 from wx.py import dispatcher
+import xml.etree.ElementTree as ElementTree
 
 
 class Region(Object):
@@ -21,8 +23,49 @@ class Region(Object):
         self.ontologyTerm = ontologyTerm
         self.arborizations = []
         self.pathways = []
+        self.neurons = []
         if parentRegion is not None:
             parentRegion.addSubRegion(self)
+    
+    
+    @classmethod
+    def fromXMLElement(cls, network, xmlElement):
+        object = super(Region, cls).fromXMLElement(network, xmlElement)
+        object.parentRegion = None
+        object.subRegions = []
+        for regionElement in xmlElement.findall('Region'):
+            region = Region.fromXMLElement(network, regionElement)
+            if region is None:
+                raise ValueError, gettext('Could not create region')
+            region.parentRegion = object
+            object.subRegions.append(region)
+            network.addObject(region)
+        ontologyElement = xmlElement.find('OntologyTerm')
+        if ontologyElement is None:
+            object.ontologyTerm = None
+        else:
+            ontology = wx.GetApp().library.ontology(ontologyElement.get('ontologyId'))
+            if ontology is None:
+                raise ValueError, gettext('Could not find ontology "%s"') % (ontologyElement.get('ontologyId'))
+            else:
+                termId = ontologyElement.get('ontologyTermId')
+                if termId in ontology:
+                    object.ontologyTerm = ontology[termId]
+                else:
+                    raise ValueError, gettext('Could not find ontology term "%s"') % (termId)
+        object.arborizations = []
+        object.pathways = []
+        object.neurons = []
+        return object
+    
+    
+    def toXMLElement(self, parentElement):
+        regionElement = Object.toXMLElement(self, parentElement)
+        if self.ontologyTerm is not None:
+            ElementTree.SubElement(regionElement, 'ontologyTerm', ontologyId = str(self.ontologyTerm.ontology.identifier), ontologyTermId = str(self.ontologyTerm.identifier))
+        for subRegion in self.subRegions:
+            subRegion.toXMLElement(regionElement)
+        return regionElement
     
     
     def addSubRegion(self, subRegion):
@@ -32,7 +75,7 @@ class Region(Object):
     
     
     def addPathwayToRegion(self, otherRegion, name=None):
-        pathway = Pathway(self, otherRegion, name)
+        pathway = Pathway(self, otherRegion, name = name)
         self.pathways.append(pathway)
         otherRegion.pathways.append(pathway)
         self.network.addObject(pathway)

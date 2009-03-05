@@ -22,6 +22,7 @@ from math import pi, fabs
 from numpy import diag, mat, sign, inner, isinf, zeros
 from numpy.linalg import pinv, eigh
 import os, platform, cPickle
+import xml.etree.ElementTree as ElementTree
 
 try:
     import pygraphviz
@@ -132,6 +133,19 @@ class Display(wx.glcanvas.GLCanvas):
         self.graphicsWindow = self.viewer2D.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
         
         self.SetDropTarget(DisplayDropTarget(self))
+    
+    
+    def toXMLElement(self, parentElement):
+        displayElement = ElementTree.SubElement(parentElement, 'Display')
+# TODO:
+#        for visible in self.visibles:
+#            if visible.parent is None:
+#                visibleElement = visible.toXMLElement(xmlDocument)
+#                if visibleElement is None:
+#                    raise ValueError, gettext('Could not save visualized item')
+#                else:
+#                    displayElement.appendChild(visibleElement)
+        return displayElement
     
     
     def textureFromImage(self, imageName):
@@ -387,7 +401,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     def keyForObject(self, object):
         if isinstance(object, Synapse):
-            key = (object.presynapticNeurite, object.postsynapticNeurites[0])
+            key = (object.preSynapticNeurite, object.postSynapticNeurites[0])
         elif isinstance(object, GapJunction):
             key = list(object.neurites)
             key.sort()
@@ -443,6 +457,16 @@ class Display(wx.glcanvas.GLCanvas):
                 if self._showRegionNames:
                     visible.setLabel(object.abbreviation or object.name)
                 self.addVisible(visible, object, self.visibleForObject(object.parentRegion))
+                for subRegion in object.subRegions:
+                    subVisible = self.visibleForObject(subRegion)
+                    if subVisible is not None:
+                        self.rootNode.removeChild(subVisible.sgNode)
+                        visible.addChildVisible(subVisible)
+                for neuron in object.neurons:
+                    neuronVisible = self.visibleForObject(neuron)
+                    if neuronVisible is not None:
+                        self.rootNode.removeChild(neuronVisible.sgNode)
+                        visible.addChildVisible(neuronVisible)
             elif isinstance(object, Pathway):
                 visible = Visible(self, object)
                 visible.setShape("tube")
@@ -489,8 +513,8 @@ class Display(wx.glcanvas.GLCanvas):
                 self.addVisible(visible, object)
             elif isinstance(object, Synapse):
                 # create one visible per post-synaptic neurite?
-                preNeuronVis = self.visibleForObject(object.presynapticNeurite.neuron())
-                for neurite in object.postsynapticNeurites:
+                preNeuronVis = self.visibleForObject(object.preSynapticNeurite.neuron())
+                for neurite in object.postSynapticNeurites:
                     visible = Visible(self, object)
                     visible.setShape("tube")
                     visible.setColor(neuralTissueColor)
@@ -787,8 +811,8 @@ class Display(wx.glcanvas.GLCanvas):
             if not extend or visible not in self.selectedVisibles or (self.hoverSelected and not self.hoverSelecting):  # and self.selectedVisibles == [visible]):
                 if isinstance(object, Arborization) and not self.objectIsSelected(object.neurite.neuron()):
                     object = object.neurite.neuron()
-                elif isinstance(object, Synapse) and not self.objectIsSelected(object.presynapticNeurite.neuron()):
-                    object = object.presynapticNeurite.neuron()
+                elif isinstance(object, Synapse) and not self.objectIsSelected(object.preSynapticNeurite.neuron()):
+                    object = object.preSynapticNeurite.neuron()
                 elif isinstance(object, GapJunction) and not self.objectIsSelected(list(object.neurites)[0].neuron()):
                     object = list(object.neurites)[0].neuron()
                 if not extend:
@@ -821,15 +845,15 @@ class Display(wx.glcanvas.GLCanvas):
                     self.highlightObject(object.terminus2.region)
                 elif isinstance(object, Neuron):
                     for synapse in object.incomingSynapses():
-                        if not extend or self.objectIsSelected(synapse.presynapticNeurite.neuron()):
+                        if not extend or self.objectIsSelected(synapse.preSynapticNeurite.neuron()):
                             self.animateObjectFlow(synapse)
                             if self.selectConnectedVisibles:
-                                self.highlightObject(synapse.presynapticNeurite.neuron())
+                                self.highlightObject(synapse.preSynapticNeurite.neuron())
                     for synapse in object.outgoingSynapses():
-                        if not extend or self.objectIsSelected(synapse.postsynapticNeurites[0].neuron()):
+                        if not extend or self.objectIsSelected(synapse.postSynapticNeurites[0].neuron()):
                             self.animateObjectFlow(synapse)
                             if self.selectConnectedVisibles:
-                                self.highlightObject(synapse.postsynapticNeurites[0].neuron())
+                                self.highlightObject(synapse.postSynapticNeurites[0].neuron())
                     for arborization in object.arborizations():
                         if not extend or self.objectIsSelected(arborization.region):
                             self.animateObjectFlow(arborization)
@@ -937,7 +961,7 @@ class Display(wx.glcanvas.GLCanvas):
                                         ((animatedObject.sendsOutput and secondaryArborization.receivesInput) or (animatedObject.receivesInput and secondaryArborization.sendsOutput)):
                                         removeAnimation = False
                     elif isinstance(animatedObject, Synapse):
-                        if not self.objectIsSelected(animatedObject.presynapticNeurite.neuron()) or not self.objectIsSelected(animatedObject.postsynapticNeurites[0].neuron()):
+                        if not self.objectIsSelected(animatedObject.preSynapticNeurite.neuron()) or not self.objectIsSelected(animatedObject.postSynapticNeurites[0].neuron()):
                             removeAnimation = True
                     if removeAnimation:
                         self.animateObjectFlow(animatedObject, False)

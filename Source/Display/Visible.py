@@ -40,7 +40,6 @@ class Visible(object):
         self.client = client
         self._motionTexture1 = display.textureFromImage('texture2.png')
         self._motionTexture2 = display.textureFromImage('texture2.png')
-        self._selectable = True
         self._glowColor = None
         self._glowNode = None
         self._position = (random.random() - 0.5, random.random() - 0.5, 0)
@@ -123,7 +122,7 @@ class Visible(object):
                 self._textDrawable.setCharacterSize(48)
                 self._textGeode.addDrawable(self._textDrawable)
                 self._textDrawable.setColor(osg.Vec4(0, 0, 0, self._opacity))
-            self._textDrawable.setText(label)
+            self._textDrawable.setText(str(label))
         elif label is None and self._textDrawable is not None:
             self._textGeode.removeDrawable(self._textDrawable)
             self._textDrawable = None

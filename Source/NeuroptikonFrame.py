@@ -1,5 +1,6 @@
 import wx
 import platform, sys
+import xml.etree.ElementTree as ElementTreefrom xml.dom import minidom
 from Display.Display import Display
 from Network.Network import Network
 from Search.Finder import Finder
@@ -58,7 +59,9 @@ class NeuroptikonFrame( wx.Frame ):
         
         fileMenu = wx.Menu()
         self.Bind(wx.EVT_MENU, wx.GetApp().onNewNetwork, fileMenu.Append(wx.NewId(), gettext('New Network\tCtrl-N'), gettext('Open a new network window')))
+        self.Bind(wx.EVT_MENU, wx.GetApp().onOpenNetwork, fileMenu.Append(wx.NewId(), gettext('Open Network...\tCtrl-O'), gettext('Open a previously saved network')))
         self.Bind(wx.EVT_MENU, self.onCloseWindow, fileMenu.Append(wx.ID_CLOSE, gettext('Close Network\tCtrl-W'), gettext('Close the current network window')))
+        self.Bind(wx.EVT_MENU, self.onSaveNetwork, fileMenu.Append(wx.NewId(), gettext('Save Network...\tCtrl-S'), gettext('Save the current network')))
         fileMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, self.onRunScript, fileMenu.Append(wx.NewId(), gettext('Run Script...\tCtrl-R'), gettext('Run a console script file')))
         self.Bind(wx.EVT_MENU, wx.GetApp().onBrowseLibrary, fileMenu.Append(wx.NewId(), gettext('Browse the Library\tCtrl-Alt-L'), gettext('Open the Library window')))
@@ -194,3 +197,30 @@ class NeuroptikonFrame( wx.Frame ):
         self.display.setShowFlow(False)
         wx.GetApp()._frames.remove(self)    # hackish
         self.Destroy()
+    
+    
+    def onSaveNetwork(self, event):
+        network = self.display.network
+        if network.savePath is None:
+            dlg = wx.FileDialog(None, gettext('Save as:'), '', '', '*.xml', wx.SAVE)
+            if dlg.ShowModal() == wx.ID_OK:
+                network.savePath = dlg.GetPath()
+        
+        if network.savePath is not None:
+            try:
+                xmlRoot = ElementTree.Element('Neuroptikon')                
+                # Serialize the network
+                networkElement = network.toXMLElement(xmlRoot)
+                if networkElement is None:
+                    raise ValueError, gettext('Could not save the network')
+                
+                # Serialize the display(s)
+                for display in network.displays:
+                    displayElement = display.toXMLElement(xmlRoot)
+                    if displayElement is None:
+                        raise ValueError, gettext('Could not save one of the displays')
+                
+                xmlTree = ElementTree.ElementTree(xmlRoot)                xmlTree.write(network.savePath)
+            except:
+                raise    # TODO: inform the user nicely
+    

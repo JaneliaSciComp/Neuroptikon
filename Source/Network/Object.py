@@ -1,17 +1,48 @@
 import wx
 import os
 from wx.py import dispatcher
-from networkx import shortest_path
-
+import xml.etree.ElementTree as ElementTreefrom networkx import shortest_path
+    
+    
 class Object(object):
     
-    
-    def __init__(self, network, name = None, abbreviation = None):
+    def __init__(self, network, name = None, abbreviation = None, description = None):
         self.network = network
+        self.networkId = self.network.nextUniqueId()
+        
         self.name = name
         self.abbreviation = abbreviation
-        self.description = None
+        self.description = description
+        
         self.stimuli = []
+    
+    
+    @classmethod
+    def fromXMLElement(cls, network, xmlElement):
+        object = super(Object, cls).__new__(cls)
+        object.network = network
+        object.networkId = int(xmlElement.get('id'))
+        
+        object.name = xmlElement.findtext('name')
+        object.abbreviation = xmlElement.findtext('abbreviation')
+        object.description = xmlElement.findtext('description')
+        
+        object.stimuli = []
+        
+        # TODO: handle custom attributes
+        # TODO: handle links
+        # TODO: handle notes
+        return object
+    
+    
+    def toXMLElement(self, parentElement):
+        objectElement = ElementTree.SubElement(parentElement, self.__class__.__name__, id = str(self.networkId))
+        attrNames = ['name', 'abbreviation', 'description']
+        for attrName in attrNames:
+            attrValue = getattr(self, attrName)
+            if attrValue is not None:
+                ElementTree.SubElement(objectElement, attrName).text = attrValue
+        return objectElement
     
     
     @classmethod
@@ -31,7 +62,7 @@ class Object(object):
     
     
     def __hash__(self):
-        return id(self)
+        return self.networkId
     
     
     def __setattr__(self, name, value):
@@ -58,7 +89,7 @@ class Object(object):
     
     def shortestPathTo(self, otherObject):
         path = []
-        for nodeID in shortest_path(self.network.graph, id(self), id(otherObject)):
+        for nodeID in shortest_path(self.network.graph, self.networkId, otherObject.networkId):
             pathObject = self.network.objectWithId(nodeID)
             if pathObject != self:
                 path.append(pathObject)

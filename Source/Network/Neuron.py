@@ -1,6 +1,7 @@
 from Object import Object
 from Neurite import Neurite as Neurite
-
+import xml.etree.ElementTree as ElementTree
+import wx
 
 class Neuron(Object):
     # TODO: neurites method that returns all neurites
@@ -23,7 +24,7 @@ class Neuron(Object):
         # Pull out the keyword arguments specific to this class before we call super.
         # We need to do this so we can know if the caller specified an argument or not.
         # For example, the caller might specify a neuron class and one attribute to override.  We need to know which attributes _not_ to set.
-        localAttrNames = ['excitatory', 'function', 'neurotransmitter', 'polarity', 'region']
+        localAttrNames = ['activation', 'function', 'neurotransmitter', 'polarity', 'region']
         localKeywordArgs = {}
         for attrName in localAttrNames:
             if attrName in keywordArgs:
@@ -42,6 +43,59 @@ class Neuron(Object):
             elif self.neuronClass:
                 attrValue = getattr(self.neuronClass, attrName) # Inherit the value from the class
             setattr(self, attrName, attrValue)
+        
+        if self.region is not None:
+            self.region.neurons.append(self)
+    
+    
+    @classmethod
+    def fromXMLElement(cls, network, xmlElement):
+        object = super(Neuron, cls).fromXMLElement(network, xmlElement)
+        classId = xmlElement.findtext('class')
+        object.neuronClass = wx.GetApp().library.neuronClass(classId)
+        if classId is not None and object.neuronClass is None:
+            raise ValueError, gettext('Neuron class "%s" does not exist') % (classId)
+        ntId = xmlElement.findtext('neurotransmitter')
+        object.neurotransmitter = wx.GetApp().library.neurotransmitter(ntId)
+        if ntId is not None and  object.neurotransmitter is None:
+            raise ValueError, gettext('Neurotransmitter "%s" does not exist') % (ntId)
+        object.activation = xmlElement.findtext('activation')
+        object.function = xmlElement.findtext('function')
+        object.polarity = xmlElement.findtext('polarity')
+        regionId = xmlElement.get('somaRegionId')
+        object.region = network.objectWithId(regionId)
+        if regionId is not None and object.region is None:
+            raise ValueError, gettext('Region with id "%s" does not exist') % (regionId)
+        if object.region is not None:
+            object.region.neurons.append(object)
+        object._neurites = []
+        for neuriteElement in xmlElement.findall('Neurite'):
+            neurite = Neurite.fromXMLElement(network, neuriteElement)
+            if neurite is None:
+                raise ValueError, gettext('Could not create neurite')
+            neurite.root = object
+            object._neurites.append(neurite)
+            network.addObject(neurite)
+        return object
+    
+    
+    def toXMLElement(self, parentElement):
+        neuronElement = Object.toXMLElement(self, parentElement)
+        if self.neuronClass is not None:
+            ElementTree.SubElement(neuronElement, 'class').text = self.neuronClass.identifier
+        if self.neurotransmitter is not None:
+            ElementTree.SubElement(neuronElement, 'neurotransmitter').text = self.neurotransmitter.identifier
+        if self.activation is not None:
+            ElementTree.SubElement(neuronElement, 'activation').text = self.activation
+        if self.function is not None:
+            ElementTree.SubElement(neuronElement, 'function').text = self.function
+        if self.polarity is not None:
+            ElementTree.SubElement(neuronElement, 'polarity').text = self.polarity
+        if self.region is not None:
+            ElementTree.SubElement(neuronElement, 'somaRegionId').text = str(self.region.networkId)
+        for neurite in self._neurites:
+            neurite.toXMLElement(neuronElement)
+        return neuronElement
     
     
     def createNeurite(self):
@@ -75,7 +129,7 @@ class Neuron(Object):
         """Convenience method that creates a neurite for each neuron and then creates a synapse between them."""
         neurite = self.createNeurite()
         otherNeurite = otherNeuron.createNeurite()
-        return neurite.synapseOn(neurite = otherNeurite, excitatory = self.excitatory)
+        return neurite.synapseOn(neurite = otherNeurite, activation = self.activation)
     
     
     def incomingSynapses(self):
@@ -126,9 +180,9 @@ class Neuron(Object):
             if neurite.arborization is not None:
                 connections.add(neurite.arborization.region)
             for synapse in neurite.incomingSynapses():
-                connections.add(synapse.presynapticNeurite.neuron)
+                connections.add(synapse.preSynapticNeurite.neuron)
             for synapse in neurite.outgoingSynapses():
-                connections.add(synapse.postsynapticNeurites(0).neuron)
+                connections.add(synapse.postSynapticNeurites(0).neuron)
         return connections
     
     
