@@ -11,7 +11,7 @@ class Library(object):
     
     def add(self, item):
         if not issubclass(item.__class__, LibraryItem):
-            raise ValueError, 'Library items must be instances of a subclass of LibraryItem'
+            raise ValueError, gettext('Library items must be instances of a subclass of LibraryItem')
         
         if item.__class__.__name__ in self._library:
             # This class of item has been added before.
