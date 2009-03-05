@@ -104,15 +104,18 @@ class Finder(wx.Dialog):
         typeChoice = self.io_object_type_choice.GetSelection()
         if typeChoice == 0:
             objects = self.display.network.objectsOfClass(Network.Region.Region)
+            altName = gettext('<unnamed region>')
         elif typeChoice == 1:
             objects = self.display.network.objectsOfClass(Network.Neuron.Neuron)
+            altName = gettext('<unnamed neuron>')
         elif typeChoice == 2:
             objects = self.display.network.objectsOfClass(Network.Muscle.Muscle)
+            altName = gettext('<unnamed muscle>')
         else:
             objects = []
-        objects.sort(key=lambda object: object.name.upper())
+        objects.sort(key=lambda object: (object.name or altName).upper())
         for object in objects:
-            self.io_object_choice.Append(object.name, object)
+            self.io_object_choice.Append(object.name or altName, object)
         self.io_object_choice.SetSelection(0)
         if event != None:
             event.Skip()
