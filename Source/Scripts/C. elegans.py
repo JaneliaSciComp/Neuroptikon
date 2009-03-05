@@ -24,12 +24,12 @@ for rowNum in range(1, sheet.nrows):
             neurons[neuron2_name] = neuron2
         alreadyExists = False
         for synapse in neuron1.outgoingSynapses(): 
-            if synapse.postsynapticNeurites[0].neuron == neuron2:
+            if synapse.postSynapticNeurites[0].neuron == neuron2:
                 alreadyExists = True
         if not alreadyExists:
             synapse = neuron1.synapseOn(neuron2)
             for j in range(count - 1):
-                synapse.presynapticNeurite.synapseOn(synapse.postsynapticNeurites[0])
+                synapse.preSynapticNeurite.synapseOn(synapse.postSynapticNeurites[0])
     elif type == "EJ" and neuron1_name < neuron2_name:
         if neuron1_name in neurons:
             neuron1 = neurons[neuron1_name]
