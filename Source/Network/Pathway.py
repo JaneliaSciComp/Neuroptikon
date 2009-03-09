@@ -38,18 +38,10 @@ class PathwayTerminus(object):
     
     def toXMLElement(self, parentElement):
         terminusElement = ElementTree.SubElement(parentElement, self.__class__.__name__, regionId = str(self.region.networkId))
-        if self.sendsOutput is None:
-            terminusElement.set('sends', 'unknown')
-        elif self.sendsOutput:
-            terminusElement.set('sends', 'true')
-        else:
-            terminusElement.set('sends', 'false')
-        if self.receivesInput is None:
-            terminusElement.set('receives', 'unknown')
-        elif self.receivesInput:
-            terminusElement.set('receives', 'true')
-        else:
-            terminusElement.set('receives', 'false')
+        if self.sendsOutput is not None:
+            terminusElement.set('sends', 'true' if self.sendsOutput else 'false')
+        if self.receivesInput is not None:
+            terminusElement.set('receives', 'true' if self.receivesInput else 'false')
         return terminusElement
     
     

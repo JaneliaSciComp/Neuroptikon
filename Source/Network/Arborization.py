@@ -46,16 +46,8 @@ class Arborization(Object):
         arborizationElement = Object.toXMLElement(self, parentElement)
         arborizationElement.set('neuriteId', str(self.neurite.networkId))
         arborizationElement.set('regionId', str(self.region.networkId))
-        if self.sendsOutput is None:
-            arborizationElement.set('sends', 'unknown')
-        elif self.sendsOutput:
-            arborizationElement.set('sends', 'true')
-        else:
-            arborizationElement.set('sends', 'false')
-        if self.receivesInput is None:
-            arborizationElement.set('receives', 'unknown')
-        elif self.receivesInput:
-            arborizationElement.set('receives', 'true')
-        else:
-            arborizationElement.set('receives', 'false')
+        if self.sendsOutput is not None:
+            arborizationElement.set('sends', 'true' if self.sendsOutput else 'false')
+        if self.receivesInput is not None:
+            arborizationElement.set('receives', 'true' if self.receivesInput else 'false')
         return arborizationElement
