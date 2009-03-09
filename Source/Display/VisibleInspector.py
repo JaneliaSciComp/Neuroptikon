@@ -52,6 +52,12 @@ class VisibleInspector(Inspector):
             gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Position:')), 0)
             gridSizer.Add(self.fixedPositionCheckBox, 1)
             
+            # Add a check box for fixing the size.
+            self.fixedSizeCheckBox = wx.CheckBox(self._window, wx.ID_ANY, gettext('Fixed'), style=wx.CHK_3STATE)
+            self._window.Bind(wx.EVT_CHECKBOX, self.onSetSizeIsFixed)
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Size:')), 0)
+            gridSizer.Add(self.fixedSizeCheckBox, 1)
+            
             # Add a slider for setting the arrangement weight within our parent.
             self._arrangedWeightSlider = wx.Slider(self._window, wx.ID_ANY, 50, 1, 100)
             self._arrangedWeightSlider.Bind(wx.EVT_SCROLL, self.onSetArrangedWeight)
@@ -97,7 +103,7 @@ class VisibleInspector(Inspector):
     def inspectDisplay(self, display):
         self.visibles = display.selection()
         for visible in self.visibles:
-            for attributeName in ['color', 'opacity', 'positionIsFixed', 'shape', 'children', 'arrangedWeight', 'arrangedAxis', 'arrangedSpacing']:
+            for attributeName in ['color', 'opacity', 'positionIsFixed', 'sizeIsFixed', 'shape', 'children', 'arrangedWeight', 'arrangedAxis', 'arrangedSpacing']:
                 dispatcher.connect(self.refreshGUI, ('set', attributeName), visible)
         self.refreshGUI()
     
@@ -141,6 +147,15 @@ class VisibleInspector(Inspector):
                     self.fixedPositionCheckBox.Set3StateValue(wx.CHK_UNCHECKED)
             else:
                 self.fixedPositionCheckBox.Set3StateValue(wx.CHK_UNDETERMINED)
+        
+        if updatedAttribute is None or updatedAttribute == 'sizeIsFixed':
+            if self.visibles.haveEqualAttr('sizeIsFixed'):
+                if self.visibles[0].sizeIsFixed():
+                    self.fixedSizeCheckBox.Set3StateValue(wx.CHK_CHECKED)
+                else:
+                    self.fixedSizeCheckBox.Set3StateValue(wx.CHK_UNCHECKED)
+            else:
+                self.fixedSizeCheckBox.Set3StateValue(wx.CHK_UNDETERMINED)
         
         if updatedAttribute is None or updatedAttribute == 'shape':
             if self.visibles.haveEqualAttr('shape'):
@@ -210,6 +225,12 @@ class VisibleInspector(Inspector):
         newValue = self.fixedPositionCheckBox.GetValue()
         for visible in self.visibles:
             visible.setPositionIsFixed(newValue == wx.CHK_CHECKED)
+    
+    
+    def onSetSizeIsFixed(self, event):
+        newValue = self.fixedSizeCheckBox.GetValue()
+        for visible in self.visibles:
+            visible.setSizeIsFixed(newValue == wx.CHK_CHECKED)
         
     
     def onSetArrangedWeight(self, event):

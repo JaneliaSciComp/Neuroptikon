@@ -44,7 +44,8 @@ __builtin__.gettext = gettext_module.translation('Neuroptikon', fallback = True)
 import wx
 import wx.lib.mixins.inspection
 from wx import py
-import xml.etree.ElementTree as ElementTreefrom NeuroptikonFrame import NeuroptikonFrame
+import xml.etree.ElementTree as ElementTree
+from NeuroptikonFrame import NeuroptikonFrame
 from Network.Network import Network
 from Network.Neuron import Neuron
 from Library.Library import Library
@@ -196,18 +197,19 @@ if __name__ == "__main__":
                     network = Network.fromXMLElement(networkElement)
                     if network is None:
                         raise ValueError, gettext('Could not load the network')
-                    else:
-                        network.savePath = path
+                    network.savePath = path
+                    self._networks.append(network)
                     
                     # Instantiate any displays
-#                    for displayElement in xmlTree.findall('Display'):
-#                        display = NeuroptikonFrame.fromXMLElement(displayElement)
-#                        if display is None:
-#                            raise ValueError, gettext('Could not create one of the displays')
-#                        display.Show(True)
-#                        display.Raise()
-#                        self._frames.append(display)
+                    for frameElement in xmlTree.findall('DisplayWindow'):
+                        frame = NeuroptikonFrame.fromXMLElement(frameElement, network = network)
+                        if frame is None:
+                            raise ValueError, gettext('Could not create one of the displays')
+                        frame.Show(True)
+                        frame.Raise()
+                        self._frames.append(frame)
                     
+                    # Create a default display if none were specified in the file.
                     if len(network.displays) == 0:
                         self.displayNetwork(network)
                 except:
@@ -219,7 +221,7 @@ if __name__ == "__main__":
         
         
         def displayNetwork(self, network):
-            frame = NeuroptikonFrame(network)
+            frame = NeuroptikonFrame(network = network)
             frame.Show(True)
             frame.Raise()
             self._frames.append(frame)

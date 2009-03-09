@@ -1,31 +1,31 @@
 import wx
 import platform, sys
-import xml.etree.ElementTree as ElementTreefrom xml.dom import minidom
+import xml.etree.ElementTree as ElementTree
+from xml.dom import minidom
 from Display.Display import Display
 from Network.Network import Network
 from Search.Finder import Finder
 
 
 class NeuroptikonFrame( wx.Frame ):
-    def __init__(self, network, id=wx.ID_ANY, title=gettext('Neuroptikon')):
+    def __init__(self, network = None, id=wx.ID_ANY, title=gettext('Neuroptikon')):
         wx.Frame.__init__(self, None, id, title, size=(800,600), style=wx.DEFAULT_FRAME_STYLE|wx.FULL_REPAINT_ON_RESIZE)
         
         self.Bind(wx.EVT_ACTIVATE, self.onActivate)
         self.Bind(wx.EVT_CLOSE, self.onCloseWindow)
         
-        splitter = wx.SplitterWindow(self, wx.ID_ANY, style = wx.SP_LIVE_UPDATE)
+        self.splitter = wx.SplitterWindow(self, wx.ID_ANY, style = wx.SP_LIVE_UPDATE)
         
-        width, height = self.GetClientSize()
-        self.display = Display(splitter, wx.ID_ANY, 0, 0, width, height)
+        self.display = Display(self.splitter)
         self.display.setNetwork(network)
         
-        self._console = wx.py.shell.Shell(splitter, wx.ID_ANY, locals = self.scriptLocals(), introText=gettext('Welcome to Neuroptikon.'))
+        self._console = wx.py.shell.Shell(self.splitter, wx.ID_ANY, locals = self.scriptLocals(), introText=gettext('Welcome to Neuroptikon.'))
         
-        splitter.SplitHorizontally(self.display, self._console)
-        splitter.SetSashGravity(1.0)
+        self.splitter.SplitHorizontally(self.display, self._console)
+        self.splitter.SetSashGravity(1.0)
         
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(splitter, 1, wx.EXPAND)
+        sizer.Add(self.splitter, 1, wx.EXPAND)
         self.SetAutoLayout(True)
         self.SetSizer(sizer)
         
@@ -44,7 +44,33 @@ class NeuroptikonFrame( wx.Frame ):
         self.SetToolBar(toolbar)
         
         self.Show(1)
-        splitter.SetSashPosition(-100)
+        self.splitter.SetSashPosition(-100)
+    
+    
+    @classmethod
+    def fromXMLElement(cls, xmlElement, network = None):
+        frame = NeuroptikonFrame()
+        
+        # TODO: set frame position and size
+        
+        # Populate the display (can't use the fromXMLElement pattern here because it doesn't seem possible to re-parent a wx.GLCanvas.
+        displayElement = xmlElement.find('Display')
+        if displayElement is None:
+            raise ValueError, gettext('Display windows must contain a display')
+        frame.display.autoVisualize = False
+        frame.display.setNetwork(network)
+        frame.display.fromXMLElement(displayElement)
+        
+        return frame
+    
+    
+    def toXMLElement(self, parentElement):
+        frameElement = ElementTree.SubElement(parentElement, 'DisplayWindow')
+        displayElement = self.display.toXMLElement(frameElement)
+        if displayElement is None:
+            raise ValueError, gettext('Could not save display')
+        # TODO: save frame position and size
+        return frameElement
     
     
     def loadBitmap(self, fileName):
@@ -208,7 +234,8 @@ class NeuroptikonFrame( wx.Frame ):
         
         if network.savePath is not None:
             try:
-                xmlRoot = ElementTree.Element('Neuroptikon')                
+                xmlRoot = ElementTree.Element('Neuroptikon')
+                
                 # Serialize the network
                 networkElement = network.toXMLElement(xmlRoot)
                 if networkElement is None:
@@ -216,11 +243,12 @@ class NeuroptikonFrame( wx.Frame ):
                 
                 # Serialize the display(s)
                 for display in network.displays:
-                    displayElement = display.toXMLElement(xmlRoot)
-                    if displayElement is None:
-                        raise ValueError, gettext('Could not save one of the displays')
+                    frameElement = display.GetTopLevelParent().toXMLElement(xmlRoot)
+                    if frameElement is None:
+                        raise ValueError, gettext('Could not save one of the windows')
                 
-                xmlTree = ElementTree.ElementTree(xmlRoot)                xmlTree.write(network.savePath)
+                xmlTree = ElementTree.ElementTree(xmlRoot)
+                xmlTree.write(network.savePath)
             except:
                 raise    # TODO: inform the user nicely
     

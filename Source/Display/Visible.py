@@ -11,6 +11,7 @@ from AnimatedTextureCallback import AnimatedTextureCallback
 from wx.py import dispatcher
 from math import atan2, pi, sqrt
 import random
+import xml.etree.ElementTree as ElementTree
 
 
 class Visible(object):
@@ -37,6 +38,7 @@ class Visible(object):
     
     def __init__(self, display, client):
         self.display = display
+        self.displayId = display.nextUniqueId() # a unique identifier within the display
         self.client = client
         self._motionTexture1 = display.textureFromImage('texture2.png')
         self._motionTexture2 = display.textureFromImage('texture2.png')
@@ -45,21 +47,24 @@ class Visible(object):
         self._position = (random.random() - 0.5, random.random() - 0.5, 0)
         self._positionIsFixed = False
         self._size = (.001, .001, .001)
+        self._sizeIsFixed = True
         self.sizeIsAbsolute = False
         self._rotation = (0, 0, 1, 0)
         self._weight = 1.0
         self._dependencies = set()
         self._label = None
         self._labelNode = None
-        self._shapeName = "none"
+        self._shapeName = None
         self._color = (0.5, 0.5, 0.5)
-        self._opacity = 1
+        self._opacity = 1.0
         self._path = None
         self.pathStart = None
         self.pathEnd = None
+        self.flowTo = False
+        self.flowFrom = False
         self.sgNode = osg.MatrixTransform()
         self._shapeGeode = osg.Geode()
-        self._shapeGeode.setName(str(id(self)))
+        self._shapeGeode.setName(str(self.displayId))
         self._shapeDrawable = None
         self._stateSet = self._shapeGeode.getOrCreateStateSet()
         self._stateSet.setAttributeAndModes(osg.BlendFunc(), osg.StateAttribute.ON)
@@ -69,7 +74,7 @@ class Visible(object):
         self._stateSet.setAttribute(self._material)
         self.sgNode.addChild(self._shapeGeode)
         self._textGeode = osg.Geode()
-        self._textGeode.setName(str(id(self)))
+        self._textGeode.setName(str(self.displayId))
         self._textDrawable = None
         self.sgNode.addChild(self._textGeode)
         self._staticTexture = None
@@ -79,31 +84,185 @@ class Visible(object):
         self.children = []
         self.arrangedAxis = 'largest'
         self.arrangedSpacing = 0.02
-        self.arrangedWeight = 50.0
+        self.arrangedWeight = 1.0
         self.childGroup = osg.MatrixTransform(osg.Matrixd.identity())
         self.sgNode.addChild(self.childGroup)
+        self.connectedPaths = []
+    
+    
+    @classmethod
+    def fromXMLElement(cls, xmlElement, display):
+        client = display.network.objectWithId(xmlElement.get('objectId'))
+        visible = Visible(display, client)
+        visible.displayId = int(xmlElement.get('id'))
+        
+        # Set any geometry
+        geometryElement = xmlElement.find('geometry')
+        if geometryElement is not None:
+            positionElement = geometryElement.find('position')
+            if positionElement is not None:
+                x = float(positionElement.get('x'))
+                y = float(positionElement.get('y'))
+                z = float(positionElement.get('z'))
+                visible.setPosition((x, y, z))
+                if positionElement.get('fixed') == 'true':
+                    visible.setPositionIsFixed(True)
+            sizeElement = geometryElement.find('size')
+            if sizeElement is not None:
+                width = float(sizeElement.get('x'))
+                height = float(sizeElement.get('y'))
+                depth = float(sizeElement.get('z'))
+                visible.setSize((width, height, depth))
+                if sizeElement.get('fixed') == 'false':
+                    visible.setSizeIsFixed(False)
+                if sizeElement.get('absolute') == 'true':
+                    visible.setSizeIsAbsolute(True)
+            rotationElement = geometryElement.find('rotation')
+            if rotationElement is not None:
+                x = float(rotationElement.get('x'))
+                y = float(rotationElement.get('y'))
+                z = float(rotationElement.get('z'))
+                angle = float(rotationElement.get('angle'))
+                visible.setRotation((x, y, z, angle))
+        
+        # Set any appearance
+        appearanceElement = xmlElement.find('appearance')
+        if appearanceElement is not None:
+            visible.setLabel(appearanceElement.findtext('label'))
+            visible.setShape(appearanceElement.findtext('shape'))
+            colorElement = appearanceElement.find('color')
+            if colorElement is not None:
+                red = float(colorElement.get('r'))
+                green = float(colorElement.get('g'))
+                blue = float(colorElement.get('b'))
+                visible.setColor((red, green, blue))
+            opacityText = appearanceElement.findtext('opacity')
+            if opacityText is not None:
+                visible.setOpacity(float(opacityText))
+            weightText = appearanceElement.findtext('weight')
+            if weightText is not None:
+                visible.setWeight(float(weightText))
+        
+        # Set up any arrangement
+        arrangementElement = xmlElement.find('arrangement')
+        if arrangementElement is not None:
+            axis = arrangementElement.get('axis')
+            if axis is not None:
+                visible.setArrangedAxis(axis)
+            spacing = arrangementElement.get('spacing')
+            if spacing is not None:
+                visible.setArrangedSpacing(float(spacing))
+            weight = arrangementElement.get('weight')
+            if weight is not None:
+                visible.setArrangedWeight(float(weight))
+        
+        # Set up any path
+        pathElement = xmlElement.find('path')
+        if pathElement is not None:
+            pathStart = display.visibleIds[int(pathElement.get('startVisibleId'))]
+            pathEnd = display.visibleIds[int(pathElement.get('endVisibleId'))]
+            flowTo = pathElement.get('flowTo')
+            flowFrom = pathElement.get('flowTo')
+            if pathStart is None or pathEnd is None:
+                raise ValueError, gettext('Could not create path')
+            visible.setFlowDirection(pathStart, pathEnd, flowTo, flowFrom)
+            visible.setPath([], pathStart, pathEnd)
+        
+        # Create any child visibles
+        for visibleElement in xmlElement.findall('Visible'):
+            childVisible = Visible.fromXMLElement(visibleElement, display)
+            if childVisible is None:
+                raise ValueError, gettext('Could not create visualized item')
+            display.addVisible(childVisible, visible)
+        
+        return visible
+    
+    
+    def toXMLElement(self, parentElement):
+        visibleElement = ElementTree.SubElement(parentElement, 'Visible')
+        visibleElement.set('id', str(self.displayId))
+        if self.client is not None:
+            visibleElement.set('objectId', str(self.client.networkId))
+        
+        # Add the geometry
+        geometryElement = ElementTree.SubElement(visibleElement, 'geometry')
+        positionElement = ElementTree.SubElement(geometryElement, 'position')
+        positionElement.set('x', str(self._position[0]))
+        positionElement.set('y', str(self._position[1]))
+        positionElement.set('z', str(self._position[2]))
+        positionElement.set('fixed', 'true' if self._positionIsFixed else 'false')
+        sizeElement = ElementTree.SubElement(geometryElement, 'size')
+        sizeElement.set('x', str(self._size[0]))
+        sizeElement.set('y', str(self._size[1]))
+        sizeElement.set('z', str(self._size[2]))
+        sizeElement.set('fixed', 'true' if self.sizeIsFixed else 'false')
+        sizeElement.set('absolute', 'true' if self.sizeIsAbsolute else 'false')
+        rotationElement = ElementTree.SubElement(geometryElement, 'rotation')
+        rotationElement.set('x', str(self._rotation[0]))
+        rotationElement.set('y', str(self._rotation[1]))
+        rotationElement.set('z', str(self._rotation[2]))
+        rotationElement.set('angle', str(self._rotation[3]))
+        
+        # Add the appearance
+        appearanceElement = ElementTree.SubElement(visibleElement, 'appearance')
+        if self._label is not None:
+            ElementTree.SubElement(appearanceElement, 'label').text = self._label
+        if self._shapeName is not None:
+            ElementTree.SubElement(appearanceElement, 'shape').text = self._shapeName
+        colorElement = ElementTree.SubElement(appearanceElement, 'color')
+        colorElement.set('r', str(self._color[0]))
+        colorElement.set('g', str(self._color[1]))
+        colorElement.set('b', str(self._color[2]))
+        ElementTree.SubElement(appearanceElement, 'opacity').text = str(self._opacity)  # TODO: ghosting will confuse this
+        ElementTree.SubElement(appearanceElement, 'weight').text = str(self._weight)
+        # TODO: texture, textureTransform
+        
+        # Add the arrangement
+        arrangementElement = ElementTree.SubElement(visibleElement, 'arrangement')
+        arrangementElement.set('axis', str(self.arrangedAxis))
+        arrangementElement.set('spacing', str(self.arrangedSpacing))
+        arrangementElement.set('weight', str(self.arrangedWeight))
+        
+        # Add any path
+        if self.isPath():
+            pathElement = ElementTree.SubElement(visibleElement, 'path')
+            pathElement.set('startVisibleId', str(self.pathStart.displayId))
+            pathElement.set('endVisibleId', str(self.pathEnd.displayId))
+            if self.flowTo is not None:
+                pathElement.set('flowTo', 'true' if self.flowTo else 'false')
+            if self.flowFrom is not None:
+                pathElement.set('flowFrom', 'true' if self.flowFrom else 'false')
+        
+        # Add any child visibles
+        for childVisible in self.children:
+            childElement = childVisible.toXMLElement(visibleElement)
+            if childElement is None:
+                raise ValueError, gettext('Could not save visualized item')
+        
+        return visibleElement
         
     
     def shape(self):
-        """Return the type of shape set for this visualized object, one of 'ball', 'box', 'capsule', 'cone' or 'tube'"""
+        """Return the type of shape set for this visualized object, one of 'ball', 'box', 'capsule', 'cone', 'tube' or None"""
         return self._shapeName
     
     
     def setShape(self, shapeName):
-        self._shapeName = shapeName
-        if self._shapeDrawable:
-            self._shapeGeode.removeDrawable(self._shapeDrawable)
-        self._shapeDrawable = osg.ShapeDrawable(Visible.geometries[self._shapeName])
-        self._shapeGeode.addDrawable(self._shapeDrawable)
-        self.childGroup.setMatrix(Visible.geometryInterior[self._shapeName])
-        for child in self.children:
-            dispatcher.send(('set', 'position'), child)
-        # Recreate the glow shape if needed
-        if self._glowNode is not None:
-            glowColor = self._glowColor
-            self.setGlowColor(None)
-            self.setGlowColor(glowColor)
-        self.display.Refresh()
+        if self._shapeName != shapeName:
+            self._shapeName = shapeName
+            if self._shapeDrawable:
+                self._shapeGeode.removeDrawable(self._shapeDrawable)
+            self._shapeDrawable = osg.ShapeDrawable(Visible.geometries[self._shapeName])
+            self._shapeGeode.addDrawable(self._shapeDrawable)
+            self.childGroup.setMatrix(Visible.geometryInterior[self._shapeName])
+            for child in self.children:
+                dispatcher.send(('set', 'position'), child)
+            # Recreate the glow shape if needed
+            if self._glowNode is not None:
+                glowColor = self._glowColor
+                self.setGlowColor(None)
+                self.setGlowColor(glowColor)
+            self.display.Refresh()
     
     
     def setLabel(self, label):
@@ -253,6 +412,16 @@ class Visible(object):
         dispatcher.send(('set', 'size'), self)
         self._arrangeChildren()
         self.display.Refresh()
+    
+    
+    def sizeIsFixed(self):
+        return self._sizeIsFixed
+    
+    
+    def setSizeIsFixed(self, flag):
+        if self._sizeIsFixed != flag:
+            self._sizeIsFixed = flag
+            dispatcher.send(('set', 'size is fixed'), self)
     
     
     def setSizeIsAbsolute(self, sizeIsAbsolute = True):
@@ -636,8 +805,10 @@ class Visible(object):
             self.addDependency(startVisible, 'position')
             if startVisible != self.pathStart:
                 path.reverse()
+            startVisible.connectedPaths.append(self)
         if endVisible is not None:
             self.addDependency(endVisible, 'position')
+            endVisible.connectedPaths.append(self)
         
         self._path = path
         
@@ -675,40 +846,45 @@ class Visible(object):
         self.display.Refresh()
     
     
+    def isPath(self):
+        return self.pathStart is not None
+    
+    
     def onMouseDown(self, event):
         pass    # TODO?
     
     
     def setGlowColor(self, color):
         if color != self._glowColor:
-            if color is None:
-                if self._glowNode is not None:
-                    self.sgNode.removeChild(self._glowNode)
-                    self._glowNode = None
-                    self._glowNodeMaterial = None
-            else:
-                if self._glowNode is None:
-                    w, h, d = self.size()
-                    self._glowNode = osg.MatrixTransform(osg.Matrixd.scale(osg.Vec3((w * 1.01) / w, (h * 1.01) / h, (d * 1.01) / d)))
-                    clone = osg.Geode()
-                    clone.setName(str(id(self)))
-                    shapeDrawable = osg.ShapeDrawable(Visible.geometries[self._shapeName])
-                    clone.addDrawable(shapeDrawable)
-                    self._glowNode.addChild(clone)
-                    self._glowNode.getOrCreateStateSet().clear()
-                    self._glowNodeMaterial = osg.Material()
-                    self._glowNode.getStateSet().setAttribute(self._glowNodeMaterial)
-                    self.sgNode.addChild(self._glowNode)
-                colorVec = osg.Vec4(color[0], color[1], color[2], color[3])
-                self._glowNodeMaterial.setDiffuse(osg.Material.FRONT_AND_BACK, colorVec)
-                self._glowNodeMaterial.setEmission(osg.Material.FRONT_AND_BACK, colorVec)
-                self._glowNodeMaterial.setAlpha(osg.Material.FRONT_AND_BACK, color[3])
-                if color[3] == 1:
-                    self._glowNode.getStateSet().setRenderingHint(osg.StateSet.OPAQUE_BIN)
-                    self._glowNode.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
+            if self._shapeName is not None:
+                if color is None:
+                    if self._glowNode is not None:
+                        self.sgNode.removeChild(self._glowNode)
+                        self._glowNode = None
+                        self._glowNodeMaterial = None
                 else:
-                    self._glowNode.getStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
-                    self._glowNode.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+                    if self._glowNode is None:
+                        w, h, d = self.size()
+                        self._glowNode = osg.MatrixTransform(osg.Matrixd.scale(osg.Vec3((w * 1.01) / w, (h * 1.01) / h, (d * 1.01) / d)))
+                        clone = osg.Geode()
+                        clone.setName(str(self.displayId))
+                        shapeDrawable = osg.ShapeDrawable(Visible.geometries[self._shapeName])
+                        clone.addDrawable(shapeDrawable)
+                        self._glowNode.addChild(clone)
+                        self._glowNode.getOrCreateStateSet().clear()
+                        self._glowNodeMaterial = osg.Material()
+                        self._glowNode.getStateSet().setAttribute(self._glowNodeMaterial)
+                        self.sgNode.addChild(self._glowNode)
+                    colorVec = osg.Vec4(color[0], color[1], color[2], color[3])
+                    self._glowNodeMaterial.setDiffuse(osg.Material.FRONT_AND_BACK, colorVec)
+                    self._glowNodeMaterial.setEmission(osg.Material.FRONT_AND_BACK, colorVec)
+                    self._glowNodeMaterial.setAlpha(osg.Material.FRONT_AND_BACK, color[3])
+                    if color[3] == 1:
+                        self._glowNode.getStateSet().setRenderingHint(osg.StateSet.OPAQUE_BIN)
+                        self._glowNode.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
+                    else:
+                        self._glowNode.getStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
+                        self._glowNode.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
                 
             self._glowColor = color
             self.display.Refresh()

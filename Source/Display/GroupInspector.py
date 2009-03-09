@@ -50,14 +50,18 @@ class GroupInspector(Inspector):
             bitmap = wx.StaticBitmap(self._window, wx.ID_ANY)
             bitmap.SetMinSize(wx.Size(16, 16))
             bitmap.SetMaxSize(wx.Size(16, 16))
-            image = visible.client.image()
-            if image is None or not image.Ok():
-                bitmap.SetBitmap(wx.EmptyBitmap(16, 16))
-            else:
-                scaledImage = image.Rescale(16, 16)
-                bitmap.SetBitmap(wx.BitmapFromImage(scaledImage))
+            bitmap.SetBitmap(wx.EmptyBitmap(16, 16))
+            if visible.client is not None:
+                image = visible.client.image()
+                if image is not None and image.Ok():
+                    scaledImage = image.Rescale(16, 16)
+                    bitmap.SetBitmap(wx.BitmapFromImage(scaledImage))
             self.gridSizer.Add(bitmap)
-            self.gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, visible.client.name or gettext('Unnamed ') + visible.client.__class__.__name__))
+            if visible.client is None:
+                clientName = gettext('Virtual object')  # TODO: need a better name for a visible that has no counterpart in the biological layer...
+            else:
+                clientName = visible.client.name or gettext('Unnamed ') + visible.client.__class__.__name__
+            self.gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, clientName))
             selectButton = wx.Button(self._window, wx.ID_ANY, gettext('Select'), wx.DefaultPosition, wx.DefaultSize, wx.BU_EXACTFIT)
             selectButton.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
             selectButton.SetSize(wx.Size(50, selectButton.GetSize().GetHeight()))

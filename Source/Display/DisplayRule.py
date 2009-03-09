@@ -1,9 +1,12 @@
 from Visible import *
 
-class DisplayFilter:
-    def __init__(self):
-        self.matchingObjects = []
-        self.query = None
-        self.action = None
+class DisplayRule:
+    def __init__(self, display):
+        self.display = display
+        self.active = True
+        self.predicate = None
+        self._matchingObjects = []
+        self.actions = []
+    
     
     
