@@ -20,6 +20,7 @@ from DisplayRule import DisplayRule
 from wx.py import dispatcher
 from networkx import *
 from math import pi, fabs
+from datetime import datetime
 from numpy import diag, mat, sign, inner, isinf, zeros
 from numpy.linalg import pinv, eigh
 import os, platform, cPickle
@@ -119,6 +120,8 @@ class Display(wx.glcanvas.GLCanvas):
         self._motionTexture2 = self.textureFromImage('texture.png')
         self._pathwayTexture = self.textureFromImage('pathway.jpg')
         self._textureTransform = osg.Matrixd.scale(10 / 5000.0,  10 / 5000.0,  10 / 5000.0)
+        self.animationPhaseUniform = osg.Uniform('animationPhase', 0.0)
+        self.rootNode.getOrCreateStateSet().addUniform(self.animationPhaseUniform)
         
         self.dragSelection = None
         self.draggerLOD = None
@@ -155,7 +158,7 @@ class Display(wx.glcanvas.GLCanvas):
                     raise ValueError, gettext('Could not create visualized item')
                 self.addVisible(visible)
                 
-        # Add all of the paths
+        # Add all of the paths (must be done after nodes are added)
         for visibleElement in visibleElements:
             if visibleElement.find('path') is not None:
                 visible = Visible.fromXMLElement(visibleElement, self)
@@ -163,10 +166,29 @@ class Display(wx.glcanvas.GLCanvas):
                     raise ValueError, gettext('Could not create visualized item')
                 self.addVisible(visible)
         
-        self.setViewDimensions(int(xmlElement.get('dimensions')))
-        # TODO: all other display attributes
+        self.computeVisiblesBound()
         
-        self.centerView()
+        self.setViewDimensions(int(xmlElement.get('dimensions')))
+        
+        showRegionNames = xmlElement.get('showRegionNames')
+        if showRegionNames is not None:
+            self.setShowRegionNames(showRegionNames == 'true')
+        showNeuronNames = xmlElement.get('showNeuronNames')
+        if showNeuronNames is not None:
+            self.setShowNeuronNames(showNeuronNames == 'true')
+        showFlow = xmlElement.get('showFlow')
+        if showFlow is not None:
+            self.setShowFlow(showFlow == 'true')
+        
+        selectedVisibleIds = xmlElement.get('selectedVisibleIds')
+        if selectedVisibleIds is not None:
+            for visibleId in selectedVisibleIds.split(','):
+                if visibleId in self.visibleIds:
+                    self.selectVisible(visibleId, extend = True)
+        
+        self.resetView()
+        
+        # TODO: all other display attributes
     
     
     def toXMLElement(self, parentElement):
@@ -207,7 +229,7 @@ class Display(wx.glcanvas.GLCanvas):
         if dimensions != self.viewDimensions:
             self.viewDimensions = dimensions
             width, height = self.GetClientSize()
-            self.deselectAll()
+#            self.deselectAll()
             if self.viewDimensions == 2:
                 # TODO: approximate the 3D settings?
                 self.graphicsWindow = self.viewer2D.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
@@ -256,12 +278,7 @@ class Display(wx.glcanvas.GLCanvas):
             self.SetScrollbar(wx.VERTICAL, (self.visiblesMax[1] - self.orthoCenter[1]) / self.visiblesSize[1] * height - height / zoom / 2.0, height / zoom, height, True)
     
     
-    def centerView(self, visible=None):
-        if visible is None:
-            node = self.rootNode
-        else:
-            node = visible.sgNode
-            
+    def computeVisiblesBound(self):
         # This:
         #     boundingSphere = node.getBound()
         #     sphereCenter = boundingSphere.center()
@@ -288,21 +305,23 @@ class Display(wx.glcanvas.GLCanvas):
                     self.visiblesMax[2] = z + d / 2.0
         self.visiblesCenter = ((self.visiblesMin[0] + self.visiblesMax[0]) / 2.0, (self.visiblesMin[1] + self.visiblesMax[1]) / 2.0, (self.visiblesMin[2] + self.visiblesMax[2]) / 2.0)
         self.visiblesSize = (self.visiblesMax[0] - self.visiblesMin[0], self.visiblesMax[1] - self.visiblesMin[1], self.visiblesMax[2] - self.visiblesMin[2])
-        # Reverse the calculation in resetView():
-        # self.orthoCenter[0] - width / 2 / (2 ** (self.orthoZoom / 10.0)) = minx 
-        # self.orthoCenter[0] - minx = width / 2 / (2 ** (self.orthoZoom / 10.0))
-        # (2 ** (self.orthoZoom / 10.0)) = width / 2 / (self.orthoCenter[0] - minx)
-        # self.orthoZoom / 10.0 = math.log(width / 2 / (self.orthoCenter[0] - minx), 2)
-        # self.orthoZoom = 10 * math.log(width / 2 / (self.orthoCenter[0] - minx), 2)
+            
         width, height = self.GetClientSize()
-        #xZoom = 10 * math.log((width - 10) / 2 / (self.visiblesCenter[0] - self.visiblesMin[0]), 2)
-        #yZoom = 10 * math.log((height - 10) / 2 / (self.visiblesCenter[1] - self.visiblesMin[1]), 2)
         xZoom = self.visiblesSize[0] / (width - 10.0)
         yZoom = self.visiblesSize[1] / (height - 10.0)
         if xZoom > yZoom:
             self.zoomScale = xZoom
         else:
             self.zoomScale = yZoom
+    
+    
+    def centerView(self, visible=None):
+        if visible is None:
+            node = self.rootNode
+        else:
+            node = visible.sgNode
+        
+        self.computeVisiblesBound()
         
         if self.viewDimensions == 2:
             self.orthoCenter = (self.visiblesCenter[0], self.visiblesCenter[1])
@@ -381,6 +400,10 @@ class Display(wx.glcanvas.GLCanvas):
     
     def onIdle(self, event):
         # TODO: limit this to 30 fps
+        
+        # TODO: does setting the animation phase this way limit the slowest speed an animation can be?
+        self.animationPhaseUniform.set(datetime.now().microsecond / 1000000.0)
+        
         self.Refresh()
         event.RequestMore()
     

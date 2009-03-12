@@ -6,7 +6,6 @@ from Network.Arborization import Arborization
 from Network.Synapse import Synapse
 from Network.Stimulus import Stimulus
 from Network.Innervation import Innervation
-from AnimatedTextureCallback import AnimatedTextureCallback
 
 from wx.py import dispatcher
 from math import atan2, pi, sqrt
@@ -34,6 +33,41 @@ class Visible(object):
                         "tube": osg.Matrixd.scale(1.0 / sqrt(2), 1.0, 1.0 / sqrt(2))}
         
     # TODO: osgText::Font* font = osgText::readFontFile("fonts/arial.ttf");
+    
+    flowShaderSource = """	uniform float animationPhase;
+                            uniform bool flowTo;
+                            uniform bool flowFrom;
+                            
+                            void main()                            {
+                                float texCoord = mod(gl_TexCoord[0].t, 1.0);
+                                float glow = 0.0;
+                                if (flowTo)
+                                {
+                                    float glowTo = texCoord - animationPhase;
+                                    if (glowTo < 0.0)
+                                        glowTo += 1.0;
+                                    if (glowTo > 0.9)
+                                    {
+                                        glowTo = (glowTo - 0.9) / 0.1;
+                                        if (glowTo > glow)
+                                            glow = glowTo;
+                                    }
+                                }
+                                if (flowFrom)
+                                {
+                                    float glowFrom = (1.0 - animationPhase) - texCoord;
+                                    if (glowFrom < 0.0)
+                                        glowFrom += 1.0;
+                                    if (glowFrom > 0.9)
+                                    {
+                                        glowFrom = (glowFrom - 0.9) / 0.1;
+                                        if (glowFrom > glow)
+                                            glow = glowFrom;
+                                    }
+                                }
+                                float antiGlow = 1.0 - glow;                                gl_FragColor = vec4(1.0 * glow + gl_Color[0] * antiGlow, 1.0 * glow + gl_Color[1] * antiGlow, 1.0 * glow + gl_Color[2] * antiGlow, 1.0 * glow + gl_Color[3] * antiGlow);                            }                        """
+    flowProgram = osg.Program()
+    flowProgram.addShader(osg.Shader(osg.Shader.FRAGMENT, flowShaderSource))
     
     
     def __init__(self, display, client):
@@ -769,28 +803,14 @@ class Visible(object):
     
     def updateFlowAnimation(self):
         if self._animateFlow and (self.flowTo or self.flowFrom):
-            if self.flowTo:
-                self._stateSet.setTextureAttributeAndModes(0, self._motionTexture1, osg.StateAttribute.ON)
-                textureMatrix = osg.TexMat(osg.Matrixd.scale(10,  self.size()[1] / 400.0 * 5000.0,  10))
-                textureMatrix.setDataVariance(osg.Object.DYNAMIC)
-                self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
-                # TODO: Python callbacks really don't perform well.  It may be better to use a TexGen, possibly tied to a cycling uniform?  Or even a shader...
-                callback = AnimatedTextureCallback(self, 0, textureMatrix, osg.Matrixd.translate(-0.05, -0.05, -0.05))
-                self._shapeGeode.setUpdateCallback(callback.__disown__())
-            elif self.flowFrom:
-                # TODO: this should be using texture unit 1 but it doesn't render correctly on Mac OS X
-                self._stateSet.setTextureAttributeAndModes(0, self._motionTexture2, osg.StateAttribute.ON)
-                textureMatrix = osg.TexMat(osg.Matrixd.scale(10,  self.size()[1] / 400.0 * 5000.0,  10))
-                textureMatrix.setDataVariance(osg.Object.DYNAMIC)
-                self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
-                # TODO: Python callbacks really don't perform well.  It may be better to use a TexGen, possibly tied to a cycling uniform?  Or even a shader...
-                callback = AnimatedTextureCallback(self, 0, textureMatrix, osg.Matrixd.translate(0.05, 0.05, 0.05))
-                self._shapeGeode.setUpdateCallback(callback.__disown__())
-        elif self._shapeGeode.getUpdateCallback() is not None:
-            self._shapeGeode.setUpdateCallback(None)
-            self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXTURE)
+            textureMatrix = osg.TexMat(osg.Matrixd.scale(10,  self.size()[1] / 400.0 * 5000.0,  10))
+            self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
+            self._stateSet.addUniform(osg.Uniform('flowTo', True if self.flowTo else False))
+            self._stateSet.addUniform(osg.Uniform('flowFrom', True if self.flowFrom else False))
+            self._stateSet.setAttributeAndModes(Visible.flowProgram, osg.StateAttribute.ON)
+        elif self._stateSet.getAttribute(osg.StateAttribute.PROGRAM) is not None:
+            self._stateSet.removeAttribute(osg.StateAttribute.PROGRAM)
             self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXMAT)
-            self.setTexture(self._staticTexture)
             self.setTextureTransform(self._staticTextureTransform)
     
     
