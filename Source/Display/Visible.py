@@ -36,36 +36,45 @@ class Visible(object):
     
     flowShaderSource = """	uniform float animationPhase;
                             uniform bool flowTo;
+                            uniform vec4 flowToColor;
+                            uniform float flowToSpread;
                             uniform bool flowFrom;
+                            uniform vec4 flowFromColor;
+                            uniform float flowFromSpread;
                             
                             void main()                            {
                                 float texCoord = mod(gl_TexCoord[0].t, 1.0);
-                                float glow = 0.0;
+                                
+                                float glowTo = 0.0;
                                 if (flowTo)
                                 {
-                                    float glowTo = texCoord - animationPhase;
+                                    glowTo = texCoord - animationPhase;
                                     if (glowTo < 0.0)
                                         glowTo += 1.0;
-                                    if (glowTo > 0.9)
-                                    {
-                                        glowTo = (glowTo - 0.9) / 0.1;
-                                        if (glowTo > glow)
-                                            glow = glowTo;
-                                    }
+                                    if (glowTo > 1.0 - flowToSpread)
+                                        glowTo = (glowTo - 1.0 + flowToSpread) / flowToSpread;
+                                    else
+                                        glowTo = 0.0;
                                 }
+                                
+                                float glowFrom = 0.0;
                                 if (flowFrom)
                                 {
-                                    float glowFrom = (1.0 - animationPhase) - texCoord;
+                                    glowFrom = (1.0 - animationPhase) - texCoord;
                                     if (glowFrom < 0.0)
                                         glowFrom += 1.0;
-                                    if (glowFrom > 0.9)
-                                    {
-                                        glowFrom = (glowFrom - 0.9) / 0.1;
-                                        if (glowFrom > glow)
-                                            glow = glowFrom;
-                                    }
+                                    if (glowFrom > 1.0 - flowFromSpread)
+                                        glowFrom = (glowFrom - 1.0 + flowFromSpread) / flowFromSpread;
+                                    else
+                                        glowFrom = 0.0;
                                 }
-                                float antiGlow = 1.0 - glow;                                gl_FragColor = vec4(1.0 * glow + gl_Color[0] * antiGlow, 1.0 * glow + gl_Color[1] * antiGlow, 1.0 * glow + gl_Color[2] * antiGlow, 1.0 * glow + gl_Color[3] * antiGlow);                            }                        """
+                                
+                                vec3  glowColor = vec3(max(flowToColor[0] * glowTo, flowFromColor[0] * glowFrom), 
+                                                       max(flowToColor[1] * glowTo, flowFromColor[1] * glowFrom), 
+                                                       max(flowToColor[2] * glowTo, flowFromColor[2] * glowFrom));
+                                float glow = max(flowToColor[3] * glowTo, flowFromColor[3] * glowFrom);
+                                float antiGlow = 1.0 - glow;
+                                                                gl_FragColor = vec4(glowColor[0] * glow + gl_Color[0] * antiGlow, glowColor[1] * glow + gl_Color[1] * antiGlow, glowColor[2] * glow + gl_Color[2] * antiGlow, gl_Color[3]);                            }                        """
     flowProgram = osg.Program()
     flowProgram.addShader(osg.Shader(osg.Shader.FRAGMENT, flowShaderSource))
     
@@ -78,12 +87,16 @@ class Visible(object):
         self._motionTexture2 = display.textureFromImage('texture2.png')
         self._glowColor = None
         self._glowNode = None
+        
+        # Geometry attributes
         self._position = (random.random() - 0.5, random.random() - 0.5, 0)
         self._positionIsFixed = False
         self._size = (.001, .001, .001)
         self._sizeIsFixed = True
         self.sizeIsAbsolute = False
         self._rotation = (0, 0, 1, 0)
+        
+        # Appearance attributes
         self._weight = 1.0
         self._dependencies = set()
         self._label = None
@@ -91,11 +104,22 @@ class Visible(object):
         self._shapeName = None
         self._color = (0.5, 0.5, 0.5)
         self._opacity = 1.0
+        
+        # Path attributes
         self._path = None
         self.pathStart = None
         self.pathEnd = None
+        self.connectedPaths = []
+        
+        # Flow attributes
+        self._animateFlow = False
         self.flowTo = False
+        self._flowToColor = None
+        self._flowToSpread = None
         self.flowFrom = False
+        self._flowFromColor = None
+        self._flowFromSpread = None
+        
         self.sgNode = osg.MatrixTransform()
         self._shapeGeode = osg.Geode()
         self._shapeGeode.setName(str(self.displayId))
@@ -113,15 +137,17 @@ class Visible(object):
         self.sgNode.addChild(self._textGeode)
         self._staticTexture = None
         self._staticTextureTransform = None
-        self._animateFlow = False
+        
+        # Parent and children
         self.parent = None
         self.children = []
+        self.childGroup = osg.MatrixTransform(osg.Matrixd.identity())
+        self.sgNode.addChild(self.childGroup)
+        
+        # Arrangement attributes
         self.arrangedAxis = 'largest'
         self.arrangedSpacing = 0.02
         self.arrangedWeight = 1.0
-        self.childGroup = osg.MatrixTransform(osg.Matrixd.identity())
-        self.sgNode.addChild(self.childGroup)
-        self.connectedPaths = []
     
     
     @classmethod
@@ -801,12 +827,64 @@ class Visible(object):
         self.display.Refresh()
     
     
+    def setFlowToColor(self, color):
+        if color != self._flowToColor:
+            self._flowToColor = color
+            self.updateFlowAnimation()
+            dispatcher.send(('set', 'flowToColor'), self)
+    
+    
+    def flowToColor(self):
+        return self._flowToColor or self.display.defaultFlowToColor
+    
+    
+    def setFlowToSpread(self, spread):
+        if spread != self._flowToSpread:
+            self._flowToSpread = spread
+            self.updateFlowAnimation()
+            dispatcher.send(('set', 'flowToSpread'), self)
+    
+    
+    def flowToSpread(self):
+        return self._flowToSpread or self.display.defaultFlowToSpread
+    
+    
+    def setFlowFromColor(self, color):
+        if color != self._flowFromColor:
+            self._flowFromColor = color
+            self.updateFlowAnimation()
+            dispatcher.send(('set', 'flowFromColor'), self)
+    
+    
+    def flowFromColor(self):
+        return self._flowFromColor or self.display.defaultFlowFromColor
+    
+    
+    def setFlowFromSpread(self, spread):
+        if spread != self._flowFromSpread:
+            self._flowFromSpread = spread
+            self.updateFlowAnimation()
+            dispatcher.send(('set', 'flowFromSpread'), self)
+    
+    
+    def flowFromSpread(self):
+        return self._flowFromSpread or self.display.defaultFlowFromSpread
+    
+    
     def updateFlowAnimation(self):
         if self._animateFlow and (self.flowTo or self.flowFrom):
             textureMatrix = osg.TexMat(osg.Matrixd.scale(10,  self.size()[1] / 400.0 * 5000.0,  10))
             self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
             self._stateSet.addUniform(osg.Uniform('flowTo', True if self.flowTo else False))
+            if self._flowToColor is not None:
+                self._stateSet.addUniform(osg.Uniform('flowToColor', osg.Vec4f(*self._flowToColor)))
+            if self._flowToSpread is not None:
+                self._stateSet.addUniform(osg.Uniform('flowToSpread', self._flowToSpread))
             self._stateSet.addUniform(osg.Uniform('flowFrom', True if self.flowFrom else False))
+            if self._flowFromColor is not None:
+                self._stateSet.addUniform(osg.Uniform('flowFromColor', osg.Vec4f(*self._flowFromColor)))
+            if self._flowFromSpread is not None:
+                self._stateSet.addUniform(osg.Uniform('flowFromSpread', self._flowFromSpread))
             self._stateSet.setAttributeAndModes(Visible.flowProgram, osg.StateAttribute.ON)
         elif self._stateSet.getAttribute(osg.StateAttribute.PROGRAM) is not None:
             self._stateSet.removeAttribute(osg.StateAttribute.PROGRAM)

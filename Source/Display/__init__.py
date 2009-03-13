@@ -12,3 +12,6 @@ Inspection.registerInspectorClass(VisibleInspector)
 
 from GroupInspector import GroupInspector
 Inspection.registerInspectorClass(GroupInspector)
+
+from PathInspector import PathInspector
+Inspection.registerInspectorClass(PathInspector)
