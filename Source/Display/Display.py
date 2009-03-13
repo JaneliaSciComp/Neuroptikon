@@ -71,8 +71,9 @@ class Display(wx.glcanvas.GLCanvas):
         self.zoomScale = 1
         self.orthoZoom = 0
         self.rootNode = osg.MatrixTransform()
+        self.rootStateSet = self.rootNode.getOrCreateStateSet()
         self.rootNode.setMatrix(osg.Matrixd.identity())
-        self.rootNode.getOrCreateStateSet().setMode(osg.GL_NORMALIZE, osg.StateAttribute.ON )
+        self.rootStateSet.setMode(osg.GL_NORMALIZE, osg.StateAttribute.ON )
         if platform.system() == 'Windows':
             self.scrollWheelScale = 0.1
         else:
@@ -121,7 +122,7 @@ class Display(wx.glcanvas.GLCanvas):
         self._pathwayTexture = self.textureFromImage('pathway.jpg')
         self._textureTransform = osg.Matrixd.scale(10 / 5000.0,  10 / 5000.0,  10 / 5000.0)
         self.animationPhaseUniform = osg.Uniform('animationPhase', 0.0)
-        self.rootNode.getOrCreateStateSet().addUniform(self.animationPhaseUniform)
+        self.rootStateSet.addUniform(self.animationPhaseUniform)
         
         self.dragSelection = None
         self.draggerLOD = None
@@ -143,6 +144,19 @@ class Display(wx.glcanvas.GLCanvas):
         self.SetDropTarget(DisplayDropTarget(self))
     
         self._nextUniqueId = -1
+        
+        self.defaultFlowToColor = (1.0, 1.0, 1.0, 1.0)
+        self.defaultFlowToColorUniform = osg.Uniform('flowToColor', osg.Vec4f(*self.defaultFlowToColor))
+        self.rootStateSet.addUniform(self.defaultFlowToColorUniform)
+        self.defaultFlowToSpread = 0.1
+        self.defaultFlowToSpreadUniform = osg.Uniform('flowToSpread', self.defaultFlowToSpread)
+        self.rootStateSet.addUniform(self.defaultFlowToSpreadUniform)
+        self.defaultFlowFromColor = (1.0, 1.0, 1.0, 1.0)
+        self.defaultFlowFromColorUniform = osg.Uniform('flowFromColor', osg.Vec4f(*self.defaultFlowFromColor))
+        self.rootStateSet.addUniform(self.defaultFlowFromColorUniform)
+        self.defaultFlowFromSpread = 0.1
+        self.defaultFlowFromSpreadUniform = osg.Uniform('flowFromSpread', self.defaultFlowFromSpread)
+        self.rootStateSet.addUniform(self.defaultFlowFromSpreadUniform)
         
         dispatcher.connect(self.onSelectionChanged, ('set', 'selection'), self)
     
@@ -607,7 +621,7 @@ class Display(wx.glcanvas.GLCanvas):
         arborizationVis = self.visiblesForObject(sender)
         neuronVis = self.visiblesForObject(sender.neurite.neuron())
         regionVis = self.visiblesForObject(sender.region)
-        if len(arborizationVis) == 1 and len(neuronVis) == 1 and len(regionVis == 1):
+        if len(arborizationVis) == 1 and len(neuronVis) == 1 and len(regionVis) == 1:
             arborizationVis.setFlowDirection(neuronVis[0], regionVis[0], sender.sendsOutput, sender.receivesInput)
     
         
@@ -691,11 +705,18 @@ class Display(wx.glcanvas.GLCanvas):
     
     def setShowFlow(self, flag):
         if flag != self._showFlow:
+            wasAnimating = self._showFlow or len(self.animatedVisibles) > 0
+            
             for visibles in self.visibles.itervalues():
                 for visible in visibles:
                     if visible.flowTo or visible.flowFrom:
                         visible.animateFlow(flag)
             self._showFlow = flag
+
+            if (self._showFlow or len(self.animatedVisibles) > 0) and not wasAnimating:
+                self.Bind(wx.EVT_IDLE, self.onIdle)
+            elif (not self._showFlow and len(self.animatedVisibles) == 0) and wasAnimating:
+                self.Unbind(wx.EVT_IDLE)
     
     
     def showFlow(self):
@@ -817,24 +838,19 @@ class Display(wx.glcanvas.GLCanvas):
                 return
             
             if not extend or visible not in self.selectedVisibles or (self.hoverSelected and not self.hoverSelecting):
-                # Alter the visible to be selected in certain cases
-                if visible.isPath():
-                    if isinstance(visible.client, Stimulus):
-                        # Always select the stimulus's node visible, not its path visible.
-                        visible = visible.pathStart
-                    elif visible not in self.highlightedVisibles and visible not in self.animatedVisibles:
-                        # Select an arborization's, gap junction's or synapse's neuron instead, unless the neuron is already selected.
-                        if isinstance(visible.client, Arborization) or isinstance(visible.client, GapJunction):
-                            if isinstance(visible.pathStart.client, Neuron):
-                                visible = visible.pathStart
-                            elif isinstance(visible.pathEnd.client, Neuron):
-                                visible = visible.pathEnd
-                        elif isinstance(visible.client, Synapse):
-                            preSynapticNeuron = visible.client.preSynapticNeurite.neuron()
-                            if visible.pathStart.client == preSynapticNeuron:
-                                visible = visible.pathStart
-                            elif visible.pathEnd.client == preSynapticNeuron:
-                                visible = visible.pathEnd
+                # Select an arborization's, gap junction's or synapse's neuron instead, unless the neuron is already selected.
+                if visible.isPath() and not extend and visible not in self.highlightedVisibles and visible not in self.animatedVisibles:
+                    if isinstance(visible.client, Arborization) or isinstance(visible.client, GapJunction):
+                        if isinstance(visible.pathStart.client, Neuron):
+                            visible = visible.pathStart
+                        elif isinstance(visible.pathEnd.client, Neuron):
+                            visible = visible.pathEnd
+                    elif isinstance(visible.client, Synapse):
+                        preSynapticNeuron = visible.client.preSynapticNeurite.neuron()
+                        if visible.pathStart.client == preSynapticNeuron:
+                            visible = visible.pathStart
+                        elif visible.pathEnd.client == preSynapticNeuron:
+                            visible = visible.pathEnd
                 
                 if not extend:
                     self.deselectAll(report = False)
@@ -909,7 +925,7 @@ class Display(wx.glcanvas.GLCanvas):
         # Update the highlighting, animation and ghosting based on the current selection.
         # TODO: this should all be handled by display rules which will also keep ghosting from blowing away opacity settings
         
-        wasAnimating = (len(self.animatedVisibles) > 0)
+        wasAnimating = (self._showFlow or len(self.animatedVisibles) > 0)
         
         visiblesToHighlight = set()
         visiblesToAnimate = set()
@@ -982,9 +998,9 @@ class Display(wx.glcanvas.GLCanvas):
                         visible.setOpacity(1)
         
         # Turn idle callbacks on when any visible is animated and off otherwise.
-        if len(self.animatedVisibles) > 0 and not wasAnimating:
+        if (self._showFlow or len(self.animatedVisibles) > 0) and not wasAnimating:
             self.Bind(wx.EVT_IDLE, self.onIdle)
-        elif len(self.animatedVisibles) == 0 and wasAnimating:
+        elif (not self._showFlow and len(self.animatedVisibles) == 0) and wasAnimating:
             self.Unbind(wx.EVT_IDLE)
     
     
@@ -1283,7 +1299,30 @@ class Display(wx.glcanvas.GLCanvas):
             image.readPixels(0, 0, width, height, osg.GL_RGB, osg.GL_UNSIGNED_BYTE)
             osgDB.writeImageFile(image, savePath)
     
-
+    
+    def setDefaultFlowToColor(self, color):
+        if color != self.defaultFlowToColor:
+            self.defaultFlowToColorUniform.set(osg.Vec4f(*color))
+            self.defaultFlowToColor = color
+    
+    
+    def setDefaultFlowToSpread(self, spread):
+        if spread != self.defaultFlowToSpread:
+            self.defaultFlowToSpreadUniform.set(spread)
+            self.defaultFlowToSpread = spread
+    
+    
+    def setDefaultFlowFromColor(self, color):
+        if color != self.defaultFlowFromColor:
+            self.defaultFlowFromColorUniform.set(osg.Vec4f(*color))
+            self.defaultFlowFromColor = color
+    
+    
+    def setDefaultFlowFromSpread(self, spread):
+        if spread != self.defaultFlowFromSpread:
+            self.defaultFlowFromSpreadUniform.set(spread)
+            self.defaultFlowFromSpread = spread
+    
 
 class DisplayDropTarget(wx.PyDropTarget):
     
