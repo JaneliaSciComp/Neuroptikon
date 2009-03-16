@@ -117,6 +117,9 @@ class Display(wx.glcanvas.GLCanvas):
         self.Bind(wx.EVT_MOUSEWHEEL, self.onMouseWheel)
         self.Bind(wx.EVT_SCROLLWIN, self.onScroll)
         
+        self._animationTimer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.onAnimate)
+        
         self._motionTexture1 = self.textureFromImage('texture.png')
         self._motionTexture2 = self.textureFromImage('texture.png')
         self._pathwayTexture = self.textureFromImage('pathway.jpg')
@@ -412,14 +415,11 @@ class Display(wx.glcanvas.GLCanvas):
         self.Refresh()
     
     
-    def onIdle(self, event):
-        # TODO: limit this to 30 fps
-        
+    def onAnimate(self, event):
         # TODO: does setting the animation phase this way limit the slowest speed an animation can be?
         self.animationPhaseUniform.set(datetime.now().microsecond / 1000000.0)
         
         self.Refresh()
-        event.RequestMore()
     
     
     def onEraseBackground(self, event):
@@ -705,18 +705,16 @@ class Display(wx.glcanvas.GLCanvas):
     
     def setShowFlow(self, flag):
         if flag != self._showFlow:
-            wasAnimating = self._showFlow or len(self.animatedVisibles) > 0
-            
             for visibles in self.visibles.itervalues():
                 for visible in visibles:
                     if visible.flowTo or visible.flowFrom:
                         visible.animateFlow(flag)
             self._showFlow = flag
 
-            if (self._showFlow or len(self.animatedVisibles) > 0) and not wasAnimating:
-                self.Bind(wx.EVT_IDLE, self.onIdle)
-            elif (not self._showFlow and len(self.animatedVisibles) == 0) and wasAnimating:
-                self.Unbind(wx.EVT_IDLE)
+            if not self._animationTimer.IsRunning() and (self._showFlow or len(self.animatedVisibles) > 0):
+                self._animationTimer.Start(1000/30, wx.TIMER_CONTINUOUS)
+            elif self._animationTimer.IsRunning() and (not self._showFlow and len(self.animatedVisibles) == 0):
+                self._animationTimer.Stop()
     
     
     def showFlow(self):
@@ -925,8 +923,6 @@ class Display(wx.glcanvas.GLCanvas):
         # Update the highlighting, animation and ghosting based on the current selection.
         # TODO: this should all be handled by display rules which will also keep ghosting from blowing away opacity settings
         
-        wasAnimating = (self._showFlow or len(self.animatedVisibles) > 0)
-        
         visiblesToHighlight = set()
         visiblesToAnimate = set()
         for visible in self.selectedVisibles:
@@ -998,10 +994,10 @@ class Display(wx.glcanvas.GLCanvas):
                         visible.setOpacity(1)
         
         # Turn idle callbacks on when any visible is animated and off otherwise.
-        if (self._showFlow or len(self.animatedVisibles) > 0) and not wasAnimating:
-            self.Bind(wx.EVT_IDLE, self.onIdle)
-        elif (not self._showFlow and len(self.animatedVisibles) == 0) and wasAnimating:
-            self.Unbind(wx.EVT_IDLE)
+        if not self._animationTimer.IsRunning() and (self._showFlow or len(self.animatedVisibles) > 0):
+            self._animationTimer.Start(1000/30, wx.TIMER_CONTINUOUS)
+        elif self._animationTimer.IsRunning() and (not self._showFlow and len(self.animatedVisibles) == 0):
+            self._animationTimer.Stop()
     
     
     def addDragger(self, visible):
