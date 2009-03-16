@@ -77,4 +77,4 @@ class GroupInspector(Inspector):
     def onSelectVisible(self, event):
         sizerItem = self.gridSizer.GetItem(event.GetEventObject())
         visible = sizerItem.GetUserData()
-        visible.display.selectVisible(visible)
+        visible.display.selectVisibles([visible])

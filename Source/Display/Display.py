@@ -52,7 +52,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.autoVisualize = True
         self.visibles = {}
         self.visibleIds = {}
-        self.selectedVisibles = []
+        self.selectedVisibles = set()
         self.highlightedVisibles = []
         self.animatedVisibles = []
         self.selectConnectedVisibles = True
@@ -99,6 +99,9 @@ class Display(wx.glcanvas.GLCanvas):
         self.viewer3D.setSceneData(self.rootNode)
         self.viewer3D.setCameraManipulator(self.trackball)
         self.viewer3D.addEventHandler(self._pickHandler)
+        light = self.viewer3D.getLight()
+        light.setAmbient(osg.Vec4f(0.4, 0.4, 0.4, 1))
+        light.setDiffuse(osg.Vec4f(0.5, 0.5, 0.5, 1))
         self.viewer3D.setLight(light)
         
         config = wx.Config("Neuroptikon")
@@ -110,7 +113,6 @@ class Display(wx.glcanvas.GLCanvas):
         
         self.Bind(wx.EVT_SIZE, self.onSize)
         self.Bind(wx.EVT_PAINT, self.onPaint)
-        self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         self.Bind(wx.EVT_MOUSE_EVENTS, self.onMouseEvent)  # TODO: factor this out into individual events
@@ -118,14 +120,11 @@ class Display(wx.glcanvas.GLCanvas):
         self.Bind(wx.EVT_SCROLLWIN, self.onScroll)
         
         self._animationTimer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.onAnimate)
-        
-        self._motionTexture1 = self.textureFromImage('texture.png')
-        self._motionTexture2 = self.textureFromImage('texture.png')
-        self._pathwayTexture = self.textureFromImage('pathway.jpg')
-        self._textureTransform = osg.Matrixd.scale(10 / 5000.0,  10 / 5000.0,  10 / 5000.0)
+        self.Bind(wx.EVT_TIMER, self.onAnimate, self._animationTimer)
         self.animationPhaseUniform = osg.Uniform('animationPhase', 0.0)
         self.rootStateSet.addUniform(self.animationPhaseUniform)
+        
+        self._pathwayTexture = self.textureFromImage('pathway.jpg')
         
         self.dragSelection = None
         self.draggerLOD = None
@@ -147,6 +146,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.SetDropTarget(DisplayDropTarget(self))
     
         self._nextUniqueId = -1
+        self._loading = False
         
         self.defaultFlowToColor = (1.0, 1.0, 1.0, 1.0)
         self.defaultFlowToColorUniform = osg.Uniform('flowToColor', osg.Vec4f(*self.defaultFlowToColor))
@@ -161,10 +161,13 @@ class Display(wx.glcanvas.GLCanvas):
         self.defaultFlowFromSpreadUniform = osg.Uniform('flowFromSpread', self.defaultFlowFromSpread)
         self.rootStateSet.addUniform(self.defaultFlowFromSpreadUniform)
         
-        dispatcher.connect(self.onSelectionChanged, ('set', 'selection'), self)
+        dispatcher.connect(self.onSelectionOrShowFlowChanged, ('set', 'selection'), self)
+        dispatcher.connect(self.onSelectionOrShowFlowChanged, ('set', 'showFlow'), self)
     
     
     def fromXMLElement(self, xmlElement):
+        self._loading = True
+        
         visibleElements = xmlElement.findall('Visible')
         
         # Add all of the nodes
@@ -198,14 +201,19 @@ class Display(wx.glcanvas.GLCanvas):
             self.setShowFlow(showFlow == 'true')
         
         selectedVisibleIds = xmlElement.get('selectedVisibleIds')
+        visiblesToSelect = []
         if selectedVisibleIds is not None:
             for visibleId in selectedVisibleIds.split(','):
                 if visibleId in self.visibleIds:
-                    self.selectVisible(visibleId, extend = True)
+                    visiblesToSelect.append(visibleId)
+        self.selectVisibles(visiblesToSelect)
         
         self.resetView()
         
         # TODO: all other display attributes
+        
+        self._loading = False
+        self.Refresh()
     
     
     def toXMLElement(self, parentElement):
@@ -384,8 +392,8 @@ class Display(wx.glcanvas.GLCanvas):
         
     def onMouseEvent(self, event):
         if event.ButtonDown():
-            self.selectionShouldExtend = event.ShiftDown()
-            self.findShortestPath = event.AltDown()
+            self.selectionShouldExtend = event.CmdDown()
+            self.findShortestPath = event.ShiftDown()
             self.graphicsWindow.getEventQueue().mouseButtonPress(event.GetX(), event.GetY(), event.GetButton())
         elif event.ButtonUp():
             self.graphicsWindow.getEventQueue().mouseButtonRelease(event.GetX(), event.GetY(), event.GetButton())
@@ -420,10 +428,6 @@ class Display(wx.glcanvas.GLCanvas):
         self.animationPhaseUniform.set(datetime.now().microsecond / 1000000.0)
         
         self.Refresh()
-    
-    
-    def onEraseBackground(self, event):
-        pass
     
     
     def onSize(self, event):
@@ -480,6 +484,11 @@ class Display(wx.glcanvas.GLCanvas):
         return self.visibles[object.networkId] if object and object.networkId in self.visibles else []
     
     
+    def visibleChanged(self, sender, signal):
+        if not self._loading:
+            self.Refresh()
+    
+    
     def addVisible(self, visible, parentVisible = None):
         if visible.client is not None:
             if visible.client.networkId in self.visibles:
@@ -491,6 +500,7 @@ class Display(wx.glcanvas.GLCanvas):
             self.rootNode.addChild(visible.sgNode)
         else:
             parentVisible.addChildVisible(visible)
+        dispatcher.connect(self.visibleChanged, dispatcher.Any, visible)
     
     
     def visualizeObject(self, object):
@@ -525,7 +535,7 @@ class Display(wx.glcanvas.GLCanvas):
                 visible.setColor(neuralTissueColor)
                 visible.setTexture(self._pathwayTexture)
                 visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
-                visible.setFlowDirection(region1[0], region2[0], False, False)
+                visible.setFlowDirection(region1[0], region2[0], object.terminus1.sendsOutput, object.terminus1.receivesInput)
                 visible.setPath([], region1[0], region2[0])
                 self.addVisible(visible)
         elif isinstance(object, Neuron):
@@ -705,16 +715,8 @@ class Display(wx.glcanvas.GLCanvas):
     
     def setShowFlow(self, flag):
         if flag != self._showFlow:
-            for visibles in self.visibles.itervalues():
-                for visible in visibles:
-                    if visible.flowTo or visible.flowFrom:
-                        visible.animateFlow(flag)
             self._showFlow = flag
-
-            if not self._animationTimer.IsRunning() and (self._showFlow or len(self.animatedVisibles) > 0):
-                self._animationTimer.Start(1000/30, wx.TIMER_CONTINUOUS)
-            elif self._animationTimer.IsRunning() and (not self._showFlow and len(self.animatedVisibles) == 0):
-                self._animationTimer.Stop()
+            dispatcher.send(('set', 'showFlow'), self)
     
     
     def showFlow(self):
@@ -803,16 +805,17 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def selectObjectsMatching(self, predicate):
-        self.deselectAll(False)
+        matchingVisibles = []
         for object in self.network.objects:
             if predicate.matches(object):
                 for visible in self.visiblesForObject(object):
-                    self.selectVisible(visible, extend = True)
+                    matchingVisibles.append(visible)
+        self.selectVisibles(matchingVisibles)
     
     
     def selectObject(self, object, extend = False, findShortestPath = False):
         for visible in self.visiblesForObject(object):
-            self.selectVisible(visible, extend, findShortestPath)
+            self.selectVisibles([visible], extend, findShortestPath)
     
     
     def objectIsSelected(self, object):
@@ -822,74 +825,55 @@ class Display(wx.glcanvas.GLCanvas):
         return False
     
     
-    def selectVisible(self, visible, extend = False, findShortestPath = False):
-        self.clearDragger()
-        if visible is None:
-            self.deselectAll(report = False)
+    def selectVisibles(self, visibles, extend = False, findShortestPath = False):
+        if (extend or findShortestPath) and not self.hoverSelected:
+            newSelection = set(self.selectedVisibles)
         else:
-            if extend and findShortestPath and len(self.selectedVisibles) == 1:
-                # Add the visibles that exist along the path to the selection.
-                for pathObject in self.selectedVisibles[0].client.shortestPathTo(visible.client):
-                    pathVisibles = self.visiblesForObject(pathObject)
-                    if len(pathVisibles) == 1:
-                        self.selectVisible(pathVisible[0], extend = True)
-                return
+            newSelection = set()
+        
+        if findShortestPath:
+            # Add the visibles that exist along the path to the selection.
+            for visible in visibles:
+                for startVisible in self.selectedVisibles:
+                    for pathObject in startVisible.client.shortestPathTo(visible.client):
+                        for pathVisible in self.visiblesForObject(pathObject):
+                            newSelection.add(pathVisible)
+        elif extend and len(visibles) == 1 and visibles[0] in newSelection:
+            # Remove the visible from the selection
+            newSelection.remove(visibles[0])
+        else:
+            # Add the visibles to the new selection.
+            for visible in visibles:
+                newSelection.add(visible)
+        
+        if newSelection != self.selectedVisibles or self.hoverSelected and not self.hoverSelecting:
+            self.clearDragger()
             
-            if not extend or visible not in self.selectedVisibles or (self.hoverSelected and not self.hoverSelecting):
-                # Select an arborization's, gap junction's or synapse's neuron instead, unless the neuron is already selected.
-                if visible.isPath() and not extend and visible not in self.highlightedVisibles and visible not in self.animatedVisibles:
-                    if isinstance(visible.client, Arborization) or isinstance(visible.client, GapJunction):
-                        if isinstance(visible.pathStart.client, Neuron):
-                            visible = visible.pathStart
-                        elif isinstance(visible.pathEnd.client, Neuron):
-                            visible = visible.pathEnd
-                    elif isinstance(visible.client, Synapse):
-                        preSynapticNeuron = visible.client.preSynapticNeurite.neuron()
-                        if visible.pathStart.client == preSynapticNeuron:
-                            visible = visible.pathStart
-                        elif visible.pathEnd.client == preSynapticNeuron:
-                            visible = visible.pathEnd
-                
-                if not extend:
-                    self.deselectAll(report = False)
-                
-                self.hoverSelected = self.hoverSelecting
+            self.selectedVisibles = newSelection
+            
+            if len(self.selectedVisibles) == 0:
+                # There is no selection so hover selecting should be enabled.
                 self.hoverSelecting = False
+                self.hoverSelect = True
+            elif not self.hoverSelecting:
+                # An explicit selection has been made via the GUI or console.
                 
-                # Strongly highlight the selected visible.
-                # TODO: highlighting should be done via display filters
-                self.selectedVisibles.append(visible)
-                visible.setGlowColor(self._primarySelectionColor)
-                
-                # Make sure the selected visible does not look ghosted.
-                if self._useGhosts:
-                    visible.setOpacity(1)
-                
-            elif extend and visible in self.selectedVisibles:
-                # Remove the visible from the selection
-                self.selectedVisibles.remove(visible)
-        
-        dispatcher.send(('set', 'selection'), self)
-        
-        if len(self.selectedVisibles) == 0:
-            self.hoverSelect = True
-            self.hoverSelected = False
-        else:
-            if not self.hoverSelected:
-                self.hoverSelect = False
-            if len(self.selectedVisibles) == 1:
-                if not self.hoverSelected:
+                self.hoverSelect = False    # disable hover selecting
+            
+                if len(self.selectedVisibles) == 1:
                     # Add a dragger to the selected visible.
-                    visible = self.selectedVisibles[0]
+                    visible = list(self.selectedVisibles)[0]
                     if visible.isDraggable():
                         self.addDragger(visible)
-    
+                
+            dispatcher.send(('set', 'selection'), self)
+        
+        self.hoverSelected = self.hoverSelecting
+        self.hoverSelecting = False
+   
     
     def selection(self):
-        selection = ObjectList()
-        for visible in self.selectedVisibles:
-            selection.append(visible)
-        return selection
+        return ObjectList(self.selectedVisibles)
     
     
     def selectedObjects(self):
@@ -901,25 +885,18 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def selectAll(self, report = True):
-        self.deselectAll(report = False)
+        visiblesToSelect = []
         for visibles in self.visibles.itervalues():
             for visible in visibles:
-                self.selectedVisibles.append(visible)
-        dispatcher.send(('set', 'selection'), self)
+                visiblesToSelect.append(visible)
+        self.selectVisibles(visiblesToSelect)
         
     
     def deselectAll(self, report = True):
-        self.clearDragger()
-        self.selectedVisibles = []
-        
-        self.hoverSelected = False
-        self.hoverSelect = True
-        
-        if report:
-            dispatcher.send(('set', 'selection'), self)
+        self.selectVisibles([])
     
     
-    def onSelectionChanged(self, signal, sender):
+    def onSelectionOrShowFlowChanged(self, signal, sender):
         # Update the highlighting, animation and ghosting based on the current selection.
         # TODO: this should all be handled by display rules which will also keep ghosting from blowing away opacity settings
         
@@ -953,6 +930,12 @@ class Display(wx.glcanvas.GLCanvas):
                                         visiblesToAnimate.add(pathVisible2)
                                         visiblesToHighlight.add(region2Vis)
         
+        if len(self.selectedVisibles) == 0 and self._showFlow:
+            for visibles in self.visibles.itervalues():
+                for visible in visibles:
+                    if visible.isPath() and (visible.flowTo or visible.flowFrom):
+                        visiblesToAnimate.add(visible)
+                    
         # Turn off highlighting/animating for visibles that shouldn't have it anymore.
         for highlightedNode in self.highlightedVisibles:
             if highlightedNode not in visiblesToHighlight:
@@ -994,9 +977,9 @@ class Display(wx.glcanvas.GLCanvas):
                         visible.setOpacity(1)
         
         # Turn idle callbacks on when any visible is animated and off otherwise.
-        if not self._animationTimer.IsRunning() and (self._showFlow or len(self.animatedVisibles) > 0):
+        if not self._animationTimer.IsRunning() and len(self.animatedVisibles) > 0:
             self._animationTimer.Start(1000/30, wx.TIMER_CONTINUOUS)
-        elif self._animationTimer.IsRunning() and (not self._showFlow and len(self.animatedVisibles) == 0):
+        elif self._animationTimer.IsRunning() and len(self.animatedVisibles) == 0:
             self._animationTimer.Stop()
     
     
@@ -1069,7 +1052,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     def visibleWasDragged(self):
         # TODO: It would be nice to constrain dragging if the visible has a parent.  "Resistance" would be added when the child reached the parent border so that dragging slowed or stopped but if dragged far enough the child could force its way through.
-        visible = self.selectedVisibles[0]
+        visible = list(self.selectedVisibles)[0]
         if self.activeDragger is not None:
             matrix = self.activeDragger.getMatrix()
             position = matrix.getTrans()
@@ -1084,7 +1067,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     def clearDragger(self):
         if self.dragSelection != None:
-            visible = self.selectedVisibles[0]
+            visible = list(self.selectedVisibles)[0]
             
             if visible.parent is None:
                 rootNode = self.rootNode

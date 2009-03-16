@@ -92,6 +92,7 @@ class PickHandler(osgGA.GUIEventHandler):
                 # Loop through all of the hits to find the "deepest" one in the sense of the region hierarchy.  So a child of a region will be picked instead of its parent.
                 if self._display.useGhosts():
                     # Make a first pass only picking non-ghosted items.
+                    # TODO: this could be done with node masks...
                     deepestVisible = None
                     for intersection in picker.getIntersections():
                         for node in intersection.nodePath:
@@ -102,7 +103,7 @@ class PickHandler(osgGA.GUIEventHandler):
                                 if visible.opacity() == 1.0 and (deepestVisible is None or deepestVisible in visible.ancestors()):
                                     deepestVisible = visible
                     if deepestVisible is not None:
-                        self._display.selectVisible(deepestVisible, self._display.selectionShouldExtend, self._display.findShortestPath)
+                        self._display.selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)
                         return True
                 deepestVisible = None
                 for intersection in picker.getIntersections():
@@ -113,7 +114,7 @@ class PickHandler(osgGA.GUIEventHandler):
                             visible = self._display.visibleIds[visibleID]
                             if deepestVisible is None or deepestVisible in visible.ancestors():
                                 deepestVisible = visible
-                self._display.selectVisible(deepestVisible, self._display.selectionShouldExtend, self._display.findShortestPath)
+                self._display.selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)
             else:
                 self._display.deselectAll()
         return True       

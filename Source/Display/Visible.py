@@ -84,8 +84,6 @@ class Visible(object):
         self.display = display
         self.displayId = display.nextUniqueId() # a unique identifier within the display
         self.client = client
-        self._motionTexture1 = display.textureFromImage('texture2.png')
-        self._motionTexture2 = display.textureFromImage('texture2.png')
         self._glowColor = None
         self._glowNode = None
         
@@ -149,6 +147,13 @@ class Visible(object):
         self.arrangedAxis = 'largest'
         self.arrangedSpacing = 0.02
         self.arrangedWeight = 1.0
+    
+    
+    def __repr__(self):
+        if self.client is None:
+            return gettext('anonymous proxy')
+        else:
+            return gettext('proxy of %s') % (self.client.name or gettext('<unnamed %s>') % (self.client.__class__.displayName()))
     
     
     @classmethod
@@ -324,7 +329,7 @@ class Visible(object):
                 dispatcher.send(('set', 'position'), child)
             # Recreate the glow shape if needed
             self.setGlowColor(glowColor)
-            self.display.Refresh()
+            dispatcher.send(('set', 'shape'), self)
     
     
     def setLabel(self, label):
@@ -348,7 +353,7 @@ class Visible(object):
             self._textGeode.removeDrawable(self._textDrawable)
             self._textDrawable = None
         self._label = label
-        self.display.Refresh()
+        dispatcher.send(('set', 'label'), self)
     
     
     def label(self):
@@ -363,7 +368,6 @@ class Visible(object):
             if self._shapeDrawable is not None:
                 self._shapeDrawable.setColor(colorVec)
             self._color = color
-            self.display.Refresh()
             dispatcher.send(('set', 'color'), self)
     
     
@@ -391,7 +395,6 @@ class Visible(object):
                 self._textDrawable.setColor(osg.Vec4(0, 0, 0, opacity))
             
             self._opacity = opacity
-            self.display.Refresh()
             dispatcher.send(('set', 'opacity'), self)
     
     
@@ -422,14 +425,13 @@ class Visible(object):
             self._position = position
             self.updateTransform()
             dispatcher.send(('set', 'position'), self)
-            self.display.Refresh()
     
     
     def offsetPosition(self, offset):
         if offset != (0, 0, 0):
             self._position = (self._position[0] + offset[0], self._position[1] + offset[1], self._position[2] + offset[2])
             self.updateTransform()
-            self.display.Refresh()
+            dispatcher.send(('set', 'position'), self)
     
     
     def worldPosition(self):
@@ -473,7 +475,6 @@ class Visible(object):
         self.updateTransform()
         dispatcher.send(('set', 'size'), self)
         self._arrangeChildren()
-        self.display.Refresh()
     
     
     def sizeIsFixed(self):
@@ -495,7 +496,6 @@ class Visible(object):
             self.updateTransform()
             dispatcher.send(('set', 'sizeIsAbsolute'), self)
             self._arrangeChildren()
-            self.display.Refresh()
             
             for ancestor in self.ancestors():
                 if self.sizeIsAbsolute:
@@ -539,7 +539,6 @@ class Visible(object):
         self._rotation = rotation
         self.updateTransform()
         dispatcher.send(('set', 'rotation'), self)
-        self.display.Refresh()
     
     
     def weight(self):
@@ -553,7 +552,6 @@ class Visible(object):
         else:
             self.setPath(self._path)
         dispatcher.send(('set', 'weight'), self)
-        self.display.Refresh()
     
     
     def addChildVisible(self, childVisible):
@@ -572,7 +570,6 @@ class Visible(object):
         else:
             self._arrangeChildren()
         dispatcher.send(('set', 'children'), self)
-        self.display.Refresh()
     
     
     def removeChildVisible(self, childVisible):
@@ -593,7 +590,6 @@ class Visible(object):
             else:
                 self._arrangeChildren()
             dispatcher.send(('set', 'children'), self)
-            self.display.Refresh()
     
     
     def rootVisible(self):
@@ -688,7 +684,6 @@ class Visible(object):
             else:
                 self._arrangeChildren(False)
             dispatcher.send(('set', 'arrangedAxis'), self)
-            self.display.Refresh()
         
         if recurse:
             for child in self.children:
@@ -702,7 +697,6 @@ class Visible(object):
             self.arrangedSpacing = spacing
             self._arrangeChildren(False)
             dispatcher.send(('set', 'arrangedSpacing'), self)
-            self.display.Refresh()
             self.display.Update()
         
         if recurse:
@@ -715,7 +709,6 @@ class Visible(object):
             self.arrangedWeight = weight
             self._arrangeChildren(False)
             dispatcher.send(('set', 'arrangedWeight'), self)
-            self.display.Refresh()
             self.display.Update()
     
     
@@ -806,7 +799,7 @@ class Visible(object):
         else:
             self._stateSet.setTextureAttributeAndModes(0, texture, osg.StateAttribute.ON)
         self._staticTexture = texture
-        self.display.Refresh()
+        dispatcher.send(('set', 'texture'), self)
     
         
     def setTextureTransform(self, transform):
@@ -817,16 +810,19 @@ class Visible(object):
             textureMatrix.setMatrix(transform)
             self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
         self._staticTextureTransform = transform
-        self.display.Refresh()
+        dispatcher.send(('set', 'textureTransform'), self)
     
     
     def setFlowDirection(self, fromVisible, toVisible, flowTo=True, flowFrom=False):
         self.pathStart = fromVisible
         self.pathEnd = toVisible
-        self.flowTo = flowTo
-        self.flowFrom = flowFrom
+        if flowTo != self.flowTo:
+            self.flowTo = flowTo
+            dispatcher.send(('set', 'flowTo'), self)
+        if flowFrom != self.flowFrom:
+            self.flowFrom = flowFrom
+            dispatcher.send(('set', 'flowFrom'), self)
         self.updateFlowAnimation()
-        self.display.Refresh()
     
     
     def setFlowToColor(self, color):
@@ -943,7 +939,7 @@ class Visible(object):
                     # TODO: handle other shapes
                     print "oops"
                 self._shapeGeode.addDrawable(osg.ShapeDrawable(segment))
-        self.display.Refresh()
+        dispatcher.send(('set', 'path'), self)
     
     
     def isPath(self):
@@ -957,14 +953,14 @@ class Visible(object):
     def setGlowColor(self, color):
         if color != self._glowColor:
             if self._shapeName is not None:
-                if color is None:
+                w, h, d = self.size()
+                if color is None or w == 0.0 or h == 0.0 or d == 0.0:
                     if self._glowNode is not None:
                         self.sgNode.removeChild(self._glowNode)
                         self._glowNode = None
                         self._glowNodeMaterial = None
                 else:
                     if self._glowNode is None:
-                        w, h, d = self.size()
                         self._glowNode = osg.MatrixTransform(osg.Matrixd.scale(osg.Vec3((w * 1.01) / w, (h * 1.01) / h, (d * 1.01) / d)))
                         clone = osg.Geode()
                         clone.setName(str(self.displayId))
@@ -987,7 +983,7 @@ class Visible(object):
                         self._glowNode.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
                 
             self._glowColor = color
-            self.display.Refresh()
+            dispatcher.send(('set', 'glowColor'), self)
     
     
     def __del__(self):
