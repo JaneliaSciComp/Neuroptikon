@@ -74,8 +74,8 @@ class Region(Object):
         dispatcher.send(('set', 'subRegions'), self)
     
     
-    def addPathwayToRegion(self, otherRegion, name=None):
-        pathway = Pathway(self, otherRegion, name = name)
+    def addPathwayToRegion(self, otherRegion, sendsOutput = None, receivesInput = None, name = None):
+        pathway = Pathway(self, otherRegion, name = name, sendsOutput = sendsOutput, receivesInput = receivesInput)
         self.pathways.append(pathway)
         otherRegion.pathways.append(pathway)
         self.network.addObject(pathway)

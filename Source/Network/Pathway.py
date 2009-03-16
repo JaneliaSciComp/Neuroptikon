@@ -57,13 +57,13 @@ class PathwayTerminus(object):
     
 class Pathway(Object):
     
-    def __init__(self, region1, region2, *args, **keywords):
+    def __init__(self, region1, region2, sendsOutput = None, receivesInput = None, *args, **keywords):
         Object.__init__(self, region1.network, *args, **keywords)
         
         self.neurites = []
         
-        self.terminus1 = PathwayTerminus(self, region1)
-        self.terminus2 = PathwayTerminus(self, region2)
+        self.terminus1 = PathwayTerminus(self, region1, sendsOutput, receivesInput)
+        self.terminus2 = PathwayTerminus(self, region2, receivesInput, sendsOutput)
     
     
     @classmethod
