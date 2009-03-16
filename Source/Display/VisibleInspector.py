@@ -86,6 +86,7 @@ class VisibleInspector(Inspector):
             self._shapeChoice = wx.Choice(self._window, wx.ID_ANY)
             for geometryName in sorted(Visible.geometries.keys()):
                 self._shapeChoice.Append(gettext(geometryName), geometryName)
+            self._shapeChoice.Append(gettext('none'), None)
             self._multipleShapesId = wx.NOT_FOUND
             gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Shape:')), 0)
             gridSizer.Add(self._shapeChoice, 0)

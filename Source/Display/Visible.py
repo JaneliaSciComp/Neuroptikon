@@ -30,7 +30,8 @@ class Visible(object):
                         "box": osg.Matrixd.identity(), 
                         "capsule": osg.Matrixd.scale(sqrt(1.0 / 8.0) * 0.9, 1.0 - 0.5 / sqrt(3), sqrt(1.0 / 8.0) * 0.9), 
                         "cone": osg.Matrixd.scale(sqrt(1.0 / 8.0), 0.5, sqrt(1.0 / 8.0)) * osg.Matrixd.translate(0.0, -0.25, 0.0), 
-                        "tube": osg.Matrixd.scale(1.0 / sqrt(2), 1.0, 1.0 / sqrt(2))}
+                        "tube": osg.Matrixd.scale(1.0 / sqrt(2), 1.0, 1.0 / sqrt(2)), 
+                        None: osg.Matrixd.identity()}
         
     # TODO: osgText::Font* font = osgText::readFontFile("fonts/arial.ttf");
     
@@ -309,19 +310,20 @@ class Visible(object):
     
     def setShape(self, shapeName):
         if self._shapeName != shapeName:
+            glowColor = self._glowColor
+            if self._glowNode is not None:
+                self.setGlowColor(None)
             self._shapeName = shapeName
             if self._shapeDrawable:
                 self._shapeGeode.removeDrawable(self._shapeDrawable)
-            self._shapeDrawable = osg.ShapeDrawable(Visible.geometries[self._shapeName])
-            self._shapeGeode.addDrawable(self._shapeDrawable)
+            if self._shapeName is not None:
+                self._shapeDrawable = osg.ShapeDrawable(Visible.geometries[self._shapeName])
+                self._shapeGeode.addDrawable(self._shapeDrawable)
             self.childGroup.setMatrix(Visible.geometryInterior[self._shapeName])
             for child in self.children:
                 dispatcher.send(('set', 'position'), child)
             # Recreate the glow shape if needed
-            if self._glowNode is not None:
-                glowColor = self._glowColor
-                self.setGlowColor(None)
-                self.setGlowColor(glowColor)
+            self.setGlowColor(glowColor)
             self.display.Refresh()
     
     
