@@ -113,6 +113,7 @@ class Display(wx.glcanvas.GLCanvas):
         
         self.Bind(wx.EVT_SIZE, self.onSize)
         self.Bind(wx.EVT_PAINT, self.onPaint)
+        self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         self.Bind(wx.EVT_MOUSE_EVENTS, self.onMouseEvent)  # TODO: factor this out into individual events
@@ -146,7 +147,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.SetDropTarget(DisplayDropTarget(self))
     
         self._nextUniqueId = -1
-        self._loading = False
+        self._suppressRefresh = False
         
         self.defaultFlowToColor = (1.0, 1.0, 1.0, 1.0)
         self.defaultFlowToColorUniform = osg.Uniform('flowToColor', osg.Vec4f(*self.defaultFlowToColor))
@@ -166,7 +167,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def fromXMLElement(self, xmlElement):
-        self._loading = True
+        self._suppressRefresh = True
         
         visibleElements = xmlElement.findall('Visible')
         
@@ -212,7 +213,7 @@ class Display(wx.glcanvas.GLCanvas):
         
         # TODO: all other display attributes
         
-        self._loading = False
+        self._suppressRefresh = False
         self.Refresh()
     
     
@@ -423,6 +424,10 @@ class Display(wx.glcanvas.GLCanvas):
         self.Refresh()
     
     
+    def onEraseBackground(self, event):
+        pass
+    
+    
     def onAnimate(self, event):
         # TODO: does setting the animation phase this way limit the slowest speed an animation can be?
         self.animationPhaseUniform.set(datetime.now().microsecond / 1000000.0)
@@ -485,7 +490,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def visibleChanged(self, sender, signal):
-        if not self._loading:
+        if not self._suppressRefresh:
             self.Refresh()
     
     
@@ -846,7 +851,7 @@ class Display(wx.glcanvas.GLCanvas):
             for visible in visibles:
                 newSelection.add(visible)
         
-        if newSelection != self.selectedVisibles or self.hoverSelected and not self.hoverSelecting:
+        if newSelection != self.selectedVisibles or (self.hoverSelected and not self.hoverSelecting):
             self.clearDragger()
             
             self.selectedVisibles = newSelection
@@ -899,6 +904,8 @@ class Display(wx.glcanvas.GLCanvas):
     def onSelectionOrShowFlowChanged(self, signal, sender):
         # Update the highlighting, animation and ghosting based on the current selection.
         # TODO: this should all be handled by display rules which will also keep ghosting from blowing away opacity settings
+        
+        self._suppressRefresh = True
         
         visiblesToHighlight = set()
         visiblesToAnimate = set()
@@ -975,6 +982,8 @@ class Display(wx.glcanvas.GLCanvas):
                 for visibles in self.visibles.itervalues():
                     for visible in visibles:
                         visible.setOpacity(1)
+        
+        self._suppressRefresh = False
         
         # Turn idle callbacks on when any visible is animated and off otherwise.
         if not self._animationTimer.IsRunning() and len(self.animatedVisibles) > 0:
@@ -1105,7 +1114,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     def autoLayout(self, method=None):
         """Automatically layout the displayed network without moving visibles with fixed positions (much)"""
-        self.deselectAll()
+        self._suppressRefresh = True
         if method == 'spectral' or (method is None and self.viewDimensions == 3):
             nodes = []
             edges = []
@@ -1242,6 +1251,7 @@ class Display(wx.glcanvas.GLCanvas):
                                 x, y = pathElement.split(',')
                                 path_3D.append(((float(x) - translateX) / scaleX, (float(y) - translateY) / scaleY, 0))
                             visible.setPath(path_3D, visible.pathStart, visible.pathEnd)
+        self._suppressRefresh = False
         self.centerView()
     
     
