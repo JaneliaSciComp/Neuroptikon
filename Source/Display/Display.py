@@ -191,29 +191,25 @@ class Display(wx.glcanvas.GLCanvas):
         
         self.setViewDimensions(int(xmlElement.get('dimensions')))
         
-        showRegionNames = xmlElement.get('showRegionNames')
-        if showRegionNames is not None:
-            self.setShowRegionNames(showRegionNames == 'true')
-        showNeuronNames = xmlElement.get('showNeuronNames')
-        if showNeuronNames is not None:
-            self.setShowNeuronNames(showNeuronNames == 'true')
-        showFlow = xmlElement.get('showFlow')
-        if showFlow is not None:
-            self.setShowFlow(showFlow == 'true')
+        trueValues = ['true', 'True', 'TRUE', '1']
+        self.setShowRegionNames(xmlElement.get('showRegionNames') in trueValues)
+        self.setShowNeuronNames(xmlElement.get('showNeuronNames') in trueValues)
+        self.setShowFlow(xmlElement.get('showFlow') in trueValues)
+        self.setUseGhosts(xmlElement.get('useGhosting') in trueValues)
+        self.useHoverSelect = xmlElement.get('useMouseOverSelecting') in trueValues
+        self.autoVisualize = xmlElement.get('autoVisualize') in trueValues
         
         selectedVisibleIds = xmlElement.get('selectedVisibleIds')
         visiblesToSelect = []
         if selectedVisibleIds is not None:
             for visibleId in selectedVisibleIds.split(','):
-                if visibleId in self.visibleIds:
-                    visiblesToSelect.append(visibleId)
+                if int(visibleId) in self.visibleIds:
+                    visiblesToSelect.append(self.visibleIds[int(visibleId)])
         self.selectVisibles(visiblesToSelect)
         
-        self.resetView()
-        
-        # TODO: all other display attributes
-        
         self._suppressRefresh = False
+        
+        self.centerView()
         self.Refresh()
     
     
@@ -230,7 +226,19 @@ class Display(wx.glcanvas.GLCanvas):
                     if visibleElement is None:
                         raise ValueError, gettext('Could not save visualized item')
         displayElement.set('dimensions', str(self.viewDimensions))
+        displayElement.set('showRegionNames', 'true' if self._showRegionNames else 'false')
+        displayElement.set('showNeuronNames', 'true' if self._showNeuronNames else 'false')
+        displayElement.set('showFlow', 'true' if self._showFlow else 'false')
+        displayElement.set('useGhosting', 'true' if self._useGhosts else 'false')
+        displayElement.set('useMouseOverSelecting', 'true' if self.useHoverSelect else 'false')
+        displayElement.set('autoVisualize', 'true' if self.autoVisualize else 'false')
+        selectedVisibleIds = []
+        for visible in self.selectedVisibles:
+            selectedVisibleIds.append(str(visible.displayId))
+        displayElement.set('selectedVisibleIds', ','.join(selectedVisibleIds))
+        
         # TODO: it would be nice to save the console command history
+        
         return displayElement
     
     

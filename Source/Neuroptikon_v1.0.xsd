@@ -206,10 +206,19 @@
 	
 	<xs:complexType name="Display">
 		<xs:sequence>
+			<xs:element name="backgroundColor" type="Color" minOccurs="0"/>
+			<!-- TODO: default path flow attributes -->
 			<xs:element name="DisplayRule" type="DisplayRule" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="Visible" type="Visible" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 		<xs:attribute name="dimensions" type="xs:nonNegativeInteger"/>
+		<xs:attribute name="showRegionNames" type="xs:boolean"/>
+		<xs:attribute name="showNeuronNames" type="xs:boolean"/>
+		<xs:attribute name="showFlow" type="xs:boolean"/>
+		<xs:attribute name="useGhosting" type="xs:boolean"/>
+		<xs:attribute name="useMouseOverSelecting" type="xs:boolean"/>
+		<xs:attribute name="autoVisualize" type="xs:boolean"/>
+		<xs:attribute name="selectedVisibleIds" type="xs:string"/>
 	</xs:complexType>
 	
 	<xs:complexType name="DisplayRule">
