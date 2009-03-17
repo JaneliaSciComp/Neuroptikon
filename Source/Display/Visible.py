@@ -228,7 +228,7 @@ class Visible(object):
             pathStart = display.visibleIds[int(pathElement.get('startVisibleId'))]
             pathEnd = display.visibleIds[int(pathElement.get('endVisibleId'))]
             flowTo = pathElement.get('flowTo')
-            flowFrom = pathElement.get('flowTo')
+            flowFrom = pathElement.get('flowFrom')
             if pathStart is None or pathEnd is None:
                 raise ValueError, gettext('Could not create path')
             visible.setFlowDirection(pathStart, pathEnd, flowTo, flowFrom)
