@@ -48,13 +48,13 @@ class VisibleInspector(Inspector):
             
             # Add a check box for fixing the position.
             self.fixedPositionCheckBox = wx.CheckBox(self._window, wx.ID_ANY, gettext('Fixed'), style=wx.CHK_3STATE)
-            self._window.Bind(wx.EVT_CHECKBOX, self.onSetPositionIsFixed)
+            self._window.Bind(wx.EVT_CHECKBOX, self.onSetPositionIsFixed, self.fixedPositionCheckBox)
             gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Position:')), 0)
             gridSizer.Add(self.fixedPositionCheckBox, 1)
             
             # Add a check box for fixing the size.
             self.fixedSizeCheckBox = wx.CheckBox(self._window, wx.ID_ANY, gettext('Fixed'), style=wx.CHK_3STATE)
-            self._window.Bind(wx.EVT_CHECKBOX, self.onSetSizeIsFixed)
+            self._window.Bind(wx.EVT_CHECKBOX, self.onSetSizeIsFixed, self.fixedSizeCheckBox)
             gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Size:')), 0)
             gridSizer.Add(self.fixedSizeCheckBox, 1)
             
