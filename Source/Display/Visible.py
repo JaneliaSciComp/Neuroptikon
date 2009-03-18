@@ -161,6 +161,8 @@ class Visible(object):
         client = display.network.objectWithId(xmlElement.get('objectId'))
         visible = Visible(display, client)
         visible.displayId = int(xmlElement.get('id'))
+        visible._shapeGeode.setName(str(visible.displayId))
+        visible._textGeode.setName(str(visible.displayId))
         
         # Set any geometry
         geometryElement = xmlElement.find('geometry')
@@ -245,6 +247,28 @@ class Visible(object):
                 raise ValueError, gettext('Could not create path')
             visible.setFlowDirection(pathStart, pathEnd, flowTo, flowFrom)
             visible.setPath([], pathStart, pathEnd)
+            flowToElement = pathElement.find('flowToAppearance')
+            if flowToElement is not None:
+                colorElement = flowToElement.find('color')
+                if colorElement is not None:
+                    red = float(colorElement.get('r'))
+                    green = float(colorElement.get('g'))
+                    blue = float(colorElement.get('b'))
+                    alpha = float(colorElement.get('a'))
+                    visible.setFlowToColor((red, green, blue, alpha))
+                if flowToElement.get('spread') is not None:
+                    visible.setFlowToSpread(float(flowToElement.get('spread')))
+            flowFromElement = pathElement.find('flowFromAppearance')
+            if flowFromElement is not None:
+                colorElement = flowFromElement.find('color')
+                if colorElement is not None:
+                    red = float(colorElement.get('r'))
+                    green = float(colorElement.get('g'))
+                    blue = float(colorElement.get('b'))
+                    alpha = float(colorElement.get('a'))
+                    visible.setFlowFromColor((red, green, blue, alpha))
+                if flowFromElement.get('spread') is not None:
+                    visible.setFlowFromSpread(float(flowFromElement.get('spread')))
         
         # Create any child visibles
         for visibleElement in xmlElement.findall('Visible'):
@@ -310,6 +334,26 @@ class Visible(object):
                 pathElement.set('flowTo', 'true' if self.flowTo else 'false')
             if self.flowFrom is not None:
                 pathElement.set('flowFrom', 'true' if self.flowFrom else 'false')
+            if self._flowToColor is not None or self._flowToSpread is not None:
+                flowToElement = ElementTree.SubElement(pathElement, 'flowToAppearance')
+                if self._flowToColor is not None:
+                    colorElement = ElementTree.SubElement(flowToElement, 'color')
+                    colorElement.set('r', str(self._flowToColor[0]))
+                    colorElement.set('g', str(self._flowToColor[1]))
+                    colorElement.set('b', str(self._flowToColor[2]))
+                    colorElement.set('a', str(self._flowToColor[3]))
+                if self._flowToSpread is not None:
+                    flowToElement.set('spread', str(self._flowToSpread))
+            if self._flowFromColor is not None or self._flowFromSpread is not None:
+                flowFromElement = ElementTree.SubElement(pathElement, 'flowFromAppearance')
+                if self._flowFromColor is not None:
+                    colorElement = ElementTree.SubElement(flowFromElement, 'color')
+                    colorElement.set('r', str(self._flowFromColor[0]))
+                    colorElement.set('g', str(self._flowFromColor[1]))
+                    colorElement.set('b', str(self._flowFromColor[2]))
+                    colorElement.set('a', str(self._flowFromColor[3]))
+                if self._flowFromSpread is not None:
+                    flowFromElement.set('spread', str(self._flowFromSpread))
         
         # Add any child visibles
         for childVisible in self.children:

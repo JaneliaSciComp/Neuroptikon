@@ -169,6 +169,42 @@ class Display(wx.glcanvas.GLCanvas):
     def fromXMLElement(self, xmlElement):
         self._suppressRefresh = True
         
+        colorElement = xmlElement.find('backgroundColor')
+        if colorElement is not None:
+            red = float(colorElement.get('r'))
+            green = float(colorElement.get('g'))
+            blue = float(colorElement.get('b'))
+            alpha = float(colorElement.get('a'))
+            self.setBackgroundColor((red, green, blue, alpha))
+        
+        flowToElement = xmlElement.find('defaultFlowToAppearance')
+        if flowToElement is not None:
+            colorElement = flowToElement.find('color')
+            if colorElement is not None:
+                red = float(colorElement.get('r'))
+                green = float(colorElement.get('g'))
+                blue = float(colorElement.get('b'))
+                alpha = float(colorElement.get('a'))
+                self.defaultFlowToColor = (red, green, blue, alpha)
+                self.defaultFlowToColorUniform.set(osg.Vec4f(*self.defaultFlowToColor))
+            if flowToElement.get('spread') is not None:
+                self.defaultFlowToSpread = float(flowToElement.get('spread'))
+                self.defaultFlowToSpreadUniform.set(self.defaultFlowToSpread)
+        flowFromElement = xmlElement.find('defaultFlowFromAppearance')
+        if flowFromElement is not None:
+            colorElement = flowFromElement.find('color')
+            if colorElement is not None:
+                red = float(colorElement.get('r'))
+                green = float(colorElement.get('g'))
+                blue = float(colorElement.get('b'))
+                alpha = float(colorElement.get('a'))
+                self.defaultFlowFromColor = (red, green, blue, alpha)
+                self.defaultFlowFromColorUniform.set(osg.Vec4f(*self.defaultFlowFromColor))
+            if flowFromElement.get('spread') is not None:
+                self.defaultFlowFromSpread = float(flowFromElement.get('spread'))
+                self.defaultFlowFromSpreadUniform.set(self.defaultFlowFromSpread)
+                
+        
         visibleElements = xmlElement.findall('Visible')
         
         # Add all of the nodes
@@ -203,7 +239,7 @@ class Display(wx.glcanvas.GLCanvas):
         visiblesToSelect = []
         if selectedVisibleIds is not None:
             for visibleId in selectedVisibleIds.split(','):
-                if int(visibleId) in self.visibleIds:
+                if visibleId.isdigit() and int(visibleId) in self.visibleIds:
                     visiblesToSelect.append(self.visibleIds[int(visibleId)])
         self.selectVisibles(visiblesToSelect)
         
@@ -215,16 +251,44 @@ class Display(wx.glcanvas.GLCanvas):
     
     def toXMLElement(self, parentElement):
         displayElement = ElementTree.SubElement(parentElement, 'Display')
+        
+        # Add the background color
+        colorElement = ElementTree.SubElement(displayElement, 'backgroundColor')
+        colorElement.set('r', str(self.backgroundColor[0]))
+        colorElement.set('g', str(self.backgroundColor[1]))
+        colorElement.set('b', str(self.backgroundColor[2]))
+        colorElement.set('a', str(self.backgroundColor[3]))
+        
+        # Add the deault flow appearance
+        flowToElement = ElementTree.SubElement(displayElement, 'defaultFlowToAppearance')
+        colorElement = ElementTree.SubElement(flowToElement, 'color')
+        colorElement.set('r', str(self.defaultFlowToColor[0]))
+        colorElement.set('g', str(self.defaultFlowToColor[1]))
+        colorElement.set('b', str(self.defaultFlowToColor[2]))
+        colorElement.set('a', str(self.defaultFlowToColor[3]))
+        flowToElement.set('spread', str(self.defaultFlowToSpread))
+        flowFromElement = ElementTree.SubElement(displayElement, 'defaultFlowFromAppearance')
+        colorElement = ElementTree.SubElement(flowFromElement, 'color')
+        colorElement.set('r', str(self.defaultFlowFromColor[0]))
+        colorElement.set('g', str(self.defaultFlowFromColor[1]))
+        colorElement.set('b', str(self.defaultFlowFromColor[2]))
+        colorElement.set('a', str(self.defaultFlowFromColor[3]))
+        flowFromElement.set('spread', str(self.defaultFlowFromSpread))
+        
+        # Add the display rules
         for displayRule in self.displayRules:
             ruleElement = displayRule.toXMLElement(displayElement)
             if ruleElement is None:
                 raise ValueError, gettext('Could not save display rule')
+        
+        # Add the visibles
         for visibles in self.visibles.itervalues():
             for visible in visibles:
                 if visible.parent is None:
                     visibleElement = visible.toXMLElement(displayElement)
                     if visibleElement is None:
                         raise ValueError, gettext('Could not save visualized item')
+        
         displayElement.set('dimensions', str(self.viewDimensions))
         displayElement.set('showRegionNames', 'true' if self._showRegionNames else 'false')
         displayElement.set('showNeuronNames', 'true' if self._showNeuronNames else 'false')

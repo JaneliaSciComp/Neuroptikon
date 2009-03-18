@@ -207,7 +207,8 @@
 	<xs:complexType name="Display">
 		<xs:sequence>
 			<xs:element name="backgroundColor" type="Color" minOccurs="0"/>
-			<!-- TODO: default path flow attributes -->
+			<xs:element name="defaultFlowToAppearance" type="FlowAppearance" minOccurs="0">
+			<xs:element name="defaultFlowFromAppearance" type="FlowAppearance" minOccurs="0">
 			<xs:element name="DisplayRule" type="DisplayRule" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="Visible" type="Visible" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
@@ -282,6 +283,7 @@
 		<xs:attribute name="r" type="xs:float" use="required"/>
 		<xs:attribute name="g" type="xs:float" use="required"/>
 		<xs:attribute name="b" type="xs:float" use="required"/>
+		<xs:attribute name="a" type="xs:float"/>
 	</xs:complexType>
 	
 	<xs:complexType name="VisibleAppearance">
@@ -302,7 +304,18 @@
 		<xs:attribute name="weight" type="xs:float"/>
 	</xs:complexType>
 	
+	<xs:complexType name="FlowAppearance">
+		<xs:sequence>
+			<xs:element name="color" type="Color"/>
+		</xs:sequence>
+		<xs:attribute name="spread" type="xs:float"/>
+	</xs:complexType>
+	
 	<xs:complexType name="VisiblePath">
+		<xs:sequence>
+			<xs:element name="flowToAppearance" type="FlowAppearance" minOccurs="0">
+			<xs:element name="flowFromAppearance" type="FlowAppearance" minOccurs="0">
+		</xs:sequence>
 		<xs:attribute name="startVisibleId" type="xs:nonNegativeInteger" use="required"/>
 		<xs:attribute name="endVisibleId" type="xs:nonNegativeInteger" use="required"/>
 		<xs:attribute name="flowTo" type="xs:boolean"/>
