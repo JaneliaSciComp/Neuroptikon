@@ -146,15 +146,16 @@ class Finder(wx.Dialog):
             elif self.text_object_type_choice.GetCurrentSelection() == 10:
                 self.predicate.addStatement(lambda x: x.__class__ == Network.Stimulus.Stimulus)
             
+            findText = self.find_text.GetValue().upper()
             if self.text_operator_choice.GetCurrentSelection() == 0:
-                namePredicate = Predicate(lambda x: x.name != None and x.name.upper().find(self.find_text.GetValue().upper()) != -1)
-                descriptionPredicate = Predicate(lambda x: x.description != None and x.description.upper().find(self.find_text.GetValue().upper()) != -1)
+                namePredicate = Predicate(lambda x: (x.name is None and findText == '') or (x.name != None and x.name.upper().find(findText) != -1))
+                descriptionPredicate = Predicate(lambda x: (x.description is None and findText == '') or (x.description != None and x.description.upper().find(self.find_text.GetValue().upper()) != -1))
             elif self.text_operator_choice.GetCurrentSelection() == 1:
-                namePredicate = Predicate(lambda x: x.name != None and x.name.upper().startswith(self.find_text.GetValue().upper()))
+                namePredicate = Predicate(lambda x: x.name != None and x.name.upper().startswith(findText))
                 descriptionPredicate = Predicate(lambda x: x.description != None and x.description.upper().startswith(self.find_text.GetValue().upper()))
             elif self.text_operator_choice.GetCurrentSelection() == 2:
-                namePredicate = Predicate(lambda x: x.name != None and x.name.upper().endswith(self.find_text.GetValue().upper()))
-                descriptionPredicate = Predicate(lambda x: x.description != None and x.description.upper().endswith(self.find_text.GetValue().upper()))
+                namePredicate = Predicate(lambda x: x.name != None and x.name.upper().endswith(findText))
+                descriptionPredicate = Predicate(lambda x: x.description != None and x.description.upper().endswith(findText))
             if self.text_field_choice.GetCurrentSelection() == 0:   # name or description
                 fieldPredicate = CompoundPredicate()
                 fieldPredicate.matchAll = False
