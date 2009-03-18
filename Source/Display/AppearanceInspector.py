@@ -1,0 +1,162 @@
+import wx
+import os, sys
+import osg
+from wx.py import dispatcher
+from Inspection.Inspector import Inspector
+from Network.ObjectList import ObjectList
+from Visible import Visible
+
+
+class AppearanceInspector(Inspector):
+    
+    @classmethod
+    def name(cls):
+        return gettext('Appearance')
+    
+    
+    @classmethod
+    def bitmap(cls):
+        displayDir = os.path.abspath(os.path.dirname(sys.modules['Display'].__file__))
+        image = wx.Image(displayDir + os.sep + 'AppearanceInspector.png')
+        if image.IsOk():
+            image.Rescale(16, 16)
+            return image.ConvertToBitmap()
+        else:
+            return Inspector.bitmap(cls)
+    
+    
+    @classmethod
+    def canInspectDisplay(cls, display):
+        return len(display.selection()) > 0
+
+
+    def window(self, parentWindow=None):
+        if not hasattr(self, '_window'):
+            self._window = wx.Window(parentWindow, wx.ID_ANY)
+            gridSizer = wx.FlexGridSizer(3, 2, 8, 8)
+            
+            # Add a color picker for our fill color.
+            self._colorPicker = wx.lib.colourselect.ColourSelect(self._window, wx.ID_ANY)
+            self._window.Bind(wx.lib.colourselect.EVT_COLOURSELECT, self.onSetColor, self._colorPicker)
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Color:')), 0)
+            gridSizer.Add(self._colorPicker, 1)
+            
+            # Add a slider for setting the opacity.
+            self._opacitySlider = wx.Slider(self._window, wx.ID_ANY, 100, 0, 100)
+            self._opacitySlider.Bind(wx.EVT_SCROLL, self.onSetOpacity, self._opacitySlider)
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Opacity:')), 0)
+            gridSizer.Add(self._opacitySlider, 1)
+            
+            # Add a pop-up for choosing the shape.
+            self._shapeChoice = wx.Choice(self._window, wx.ID_ANY)
+            for geometryName in sorted(Visible.geometries.keys()):
+                self._shapeChoice.Append(gettext(geometryName), geometryName)
+            self._shapeChoice.Append(gettext('none'), None)
+            self._multipleShapesId = wx.NOT_FOUND
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Shape:')), 0)
+            gridSizer.Add(self._shapeChoice, 0)
+            parentWindow.Bind(wx.EVT_CHOICE, self.onSetShape, self._shapeChoice)
+            
+            # Add a pop-up for choosing the texture.
+            self._textureChoice = wx.Choice(self._window, wx.ID_ANY)
+            for texture in wx.GetApp().library.textures():
+                self._textureChoice.Append(gettext(texture.name), texture)
+            self._textureChoice.Append(gettext('None'), None)
+            self._multipleTexturesId = wx.NOT_FOUND
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Texture:')), 0)
+            gridSizer.Add(self._textureChoice, 0)
+            parentWindow.Bind(wx.EVT_CHOICE, self.onSetTexture, self._textureChoice)
+            
+            # TODO: label, ???
+            
+            mainSizer = wx.BoxSizer(wx.VERTICAL)
+            mainSizer.Add(gridSizer, 1, wx.ALL, 5)
+            self._window.SetSizer(mainSizer)
+        
+        return self._window
+    
+    
+    def inspectDisplay(self, display):
+        self.visibles = display.selection()
+        for visible in self.visibles:
+            for attributeName in ['color', 'opacity', 'shape', 'texture']:
+                dispatcher.connect(self.refreshGUI, ('set', attributeName), visible)
+        self.refreshGUI()
+    
+    
+    def refreshGUI(self, signal = ('set', None), **arguments):
+        updatedAttribute = signal[1]
+        
+        if updatedAttribute is None or updatedAttribute == 'color':
+            if self.visibles.haveEqualAttr('color'):
+                red, green, blue = self.visibles[0].color()
+                self._colorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, 255))
+                self._colorPicker.SetLabel(gettext(''))
+            else:
+                self._colorPicker.SetColour(wx.NamedColour('GRAY'))  # TODO: be clever and pick the average color?
+                self._colorPicker.SetLabel(gettext('Multiple values'))
+        
+        if updatedAttribute is None or updatedAttribute == 'opacity':
+            if self.visibles.haveEqualAttr('opacity'):
+                self._opacitySlider.SetLabel('')
+                self._opacitySlider.SetValue(self.visibles[0].opacity() * 100.0)
+            else:
+                self._opacitySlider.SetLabel(gettext('Multiple values'))
+                self._opacitySlider.SetValue(100)
+        
+        if updatedAttribute is None or updatedAttribute == 'shape':
+            if self.visibles.haveEqualAttr('shape'):
+                for index in range(0, self._shapeChoice.GetCount()):
+                    if self._shapeChoice.GetClientData(index) == self.visibles[0].shape():
+                        self._shapeChoice.SetSelection(index)
+                        break
+            else:
+                self._multipleShapesId = self._shapeChoice.Append(gettext('Multiple values'), None)
+                self._shapeChoice.SetSelection(self._multipleShapesId)
+        
+        if updatedAttribute is None or updatedAttribute == 'texture':
+            if self.visibles.haveEqualAttr('texture'):
+                for index in range(0, self._textureChoice.GetCount()):
+                    if self._textureChoice.GetClientData(index) == self.visibles[0].texture():
+                        self._textureChoice.SetSelection(index)
+                        break
+            else:
+                self._multipleTexturesId = self._textureChoice.Append(gettext('Multiple values'), None)
+                self._textureChoice.SetSelection(self._multipleTexturesId)
+        
+        self._window.Layout()
+    
+    
+    def onSetColor(self, event):
+        wxColor = self._colorPicker.GetColour()
+        colorTuple = (wxColor.Red() / 255.0, wxColor.Green() / 255.0, wxColor.Blue() / 255.0)
+        for visible in self.visibles:
+            visible.setColor(colorTuple)
+        
+    
+    def onSetOpacity(self, event):
+        newOpacity = self._opacitySlider.GetValue() / 100.0
+        for visible in self.visibles:
+            visible.setOpacity(newOpacity)
+        
+    
+    def onSetShape(self, event):
+        shape = self._shapeChoice.GetClientData(self._shapeChoice.GetSelection())
+        for visible in self.visibles:
+            visible.setShape(shape)
+        # Remove the "multiple values" choice now that all of the visibles have the same value.
+        if self._multipleShapesId != wx.NOT_FOUND:
+            self._shapeChoice.Delete(self._multipleShapesId)
+            self._multipleShapesId = wx.NOT_FOUND
+        
+    
+    def onSetTexture(self, event):
+        texture = self._textureChoice.GetClientData(self._textureChoice.GetSelection())
+        for visible in self.visibles:
+            visible.setTexture(texture)
+            visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
+        # Remove the "multiple values" choice now that all of the visibles have the same value.
+        if self._multipleTexturesId != wx.NOT_FOUND:
+            self._textureChoice.Delete(self._multipleTexturesId)
+            self._multipleTexturesId = wx.NOT_FOUND
+    

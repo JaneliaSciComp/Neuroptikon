@@ -1,5 +1,7 @@
 import os, platform, stat, sys
 
+os.environ['OSG_NOTIFY_LEVEL'] = 'ALWAYS'
+
 # Make sure that the library paths are set up correctly for the current location.
 commonLibPath = os.getcwd() + os.sep + 'lib' + os.sep + 'CrossPlatform'
 platformLibPath = os.getcwd() + os.sep + 'lib' + os.sep + platform.system()
@@ -53,6 +55,7 @@ from Library.Neurotransmitter import Neurotransmitter
 from Library.NeuronClass import NeuronClass
 from Library.Modality import Modality
 from Library.Ontology import Ontology
+from Library.Texture import Texture
 from Preferences import Preferences
 from Inspection.InspectorFrame import InspectorFrame
 
@@ -121,9 +124,13 @@ if __name__ == "__main__":
             self.library.add(Modality('taste', gettext('Taste')))
             
             flyOntology = Ontology('drosophila brain', name = gettext('Drosophila brain'))
-            flyOntology.importOBO('Library/flybrain.obo')
+            flyOntology.importOBO('Library' + os.sep + 'flybrain.obo')
             self.library.add(flyOntology)
-
+            
+            for fileName in os.listdir('Library' + os.sep + 'Textures'):
+                identifier = os.path.splitext(fileName)[0]                texture = Texture(identifier, gettext(identifier))
+                if texture.loadImage(fileName):
+                    self.library.add(texture)
         
         
         def onQuit(self, event):

@@ -293,8 +293,8 @@
 			<xs:element name="color" type="Color" minOccurs="0"/>
 			<xs:element name="opacity" type="xs:float" minOccurs="0"/>
 			<xs:element name="weight" type="xs:float" minOccurs="0"/>
-			<!--texture?
-				texture transform?-->
+			<xs:element name="texture" type="xs:string" minOccurs="0"/>
+			<!--texture transform?-->
 		</xs:sequence>
 	</xs:complexType>
 	

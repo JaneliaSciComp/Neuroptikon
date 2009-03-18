@@ -7,6 +7,7 @@ from Network.Synapse import Synapse
 from Network.Stimulus import Stimulus
 from Network.Innervation import Innervation
 
+import wx
 from wx.py import dispatcher
 from math import atan2, pi, sqrt
 import random
@@ -210,6 +211,10 @@ class Visible(object):
             weightText = appearanceElement.findtext('weight')
             if weightText is not None:
                 visible.setWeight(float(weightText))
+            textureId = appearanceElement.findtext('texture')
+            if textureId is not None:
+                visible.setTexture(wx.GetApp().library.texture(textureId))
+                visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
         
         # Set up any arrangement
         arrangementElement = xmlElement.find('arrangement')
@@ -317,7 +322,9 @@ class Visible(object):
         colorElement.set('b', str(self._color[2]))
         ElementTree.SubElement(appearanceElement, 'opacity').text = str(self._opacity)  # TODO: ghosting will confuse this
         ElementTree.SubElement(appearanceElement, 'weight').text = str(self._weight)
-        # TODO: texture, textureTransform
+        if self._staticTexture is not None:
+            ElementTree.SubElement(appearanceElement, 'texture').text = self._staticTexture.identifier
+        # TODO: textureTransform?
         
         # Add the arrangement
         arrangementElement = ElementTree.SubElement(visibleElement, 'arrangement')
@@ -853,9 +860,13 @@ class Visible(object):
         if texture is None:
             self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXTURE)
         else:
-            self._stateSet.setTextureAttributeAndModes(0, texture, osg.StateAttribute.ON)
+            self._stateSet.setTextureAttributeAndModes(0, texture.textureData(), osg.StateAttribute.ON)
         self._staticTexture = texture
         dispatcher.send(('set', 'texture'), self)
+    
+    
+    def texture(self):
+        return self._staticTexture
     
         
     def setTextureTransform(self, transform):

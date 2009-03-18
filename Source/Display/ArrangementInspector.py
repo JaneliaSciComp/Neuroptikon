@@ -1,4 +1,4 @@
-import wx, wx.lib.colourselect
+import wx
 import os, sys
 from wx.py import dispatcher
 from Inspection.Inspector import Inspector
@@ -6,17 +6,17 @@ from Network.ObjectList import ObjectList
 from Visible import Visible
 
 
-class VisibleInspector(Inspector):
+class ArrangementInspector(Inspector):
     
     @classmethod
     def name(cls):
-        return gettext('Visible')
+        return gettext('Arrangement')
     
     
     @classmethod
     def bitmap(cls):
         displayDir = os.path.abspath(os.path.dirname(sys.modules['Display'].__file__))
-        image = wx.Image(displayDir + os.sep + 'VisibleInspector.png')
+        image = wx.Image(displayDir + os.sep + 'ArrangementInspector.png')
         if image.IsOk():
             image.Rescale(16, 16)
             return image.ConvertToBitmap()
@@ -33,30 +33,6 @@ class VisibleInspector(Inspector):
         if not hasattr(self, '_window'):
             self._window = wx.Window(parentWindow, wx.ID_ANY)
             gridSizer = wx.FlexGridSizer(3, 2, 8, 8)
-            
-            # Add a color picker for our fill color.
-            self._colorPicker = wx.lib.colourselect.ColourSelect(self._window, wx.ID_ANY)
-            self._window.Bind(wx.lib.colourselect.EVT_COLOURSELECT, self.onSetColor, self._colorPicker)
-            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Color:')), 0)
-            gridSizer.Add(self._colorPicker, 1)
-            
-            # Add a slider for setting the opacity.
-            self._opacitySlider = wx.Slider(self._window, wx.ID_ANY, 100, 0, 100)
-            self._opacitySlider.Bind(wx.EVT_SCROLL, self.onSetOpacity, self._opacitySlider)
-            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Opacity:')), 0)
-            gridSizer.Add(self._opacitySlider, 1)
-            
-            # Add a check box for fixing the position.
-            self.fixedPositionCheckBox = wx.CheckBox(self._window, wx.ID_ANY, gettext('Fixed'), style=wx.CHK_3STATE)
-            self._window.Bind(wx.EVT_CHECKBOX, self.onSetPositionIsFixed, self.fixedPositionCheckBox)
-            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Position:')), 0)
-            gridSizer.Add(self.fixedPositionCheckBox, 1)
-            
-            # Add a check box for fixing the size.
-            self.fixedSizeCheckBox = wx.CheckBox(self._window, wx.ID_ANY, gettext('Fixed'), style=wx.CHK_3STATE)
-            self._window.Bind(wx.EVT_CHECKBOX, self.onSetSizeIsFixed, self.fixedSizeCheckBox)
-            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Size:')), 0)
-            gridSizer.Add(self.fixedSizeCheckBox, 1)
             
             # Add a slider for setting the arrangement weight within our parent.
             self._arrangedWeightSlider = wx.Slider(self._window, wx.ID_ANY, 50, 1, 100)
@@ -82,18 +58,6 @@ class VisibleInspector(Inspector):
             gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Arranged spacing:')), 0)
             gridSizer.Add(self._arrangedSpacingSlider, 1)
             
-            # Add a pop-up for choosing the shape.
-            self._shapeChoice = wx.Choice(self._window, wx.ID_ANY)
-            for geometryName in sorted(Visible.geometries.keys()):
-                self._shapeChoice.Append(gettext(geometryName), geometryName)
-            self._shapeChoice.Append(gettext('none'), None)
-            self._multipleShapesId = wx.NOT_FOUND
-            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Shape:')), 0)
-            gridSizer.Add(self._shapeChoice, 0)
-            parentWindow.Bind(wx.EVT_CHOICE, self.onSetShape, self._shapeChoice)
-            
-            # TODO: label, opacity, ???
-            
             mainSizer = wx.BoxSizer(wx.VERTICAL)
             mainSizer.Add(gridSizer, 1, wx.ALL, 5)
             self._window.SetSizer(mainSizer)
@@ -104,7 +68,7 @@ class VisibleInspector(Inspector):
     def inspectDisplay(self, display):
         self.visibles = display.selection()
         for visible in self.visibles:
-            for attributeName in ['color', 'opacity', 'positionIsFixed', 'sizeIsFixed', 'shape', 'children', 'arrangedWeight', 'arrangedAxis', 'arrangedSpacing']:
+            for attributeName in ['children', 'arrangedWeight', 'arrangedAxis', 'arrangedSpacing']:
                 dispatcher.connect(self.refreshGUI, ('set', attributeName), visible)
         self.refreshGUI()
     
@@ -122,51 +86,6 @@ class VisibleInspector(Inspector):
             if len(visible.children) != commonChildCount:
                 commonChildCount = -1   # different numbers of children
                 break
-        
-        if updatedAttribute is None or updatedAttribute == 'color':
-            if self.visibles.haveEqualAttr('color'):
-                red, green, blue = self.visibles[0].color()
-                self._colorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, 255))
-                self._colorPicker.SetLabel(gettext(''))
-            else:
-                self._colorPicker.SetColour(wx.NamedColour('GRAY'))  # TODO: be clever and pick the average color?
-                self._colorPicker.SetLabel(gettext('Multiple values'))
-        
-        if updatedAttribute is None or updatedAttribute == 'opacity':
-            if self.visibles.haveEqualAttr('opacity'):
-                self._opacitySlider.SetLabel('')
-                self._opacitySlider.SetValue(self.visibles[0].opacity() * 100.0)
-            else:
-                self._opacitySlider.SetLabel(gettext('Multiple values'))
-                self._opacitySlider.SetValue(100)
-        
-        if updatedAttribute is None or updatedAttribute == 'positionIsFixed':
-            if self.visibles.haveEqualAttr('positionIsFixed'):
-                if self.visibles[0].positionIsFixed():
-                    self.fixedPositionCheckBox.Set3StateValue(wx.CHK_CHECKED)
-                else:
-                    self.fixedPositionCheckBox.Set3StateValue(wx.CHK_UNCHECKED)
-            else:
-                self.fixedPositionCheckBox.Set3StateValue(wx.CHK_UNDETERMINED)
-        
-        if updatedAttribute is None or updatedAttribute == 'sizeIsFixed':
-            if self.visibles.haveEqualAttr('sizeIsFixed'):
-                if self.visibles[0].sizeIsFixed():
-                    self.fixedSizeCheckBox.Set3StateValue(wx.CHK_CHECKED)
-                else:
-                    self.fixedSizeCheckBox.Set3StateValue(wx.CHK_UNCHECKED)
-            else:
-                self.fixedSizeCheckBox.Set3StateValue(wx.CHK_UNDETERMINED)
-        
-        if updatedAttribute is None or updatedAttribute == 'shape':
-            if self.visibles.haveEqualAttr('shape'):
-                for index in range(0, self._shapeChoice.GetCount()):
-                    if self._shapeChoice.GetClientData(index) == self.visibles[0].shape():
-                        self._shapeChoice.SetSelection(index)
-                        break
-            else:
-                self._multipleShapesId = self._shapeChoice.Append(gettext('Multiple values'), None)
-                self._shapeChoice.SetSelection(self._multipleShapesId)
         
         if updatedAttribute is None or updatedAttribute == 'arrangedWeight':
             if visibleHasParent:
@@ -209,31 +128,6 @@ class VisibleInspector(Inspector):
         self._window.Layout()
     
     
-    def onSetColor(self, event):
-        wxColor = self._colorPicker.GetColour()
-        colorTuple = (wxColor.Red() / 255.0, wxColor.Green() / 255.0, wxColor.Blue() / 255.0)
-        for visible in self.visibles:
-            visible.setColor(colorTuple)
-        
-    
-    def onSetOpacity(self, event):
-        newOpacity = self._opacitySlider.GetValue() / 100.0
-        for visible in self.visibles:
-            visible.setOpacity(newOpacity)
-    
-    
-    def onSetPositionIsFixed(self, event):
-        newValue = self.fixedPositionCheckBox.GetValue()
-        for visible in self.visibles:
-            visible.setPositionIsFixed(newValue == wx.CHK_CHECKED)
-    
-    
-    def onSetSizeIsFixed(self, event):
-        newValue = self.fixedSizeCheckBox.GetValue()
-        for visible in self.visibles:
-            visible.setSizeIsFixed(newValue == wx.CHK_CHECKED)
-        
-    
     def onSetArrangedWeight(self, event):
         newWeight = self._arrangedWeightSlider.GetValue()
         for visible in self.visibles:
@@ -254,14 +148,3 @@ class VisibleInspector(Inspector):
         newWeight = self._arrangedSpacingSlider.GetValue() / 1000.0
         for visible in self.visibles:
             visible.setArrangedSpacing(newWeight)
-        
-    
-    def onSetShape(self, event):
-        shape = self._shapeChoice.GetClientData(self._shapeChoice.GetSelection())
-        for visible in self.visibles:
-            visible.setShape(shape)
-        # Remove the "multiple values" choice now that all of the visibles have the same value.
-        if self._multipleShapesId != wx.NOT_FOUND:
-            self._shapeChoice.Delete(self._multipleShapesId)
-            self._multipleShapesId = wx.NOT_FOUND
-    

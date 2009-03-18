@@ -7,8 +7,14 @@ import Inspection
 from DisplayInspector import DisplayInspector
 Inspection.registerInspectorClass(DisplayInspector)
 
-from VisibleInspector import VisibleInspector
-Inspection.registerInspectorClass(VisibleInspector)
+from AppearanceInspector import AppearanceInspector
+Inspection.registerInspectorClass(AppearanceInspector)
+
+from ArrangementInspector import ArrangementInspector
+Inspection.registerInspectorClass(ArrangementInspector)
+
+from GeometryInspector import GeometryInspector
+Inspection.registerInspectorClass(GeometryInspector)
 
 from GroupInspector import GroupInspector
 Inspection.registerInspectorClass(GroupInspector)

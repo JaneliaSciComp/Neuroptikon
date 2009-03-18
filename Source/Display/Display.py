@@ -125,8 +125,6 @@ class Display(wx.glcanvas.GLCanvas):
         self.animationPhaseUniform = osg.Uniform('animationPhase', 0.0)
         self.rootStateSet.addUniform(self.animationPhaseUniform)
         
-        self._pathwayTexture = self.textureFromImage('pathway.jpg')
-        
         self.dragSelection = None
         self.draggerLOD = None
         self.simpleDragger = None
@@ -309,18 +307,6 @@ class Display(wx.glcanvas.GLCanvas):
     def nextUniqueId(self):
         self._nextUniqueId += 1
         return self._nextUniqueId
-    
-    
-    def textureFromImage(self, imageName):
-        image = osgDB.readImageFile("Display" + os.sep + imageName)
-        texture = osg.Texture2D()
-        texture.setFilter(osg.Texture2D.MIN_FILTER, osg.Texture2D.LINEAR);
-        texture.setFilter(osg.Texture2D.MAG_FILTER, osg.Texture2D.LINEAR);
-        texture.setImage(image)
-        texture.setWrap(osg.Texture2D.WRAP_S,  osg.Texture2D.REPEAT)
-        texture.setWrap(osg.Texture2D.WRAP_T,  osg.Texture2D.REPEAT)
-        texture.setWrap(osg.Texture2D.WRAP_R,  osg.Texture2D.REPEAT)
-        return texture
     
     
     def setViewDimensions(self, dimensions):
@@ -610,7 +596,7 @@ class Display(wx.glcanvas.GLCanvas):
                 visible.setShape("tube")
                 visible.setWeight(5.0)
                 visible.setColor(neuralTissueColor)
-                visible.setTexture(self._pathwayTexture)
+                visible.setTexture(wx.GetApp().library.texture('Stripes'))
                 visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
                 visible.setFlowDirection(region1[0], region2[0], object.terminus1.sendsOutput, object.terminus1.receivesInput)
                 visible.setPath([], region1[0], region2[0])
@@ -631,7 +617,7 @@ class Display(wx.glcanvas.GLCanvas):
             visible.setShape('capsule')
             visible.setSize((.1, .2, .02))
             visible.setColor((0.5, 0, 0))
-            visible.setTexture(self._pathwayTexture)
+            visible.setTexture(wx.GetApp().library.texture('Stripes'))
             visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
             visible.setLabel(object.name)
             self.addVisible(visible)
@@ -764,7 +750,7 @@ class Display(wx.glcanvas.GLCanvas):
                 for visible in visibles:
                     if isinstance(visible, Visible) and isinstance(visible.client, Region):
                         if flag:
-                            visible.setLabel(visible.client.name)
+                            visible.setLabel(visible.client.abbreviation or visible.client.name)
                         else:
                             visible.setLabel(None)
             self._showRegionNames = flag
@@ -1313,18 +1299,20 @@ class Display(wx.glcanvas.GLCanvas):
                             endDotX, endDotY = endPos.split(',')
                             endDotX = float(endDotX)
                             endDotY = float(endDotY)
-                            scaleX = (startDotX - endDotX) / (startVisX - endVisX)
-                            translateX = startDotX - scaleX * startVisX
-                            scaleY = (startDotY - endDotY) / (startVisY - endVisY)
-                            translateY = startDotY - scaleY * startVisY
-                            path_3D = []
-                            path = pos.split(' ')
-                            for pathElement in path[1:-1]:
-                                x, y = pathElement.split(',')
-                                path_3D.append(((float(x) - translateX) / scaleX, (float(y) - translateY) / scaleY, 0))
-                            visible.setPath(path_3D, visible.pathStart, visible.pathEnd)
+                            if startDotX != endDotX and startDotY != endDotY and startVisX != endVisX and startVisY != endVisY:
+                                scaleX = (startDotX - endDotX) / (startVisX - endVisX)
+                                translateX = startDotX - scaleX * startVisX
+                                scaleY = (startDotY - endDotY) / (startVisY - endVisY)
+                                translateY = startDotY - scaleY * startVisY
+                                path_3D = []
+                                path = pos.split(' ')
+                                for pathElement in path[1:-1]:
+                                    x, y = pathElement.split(',')
+                                    path_3D.append(((float(x) - translateX) / scaleX, (float(y) - translateY) / scaleY, 0))
+                                visible.setPath(path_3D, visible.pathStart, visible.pathEnd)
         self._suppressRefresh = False
         self.centerView()
+        self.Refresh()
     
     
     def _graphvizNodePos(self, graph, nodeId):
