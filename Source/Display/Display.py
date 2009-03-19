@@ -209,12 +209,18 @@ class Display(wx.glcanvas.GLCanvas):
         self.setViewDimensions(int(xmlElement.get('dimensions')))
         
         trueValues = ['true', 'True', 'TRUE', '1']
-        self.setShowRegionNames(xmlElement.get('showRegionNames') in trueValues)
-        self.setShowNeuronNames(xmlElement.get('showNeuronNames') in trueValues)
-        self.setShowFlow(xmlElement.get('showFlow') in trueValues)
-        self.setUseGhosts(xmlElement.get('useGhosting') in trueValues)
-        self.useHoverSelect = xmlElement.get('useMouseOverSelecting') in trueValues
-        self.autoVisualize = xmlElement.get('autoVisualize') in trueValues
+        if xmlElement.get('showRegionNames') is not None:
+            self.setShowRegionNames(xmlElement.get('showRegionNames') in trueValues)
+        if xmlElement.get('showNeuronNames') is not None:
+                self.setShowNeuronNames(xmlElement.get('showNeuronNames') in trueValues)
+        if xmlElement.get('showFlow') is not None:
+            self.setShowFlow(xmlElement.get('showFlow') in trueValues)
+        if xmlElement.get('useGhosting') is not None:
+            self.setUseGhosts(xmlElement.get('useGhosting') in trueValues)
+        if xmlElement.get('useMouseOverSelecting') is not None:
+            self.useHoverSelect = xmlElement.get('useMouseOverSelecting') in trueValues
+        if xmlElement.get('autoVisualize') is not None:
+            self.autoVisualize = xmlElement.get('autoVisualize') in trueValues
         
         selectedVisibleIds = xmlElement.get('selectedVisibleIds')
         visiblesToSelect = []
