@@ -67,6 +67,12 @@ class AppearanceInspector(Inspector):
             gridSizer.Add(self._textureChoice, 0)
             parentWindow.Bind(wx.EVT_CHOICE, self.onSetTexture, self._textureChoice)
             
+            # Add a slider for setting the weight.
+            self._weightSlider = wx.Slider(self._window, wx.ID_ANY, 50, 0, 100)
+            self._weightSlider.Bind(wx.EVT_SCROLL, self.onSetWeight, self._weightSlider)
+            gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Weight:')), 0)
+            gridSizer.Add(self._weightSlider, 1)
+            
             # TODO: label, ???
             
             mainSizer = wx.BoxSizer(wx.VERTICAL)
@@ -79,7 +85,7 @@ class AppearanceInspector(Inspector):
     def inspectDisplay(self, display):
         self.visibles = display.selection()
         for visible in self.visibles:
-            for attributeName in ['color', 'opacity', 'shape', 'texture']:
+            for attributeName in ['color', 'opacity', 'shape', 'texture', 'weight']:
                 dispatcher.connect(self.refreshGUI, ('set', attributeName), visible)
         self.refreshGUI()
     
@@ -124,6 +130,17 @@ class AppearanceInspector(Inspector):
                 self._multipleTexturesId = self._textureChoice.Append(gettext('Multiple values'), None)
                 self._textureChoice.SetSelection(self._multipleTexturesId)
         
+        if updatedAttribute is None or updatedAttribute == 'weight':
+            if self.visibles.haveEqualAttr('weight'):
+                self._weightSlider.SetLabel('')
+                if self.visibles[0].weight() >= 1.0:
+                    self._weightSlider.SetValue((self.visibles[0].weight() - 1.0) * 50.0 / 9.0 + 50.0)
+                else:
+                    self._weightSlider.SetValue(50.0 - (1.0 - self.visibles[0].weight()) * 10.0 * 50.0 / 9.0)
+            else:
+                self._weightSlider.SetLabel(gettext('Multiple values'))
+                self._weightSlider.SetValue(50)
+        
         self._window.Layout()
     
     
@@ -159,4 +176,14 @@ class AppearanceInspector(Inspector):
         if self._multipleTexturesId != wx.NOT_FOUND:
             self._textureChoice.Delete(self._multipleTexturesId)
             self._multipleTexturesId = wx.NOT_FOUND
+        
+    
+    def onSetWeight(self, event):
+        newWeight = self._weightSlider.GetValue()
+        if newWeight >= 50:
+            newWeight = 1.0 + (newWeight - 50.0) / (50.0 / 9.0)
+        else:
+            newWeight = 1.0 - (50.0 - newWeight) / (50.0 / 9.0) / 10.0
+        for visible in self.visibles:
+            visible.setWeight(newWeight)
     
