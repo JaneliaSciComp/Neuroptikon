@@ -647,7 +647,7 @@ class Visible(object):
             childVisible.parent = None
             self.children.remove(childVisible)
             if len(self.children) == 0:
-                pass    # TODO: opposite of self._stateSet.setAttributeAndModes(osg.PolygonMode(osg.PolygonMode.FRONT_AND_BACK, osg.PolygonMode.LINE), osg.StateAttribute.ON)
+                self._stateSet.removeAttribute(osg.StateAttribute.POLYGONMODE)
             if self.arrangedAxis is None:
                 childVisible.updateTransform()
             else:
