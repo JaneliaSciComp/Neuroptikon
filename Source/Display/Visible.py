@@ -895,6 +895,10 @@ class Visible(object):
     def setFlowToColor(self, color):
         if color != self._flowToColor:
             self._flowToColor = color
+            if self._flowToColor is None:
+                self._stateSet.removeUniform('flowToColor')
+            else:
+                self._stateSet.addUniform(osg.Uniform('flowToColor', osg.Vec4f(*self._flowToColor)))
             self.updateFlowAnimation()
             dispatcher.send(('set', 'flowToColor'), self)
     
@@ -906,6 +910,10 @@ class Visible(object):
     def setFlowToSpread(self, spread):
         if spread != self._flowToSpread:
             self._flowToSpread = spread
+            if self._flowToSpread is None:
+                self._stateSet.removeUniform('flowToSpread')
+            else:
+                self._stateSet.addUniform(osg.Uniform('flowToSpread', self._flowToSpread))
             self.updateFlowAnimation()
             dispatcher.send(('set', 'flowToSpread'), self)
     
@@ -917,6 +925,10 @@ class Visible(object):
     def setFlowFromColor(self, color):
         if color != self._flowFromColor:
             self._flowFromColor = color
+            if self._flowFromColor is None:
+                self._stateSet.removeUniform('flowFromColor')
+            else:
+                self._stateSet.addUniform(osg.Uniform('flowFromColor', osg.Vec4f(*self._flowFromColor)))
             self.updateFlowAnimation()
             dispatcher.send(('set', 'flowFromColor'), self)
     
@@ -928,6 +940,10 @@ class Visible(object):
     def setFlowFromSpread(self, spread):
         if spread != self._flowFromSpread:
             self._flowFromSpread = spread
+            if self._flowFromSpread is None:
+                self._stateSet.removeUniform('flowFromSpread')
+            else:
+                self._stateSet.addUniform(osg.Uniform('flowFromSpread', self._flowFromSpread))
             self.updateFlowAnimation()
             dispatcher.send(('set', 'flowFromSpread'), self)
     
@@ -941,18 +957,12 @@ class Visible(object):
             textureMatrix = osg.TexMat(osg.Matrixd.scale(10,  self.size()[1] / 400.0 * 5000.0,  10))
             self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
             self._stateSet.addUniform(osg.Uniform('flowTo', True if self.flowTo else False))
-            if self._flowToColor is not None:
-                self._stateSet.addUniform(osg.Uniform('flowToColor', osg.Vec4f(*self._flowToColor)))
-            if self._flowToSpread is not None:
-                self._stateSet.addUniform(osg.Uniform('flowToSpread', self._flowToSpread))
             self._stateSet.addUniform(osg.Uniform('flowFrom', True if self.flowFrom else False))
-            if self._flowFromColor is not None:
-                self._stateSet.addUniform(osg.Uniform('flowFromColor', osg.Vec4f(*self._flowFromColor)))
-            if self._flowFromSpread is not None:
-                self._stateSet.addUniform(osg.Uniform('flowFromSpread', self._flowFromSpread))
             self._stateSet.setAttributeAndModes(Visible.flowProgram, osg.StateAttribute.ON)
         elif self._stateSet.getAttribute(osg.StateAttribute.PROGRAM) is not None:
             self._stateSet.removeAttribute(osg.StateAttribute.PROGRAM)
+            self._stateSet.removeUniform('flowTo')
+            self._stateSet.removeUniform('flowFrom')
             self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXMAT)
             self.setTextureTransform(self._staticTextureTransform)
     
@@ -1011,10 +1021,6 @@ class Visible(object):
     
     def isPath(self):
         return self.pathStart is not None
-    
-    
-    def onMouseDown(self, event):
-        pass    # TODO?
     
     
     def setGlowColor(self, color):
