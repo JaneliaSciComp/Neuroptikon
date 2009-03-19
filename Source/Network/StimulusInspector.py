@@ -36,7 +36,7 @@ class StimulusInspector( ObjectInspector ):
             # Choose the appropriate item in the pop-up menu.
             if self.objects.haveEqualAttr('modality'):
                 if self.objects[0].modality is None:
-                    self._modalityChoice.SetSelection(self._unknownMadalityId)
+                    self._modalityChoice.SetSelection(self._unknownModalityId)
                 else:
                     self._modalityChoice.SetStringSelection(self.objects[0].modality.name)
             else:
