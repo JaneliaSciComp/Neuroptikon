@@ -68,8 +68,11 @@ class Display(wx.glcanvas.GLCanvas):
         self.visiblesCenter = [0, 0, 0]
         self.visiblesSize = [200, 200, 200]
         self.orthoCenter = (0, 0)
-        self.zoomScale = 1
+        self.orthoViewPlane = 'xy'
+        self.orthoXPlane = 0
+        self.orthoYPlane = 1
         self.orthoZoom = 0
+        self.zoomScale = 1
         self.rootNode = osg.MatrixTransform()
         self.rootStateSet = self.rootNode.getOrCreateStateSet()
         self.rootNode.setMatrix(osg.Matrixd.identity())
@@ -319,6 +322,25 @@ class Display(wx.glcanvas.GLCanvas):
         self.setViewDimensions(3)
     
     
+    def setOrthoViewPlane(self, plane):
+        if plane != self.orthoViewPlane:
+            self.orthoViewPlane = plane
+            if self.orthoViewPlane == 'xy':
+                self.orthoXPlane = 0
+                self.orthoYPlane = 1
+            elif self.orthoViewPlane == 'xz':
+                self.orthoXPlane = 0
+                self.orthoYPlane = 2
+            elif self.orthoViewPlane == 'yz':
+                self.orthoXPlane = 1
+                self.orthoYPlane = 2
+            else:
+                raise ValueError, gettext("orthographic view plane must be one of 'xy', 'xz' or 'yz'")
+            self.resetView()
+            self.Refresh()
+            dispatcher.send(('set', 'orthoViewPlane'), self)
+    
+    
     def setUseStereo(self, useStereo):
         settings = self.viewer3D.getDisplaySettings()
         
@@ -340,7 +362,14 @@ class Display(wx.glcanvas.GLCanvas):
                                                                    self.orthoCenter[0] + width * self.zoomScale / 2.0 / zoom, 
                                                                    self.orthoCenter[1] - height * self.zoomScale / 2.0 / zoom, 
                                                                    self.orthoCenter[1] + height * self.zoomScale / 2.0 / zoom)
-            self.viewer2D.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(0, 0, -2.0)))
+            if self.orthoViewPlane == 'xy':
+                self.viewer2D.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(0.0, 0.0, self.visiblesMin[2] - 2.0)))
+            elif self.orthoViewPlane == 'xz':
+                self.viewer2D.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(0.0, self.visiblesMax[1] + 2.0, 0.0)) * \
+                                                        osg.Matrixd.rotate(osg.Quat(pi / -2.0, osg.Vec3d(1, 0, 0))))
+            elif self.orthoViewPlane == 'yz':
+                self.viewer2D.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(self.visiblesMax[0] + 2.0, 0.0, 0.0)) * \
+                                                        osg.Matrixd.rotate(osg.Quat(pi / 2.0, osg.Vec3d(0, 1, 0))))
             self.SetScrollbar(wx.HORIZONTAL, (self.orthoCenter[0] - self.visiblesMin[0]) / self.visiblesSize[0] * width - width / zoom / 2.0, width / zoom, width, True)
             self.SetScrollbar(wx.VERTICAL, (self.visiblesMax[1] - self.orthoCenter[1]) / self.visiblesSize[1] * height - height / zoom / 2.0, height / zoom, height, True)
     
@@ -374,8 +403,8 @@ class Display(wx.glcanvas.GLCanvas):
         self.visiblesSize = (self.visiblesMax[0] - self.visiblesMin[0], self.visiblesMax[1] - self.visiblesMin[1], self.visiblesMax[2] - self.visiblesMin[2])
             
         width, height = self.GetClientSize()
-        xZoom = self.visiblesSize[0] / (width - 10.0)
-        yZoom = self.visiblesSize[1] / (height - 10.0)
+        xZoom = self.visiblesSize[self.orthoXPlane] / (width - 10.0)
+        yZoom = self.visiblesSize[self.orthoYPlane] / (height - 10.0)
         if xZoom > yZoom:
             self.zoomScale = xZoom
         else:
@@ -391,7 +420,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.computeVisiblesBound()
         
         if self.viewDimensions == 2:
-            self.orthoCenter = (self.visiblesCenter[0], self.visiblesCenter[1])
+            self.orthoCenter = (self.visiblesCenter[self.orthoXPlane], self.visiblesCenter[self.orthoYPlane])
             self.orthoZoom = 0
             self.resetView()
         elif self.viewDimensions == 3:
@@ -1050,31 +1079,50 @@ class Display(wx.glcanvas.GLCanvas):
         rootNode.addChild(self.dragSelection)
         
         self.compositeDragger = None
+        pixelCutOff = 200.0
         if self.viewDimensions == 2:
-            self.draggerZOffset = visible.size()[2]
             self.draggerScale = 1.0
             self.simpleDragger = osgManipulator.TranslatePlaneDragger()
             if not visible.sizeIsFixed():
                 self.compositeDragger = osgManipulator.TabPlaneDragger()
-                if visible.parent is not None and visible.sizeIsAbsolute:
-                    self.draggerZOffset /= visible.parent.worldSize()[2]
-                    pixelCutOff = 200.0 / visible.parent.worldSize()[0]
+            if self.orthoViewPlane == 'xy':
+                if visible.parent is None or not visible.sizeIsAbsolute:
+                    self.draggerOffset = (0.0, 0.0, visible.size()[2])
                 else:
-                    pixelCutOff = 200.0
+                    self.draggerOffset = (0.0, 0.0, visible.size()[2] / visible.parent.worldSize()[2])
+                    pixelCutOff /= visible.parent.worldSize()[0]
+                draggerMatrix = osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * \
+                                visible.sgNode.getMatrix() * \
+                                osg.Matrixd.translate(*self.draggerOffset)
+            elif self.orthoViewPlane == 'xz':
+                if visible.parent is None or not visible.sizeIsAbsolute:
+                    self.draggerOffset = (0.0, visible.size()[1], 0.0)
+                else:
+                    self.draggerOffset = (0.0, visible.size()[1] / visible.parent.worldSize()[1], 0.0)
+                    pixelCutOff /= visible.parent.worldSize()[0]
+                draggerMatrix = visible.sgNode.getMatrix() * \
+                                osg.Matrixd.translate(*self.draggerOffset)
+            elif self.orthoViewPlane == 'yz':
+                if visible.parent is None or not visible.sizeIsAbsolute:
+                    self.draggerOffset = (visible.size()[0], 0.0, 0.0)
+                else:
+                    self.draggerOffset = (visible.size()[0] / visible.parent.worldSize()[0], 0.0, 0.0)
+                    pixelCutOff /= visible.parent.worldSize()[1]
+                draggerMatrix = osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * \
+                                osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(0, 1, 0)) * \
+                                visible.sgNode.getMatrix() * \
+                                osg.Matrixd.translate(*self.draggerOffset)
         elif self.viewDimensions == 3:
-            self.draggerZOffset = 0.0
+            self.draggerOffset = (0.0, 0.0, 0.0)
             self.draggerScale = 1.02
             self.simpleDragger = osgManipulator.TranslateAxisDragger()
             if not visible.sizeIsFixed():
                 self.compositeDragger = osgManipulator.TabBoxDragger()
                 if visible.parent is not None and visible.sizeIsAbsolute:
-                    pixelCutOff = 200.0 / visible.parent.worldSize()[0]
-                else:
-                    pixelCutOff = 200.0
-        draggerMatrix = osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * \
-                        osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * \
-                        visible.sgNode.getMatrix() * \
-                        osg.Matrixd.translate(0, 0, self.draggerZOffset)
+                    pixelCutOff /= visible.parent.worldSize()[0]
+            draggerMatrix = osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * \
+                            osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * \
+                            visible.sgNode.getMatrix()
         self.simpleDragger.setMatrix(draggerMatrix)
         self.simpleDragger.setupDefaultGeometry()
         self.commandMgr = osgManipulator.CommandManager()
@@ -1114,7 +1162,7 @@ class Display(wx.glcanvas.GLCanvas):
                 parentSize = (1.0, 1.0, 1.0)
             else:
                 parentSize = visible.parent.worldSize()
-            visible.setPosition((position.x(), position.y(), position.z() - self.draggerZOffset))
+            visible.setPosition((position.x() - self.draggerOffset[0], position.y() - self.draggerOffset[1], position.z() - self.draggerOffset[2]))
             visible.setSize((size.x() * parentSize[0] / self.draggerScale, size.y() * parentSize[1] / self.draggerScale, size.z() * parentSize[2] / self.draggerScale))
     
     
