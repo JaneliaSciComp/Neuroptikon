@@ -48,12 +48,14 @@ class InspectorFrame( wx.Frame ):
             self.toolBook.Destroy()
         
         self.toolBook = wx.Toolbook(self, wx.ID_ANY)
+        
         self.inspectors = []
-        for inspectorClass in Inspection.inspectorClasses():
-            # Create a new inspector instance
-            if inspectorClass.canInspectDisplay(self.display):
-                inspector = inspectorClass()
-                self.inspectors.append(inspector)
+        if self.display is not None:
+            for inspectorClass in Inspection.inspectorClasses():
+                # Create a new inspector instance
+                if inspectorClass.canInspectDisplay(self.display):
+                    inspector = inspectorClass()
+                    self.inspectors.append(inspector)
         
         if len(self.inspectors) == 0:
             self.toolBook = None

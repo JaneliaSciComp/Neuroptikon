@@ -147,17 +147,15 @@ class Display(wx.glcanvas.GLCanvas):
         self._nextUniqueId = -1
         self._suppressRefresh = False
         
-        self.defaultFlowToColor = (1.0, 1.0, 1.0, 1.0)
-        self.defaultFlowToColorUniform = osg.Uniform('flowToColor', osg.Vec4f(*self.defaultFlowToColor))
+        self.defaultFlowColor = (1.0, 1.0, 1.0, 1.0)
+        self.defaultFlowToColorUniform = osg.Uniform('flowToColor', osg.Vec4f(*self.defaultFlowColor))
         self.rootStateSet.addUniform(self.defaultFlowToColorUniform)
-        self.defaultFlowToSpread = 0.1
-        self.defaultFlowToSpreadUniform = osg.Uniform('flowToSpread', self.defaultFlowToSpread)
-        self.rootStateSet.addUniform(self.defaultFlowToSpreadUniform)
-        self.defaultFlowFromColor = (1.0, 1.0, 1.0, 1.0)
-        self.defaultFlowFromColorUniform = osg.Uniform('flowFromColor', osg.Vec4f(*self.defaultFlowFromColor))
+        self.defaultFlowFromColorUniform = osg.Uniform('flowFromColor', osg.Vec4f(*self.defaultFlowColor))
         self.rootStateSet.addUniform(self.defaultFlowFromColorUniform)
-        self.defaultFlowFromSpread = 0.1
-        self.defaultFlowFromSpreadUniform = osg.Uniform('flowFromSpread', self.defaultFlowFromSpread)
+        self.defaultFlowSpread = 0.1
+        self.defaultFlowToSpreadUniform = osg.Uniform('flowToSpread', self.defaultFlowSpread)
+        self.rootStateSet.addUniform(self.defaultFlowToSpreadUniform)
+        self.defaultFlowFromSpreadUniform = osg.Uniform('flowFromSpread', self.defaultFlowSpread)
         self.rootStateSet.addUniform(self.defaultFlowFromSpreadUniform)
         
         dispatcher.connect(self.onSelectionOrShowFlowChanged, ('set', 'selection'), self)
@@ -175,32 +173,17 @@ class Display(wx.glcanvas.GLCanvas):
             alpha = float(colorElement.get('a'))
             self.setBackgroundColor((red, green, blue, alpha))
         
-        flowToElement = xmlElement.find('defaultFlowToAppearance')
-        if flowToElement is not None:
-            colorElement = flowToElement.find('color')
+        flowAppearanceElement = xmlElement.find('defaultFlowAppearance')
+        if flowAppearanceElement is not None:
+            colorElement = flowAppearanceElement.find('color')
             if colorElement is not None:
                 red = float(colorElement.get('r'))
                 green = float(colorElement.get('g'))
                 blue = float(colorElement.get('b'))
                 alpha = float(colorElement.get('a'))
-                self.defaultFlowToColor = (red, green, blue, alpha)
-                self.defaultFlowToColorUniform.set(osg.Vec4f(*self.defaultFlowToColor))
-            if flowToElement.get('spread') is not None:
-                self.defaultFlowToSpread = float(flowToElement.get('spread'))
-                self.defaultFlowToSpreadUniform.set(self.defaultFlowToSpread)
-        flowFromElement = xmlElement.find('defaultFlowFromAppearance')
-        if flowFromElement is not None:
-            colorElement = flowFromElement.find('color')
-            if colorElement is not None:
-                red = float(colorElement.get('r'))
-                green = float(colorElement.get('g'))
-                blue = float(colorElement.get('b'))
-                alpha = float(colorElement.get('a'))
-                self.defaultFlowFromColor = (red, green, blue, alpha)
-                self.defaultFlowFromColorUniform.set(osg.Vec4f(*self.defaultFlowFromColor))
-            if flowFromElement.get('spread') is not None:
-                self.defaultFlowFromSpread = float(flowFromElement.get('spread'))
-                self.defaultFlowFromSpreadUniform.set(self.defaultFlowFromSpread)
+                self.setDefaultFlowColor((red, green, blue, alpha))
+            if flowAppearanceElement.get('spread') is not None:
+                self.setDefaultFlowSpread(float(flowAppearanceElement.get('spread')))
                 
         
         visibleElements = xmlElement.findall('Visible')
@@ -258,20 +241,13 @@ class Display(wx.glcanvas.GLCanvas):
         colorElement.set('a', str(self.backgroundColor[3]))
         
         # Add the deault flow appearance
-        flowToElement = ElementTree.SubElement(displayElement, 'defaultFlowToAppearance')
-        colorElement = ElementTree.SubElement(flowToElement, 'color')
-        colorElement.set('r', str(self.defaultFlowToColor[0]))
-        colorElement.set('g', str(self.defaultFlowToColor[1]))
-        colorElement.set('b', str(self.defaultFlowToColor[2]))
-        colorElement.set('a', str(self.defaultFlowToColor[3]))
-        flowToElement.set('spread', str(self.defaultFlowToSpread))
-        flowFromElement = ElementTree.SubElement(displayElement, 'defaultFlowFromAppearance')
-        colorElement = ElementTree.SubElement(flowFromElement, 'color')
-        colorElement.set('r', str(self.defaultFlowFromColor[0]))
-        colorElement.set('g', str(self.defaultFlowFromColor[1]))
-        colorElement.set('b', str(self.defaultFlowFromColor[2]))
-        colorElement.set('a', str(self.defaultFlowFromColor[3]))
-        flowFromElement.set('spread', str(self.defaultFlowFromSpread))
+        flowAppearanceElement = ElementTree.SubElement(displayElement, 'defaultFlowAppearance')
+        colorElement = ElementTree.SubElement(flowAppearanceElement, 'color')
+        colorElement.set('r', str(self.defaultFlowColor[0]))
+        colorElement.set('g', str(self.defaultFlowColor[1]))
+        colorElement.set('b', str(self.defaultFlowColor[2]))
+        colorElement.set('a', str(self.defaultFlowColor[3]))
+        flowAppearanceElement.set('spread', str(self.defaultFlowSpread))
         
         # Add the display rules
         for displayRule in self.displayRules:
@@ -326,6 +302,7 @@ class Display(wx.glcanvas.GLCanvas):
                 self.viewer3D.getCamera().setProjectionMatrixAsPerspective(30.0, width / height, 1.0, 10000.0)
                 self.centerView()
             self.Refresh()
+            dispatcher.send(('set', 'viewDimensions'), self)
     
     
     def onViewIn2D(self, event):
@@ -754,6 +731,7 @@ class Display(wx.glcanvas.GLCanvas):
                         else:
                             visible.setLabel(None)
             self._showRegionNames = flag
+            dispatcher.send(('set', 'showRegionNames'), self)
     
     
     def showRegionNames(self):
@@ -770,6 +748,7 @@ class Display(wx.glcanvas.GLCanvas):
                         else:
                             visible.setLabel(None)
             self._showNeuronNames = flag
+            dispatcher.send(('set', 'showNeuronNames'), self)
     
     
     def showNeuronNames(self):
@@ -796,6 +775,7 @@ class Display(wx.glcanvas.GLCanvas):
                             visible.setOpacity(0.1)
                         else:
                             visible.setOpacity(1)
+            dispatcher.send(('set', 'useGhosts'), self)
     
     
     def useGhosts(self):
@@ -1349,28 +1329,20 @@ class Display(wx.glcanvas.GLCanvas):
             osgDB.writeImageFile(image, savePath)
     
     
-    def setDefaultFlowToColor(self, color):
-        if color != self.defaultFlowToColor:
+    def setDefaultFlowColor(self, color):
+        if color != self.defaultFlowColor:
+            self.defaultFlowColor = color
             self.defaultFlowToColorUniform.set(osg.Vec4f(*color))
-            self.defaultFlowToColor = color
-    
-    
-    def setDefaultFlowToSpread(self, spread):
-        if spread != self.defaultFlowToSpread:
-            self.defaultFlowToSpreadUniform.set(spread)
-            self.defaultFlowToSpread = spread
-    
-    
-    def setDefaultFlowFromColor(self, color):
-        if color != self.defaultFlowFromColor:
             self.defaultFlowFromColorUniform.set(osg.Vec4f(*color))
-            self.defaultFlowFromColor = color
+            dispatcher.send(('set', 'defaultFlowColor'), self)
     
     
-    def setDefaultFlowFromSpread(self, spread):
-        if spread != self.defaultFlowFromSpread:
+    def setDefaultFlowSpread(self, spread):
+        if spread != self.defaultFlowSpread:
+            self.defaultFlowSpread = spread
+            self.defaultFlowToSpreadUniform.set(spread)
             self.defaultFlowFromSpreadUniform.set(spread)
-            self.defaultFlowFromSpread = spread
+            dispatcher.send(('set', 'defaultFlowSpread'), self)
     
 
 class DisplayDropTarget(wx.PyDropTarget):

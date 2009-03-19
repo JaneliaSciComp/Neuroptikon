@@ -207,8 +207,7 @@
 	<xs:complexType name="Display">
 		<xs:sequence>
 			<xs:element name="backgroundColor" type="Color" minOccurs="0"/>
-			<xs:element name="defaultFlowToAppearance" type="FlowAppearance" minOccurs="0">
-			<xs:element name="defaultFlowFromAppearance" type="FlowAppearance" minOccurs="0">
+			<xs:element name="defaultFlowAppearance" type="FlowAppearance" minOccurs="0">
 			<xs:element name="DisplayRule" type="DisplayRule" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="Visible" type="Visible" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>

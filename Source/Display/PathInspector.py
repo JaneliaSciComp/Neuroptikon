@@ -44,7 +44,8 @@ class PathInspector(Inspector):
             
             self._flowToCheckBox = wx.CheckBox(self._window, wx.ID_ANY, '', style=wx.CHK_3STATE)
             self._window.Bind(wx.EVT_CHECKBOX, self.onSetAnimateFlowTo, self._flowToCheckBox)
-            flowToGridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Animate:')), 0)
+            self._flowToLabel = wx.StaticText(self._window, wx.ID_ANY, gettext('Animate:'))
+            flowToGridSizer.Add(self._flowToLabel, 0)
             flowToGridSizer.Add(self._flowToCheckBox, 1)
             
             self._flowToColorPicker = wx.lib.colourselect.ColourSelect(self._window, wx.ID_ANY)
@@ -90,14 +91,28 @@ class PathInspector(Inspector):
     
     def inspectDisplay(self, display):
         self.display = display
+        
+        # Get the subset of visibles that are paths.
         self.paths = ObjectList()
         self.visibles = display.selection()
         for visible in self.visibles:
             if visible.isPath():
                 self.paths.append(visible)
-        for path in self.paths:
-            for attributeName in ['flowTo', 'flowToColor', 'flowToSpread', 'flowFrom', 'flowFromColor', 'flowFromSpread']:
-                dispatcher.connect(self.refreshGUI, ('set', attributeName), visible)
+        
+        if len(self.paths) == 0:
+            self._flowToLabel.Hide()
+            self._flowToCheckBox.Hide()
+            self._sizer.Hide(self._flowFromBoxSizer, True)
+            dispatcher.connect(self.refreshGUI, ('set', 'defaultFlowColor'), self.display)
+            dispatcher.connect(self.refreshGUI, ('set', 'defaultFlowSpread'), self.display)
+        else:
+            self._flowToLabel.Show()
+            self._flowToCheckBox.Show()
+            self._sizer.Show(self._flowFromBoxSizer, True)
+            for path in self.paths:
+                for attributeName in ['flowTo', 'flowToColor', 'flowToSpread', 'flowFrom', 'flowFromColor', 'flowFromSpread']:
+                    dispatcher.connect(self.refreshGUI, ('set', attributeName), visible)
+        self._flowToBoxSizer.Layout()
         self.refreshGUI()
     
     
@@ -107,8 +122,7 @@ class PathInspector(Inspector):
         usingDefault = len(self.paths) == 0
         
         if usingDefault:
-            self._flowToBoxSizer.GetStaticBox().SetLabel(gettext('Default flow to'))
-            self._flowFromBoxSizer.GetStaticBox().SetLabel(gettext('Default flow from'))
+            self._flowToBoxSizer.GetStaticBox().SetLabel(gettext('Default flow appearance'))
         else:
             if self.paths.haveEqualAttr('pathEnd.client'):
                 flowToName = self.paths[0].pathEnd.client.name or gettext('<unnamed %s>') % ( self.paths[0].pathEnd.client.__class__.displayName())
@@ -135,10 +149,10 @@ class PathInspector(Inspector):
                     self._flowToCheckBox.Set3StateValue(wx.CHK_UNDETERMINED)
                 self._flowToCheckBox.Enable()
         
-        if updatedAttribute is None or updatedAttribute == 'flowToColor':
+        if updatedAttribute is None or updatedAttribute == 'flowToColor' or updatedAttribute == 'defaultFlowColor':
             if usingDefault or self.paths.haveEqualAttr('flowToColor'):
                 if usingDefault:
-                    red, green, blue, alpha = self.display.defaultFlowToColor
+                    red, green, blue, alpha = self.display.defaultFlowColor
                 else:
                     red, green, blue, alpha = self.paths[0].flowToColor()
                 self._flowToColorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, alpha * 255))
@@ -147,10 +161,10 @@ class PathInspector(Inspector):
                 self._flowToColorPicker.SetColour(wx.NamedColour('GRAY'))  # TODO: be clever and pick the average color?
                 self._flowToColorPicker.SetLabel(gettext('Multiple values'))
         
-        if updatedAttribute is None or updatedAttribute == 'flowToSpread':
+        if updatedAttribute is None or updatedAttribute == 'flowToSpread' or updatedAttribute == 'defaultFlowSpread':
             if usingDefault or self.paths.haveEqualAttr('flowToSpread'):
                 if usingDefault:
-                    spread = self.display.defaultFlowToSpread
+                    spread = self.display.defaultFlowSpread
                 else:
                     spread = self.paths[0].flowToSpread()
                 self._flowToSlider.SetLabel('')
@@ -159,38 +173,28 @@ class PathInspector(Inspector):
                 self._flowToSlider.SetLabel(gettext('Multiple values'))
                 self._flowToSlider.SetValue(50)
         
-        if updatedAttribute is None or updatedAttribute == 'flowFrom':
-            if usingDefault:
-                self._flowFromCheckBox.Set3StateValue(wx.CHK_UNCHECKED)
-                self._flowFromCheckBox.Disable()
+        if (updatedAttribute is None or updatedAttribute == 'flowFrom') and not usingDefault:
+            if self.paths.haveEqualAttr('flowFrom'):
+                if self.paths[0].flowFrom:
+                    self._flowFromCheckBox.Set3StateValue(wx.CHK_CHECKED)
+                else:
+                    self._flowFromCheckBox.Set3StateValue(wx.CHK_UNCHECKED)
             else:
-                if self.paths.haveEqualAttr('flowFrom'):
-                    if self.paths[0].flowFrom:
-                        self._flowFromCheckBox.Set3StateValue(wx.CHK_CHECKED)
-                    else:
-                        self._flowFromCheckBox.Set3StateValue(wx.CHK_UNCHECKED)
-                else:
-                    self._flowFromCheckBox.Set3StateValue(wx.CHK_UNDETERMINED)
-                self._flowFromCheckBox.Enable()
+                self._flowFromCheckBox.Set3StateValue(wx.CHK_UNDETERMINED)
+            self._flowFromCheckBox.Enable()
         
-        if updatedAttribute is None or updatedAttribute == 'flowFromColor':
-            if usingDefault or self.paths.haveEqualAttr('flowFromColor'):
-                if usingDefault:
-                    red, green, blue, alpha = self.display.defaultFlowFromColor
-                else:
-                    red, green, blue, alpha = self.paths[0].flowFromColor()
+        if (updatedAttribute is None or updatedAttribute == 'flowFromColor') and not usingDefault:
+            if self.paths.haveEqualAttr('flowFromColor'):
+                red, green, blue, alpha = self.paths[0].flowFromColor()
                 self._flowFromColorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, alpha * 255))
                 self._flowFromColorPicker.SetLabel(gettext(''))
             else:
                 self._flowFromColorPicker.SetColour(wx.NamedColour('GRAY'))  # TODO: be clever and pick the average color?
                 self._flowFromColorPicker.SetLabel(gettext('Multiple values'))
         
-        if updatedAttribute is None or updatedAttribute == 'flowFromSpread':
-            if usingDefault or self.paths.haveEqualAttr('flowFromSpread'):
-                if usingDefault:
-                    spread = self.display.defaultFlowFromSpread
-                else:
-                    spread = self.paths[0].flowFromSpread()
+        if (updatedAttribute is None or updatedAttribute == 'flowFromSpread') and not usingDefault:
+            if self.paths.haveEqualAttr('flowFromSpread'):
+                spread = self.paths[0].flowFromSpread()
                 self._flowFromSlider.SetLabel('')
                 self._flowFromSlider.SetValue(spread * 100.0)
             else:
@@ -210,7 +214,7 @@ class PathInspector(Inspector):
         wxColor = self._flowToColorPicker.GetColour()
         newColor = (wxColor.Red() / 255.0, wxColor.Green() / 255.0, wxColor.Blue() / 255.0, wxColor.Alpha() / 255.0)
         if len(self.paths) == 0:
-            self.display.setDefaultFlowToColor(newColor)
+            self.display.setDefaultFlowColor(newColor)
         else:
             for path in self.paths:
                 path.setFlowToColor(newColor)
@@ -219,7 +223,7 @@ class PathInspector(Inspector):
     def onSetFlowToSpread(self, event):
         newSpread = self._flowToSlider.GetValue() / 100.0
         if len(self.paths) == 0:
-            self.display.setDefaultFlowToSpread(newSpread)
+            self.display.setDefaultFlowSpread(newSpread)
         else:
             for path in self.paths:
                 path.setFlowToSpread(newSpread)
@@ -234,18 +238,12 @@ class PathInspector(Inspector):
     def onSetFlowFromColor(self, event):
         wxColor = self._flowFromColorPicker.GetColour()
         newColor = (wxColor.Red() / 255.0, wxColor.Green() / 255.0, wxColor.Blue() / 255.0, wxColor.Alpha() / 255.0)
-        if len(self.paths) == 0:
-            self.display.setDefaultFlowFromColor(newColor)
-        else:
-            for path in self.paths:
-                path.setFlowFromColor(newColor)
+        for path in self.paths:
+            path.setFlowFromColor(newColor)
         
     
     def onSetFlowFromSpread(self, event):
         newSpread = self._flowFromSlider.GetValue() / 100.0
-        if len(self.paths) == 0:
-            self.display.setDefaultFlowFromSpread(newSpread)
-        else:
-            for path in self.paths:
-                path.setFlowFromSpread(newSpread)
+        for path in self.paths:
+            path.setFlowFromSpread(newSpread)
   

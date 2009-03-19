@@ -900,7 +900,7 @@ class Visible(object):
     
     
     def flowToColor(self):
-        return self._flowToColor or self.display.defaultFlowToColor
+        return self._flowToColor or self.display.defaultFlowColor
     
     
     def setFlowToSpread(self, spread):
@@ -911,7 +911,7 @@ class Visible(object):
     
     
     def flowToSpread(self):
-        return self._flowToSpread or self.display.defaultFlowToSpread
+        return self._flowToSpread or self.display.defaultFlowSpread
     
     
     def setFlowFromColor(self, color):
@@ -922,7 +922,7 @@ class Visible(object):
     
     
     def flowFromColor(self):
-        return self._flowFromColor or self.display.defaultFlowFromColor
+        return self._flowFromColor or self.display.defaultFlowColor
     
     
     def setFlowFromSpread(self, spread):
@@ -933,7 +933,7 @@ class Visible(object):
     
     
     def flowFromSpread(self):
-        return self._flowFromSpread or self.display.defaultFlowFromSpread
+        return self._flowFromSpread or self.display.defaultFlowSpread
     
     
     def updateFlowAnimation(self):
