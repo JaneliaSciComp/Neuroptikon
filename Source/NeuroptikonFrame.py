@@ -152,8 +152,7 @@ class NeuroptikonFrame( wx.Frame ):
         
     def onRunScript(self, event):
         # TODO: It would be nice to provide progress for long running scripts.  Would need some kind of callback for scripts to indicate how far along they were.
-        # TODO: make this portable
-        dlg = wx.FileDialog(None, 'Choose a script to run', '/Users/midgleyf/Development/Neuroptikon/Source/Scripts', '', '*.py', wx.OPEN)
+        dlg = wx.FileDialog(None, 'Choose a script to run', './Scripts', '', '*.py', wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
             try:
                 execfile(dlg.GetPath(), self.scriptLocals())
