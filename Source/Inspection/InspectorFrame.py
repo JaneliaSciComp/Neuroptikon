@@ -74,7 +74,7 @@ class InspectorFrame( wx.Frame ):
         if self._lastClickedInspectorClass is not None:
             foundInspector = False
             for i in range(0, len(self.inspectors)):
-                if self.inspectors[i].__class__ == self._lastClickedInspectorClass:
+                if isinstance(self.inspectors[i], self._lastClickedInspectorClass):
                     self.toolBook.ChangeSelection(i)
                     foundInspector = True
             if not foundInspector:
@@ -84,14 +84,6 @@ class InspectorFrame( wx.Frame ):
                     inspectorBaseClasses = self.inspectors[i].__class__.__bases__
                     if lastInspectorBaseClass in inspectorBaseClasses:
                         self.toolBook.ChangeSelection(i)
-
-        if self.toolBook is not None:
-            if self.toolBook.GetCurrentPage() is not None:
-                self.toolBook.GetCurrentPage().Layout()
-            self.toolBook.Layout()
-        
-        self.Layout()
-        self.Fit()
         
         self._updatingInspectors = False
     
@@ -107,12 +99,6 @@ class InspectorFrame( wx.Frame ):
         inspector = self.inspectors[event.GetSelection()]
         if inspector is not None:
             inspector.willBeShown()
-            if self.toolBook.GetCurrentPage() is not None:
-                self.toolBook.GetCurrentPage().Layout()
-        self.toolBook.Layout()
-        self.Layout()
-        self.Fit()
-        event.Skip()
     
     
     def onPageChanged(self, event):
@@ -121,10 +107,17 @@ class InspectorFrame( wx.Frame ):
             self.SetTitle(inspector.name() + ' ' + gettext('Inspector'))
             if not self._updatingInspectors:
                 self._lastClickedInspectorClass = inspector.__class__
-        self.toolBook.Layout()
-        self.Layout()
+            self.Layout()
+            self.Fit()
+            
+            # wx.StaticBoxSizers in wx.ToolBooks are flaky with the current wx.  Any static boxes in the inspector won't be laid out correctly at this point.
+            # We have to wait until they get realized and rendered once and then layout again.
+            wx.CallAfter(self.relayout)
+    
+    
+    def relayout(self):
         self.Fit()
-        event.Skip()
+        self.currentInspector().window().Layout()
         
     
     def Close(self, event=None):
