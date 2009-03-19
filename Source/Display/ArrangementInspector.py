@@ -26,7 +26,10 @@ class ArrangementInspector(Inspector):
     
     @classmethod
     def canInspectDisplay(cls, display):
-        return len(display.selection()) > 0
+        for visible in display.selectedVisibles:
+            if (len(visible.children) > 0 and visible.arrangedAxis is not None) or (visible.parent is not None and visible.parent.arrangedAxis is not None):
+                return True
+        return False
 
 
     def window(self, parentWindow=None):
