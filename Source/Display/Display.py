@@ -608,7 +608,10 @@ class Display(wx.glcanvas.GLCanvas):
                 visible.setShape("tube")
                 visible.setWeight(5.0)
                 visible.setColor(neuralTissueColor)
-                visible.setTexture(wx.GetApp().library.texture('Stripes'))
+                try:
+                    visible.setTexture(wx.GetApp().library.texture('Stripes'))
+                except:
+                    pass
                 visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
                 visible.setFlowDirection(region1[0], region2[0], object.terminus1.sendsOutput, object.terminus1.receivesInput)
                 visible.setPath([], region1[0], region2[0])
@@ -629,7 +632,10 @@ class Display(wx.glcanvas.GLCanvas):
             visible.setShape('capsule')
             visible.setSize((.1, .2, .02))
             visible.setColor((0.5, 0, 0))
-            visible.setTexture(wx.GetApp().library.texture('Stripes'))
+            try:
+                visible.setTexture(wx.GetApp().library.texture('Stripes'))
+            except:
+                pass
             visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
             visible.setLabel(object.name)
             self.addVisible(visible)
@@ -1038,23 +1044,22 @@ class Display(wx.glcanvas.GLCanvas):
         self.animatedVisibles = visiblesToAnimate
         
         if self._useGhosts:
-            if len(self.selectedVisibles) > 0:
-                # Dim everything that isn't selected, highlighted or animated.
-                for visibles in self.visibles.itervalues():
-                    for visible in visibles:
-                        ghost = True
-                        ancestors = [visible]
-                        ancestors.extend(visible.ancestors())
+            # Dim everything that isn't selected, highlighted or animated.
+            selectionIsNonEmpty = len(self.selectedVisibles) > 0
+            for visibles in self.visibles.itervalues():
+                for visible in visibles:
+                    ghost = True
+                    if visible in self.highlightedVisibles or visible in self.animatedVisibles:
+                        ghost = False
+                    elif selectionIsNonEmpty:
+                        ancestors = visible.ancestors()
                         for ancestor in ancestors:
-                            if ancestor in self.highlightedVisibles or ancestor in self.animatedVisibles:
+                            if ancestor in self.selectedVisibles:
                                 ghost = False
-                        if ghost:
-                            visible.setOpacity(0.1)
-            else:
-                # Restore all visibles to full opacity.
-                for visibles in self.visibles.itervalues():
-                    for visible in visibles:
-                        visible.setOpacity(1)
+                if ghost:
+                    visible.setOpacity(0.1)
+                else:
+                    visible.setOpacity(1)
         
         self._suppressRefresh = False
         
