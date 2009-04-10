@@ -1045,21 +1045,18 @@ class Display(wx.glcanvas.GLCanvas):
         
         if self._useGhosts:
             # Dim everything that isn't selected, highlighted or animated.
-            selectionIsNonEmpty = len(self.selectedVisibles) > 0
+            selectionIsEmpty = len(self.selectedVisibles) == 0
             for visibles in self.visibles.itervalues():
                 for visible in visibles:
-                    ghost = True
-                    if visible in self.highlightedVisibles or visible in self.animatedVisibles:
-                        ghost = False
-                    elif selectionIsNonEmpty:
+                    if selectionIsEmpty or visible in self.highlightedVisibles or visible in self.animatedVisibles:
+                        opacity = 1.0
+                    else:
+                        opacity = 0.1
                         ancestors = visible.ancestors()
                         for ancestor in ancestors:
                             if ancestor in self.selectedVisibles:
-                                ghost = False
-                if ghost:
-                    visible.setOpacity(0.1)
-                else:
-                    visible.setOpacity(1)
+                                opacity = 0.5
+                    visible.setOpacity(opacity)
         
         self._suppressRefresh = False
         
