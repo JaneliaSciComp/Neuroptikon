@@ -1,5 +1,5 @@
 import wx
-import platform, sys
+import os, platform, sys
 import xml.etree.ElementTree as ElementTree
 from xml.dom import minidom
 from Display.Display import Display
@@ -74,7 +74,13 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     def loadBitmap(self, fileName):
-        image = wx.Image(fileName)
+        try:
+            rootDir = os.path.dirname(sys.modules['__main__'].__file__)
+            image = wx.Image(rootDir + os.sep + 'Images' + os.sep + fileName)
+        except:
+            image = None
+        if image is None or not image.IsOk():
+            image = wx.EmptyImage(32, 32)
         if platform.system() == 'Windows':
             image.Rescale(16, 16)
         return image.ConvertToBitmap()
@@ -154,8 +160,10 @@ class NeuroptikonFrame( wx.Frame ):
         # TODO: It would be nice to provide progress for long running scripts.  Would need some kind of callback for scripts to indicate how far along they were.
         dlg = wx.FileDialog(None, 'Choose a script to run', './Scripts', '', '*.py', wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
+            locals = self.scriptLocals()
+            locals['__file__'] = dlg.GetPath()
             try:
-                execfile(dlg.GetPath(), self.scriptLocals())
+                execfile(dlg.GetPath(), locals)
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                 dialog = wx.MessageDialog(self, exceptionValue.message, gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)

@@ -1,3 +1,4 @@
+import os, sys
 import wx
 
 
@@ -9,8 +10,23 @@ class Inspector( object ):
     
     
     @classmethod
+    def shouldBeRegistered(cls):
+        return True
+    
+    
+    @classmethod
     def bitmap(cls):
-        return wx.EmptyBitmap(16, 16)
+        # Check for an Icon.png in the same directory as this class's module's source file, otherwise return an empty bitmap.
+        iconDir = os.path.dirname(sys.modules[cls.__module__].__file__)
+        try:
+            image = wx.Image(iconDir + os.sep + 'Icon.png')
+        except:
+            image = None
+        if image is not None and image.IsOk():
+            image.Rescale(16, 16)
+            return image.ConvertToBitmap()
+        else:
+            return wx.EmptyBitmap(16, 16)
     
     
     @classmethod

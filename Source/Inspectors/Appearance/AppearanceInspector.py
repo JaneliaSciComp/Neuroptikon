@@ -1,10 +1,9 @@
 import wx
-import os, sys
 import osg
 from wx.py import dispatcher
 from Inspection.Inspector import Inspector
 from Network.ObjectList import ObjectList
-from Visible import Visible
+from Display.Visible import Visible
 
 
 class AppearanceInspector(Inspector):
@@ -12,17 +11,6 @@ class AppearanceInspector(Inspector):
     @classmethod
     def name(cls):
         return gettext('Appearance')
-    
-    
-    @classmethod
-    def bitmap(cls):
-        displayDir = os.path.abspath(os.path.dirname(sys.modules['Display'].__file__))
-        image = wx.Image(displayDir + os.sep + 'AppearanceInspector.png')
-        if image.IsOk():
-            image.Rescale(16, 16)
-            return image.ConvertToBitmap()
-        else:
-            return Inspector.bitmap(cls)
     
     
     @classmethod

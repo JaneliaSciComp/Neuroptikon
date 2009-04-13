@@ -2,9 +2,11 @@ import os, platform, stat, sys
 
 os.environ['OSG_NOTIFY_LEVEL'] = 'ALWAYS'
 
+rootDir = os.path.abspath(os.path.dirname(sys.modules['__main__'].__file__))
+
 # Make sure that the library paths are set up correctly for the current location.
-commonLibPath = os.getcwd() + os.sep + 'lib' + os.sep + 'CrossPlatform'
-platformLibPath = os.getcwd() + os.sep + 'lib' + os.sep + platform.system()
+commonLibPath = rootDir + os.sep + 'lib' + os.sep + 'CrossPlatform'
+platformLibPath = rootDir + os.sep + 'lib' + os.sep + platform.system()
 
 if platform.system() == 'Darwin':
     libraryEnvVar = 'DYLD_LIBRARY_PATH'
@@ -57,7 +59,9 @@ from Library.Modality import Modality
 from Library.Ontology import Ontology
 from Library.Texture import Texture
 from Preferences import Preferences
+import Inspectors
 from Inspection.InspectorFrame import InspectorFrame
+import osg
 
 
 def debugException(type, value, tb):
@@ -88,6 +92,8 @@ if __name__ == "__main__":
             # TODO: use wxWidget's document/view framework instead
             self._frames = [self.preferences, self.inspector]
             self.SetExitOnFrameDelete(False)
+            
+            osg.DisplaySettings.instance().setNumMultiSamples(4);
             
             # open an empty network by default
             # TODO: pref to re-open last doc?
@@ -123,14 +129,33 @@ if __name__ == "__main__":
             self.library.add(Modality('sound', gettext('Sound')))
             self.library.add(Modality('taste', gettext('Taste')))
             
-            flyOntology = Ontology('drosophila brain', name = gettext('Drosophila brain'))
-            flyOntology.importOBO('Library' + os.sep + 'flybrain.obo')
-            self.library.add(flyOntology)
+            # Load any ontologies in <root>/Ontologies
+            try:
+                for fileName in os.listdir(rootDir + os.sep + 'Ontologies'):
+                    if fileName != '.svn':
+                        identifier = os.path.splitext(fileName)[0]
+                        ontology = Ontology(identifier)
+                        try:
+                            ontology.importOBO(rootDir + os.sep + 'Ontologies' + os.sep + fileName)
+                            self.library.add(ontology)
+                        except:
+                            (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
+                            print 'Could not import ontology ' + fileName + ' (' + exceptionValue.message + ')'
+            except:
+                (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
+                print 'Could not import ontologies (' + exceptionValue.message + ')'
             
-            for fileName in os.listdir('Library' + os.sep + 'Textures'):
-                identifier = os.path.splitext(fileName)[0]                texture = Texture(identifier, gettext(identifier))
-                if texture.loadImage(fileName):
-                    self.library.add(texture)
+            # Load any textures in <root>/Textures
+            try:
+                for fileName in os.listdir(rootDir + os.sep + 'Textures'):
+                    if fileName != '.svn':
+                        identifier = os.path.splitext(fileName)[0]
+                        texture = Texture(identifier, gettext(identifier))
+                        if texture.loadImage(rootDir + os.sep + 'Textures' + os.sep + fileName):
+                            self.library.add(texture)
+            except:
+                (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
+                print 'Could not import textures (' + exceptionValue.message + ')'
         
         
         def onQuit(self, event):

@@ -1,6 +1,6 @@
 import wx
 from ObjectInspector import ObjectInspector
-from Synapse import Synapse
+from Network.Synapse import Synapse
 
 
 class SynapseInspector( ObjectInspector ):

@@ -1,6 +1,6 @@
 import wx
 from ObjectInspector import ObjectInspector
-from Stimulus import Stimulus
+from Network.Stimulus import Stimulus
 
 
 class StimulusInspector( ObjectInspector ):

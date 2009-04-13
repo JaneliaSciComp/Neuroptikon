@@ -1,7 +1,7 @@
 import wx
 from ObjectInspector import ObjectInspector
-from Pathway import Pathway
-from Region import Region
+from Network.Pathway import Pathway
+from Network.Region import Region
 
 class PathwayInspector( ObjectInspector ):
     

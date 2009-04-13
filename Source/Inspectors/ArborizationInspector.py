@@ -1,6 +1,6 @@
 import wx
 from ObjectInspector import ObjectInspector
-from Arborization import Arborization
+from Network.Arborization import Arborization
 
 
 class ArborizationInspector( ObjectInspector ):

@@ -1,11 +1,21 @@
 import wx
 from Inspection.Inspector import Inspector
-from Object import Object
-from ObjectList import ObjectList
+from Network.Object import Object
+from Network.ObjectList import ObjectList
 from wx.py import dispatcher
 
 
 class ObjectInspector(Inspector):
+    
+    @classmethod
+    def name(cls):
+        return cls.objectClass().displayName()
+    
+    
+    @classmethod
+    def shouldBeRegistered(cls):
+        return cls != ObjectInspector.__class__
+    
     
     @classmethod
     def objectClass(cls):
@@ -15,11 +25,6 @@ class ObjectInspector(Inspector):
     @classmethod
     def inspectedAttributes(cls):
         return []
-    
-    
-    @classmethod
-    def name(cls):
-        return cls.objectClass().displayName()
     
     
     @classmethod

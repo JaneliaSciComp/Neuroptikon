@@ -1,10 +1,10 @@
 import wx
 from ObjectInspector import ObjectInspector
-from Neurite import Neurite
+from Network.Muscle import Muscle
 
 
-class NeuriteInspector( ObjectInspector ):
+class MuscleInspector( ObjectInspector ):
     
     @classmethod
     def objectClass(cls):
-        return Neurite
+        return Muscle

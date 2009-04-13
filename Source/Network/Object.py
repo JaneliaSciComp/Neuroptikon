@@ -1,7 +1,8 @@
 import wx
-import os
+import os, sys
 from wx.py import dispatcher
-import xml.etree.ElementTree as ElementTreefrom networkx import shortest_path
+import xml.etree.ElementTree as ElementTree
+from networkx import shortest_path
     
     
 class Object(object):
@@ -53,9 +54,10 @@ class Object(object):
     @classmethod
     def image(cls):
         try:
-            image = wx.Image("Network" + os.sep + cls.__name__ + ".png")
+            rootDir = os.path.dirname(sys.modules['__main__'].__file__)
+            image = wx.Image(rootDir + os.sep + 'Images' + os.sep + cls.__name__ + ".png")
         except:
-            pass
+            image = None
         if image is None or not image.IsOk():
             image = wx.EmptyImage(32, 32)
         return image

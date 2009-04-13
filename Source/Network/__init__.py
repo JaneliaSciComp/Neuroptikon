@@ -5,26 +5,6 @@ __version__ = "1.0.0"
 
 # Register the network inspectors
 import Inspection
-from ArborizationInspector import ArborizationInspector
-Inspection.registerInspectorClass(ArborizationInspector)
-from GapJunctionInspector import GapJunctionInspector
-Inspection.registerInspectorClass(GapJunctionInspector)
-from InnervationInspector import InnervationInspector
-Inspection.registerInspectorClass(InnervationInspector)
-from MuscleInspector import MuscleInspector
-Inspection.registerInspectorClass(MuscleInspector)
-from NeuriteInspector import NeuriteInspector
-Inspection.registerInspectorClass(NeuriteInspector)
-from NeuronInspector import NeuronInspector
-Inspection.registerInspectorClass(NeuronInspector)
-from PathwayInspector import PathwayInspector
-Inspection.registerInspectorClass(PathwayInspector)
-from RegionInspector import RegionInspector
-Inspection.registerInspectorClass(RegionInspector)
-from StimulusInspector import StimulusInspector
-Inspection.registerInspectorClass(StimulusInspector)
-from SynapseInspector import SynapseInspector
-Inspection.registerInspectorClass(SynapseInspector)
 
 #from ConnectionsInspector import ConnectionsInspector
 #Inspection.registerInspectorClass(ConnectionsInspector)

@@ -1,5 +1,5 @@
 import wx
-import os
+import os, sys
 from LibraryItem import LibraryItem
 from OntologyTerm import OntologyTerm
 from OntologyFrame import OntologyFrame
@@ -26,7 +26,8 @@ class Ontology(LibraryItem, dict):
     def bitmap(cls):
         bitmap = None
         try:
-            image = wx.Image("Library" + os.sep + "Ontology.png")
+            imagesDir = os.path.dirname(sys.modules['__main__'].__file__) + os.sep + 'Images'
+            image = wx.Image(imagesDir + os.sep + "Ontology.png")
             if image is not None and image.IsOk():
                 bitmap = wx.BitmapFromImage(image)
         except:
@@ -48,7 +49,8 @@ class Ontology(LibraryItem, dict):
         unresolvedRefs = []
         for entry in obo.OBOEntryIterator(open(filePath)):
             if entry.isHeader:
-                pass
+                if self.name is None and 'name' in entry and len(entry['name']) > 0 and len(entry['name'][0].value) > 0:
+                    self.name = entry['name'][0].value
             elif entry.stanzaName == 'Term':
                 term = OntologyTerm(self, oboStanza = entry)
                 self[term.identifier] = term

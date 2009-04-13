@@ -5,6 +5,7 @@ auto-generated-by: OBO-Edit 1.101
 synonymtypedef: ABBREVIATION "aRnim's abbreviations" EXACT
 default-namespace: GMR
 namespace-id-rule: * GMR:$sequence(8,10000001,99999999)$
+name: Drosophila Neuroanatomy
 
 [Term]
 id: GMR:10000001

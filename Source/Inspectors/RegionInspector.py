@@ -1,6 +1,6 @@
 import wx
 from ObjectInspector import ObjectInspector
-from Region import Region
+from Network.Region import Region
 
 
 class RegionInspector( ObjectInspector ):

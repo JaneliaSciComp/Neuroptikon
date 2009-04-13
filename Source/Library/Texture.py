@@ -1,6 +1,6 @@
 import wx
 import osg, osgDB
-import os
+import os, sys
 from LibraryItem import LibraryItem
 
 class Texture(LibraryItem):
@@ -19,7 +19,8 @@ class Texture(LibraryItem):
     def bitmap(cls):
         bitmap = None
         try:
-            image = wx.Image("Library" + os.sep + "Texture.png")
+            imagesDir = os.path.dirname(sys.modules['__main__'].__file__) + os.sep + 'Images'
+            image = wx.Image(imagesDir + os.sep + "Texture.png")
             if image is not None and image.IsOk():
                 bitmap = wx.BitmapFromImage(image)
         except:
@@ -27,9 +28,12 @@ class Texture(LibraryItem):
         return bitmap
     
     
-    def loadImage(self, imageName):
-        image = osgDB.readImageFile("Library" + os.sep + "Textures" + os.sep + imageName)
-        if image is not None:
+    def loadImage(self, imagePath):
+        try:
+            image = osgDB.readImageFile(str(imagePath))
+        except:
+            image = None
+        if image is not None and image.valid():
             self._texture = osg.Texture2D()
             self._texture.setFilter(osg.Texture2D.MIN_FILTER, osg.Texture2D.LINEAR);
             self._texture.setFilter(osg.Texture2D.MAG_FILTER, osg.Texture2D.LINEAR);

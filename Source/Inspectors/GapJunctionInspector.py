@@ -1,6 +1,6 @@
 import wx
 from ObjectInspector import ObjectInspector
-from GapJunction import GapJunction
+from Network.GapJunction import GapJunction
 
 
 class GapJunctionInspector( ObjectInspector ):

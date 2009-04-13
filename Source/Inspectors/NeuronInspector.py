@@ -1,6 +1,6 @@
 import wx
 from ObjectInspector import ObjectInspector
-from Neuron import Neuron
+from Network.Neuron import Neuron
 
 
 class NeuronInspector( ObjectInspector ):

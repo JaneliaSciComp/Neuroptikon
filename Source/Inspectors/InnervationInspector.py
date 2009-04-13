@@ -1,6 +1,6 @@
 import wx
 from ObjectInspector import ObjectInspector
-from Innervation import Innervation
+from Network.Innervation import Innervation
 
 
 class InnervationInspector( ObjectInspector ):
