@@ -4,32 +4,36 @@ os.environ['OSG_NOTIFY_LEVEL'] = 'ALWAYS'
 
 rootDir = os.path.abspath(os.path.dirname(sys.modules['__main__'].__file__))
 
-# Make sure that the library paths are set up correctly for the current location.
-commonLibPath = rootDir + os.sep + 'lib' + os.sep + 'CrossPlatform'
-platformLibPath = rootDir + os.sep + 'lib' + os.sep + platform.system()
+if 'ARGVZERO' in os.environ:
+    platformLibPath = os.getcwd()
+else:
+    # Make sure that the library paths are set up correctly for the current location.
+    commonLibPath = rootDir + os.sep + 'lib' + os.sep + 'CrossPlatform'
+    platformLibPath = rootDir + os.sep + 'lib' + os.sep + platform.system()
 
-if platform.system() == 'Darwin':
-    libraryEnvVar = 'DYLD_LIBRARY_PATH'
-elif platform.system() == 'Windows':
-    libraryEnvVar = 'PATH'
-#elif platform.system() == 'Linux':
-#    libraryEnvVar = 'LD_LIBRARY_PATH'
+    if platform.system() == 'Darwin':
+        libraryEnvVar = 'DYLD_LIBRARY_PATH'
+    elif platform.system() == 'Windows':
+        libraryEnvVar = 'PATH'
+    #elif platform.system() == 'Linux':
+    #    libraryEnvVar = 'LD_LIBRARY_PATH'
 
-if libraryEnvVar not in os.environ or platformLibPath not in os.environ[libraryEnvVar].split(os.pathsep):
-    # Add the search path for the native libraries to the enviroment.
-    if libraryEnvVar in os.environ:
-        os.environ[libraryEnvVar] = platformLibPath + os.pathsep + os.environ[libraryEnvVar]
-    else:
-        os.environ[libraryEnvVar] = platformLibPath
-    # Restart this script with the same instance of python and the same arguments.
-    arguments = [sys.executable]
-    arguments.extend(sys.argv)
-    os.system(' '.join(arguments))
-    raise SystemExit
+    if libraryEnvVar not in os.environ or platformLibPath not in os.environ[libraryEnvVar].split(os.pathsep):
+        # Add the search path for the native libraries to the enviroment.
+        if libraryEnvVar in os.environ:
+            os.environ[libraryEnvVar] = platformLibPath + os.pathsep + os.environ[libraryEnvVar]
+        else:
+            os.environ[libraryEnvVar] = platformLibPath
+        # Restart this script with the same instance of python and the same arguments.
+        arguments = [sys.executable]
+        arguments.extend(sys.argv)
+        os.system(' '.join(arguments))
+        raise SystemExit
 
-sys.path.insert(0, commonLibPath)
-sys.path.insert(0, platformLibPath)
+    sys.path.insert(0, commonLibPath)
+    sys.path.insert(0, platformLibPath)
 
+# Make sure all the graphviz pieces can be found and used.
 fdpPath = platformLibPath + os.sep + 'fdp'
 if os.access(fdpPath, os.F_OK):
     # Make sure graphviz's binaries can find the graphviz plug-ins.
