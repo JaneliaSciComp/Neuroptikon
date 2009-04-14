@@ -18,6 +18,16 @@ resources = ['Images', 'Inspectors', 'Ontologies', 'Scripts', 'Textures']
 
 import sys
 if sys.platform == 'darwin':
+
+	# Mac build notes:
+	#	1. Install Python from http://www.python.org/ftp/python/2.5.4/python-2.5.4-macosx.dmg
+	#	2. Make that python active: sudo python_select python25 (?)
+	#	3. sudo easy_install py2app
+	#	4. sudo easy_install numpy
+	#	5. Install wxPython from http://downloads.sourceforge.net/wxpython/wxPython2.8-osx-unicode-2.8.9.2-universal-py2.5.dmg
+	#	6. export PYTHONPATH=/usr/local/lib/wxPython-unicode/lib/python2.5/site-packages:/Library/Python/2.5:lib/Darwin:lib/CrossPlatform
+	#	7. python setup.py py2exe
+
 	setup_options['setup_requires'] = ['py2app']
 	setup_options['app'] = app_scripts
 	
