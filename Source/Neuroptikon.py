@@ -1,12 +1,16 @@
 import os, platform, stat, sys
 
-os.environ['OSG_NOTIFY_LEVEL'] = 'ALWAYS'
+if 'OSG_NOTIFY_LEVEL' not in os.environ:
+    os.environ['OSG_NOTIFY_LEVEL'] = 'ALWAYS'
 
 rootDir = os.path.abspath(os.path.dirname(sys.modules['__main__'].__file__))
 
-if 'ARGVZERO' in os.environ:
+if hasattr(sys, "frozen"):
     platformLibPath = os.getcwd()
 else:
+    import wxversion
+    wxversion.select('2.8')
+    
     # Make sure that the library paths are set up correctly for the current location.
     commonLibPath = rootDir + os.sep + 'lib' + os.sep + 'CrossPlatform'
     platformLibPath = rootDir + os.sep + 'lib' + os.sep + platform.system()
