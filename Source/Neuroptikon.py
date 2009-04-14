@@ -38,17 +38,22 @@ else:
     sys.path.insert(0, platformLibPath)
 
 # Make sure all the graphviz pieces can be found and used.
-fdpPath = platformLibPath + os.sep + 'fdp'
-if os.access(fdpPath, os.F_OK):
-    # Make sure graphviz's binaries can find the graphviz plug-ins.
-    os.environ['GVBINDIR'] = platformLibPath + os.sep + 'graphviz'
+try:
+    fdpPath = platformLibPath + os.sep + 'fdp'
+    if os.access(fdpPath, os.F_OK):
+        # Make sure graphviz's binaries can find the graphviz plug-ins.
+        os.environ['GVBINDIR'] = platformLibPath + os.sep + 'graphviz'
 
-    # Make sure our custom build of graphviz's binaries can be found.
-    os.environ['PATH'] = platformLibPath + os.pathsep + os.environ['PATH']
+        # Make sure our custom build of graphviz's binaries can be found.
+        os.environ['PATH'] = platformLibPath + os.pathsep + os.environ['PATH']
 
-    # Make sure fdp is executable.
-    os.chmod(fdpPath, os.stat(fdpPath).st_mode | stat.S_IXUSR)
-
+        # Make sure fdp is executable.
+        if os.stat(fdpPath) & stat.S_IXUSR == 0:
+            os.chmod(fdpPath, os.stat(fdpPath).st_mode | stat.S_IXUSR)
+except:
+    (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
+    print 'Could not configure graphviz (' + exceptionValue.message + ')'
+    
 # Set up for internationalization.
 import gettext as gettext_module, __builtin__
 __builtin__.gettext = gettext_module.translation('Neuroptikon', fallback = True).lgettext
