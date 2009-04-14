@@ -1,4 +1,4 @@
-flyBrainOnt = library.ontology('drosophila brain')
+flyBrainOnt = library.ontology('flybrain')
 
 # Build the network
 
