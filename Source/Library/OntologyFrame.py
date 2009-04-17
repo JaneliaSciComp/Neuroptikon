@@ -32,7 +32,10 @@ class OntologyFrame( LibraryItemFrame ):
             term = self.treeCtrl.GetPyData(item)
             if len(term.parts) > 0 and self.treeCtrl.GetChildrenCount(item) == 0:
                 for childTerm in term.parts:
-                    childItem = self.treeCtrl.AppendItem(item, childTerm.name)
+                    if childTerm.abbreviation is not None:
+                        childItem = self.treeCtrl.AppendItem(item, childTerm.name + ' (' + childTerm.abbreviation + ')')
+                    else:
+                        childItem = self.treeCtrl.AppendItem(item, childTerm.name)
                     self.treeCtrl.SetPyData(childItem, childTerm)
                     if childTerm.obsolete:
                         self.treeCtrl.SetItemTextColour(childItem, wx.NamedColor('GRAY'))
