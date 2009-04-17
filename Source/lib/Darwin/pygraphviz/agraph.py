@@ -1138,7 +1138,7 @@ class AGraph(object):
         import os
 
         runprog=self._get_prog(prog)
-        cmd=' '.join([runprog,args])
+        cmd=' '.join(['\'' + runprog + '\'',args])
         child_stdin,child_stdout,child_stderr=os.popen3(cmd, 'b')
         # Use threading to avoid blocking
         data = []
