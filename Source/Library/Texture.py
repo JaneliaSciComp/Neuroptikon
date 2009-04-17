@@ -19,8 +19,7 @@ class Texture(LibraryItem):
     def bitmap(cls):
         bitmap = None
         try:
-            imagesDir = os.path.dirname(sys.modules['__main__'].__file__) + os.sep + 'Images'
-            image = wx.Image(imagesDir + os.sep + "Texture.png")
+            image = wx.GetApp().loadImage("Texture.png")
             if image is not None and image.IsOk():
                 bitmap = wx.BitmapFromImage(image)
         except:

@@ -26,8 +26,7 @@ class Ontology(LibraryItem, dict):
     def bitmap(cls):
         bitmap = None
         try:
-            imagesDir = os.path.dirname(sys.modules['__main__'].__file__) + os.sep + 'Images'
-            image = wx.Image(imagesDir + os.sep + "Ontology.png")
+            image = wx.GetApp().loadImage("Ontology.png")
             if image is not None and image.IsOk():
                 bitmap = wx.BitmapFromImage(image)
         except:

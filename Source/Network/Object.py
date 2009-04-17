@@ -53,11 +53,7 @@ class Object(object):
     
     @classmethod
     def image(cls):
-        try:
-            rootDir = os.path.dirname(sys.modules['__main__'].__file__)
-            image = wx.Image(rootDir + os.sep + 'Images' + os.sep + cls.__name__ + ".png")
-        except:
-            image = None
+        image =wx.GetApp().loadImage(cls.__name__ + ".png")
         if image is None or not image.IsOk():
             image = wx.EmptyImage(32, 32)
         return image

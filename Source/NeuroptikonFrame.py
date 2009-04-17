@@ -74,11 +74,7 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     def loadBitmap(self, fileName):
-        try:
-            rootDir = os.path.dirname(sys.modules['__main__'].__file__)
-            image = wx.Image(rootDir + os.sep + 'Images' + os.sep + fileName)
-        except:
-            image = None
+        image = wx.GetApp().loadImage(fileName)
         if image is None or not image.IsOk():
             image = wx.EmptyImage(32, 32)
         if platform.system() == 'Windows':

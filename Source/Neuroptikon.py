@@ -3,11 +3,12 @@ import os, platform, stat, sys
 if 'OSG_NOTIFY_LEVEL' not in os.environ:
     os.environ['OSG_NOTIFY_LEVEL'] = 'ALWAYS'
 
-rootDir = os.path.abspath(os.path.dirname(sys.modules['__main__'].__file__))
-
 if hasattr(sys, "frozen"):
-    platformLibPath = os.getcwd()
+    rootDir = os.path.dirname(sys.executable)    if platform.system() == 'Darwin':
+        rootDir = os.path.dirname(rootDir) + os.sep + 'Resources'
+    platformLibPath = rootDir
 else:
+    rootDir = os.path.abspath(os.path.dirname(sys.modules['__main__'].__file__))
     import wxversion
     wxversion.select('2.8')
     
@@ -48,7 +49,7 @@ try:
         os.environ['PATH'] = platformLibPath + os.pathsep + os.environ['PATH']
 
         # Make sure fdp is executable.
-        if os.stat(fdpPath) & stat.S_IXUSR == 0:
+        if os.stat(fdpPath).st_mode & stat.S_IXUSR == 0:
             os.chmod(fdpPath, os.stat(fdpPath).st_mode | stat.S_IXUSR)
 except:
     (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
@@ -92,6 +93,8 @@ if __name__ == "__main__":
         def OnInit(self):
             
             #self.convertRealData(None)
+            
+            self.rootDir = rootDir
             
             self.library = Library()
             self._loadDefaultLibraryItems()
@@ -178,6 +181,14 @@ if __name__ == "__main__":
                     ok2Quit = False
             if ok2Quit:
                 self.ExitMainLoop()
+        
+        
+        def loadImage(self, imageFileName):
+            try:
+                image = wx.Image(self.rootDir + os.sep + 'Images' + os.sep + imageFileName)
+            except:
+                image = None
+            return image
         
         
         def scriptLocals(self):
