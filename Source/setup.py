@@ -67,8 +67,7 @@ elif sys.platform == 'win32':
     # Windows build notes:
     # - Install Enthought Python Distribution
     # - Install Inno Setup QuickStart Pack from http://jrsoftware.org/isdl.php
-    # - path=%PATH%;C:\Program Files\Microsoft Visual Studio 9.0\VC\redist\x86\Microsoft.VC90.CRT
-    # - move aside networkx and pyxml site-packages
+    # - move aside networkx(?) and pyxml site-packages
     # - python setup.py py2exe
     
     import py2exe
