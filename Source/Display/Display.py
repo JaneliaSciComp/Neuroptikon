@@ -1353,7 +1353,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     def _graphvizNodePos(self, graph, nodeId):
         pos = None
-        if isinstance(graph, pygraphviz.AGraph):
+        if pygraphviz is not None:
             node = pygraphviz.Node(graph, nodeId) 
             if 'pos' in node.attr:
                 pos = node.attr['pos']
