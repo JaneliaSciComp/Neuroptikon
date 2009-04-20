@@ -9,14 +9,18 @@ if hasattr(sys, "frozen"):
     platformLibPath = rootDir
 else:
     rootDir = os.path.abspath(os.path.dirname(sys.modules['__main__'].__file__))
-    import wxversion
-    wxversion.select('2.8')
+    
+    
     
     # Make sure that the library paths are set up correctly for the current location.
     commonLibPath = rootDir + os.sep + 'lib' + os.sep + 'CrossPlatform'
     platformLibPath = rootDir + os.sep + 'lib' + os.sep + platform.system()
 
     if platform.system() == 'Darwin':
+        # Use the copy of wx in /Library
+        import wxversion
+        wxversion.select('2.8')
+        
         libraryEnvVar = 'DYLD_LIBRARY_PATH'
     elif platform.system() == 'Windows':
         libraryEnvVar = 'PATH'
