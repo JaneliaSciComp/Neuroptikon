@@ -65,17 +65,26 @@ if sys.platform == 'darwin':
 elif sys.platform == 'win32':
     
     # Windows build notes:
-    # TODO
+    # - Install Enthought Python Distribution
+    # - Install Inno Setup QuickStart Pack from http://jrsoftware.org/isdl.php
+    # - path=%PATH%;C:\Program Files\Microsoft Visual Studio 9.0\VC\redist\x86\Microsoft.VC90.CRT
+    # - move aside networkx and pyxml site-packages
+    # - python setup.py py2exe
+    
+    import py2exe
     
     sys.path.append('lib/Windows')
     
     setup_options['setup_requires'] = ['py2exe']
-    setup_options['app'] = app_scripts
+    setup_options['windows'] = app_scripts
     
     py2exe_options = dict()
     
+    dist_dir = 'build/Neuroptikon ' + app_version
+    py2exe_options['dist_dir'] = dist_dir
+    
     py2exe_options['packages'] = ['wx']
-    py2exe_options['excludes'] = ['matplotlib', 'numarray', 'pyxml', 'scipy']
+    py2exe_options['excludes'] = ['matplotlib', 'numarray', 'pyxml', 'scipy', 'Tkinter', '_tkinter']
     
     # py2exe doesn't support 'resources' so we have to add each file individually.
     # TODO: use glob instead?
@@ -97,7 +106,7 @@ elif sys.platform == 'win32':
         if os.path.isdir(resourceName):
             addDataFiles(dataFilesList, resourceName)
         else:
-            dataFilesList.append(('', resourceName))
+            dataFilesList.append(('', [resourceName]))
     # Include all of the libraries that OSG needs.
     dataFilesList.append(('', ['lib/Windows/freetype6.dll', 'lib/Windows/libimage.dll', 'lib/Windows/libpng3.dll', 'lib/Windows/libpng12.dll', 'lib/Windows/librle3.dll', 'lib/Windows/libtiff3.dll']))
     # Include the OSG plug-ins we use.
@@ -106,13 +115,13 @@ elif sys.platform == 'win32':
     
     setup_options['options'] = dict(py2exe = py2exe_options)
 else:
-        pass	# TODO: UNIX/Linux systems
+        pass	# TODO: Linux setup
 
 setup(
     name = 'Neuroptikon', 
     version = app_version, 
     description = 'Neural circuit visualization', 
-    url = 'http://openwiki.janelia.org/wiki/display/Neuroptikon/', 
+    url = 'http://openwiki.janelia.org/wiki/display/neuroptikon/', 
     **setup_options
 )
 
@@ -130,14 +139,19 @@ for root, dirs, files in os.walk(dist_dir, topdown=False):
                 os.remove(os.path.join(root, name))
 
 
+from subprocess import call
 if sys.platform == 'darwin':
     # Create the disk image
     dmgPath = 'build/Neuroptikon_' + app_version + '.dmg'
-    from subprocess import call
     print 'hdiutil create -srcfolder \'' + dist_dir + '\' -format UDZO ' + dmgPath
     retcode = call('hdiutil create -srcfolder \'' + dist_dir + '\' -format UDZO ' + dmgPath, shell=True)
     if retcode < 0:
         print "Could not create disk image"
     else:
-    	# Open the disk image in the Finder so we can check it out.
+        # Open the disk image in the Finder so we can check it out.
         call('open ' + dmgPath, shell=True)
+elif sys.platform == 'win32':
+    # Create the installer
+    retcode = call('C:\Program Files\Inno Setup 5\iscc.exe /Q /O"build" "/dAPP_VERSION=' + app_version + '" Neuroptikon.iss')
+    if retcode != 0:
+        print "Could not create the installer"
