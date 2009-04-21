@@ -2,10 +2,10 @@
 py2app/py2exe build script for Neuroptikon
 
 Usage (Mac OS X):
-    python setup.py py2app
+    python setup.py --quiet py2app
 
 Usage (Windows):
-    python setup.py py2exe
+    python setup.py --quiet py2exe
 """
 
 # Make sure setuptools is installed.
@@ -48,7 +48,7 @@ if sys.platform == 'darwin':
     dist_dir = 'build/Neuroptikon ' + app_version
     py2app_options['dist_dir'] = dist_dir
     
-    py2app_options['packages'] = ['wx']
+    py2app_options['packages'] = ['wx', 'xlrd']
     
     resources.append('lib/Darwin/fdp')
     resources.append('lib/Darwin/graphviz')
@@ -82,7 +82,7 @@ elif sys.platform == 'win32':
     dist_dir = 'build/Neuroptikon ' + app_version
     py2exe_options['dist_dir'] = dist_dir
     
-    py2exe_options['packages'] = ['wx']
+    py2exe_options['packages'] = ['wx', 'xlrd']
     py2exe_options['excludes'] = ['matplotlib', 'numarray', 'pyxml', 'scipy', 'Tkinter', '_tkinter']
     
     # py2exe doesn't support 'resources' so we have to add each file individually.
@@ -141,16 +141,18 @@ for root, dirs, files in os.walk(dist_dir, topdown=False):
 from subprocess import call
 if sys.platform == 'darwin':
     # Create the disk image
-    dmgPath = 'build/Neuroptikon_' + app_version + '.dmg'
-    print 'hdiutil create -srcfolder \'' + dist_dir + '\' -format UDZO ' + dmgPath
-    retcode = call('hdiutil create -srcfolder \'' + dist_dir + '\' -format UDZO ' + dmgPath, shell=True)
+    dmgPath = 'build/Neuroptikon ' + app_version + '.dmg'
+    print 'Creating disk image...'
+    print 'hdiutil create -srcfolder \'' + dist_dir + '\' -format UDZO "' + dmgPath + '"'
+    retcode = call('hdiutil create -srcfolder \'' + dist_dir + '\' -format UDZO "' + dmgPath + '"', shell=True)
     if retcode < 0:
         print "Could not create disk image"
     else:
         # Open the disk image in the Finder so we can check it out.
-        call('open ' + dmgPath, shell=True)
+        call('open "' + dmgPath + '"', shell=True)
 elif sys.platform == 'win32':
     # Create the installer
+    print 'Creating installer...'
     retcode = call('C:\Program Files\Inno Setup 5\iscc.exe /Q /O"build" "/dAPP_VERSION=' + app_version + '" Neuroptikon.iss')
     if retcode != 0:
         print "Could not create the installer"
