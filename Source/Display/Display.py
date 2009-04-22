@@ -35,6 +35,11 @@ except ImportError:
     except ImportError:
         pydot = None
 
+# On Windows pydot 1.0.2 doesn't work right out of the box.  Two changes are required to pydot.py:
+# 1. Add an additional argument to the subprocess.Popen call in Dot.create to keep a command window from flashing every time layout occurs: creationflags = 0x8000000
+# 2. To allow pydot to find the graphviz executables when no "SOFTWARE/ATT/Graphviz" registry entry exists use the following in find_graphviz() instead of the existing "Method 1" code:
+#        # Get the GraphViz install path from the registry#        #        try:#            import winreg#        except:#            try:#                import _winreg as winreg#            except:#                winreg = None#        #        if winreg is not None:#            hkey = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)#            #            try:#                gvkey = winreg.OpenKey(hkey, "SOFTWARE\\ATT\\Graphviz", 0, winreg.KEY_READ)#                #                if gvkey is not None:#                    path = winreg.QueryValueEx(gvkey, "InstallPath")[0]#                    #                    if path is not None:#                        progs = __find_executables(path + os.sep + "bin")#                        if progs is not None :#                            #print "Used Windows registry"#                            return progs#            except:#                pass#            finally:#                winreg.CloseKey(hkey)
+
 
 class Display(wx.glcanvas.GLCanvas):
     
