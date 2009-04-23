@@ -49,7 +49,9 @@ if sys.platform == 'darwin':
     py2app_options['dist_dir'] = dist_dir
     
     py2app_options['packages'] = ['wx', 'xlrd']
+    py2app_options['excludes'] = ['matplotlib', 'scipy']
     
+    resources.append('../Artwork/Neuroptikon.icns')
     resources.append('lib/Darwin/fdp')
     resources.append('lib/Darwin/graphviz')
     resources.append('lib/Darwin/osgdb_qt.so')
@@ -57,6 +59,7 @@ if sys.platform == 'darwin':
     
     py2app_options['argv_emulation'] = True
     py2app_options['plist'] = dict()
+    py2app_options['plist']['CFBundleIconFile'] = 'Neuroptikon.icns'
     py2app_options['plist']['PyResourcePackages'] = ['lib/python2.5/lib-dynload']
     py2app_options['plist']['LSEnvironment'] = dict(DYLD_LIBRARY_PATH = '../Resources')
     
