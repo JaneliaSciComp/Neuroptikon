@@ -49,18 +49,14 @@ if sys.platform == 'darwin':
     py2app_options['dist_dir'] = dist_dir
     
     py2app_options['packages'] = ['wx', 'xlrd']
-    py2app_options['excludes'] = ['matplotlib', 'scipy']
-    
-    resources.append('../Artwork/Neuroptikon.icns')
-    resources.append('lib/Darwin/fdp')
+    py2app_options['excludes'] = ['matplotlib', 'scipy']        resources.append('../Artwork/Neuroptikon.icns')    resources.append('lib/Darwin/fdp')
     resources.append('lib/Darwin/graphviz')
     resources.append('lib/Darwin/osgdb_qt.so')
     py2app_options['resources'] = ','.join(resources)
     
     py2app_options['argv_emulation'] = True
     py2app_options['plist'] = dict()
-    py2app_options['plist']['CFBundleIconFile'] = 'Neuroptikon.icns'
-    py2app_options['plist']['PyResourcePackages'] = ['lib/python2.5/lib-dynload']
+    py2app_options['plist']['CFBundleIconFile'] = 'Neuroptikon.icns'    py2app_options['plist']['PyResourcePackages'] = ['lib/python2.5/lib-dynload']
     py2app_options['plist']['LSEnvironment'] = dict(DYLD_LIBRARY_PATH = '../Resources')
     
     setup_options['options'] = dict(py2app = py2app_options)
@@ -78,7 +74,7 @@ elif sys.platform == 'win32':
     sys.path.append('lib/Windows')
     
     setup_options['setup_requires'] = ['py2exe']
-    setup_options['windows'] = app_scripts
+    setup_options['windows'] = [{'script': app_scripts[0], 'icon_resources':  [(0, '../Artwork/Neuroptikon.ico')]}]
     
     py2exe_options = dict()
     
