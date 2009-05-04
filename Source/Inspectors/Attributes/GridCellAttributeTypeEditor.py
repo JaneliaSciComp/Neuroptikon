@@ -1,19 +1,33 @@
-import wx, wx.grid
+import wx, wx.grid, wx.combo
 import weakref
 from Network.Attribute import Attribute
+
+USE_WX_COMBO = False
 
 
 class GridCellAttributeTypeEditor(wx.grid.PyGridCellEditor):
     
-    def __init__(self, grid):
-        self.gridRef = weakref.ref(grid)
+    def __init__(self, inspector):
+        self.inspectorRef = weakref.ref(inspector)
         
         wx.grid.PyGridCellEditor.__init__(self)
 
 
     def Create(self, parent, id, evtHandler):
-        self._tc = wx.Choice(parent, id, (100, 50), choices = Attribute.TYPES)
-
+        if USE_WX_COMBO:
+            self._tc = wx.combo.BitmapComboBox(parent, id, style = wx.CB_READONLY)
+        else:
+            self._tc = wx.Choice(parent, id, (100, 50))
+        for attrType in Attribute.TYPES:
+            displayName = Attribute.displayNameForType(attrType)
+            if USE_WX_COMBO:
+                if attrType in self.inspectorRef().icons:
+                    self._tc.Append(displayName, self.inspectorRef().icons[attrType], attrType)
+                else:
+                    self._tc.Append(displayName, wx.EmptyBitmap(16, 16), attrType)
+            else:
+                self._tc.Append(displayName, attrType)
+        
         self.SetControl(self._tc)
         if evtHandler:
             self._tc.PushEventHandler(evtHandler)
@@ -25,20 +39,30 @@ class GridCellAttributeTypeEditor(wx.grid.PyGridCellEditor):
 
     def BeginEdit(self, row, col, grid):
         self.startValue = grid.GetTable().GetValue(row, col)
-        self._tc.SetStringSelection(self.startValue)
-        self._tc.SetFocus()
+        for i in range(self._tc.GetCount()):
+            if self._tc.GetClientData(i) == self.startValue:
+                self._tc.SetSelection(i)
+        if USE_WX_COMBO:
+            if not self._tc.IsPopupShown():
+                self._tc.ShowPopup()
+        else:
+            self._tc.SetFocus()
 
 
     def EndEdit(self, row, col, grid):
         changed = False
 
-        val = self._tc.GetStringSelection()
+        val = self._tc.GetClientData(self._tc.GetSelection())
         if val != self.startValue:
             changed = True
             grid.GetTable().SetValue(row, col, val) # update the table
 
         self.startValue = 'zero'
         self._tc.SetStringSelection('zero')
+        if USE_WX_COMBO:
+            if self._tc.IsPopupShown():
+                self._tc.HidePopup()
+        
         return changed
 
 
@@ -74,11 +98,9 @@ class GridCellAttributeTypeEditor(wx.grid.PyGridCellEditor):
         called to allow the editor to simulate the click on the control if
         needed.
         """
-        pass
-#        grid = self.gridRef()
-#        if grid is not None:
-#            if grid.CanEnableCellControl():
-#                grid.EnableCellEditControl()
+        if USE_WX_COMBO:
+            if not self._tc.IsPopupShown():
+                self._tc.ShowPopup()
         
 
 

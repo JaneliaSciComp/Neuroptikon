@@ -4,6 +4,7 @@ from wx.py import dispatcher
 from Inspection.Inspector import Inspector
 from Network.ObjectList import ObjectList
 from Display.Visible import Visible
+from Network.Attribute import Attribute
 from AttributesTable import AttributesTable
 from GridCellAttributeTypeEditor import GridCellAttributeTypeEditor
 from GridCellAttributeTypeRenderer import GridCellAttributeTypeRenderer
@@ -48,7 +49,7 @@ class AttributesInspector(Inspector):
             self.attributesTable = AttributesTable(self.grid)
             self.grid.SetTable(self.attributesTable)
             self.grid.SetSelectionMode(wx.grid.Grid.SelectRows)
-            typeColAttr = wx.grid.GridCellAttr()            typeColAttr.SetEditor(GridCellAttributeTypeEditor(self.grid))            typeColAttr.SetRenderer(GridCellAttributeTypeRenderer(self.grid))            self.grid.SetColAttr(0, typeColAttr)
+            typeColAttr = wx.grid.GridCellAttr()            typeColAttr.SetEditor(GridCellAttributeTypeEditor(self))            typeColAttr.SetRenderer(GridCellAttributeTypeRenderer(self))            self.grid.SetColAttr(0, typeColAttr)
             nameColAttr = wx.grid.GridCellAttr()
             boldFont = self.grid.GetDefaultCellFont()
             boldFont.SetWeight(wx.FONTWEIGHT_BOLD)
@@ -73,6 +74,11 @@ class AttributesInspector(Inspector):
             mainSizer.Add(self.grid, 1, wx.EXPAND | wx.ALL, 5)
             mainSizer.Add(buttonSizer, 0, wx.LEFT | wx.BOTTOM | wx.RIGHT, 5)
             self._window.SetSizer(mainSizer)
+            
+            # Load the icons for each attribute type
+            self.icons = {}
+            for iconName in Attribute.TYPES:
+                self.icons[iconName] = self.loadBitmap(iconName + '.png')
         
         return self._window
     
