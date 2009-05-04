@@ -14,6 +14,25 @@ class Attribute(object):
     TYPES = [STRING_TYPE, INTEGER_TYPE, DECIMAL_TYPE, BOOLEAN_TYPE, DATE_TIME_TYPE, DATE_TYPE, TIME_TYPE]
     
     @classmethod
+    def displayNameForType(cls, type):
+        if type == cls.STRING_TYPE:
+            return gettext('String')
+        elif type == cls.INTEGER_TYPE:
+            return gettext('Integer')
+        elif type == cls.DECIMAL_TYPE:
+            return gettext('Decimal')
+        elif type == cls.BOOLEAN_TYPE:
+            return gettext('True or False')
+        elif type == cls.DATE_TIME_TYPE:
+            return gettext('Date & Time')
+        elif type == cls.DATE_TYPE:
+            return gettext('Date')
+        elif type == cls.TIME_TYPE:
+            return gettext('Time')
+        else:
+            return gettext('Unknown Type')
+    
+    @classmethod
     def fromXMLElement(cls, object, xmlElement):
         name = xmlElement.findtext('Name')
         type = xmlElement.get('type')
