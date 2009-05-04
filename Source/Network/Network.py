@@ -1,7 +1,8 @@
 from networkx import *
 import sys
 from wx.py import dispatcher
-import xml.etree.ElementTree as ElementTreefrom Region import Region
+import xml.etree.ElementTree as ElementTree
+from Region import Region
 from Pathway import Pathway
 from Neuron import Neuron
 from Neurite import Neurite
@@ -11,6 +12,7 @@ from GapJunction import GapJunction
 from Stimulus import Stimulus
 from Muscle import Muscle
 from Innervation import Innervation
+from Attribute import Attribute
 
 try:
     import pydot
@@ -27,6 +29,7 @@ class Network:
         self.displays = []
         self._nextUniqueId = -1
         self.savePath = None
+        self.attributes = []
     
     
     @classmethod
@@ -40,6 +43,12 @@ class Network:
                 object = elementClass.fromXMLElement(network, element)
                 if object is not None:
                     network.addObject(object)
+        
+        for element in xmlElement.findall('Attribute'):
+            attribute = Attribute.fromXMLElement(network, element)
+            if attribute is not None:
+                network.attributes.append(attribute)
+        
         return network
     
     
@@ -50,6 +59,8 @@ class Network:
                 objectElement = object.toXMLElement(networkElement)
                 if objectElement is None:
                     pass    # TODO: are there any cases where this is NOT an error?
+        for attribute in self.attributes:
+            attribute.toXMLElement(networkElement)
         return networkElement
     
     

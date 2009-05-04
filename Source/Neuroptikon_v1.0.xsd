@@ -22,6 +22,7 @@
 				<xs:element name="GapJunction" type="GapJunction" minOccurs="0" maxOccurs="unbounded"/>
 				<xs:element name="Synapse" type="Synapse" minOccurs="0" maxOccurs="unbounded"/>
 				<xs:element name="Stimulus" type="Stimulus" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="Attribute" type="Attribute" minOccurs="0" maxOccurs="unbounded"/>
 			</xs:choice>
 		</xs:sequence>
 	</xs:complexType>
@@ -32,7 +33,6 @@
 			<xs:enumeration value="integer"/>
 			<xs:enumeration value="double"/>
 			<xs:enumeration value="boolean"/>
-			<xs:enumeration value="duration"/>
 			<xs:enumeration value="dateTime"/>
 			<xs:enumeration value="date"/>
 			<xs:enumeration value="time"/>
@@ -40,13 +40,13 @@
 	</xs:simpleType>
 	
 	<xs:simpleType name="AttributeValue">
-		<xs:union memberTypes="xs:string xs:integer xs:double xs:boolean xs:duration xs:dateTime xs:date xs:time"/>
+		<xs:union memberTypes="xs:string xs:integer xs:double xs:boolean xs:dateTime xs:date xs:time"/>
 	</xs:simpleType>
 	
 	<xs:complexType name="Attribute">
 		<xs:sequence>
-			<xs:element name="name" type="xs:string"/>
-			<xs:element name="value" type="AttributeValue"/>
+			<xs:element name="Name" type="xs:string"/>
+			<xs:element name="Value" type="AttributeValue"/>
 		</xs:sequence>
 		<xs:attribute name="type" type="AttributeType" use="required"/>
 	</xs:complexType>
@@ -54,26 +54,26 @@
 	<xs:complexType name="Link">
 		<xs:sequence>
 			<xs:element name="URI" type="xs:anyURI"/>
-			<xs:element name="text" type="xs:string" minOccurs="0"/>
+			<xs:element name="Text" type="xs:string" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
 	
 	<xs:complexType name="Note">
 		<xs:sequence>
-			<xs:element name="title" type="xs:string"/>
-			<xs:element name="text" type="xs:string" minOccurs="0"/>
-			<xs:element name="created" type="xs:dateTime"/>
+			<xs:element name="Title" type="xs:string"/>
+			<xs:element name="Text" type="xs:string" minOccurs="0"/>
+			<xs:element name="Created" type="xs:dateTime"/>
 		</xs:sequence>
 	</xs:complexType>
 	
 	<xs:complexType name="Object" abstract="true">
 		<xs:sequence>
-			<xs:element name="name" type="xs:string" minOccurs="0"/>
-			<xs:element name="abbreviation" type="xs:string" minOccurs="0"/>
-			<xs:element name="description" type="xs:string" minOccurs="0"/>
-			<xs:element name="attribute" type="Attribute" minOccurs="0" maxOccurs="unbounded"/>
-			<xs:element name="link" type="Link" minOccurs="0" maxOccurs="unbounded"/>
-			<xs:element name="note" type="Note" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="Name" type="xs:string" minOccurs="0"/>
+			<xs:element name="Abbreviation" type="xs:string" minOccurs="0"/>
+			<xs:element name="Description" type="xs:string" minOccurs="0"/>
+			<xs:element name="Attribute" type="Attribute" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="Link" type="Link" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="Note" type="Note" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 		<xs:attribute name="id" type="xs:nonNegativeInteger" use="required"/>
 	</xs:complexType>
@@ -115,12 +115,12 @@
 		<xs:complexContent>
 			<xs:extension base="Object">
 				<xs:sequence>
-					<xs:element name="class" type="xs:string" minOccurs="0"/>
-					<xs:element name="neurotransmitter" type="xs:string" minOccurs="0"/>
-					<xs:element name="activation" type="xs:string" minOccurs="0"/>
-					<xs:element name="function" type="xs:string" minOccurs="0"/>
-					<xs:element name="polarity" type="xs:string" minOccurs="0"/>
-					<xs:element name="somaRegionId" type="xs:integer" minOccurs="0"/>
+					<xs:element name="Class" type="xs:string" minOccurs="0"/>
+					<xs:element name="Neurotransmitter" type="xs:string" minOccurs="0"/>
+					<xs:element name="Activation" type="xs:string" minOccurs="0"/>
+					<xs:element name="Function" type="xs:string" minOccurs="0"/>
+					<xs:element name="Polarity" type="xs:string" minOccurs="0"/>
+					<xs:element name="SomaRegionId" type="xs:integer" minOccurs="0"/>
 					<xs:element name="Neurite" type="Neurite" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
 			</xs:extension>
@@ -131,8 +131,8 @@
 		<xs:complexContent>
 			<xs:extension base="Object">
 				<xs:sequence>
-					<xs:element name="pathwayId" type="xs:integer" minOccurs="0"/>
-					<xs:element name="neurite" type="Neurite" minOccurs="0" maxOccurs="unbounded"/>
+					<xs:element name="PathwayId" type="xs:integer" minOccurs="0"/>
+					<xs:element name="Neurite" type="Neurite" minOccurs="0" maxOccurs="unbounded"/>
 				</xs:sequence>
 			</xs:extension>
 		</xs:complexContent>
@@ -177,9 +177,9 @@
 		<xs:complexContent>
 			<xs:extension base="Object">
 				<xs:sequence>
-					<xs:element name="preSynapticNeuriteId" type="xs:integer"/>
-					<xs:element name="postSynapticNeuriteId" type="xs:integer" minOccurs="1" maxOccurs="unbounded"/>
-					<xs:element name="activation" type="xs:string" minOccurs="0"/>
+					<xs:element name="PreSynapticNeuriteId" type="xs:integer"/>
+					<xs:element name="PostSynapticNeuriteId" type="xs:integer" minOccurs="1" maxOccurs="unbounded"/>
+					<xs:element name="Activation" type="xs:string" minOccurs="0"/>
 				</xs:sequence>
 			</xs:extension>
 		</xs:complexContent>
@@ -206,8 +206,8 @@
 	
 	<xs:complexType name="Display">
 		<xs:sequence>
-			<xs:element name="backgroundColor" type="Color" minOccurs="0"/>
-			<xs:element name="defaultFlowAppearance" type="FlowAppearance" minOccurs="0">
+			<xs:element name="BackgroundColor" type="Color" minOccurs="0"/>
+			<xs:element name="DefaultFlowAppearance" type="FlowAppearance" minOccurs="0"/>
 			<xs:element name="DisplayRule" type="DisplayRule" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="Visible" type="Visible" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
@@ -223,16 +223,16 @@
 	
 	<xs:complexType name="DisplayRule">
 		<xs:sequence>
-			<xs:element name="name" type="xs:string" minOccurs="0"/>
+			<xs:element name="Name" type="xs:string" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
 	
 	<xs:complexType name="Visible">
 		<xs:sequence>
-			<xs:element name="geometry" type="VisibleGeometry" minOccurs="0"/>
-			<xs:element name="appearance" type="VisibleAppearance" minOccurs="0"/>
-			<xs:element name="arrangement" type="VisibleArrangement" minOccurs="0"/>
-			<xs:element name="path" type="VisiblePath" minOccurs="0"/>
+			<xs:element name="Geometry" type="VisibleGeometry" minOccurs="0"/>
+			<xs:element name="Appearance" type="VisibleAppearance" minOccurs="0"/>
+			<xs:element name="Arrangement" type="VisibleArrangement" minOccurs="0"/>
+			<xs:element name="Path" type="VisiblePath" minOccurs="0"/>
 			<xs:element name="Visible" type="Visible" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 		<xs:attribute name="id" type="xs:nonNegativeInteger" use="required"/>
@@ -272,9 +272,9 @@
 	
 	<xs:complexType name="VisibleGeometry">
 		<xs:sequence>
-			<xs:element name="position" type="VisiblePosition" minOccurs="0"/>
-			<xs:element name="size" type="VisibleSize" minOccurs="0"/>
-			<xs:element name="rotation" type="VisibleRotation" minOccurs="0"/>
+			<xs:element name="Position" type="VisiblePosition" minOccurs="0"/>
+			<xs:element name="Size" type="VisibleSize" minOccurs="0"/>
+			<xs:element name="Rotation" type="VisibleRotation" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
 	
@@ -287,12 +287,12 @@
 	
 	<xs:complexType name="VisibleAppearance">
 		<xs:sequence>
-			<xs:element name="label" type="xs:string" minOccurs="0"/>
-			<xs:element name="shape" type="xs:string" minOccurs="0"/>
-			<xs:element name="color" type="Color" minOccurs="0"/>
-			<xs:element name="opacity" type="xs:float" minOccurs="0"/>
-			<xs:element name="weight" type="xs:float" minOccurs="0"/>
-			<xs:element name="texture" type="xs:string" minOccurs="0"/>
+			<xs:element name="Label" type="xs:string" minOccurs="0"/>
+			<xs:element name="Shape" type="xs:string" minOccurs="0"/>
+			<xs:element name="Color" type="Color" minOccurs="0"/>
+			<xs:element name="Opacity" type="xs:float" minOccurs="0"/>
+			<xs:element name="Weight" type="xs:float" minOccurs="0"/>
+			<xs:element name="Texture" type="xs:string" minOccurs="0"/>
 			<!--texture transform?-->
 		</xs:sequence>
 	</xs:complexType>
@@ -305,15 +305,15 @@
 	
 	<xs:complexType name="FlowAppearance">
 		<xs:sequence>
-			<xs:element name="color" type="Color"/>
+			<xs:element name="Color" type="Color"/>
 		</xs:sequence>
 		<xs:attribute name="spread" type="xs:float"/>
 	</xs:complexType>
 	
 	<xs:complexType name="VisiblePath">
 		<xs:sequence>
-			<xs:element name="flowToAppearance" type="FlowAppearance" minOccurs="0">
-			<xs:element name="flowFromAppearance" type="FlowAppearance" minOccurs="0">
+			<xs:element name="FlowToAppearance" type="FlowAppearance" minOccurs="0"/>
+			<xs:element name="FlowFromAppearance" type="FlowAppearance" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="startVisibleId" type="xs:nonNegativeInteger" use="required"/>
 		<xs:attribute name="endVisibleId" type="xs:nonNegativeInteger" use="required"/>

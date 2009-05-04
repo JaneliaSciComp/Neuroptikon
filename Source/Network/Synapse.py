@@ -14,27 +14,36 @@ class Synapse(Object):
     @classmethod
     def fromXMLElement(cls, network, xmlElement):
         object = super(Synapse, cls).fromXMLElement(network, xmlElement)
-        object.preSynapticNeurite = network.objectWithId(xmlElement.findtext('preSynapticNeuriteId'))
+        preSynapticNeuriteId = xmlElement.findtext('PreSynapticNeuriteId')
+        if preSynapticNeuriteId is None:
+            preSynapticNeuriteId = xmlElement.findtext('preSynapticNeuriteId')
+        object.preSynapticNeurite = network.objectWithId(preSynapticNeuriteId)
         if object.preSynapticNeurite is None:
-            raise ValueError, gettext('Neurite with id "%s" does not exist') % (xmlElement.findtext('preSynapticNeuriteId'))
+            raise ValueError, gettext('Neurite with id "%s" does not exist') % (preSynapticNeuriteId)
         object.preSynapticNeurite.synapses.append(object)
         object.postSynapticNeurites = []
-        for neuriteElement in xmlElement.findall('postSynapticNeuriteId'):
+        if xmlElement.find('PreSynapticNeuriteId') is not None:
+            postSynapticNeuriteIds = xmlElement.findall('PostSynapticNeuriteId')
+        else:
+            postSynapticNeuriteIds = xmlElement.findall('postSynapticNeuriteId')
+        for neuriteElement in postSynapticNeuriteIds:
             neuriteId = neuriteElement.text
             neurite = network.objectWithId(neuriteId)
             if neurite is None:
                 raise ValueError, gettext('Neurite with id "%s" does not exist') % (neuriteId)
             object.postSynapticNeurites.append(neurite)
             neurite.synapses.append(object)
-        object.activation = xmlElement.findtext('activation')
+        object.activation = xmlElement.findtext('Activation')
+        if object.activation is None:
+            object.activation = xmlElement.findtext('activation')
         return object
     
     
     def toXMLElement(self, parentElement):
         synapseElement = Object.toXMLElement(self, parentElement)
-        ElementTree.SubElement(synapseElement, 'preSynapticNeuriteId').text = str(self.preSynapticNeurite.networkId)
+        ElementTree.SubElement(synapseElement, 'PreSynapticNeuriteId').text = str(self.preSynapticNeurite.networkId)
         for neurite in self.postSynapticNeurites:
-            ElementTree.SubElement(synapseElement, 'postSynapticNeuriteId').text = str(neurite.networkId)
+            ElementTree.SubElement(synapseElement, 'PostSynapticNeuriteId').text = str(neurite.networkId)
         if self.activation is not None:
-            ElementTree.SubElement(synapseElement, 'activation').text = self.activation
+            ElementTree.SubElement(synapseElement, 'Activation').text = self.activation
         return synapseElement

@@ -228,6 +228,9 @@ class NeuroptikonFrame( wx.Frame ):
         self.Destroy()
     
     
+    def indentXMLElement(self, element, level=0):        i = "\n" + level*"\t"        if len(element):            if not element.text or not element.text.strip():                element.text = i + "\t"            if not element.tail or not element.tail.strip():                element.tail = i            for element in element:                self.indentXMLElement(element, level+1)            if not element.tail or not element.tail.strip():                element.tail = i        else:            if level and (not element.tail or not element.tail.strip()):                element.tail = i
+    
+    
     def onSaveNetwork(self, event):
         network = self.display.network
         if network.savePath is None:
@@ -250,8 +253,12 @@ class NeuroptikonFrame( wx.Frame ):
                     if frameElement is None:
                         raise ValueError, gettext('Could not save one of the windows')
                 
+                self.indentXMLElement(xmlRoot)
                 xmlTree = ElementTree.ElementTree(xmlRoot)
                 xmlTree.write(network.savePath)
+                
+                # To test the contents of the output use:
+                # xmllint --noout --schema Source/Neuroptikon_v1.0.xsd Test.xml
             except:
                 raise    # TODO: inform the user nicely
     

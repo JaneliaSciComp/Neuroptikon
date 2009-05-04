@@ -44,7 +44,8 @@ class Visible(object):
                             uniform vec4 flowFromColor;
                             uniform float flowFromSpread;
                             
-                            void main()                            {
+                            void main()
+                            {
                                 float texCoord = mod(gl_TexCoord[0].t, 1.0);
                                 
                                 float glowTo = 0.0;
@@ -76,7 +77,10 @@ class Visible(object):
                                                        max(flowToColor[2] * glowTo, flowFromColor[2] * glowFrom));
                                 float glow = max(flowToColor[3] * glowTo, flowFromColor[3] * glowFrom);
                                 float antiGlow = 1.0 - glow;
-                                                                gl_FragColor = vec4(glowColor[0] * glow + gl_Color[0] * antiGlow, glowColor[1] * glow + gl_Color[1] * antiGlow, glowColor[2] * glow + gl_Color[2] * antiGlow, gl_Color[3]);                            }                        """
+                                
+                                gl_FragColor = vec4(glowColor[0] * glow + gl_Color[0] * antiGlow, glowColor[1] * glow + gl_Color[1] * antiGlow, glowColor[2] * glow + gl_Color[2] * antiGlow, gl_Color[3]);
+                            }
+                        """
     flowProgram = osg.Program()
     flowProgram.addShader(osg.Shader(osg.Shader.FRAGMENT, flowShaderSource))
     
@@ -166,9 +170,13 @@ class Visible(object):
         visible._textGeode.setName(str(visible.displayId))
         
         # Set any geometry
-        geometryElement = xmlElement.find('geometry')
+        geometryElement = xmlElement.find('Geometry')
+        if geometryElement is None:
+            geometryElement = xmlElement.find('geometry')
         if geometryElement is not None:
-            positionElement = geometryElement.find('position')
+            positionElement = geometryElement.find('Position')
+            if positionElement is None:
+                positionElement = geometryElement.find('position')
             if positionElement is not None:
                 x = float(positionElement.get('x'))
                 y = float(positionElement.get('y'))
@@ -176,7 +184,9 @@ class Visible(object):
                 visible.setPosition((x, y, z))
                 if positionElement.get('fixed') == 'true':
                     visible.setPositionIsFixed(True)
-            sizeElement = geometryElement.find('size')
+            sizeElement = geometryElement.find('Size')
+            if sizeElement is None:
+                sizeElement = geometryElement.find('size')
             if sizeElement is not None:
                 width = float(sizeElement.get('x'))
                 height = float(sizeElement.get('y'))
@@ -186,7 +196,9 @@ class Visible(object):
                     visible.setSizeIsFixed(False)
                 if sizeElement.get('absolute') == 'true':
                     visible.setSizeIsAbsolute(True)
-            rotationElement = geometryElement.find('rotation')
+            rotationElement = geometryElement.find('Rotation')
+            if rotationElement is None:
+                rotationElement = geometryElement.find('rotation')
             if rotationElement is not None:
                 x = float(rotationElement.get('x'))
                 y = float(rotationElement.get('y'))
@@ -195,29 +207,35 @@ class Visible(object):
                 visible.setRotation((x, y, z, angle))
         
         # Set any appearance
-        appearanceElement = xmlElement.find('appearance')
+        appearanceElement = xmlElement.find('Appearance')
+        if appearanceElement is None:
+            appearanceElement = xmlElement.find('appearance')
         if appearanceElement is not None:
-            visible.setLabel(appearanceElement.findtext('label'))
-            visible.setShape(appearanceElement.findtext('shape'))
-            colorElement = appearanceElement.find('color')
+            visible.setLabel(appearanceElement.findtext('Label') or appearanceElement.findtext('label'))
+            visible.setShape(appearanceElement.findtext('Shape') or appearanceElement.findtext('shape'))
+            colorElement = appearanceElement.find('Color')
+            if colorElement is None:
+                colorElement = appearanceElement.find('color')
             if colorElement is not None:
                 red = float(colorElement.get('r'))
                 green = float(colorElement.get('g'))
                 blue = float(colorElement.get('b'))
                 visible.setColor((red, green, blue))
-            opacityText = appearanceElement.findtext('opacity')
+            opacityText = appearanceElement.findtext('Opacity') or appearanceElement.findtext('opacity')
             if opacityText is not None:
                 visible.setOpacity(float(opacityText))
-            weightText = appearanceElement.findtext('weight')
+            weightText = appearanceElement.findtext('Weight') or appearanceElement.findtext('weight')
             if weightText is not None:
                 visible.setWeight(float(weightText))
-            textureId = appearanceElement.findtext('texture')
+            textureId = appearanceElement.findtext('Texture') or appearanceElement.findtext('texture')
             if textureId is not None:
                 visible.setTexture(wx.GetApp().library.texture(textureId))
                 visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
         
         # Set up any arrangement
-        arrangementElement = xmlElement.find('arrangement')
+        arrangementElement = xmlElement.find('Arrangement')
+        if arrangementElement is None:
+            arrangementElement = xmlElement.find('arrangement')
         if arrangementElement is not None:
             axis = arrangementElement.get('axis')
             if axis is not None:
@@ -230,7 +248,9 @@ class Visible(object):
                 visible.setArrangedWeight(float(weight))
         
         # Set up any path
-        pathElement = xmlElement.find('path')
+        pathElement = xmlElement.find('Path')
+        if pathElement is None:
+            pathElement = xmlElement.find('path')
         if pathElement is not None:
             pathStart = display.visibleIds[int(pathElement.get('startVisibleId'))]
             pathEnd = display.visibleIds[int(pathElement.get('endVisibleId'))]
@@ -252,9 +272,13 @@ class Visible(object):
                 raise ValueError, gettext('Could not create path')
             visible.setFlowDirection(pathStart, pathEnd, flowTo, flowFrom)
             visible.setPath([], pathStart, pathEnd)
-            flowToElement = pathElement.find('flowToAppearance')
+            flowToElement = pathElement.find('FlowToAppearance')
+            if flowToElement is None:
+                flowToElement = pathElement.find('flowToAppearance')
             if flowToElement is not None:
-                colorElement = flowToElement.find('color')
+                colorElement = flowToElement.find('Color')
+                if colorElement is None:
+                    colorElement = flowToElement.find('color')
                 if colorElement is not None:
                     red = float(colorElement.get('r'))
                     green = float(colorElement.get('g'))
@@ -263,9 +287,13 @@ class Visible(object):
                     visible.setFlowToColor((red, green, blue, alpha))
                 if flowToElement.get('spread') is not None:
                     visible.setFlowToSpread(float(flowToElement.get('spread')))
-            flowFromElement = pathElement.find('flowFromAppearance')
+            flowFromElement = pathElement.find('FlowFromAppearance')
+            if flowFromElement is None:
+                flowFromElement = pathElement.find('flowFromAppearance')
             if flowFromElement is not None:
-                colorElement = flowFromElement.find('color')
+                colorElement = flowFromElement.find('Color')
+                if colorElement is None:
+                    colorElement = flowFromElement.find('color')
                 if colorElement is not None:
                     red = float(colorElement.get('r'))
                     green = float(colorElement.get('g'))
@@ -292,49 +320,49 @@ class Visible(object):
             visibleElement.set('objectId', str(self.client.networkId))
         
         # Add the geometry
-        geometryElement = ElementTree.SubElement(visibleElement, 'geometry')
-        positionElement = ElementTree.SubElement(geometryElement, 'position')
+        geometryElement = ElementTree.SubElement(visibleElement, 'Geometry')
+        positionElement = ElementTree.SubElement(geometryElement, 'Position')
         positionElement.set('x', str(self._position[0]))
         positionElement.set('y', str(self._position[1]))
         positionElement.set('z', str(self._position[2]))
         positionElement.set('fixed', 'true' if self._positionIsFixed else 'false')
-        sizeElement = ElementTree.SubElement(geometryElement, 'size')
+        sizeElement = ElementTree.SubElement(geometryElement, 'Size')
         sizeElement.set('x', str(self._size[0]))
         sizeElement.set('y', str(self._size[1]))
         sizeElement.set('z', str(self._size[2]))
         sizeElement.set('fixed', 'true' if self.sizeIsFixed else 'false')
         sizeElement.set('absolute', 'true' if self.sizeIsAbsolute else 'false')
-        rotationElement = ElementTree.SubElement(geometryElement, 'rotation')
+        rotationElement = ElementTree.SubElement(geometryElement, 'Rotation')
         rotationElement.set('x', str(self._rotation[0]))
         rotationElement.set('y', str(self._rotation[1]))
         rotationElement.set('z', str(self._rotation[2]))
         rotationElement.set('angle', str(self._rotation[3]))
         
         # Add the appearance
-        appearanceElement = ElementTree.SubElement(visibleElement, 'appearance')
+        appearanceElement = ElementTree.SubElement(visibleElement, 'Appearance')
         if self._label is not None:
-            ElementTree.SubElement(appearanceElement, 'label').text = self._label
+            ElementTree.SubElement(appearanceElement, 'Label').text = self._label
         if self._shapeName is not None:
-            ElementTree.SubElement(appearanceElement, 'shape').text = self._shapeName
-        colorElement = ElementTree.SubElement(appearanceElement, 'color')
+            ElementTree.SubElement(appearanceElement, 'Shape').text = self._shapeName
+        colorElement = ElementTree.SubElement(appearanceElement, 'Color')
         colorElement.set('r', str(self._color[0]))
         colorElement.set('g', str(self._color[1]))
         colorElement.set('b', str(self._color[2]))
-        ElementTree.SubElement(appearanceElement, 'opacity').text = str(self._opacity)  # TODO: ghosting will confuse this
-        ElementTree.SubElement(appearanceElement, 'weight').text = str(self._weight)
+        ElementTree.SubElement(appearanceElement, 'Opacity').text = str(self._opacity)  # TODO: ghosting will confuse this
+        ElementTree.SubElement(appearanceElement, 'Weight').text = str(self._weight)
         if self._staticTexture is not None:
-            ElementTree.SubElement(appearanceElement, 'texture').text = self._staticTexture.identifier
+            ElementTree.SubElement(appearanceElement, 'Texture').text = self._staticTexture.identifier
         # TODO: textureTransform?
         
         # Add the arrangement
-        arrangementElement = ElementTree.SubElement(visibleElement, 'arrangement')
+        arrangementElement = ElementTree.SubElement(visibleElement, 'Arrangement')
         arrangementElement.set('axis', str(self.arrangedAxis))
         arrangementElement.set('spacing', str(self.arrangedSpacing))
         arrangementElement.set('weight', str(self.arrangedWeight))
         
         # Add any path
         if self.isPath():
-            pathElement = ElementTree.SubElement(visibleElement, 'path')
+            pathElement = ElementTree.SubElement(visibleElement, 'Path')
             pathElement.set('startVisibleId', str(self.pathStart.displayId))
             pathElement.set('endVisibleId', str(self.pathEnd.displayId))
             if self.flowTo is not None:
@@ -342,9 +370,9 @@ class Visible(object):
             if self.flowFrom is not None:
                 pathElement.set('flowFrom', 'true' if self.flowFrom else 'false')
             if self._flowToColor is not None or self._flowToSpread is not None:
-                flowToElement = ElementTree.SubElement(pathElement, 'flowToAppearance')
+                flowToElement = ElementTree.SubElement(pathElement, 'FlowToAppearance')
                 if self._flowToColor is not None:
-                    colorElement = ElementTree.SubElement(flowToElement, 'color')
+                    colorElement = ElementTree.SubElement(flowToElement, 'Color')
                     colorElement.set('r', str(self._flowToColor[0]))
                     colorElement.set('g', str(self._flowToColor[1]))
                     colorElement.set('b', str(self._flowToColor[2]))
@@ -352,9 +380,9 @@ class Visible(object):
                 if self._flowToSpread is not None:
                     flowToElement.set('spread', str(self._flowToSpread))
             if self._flowFromColor is not None or self._flowFromSpread is not None:
-                flowFromElement = ElementTree.SubElement(pathElement, 'flowFromAppearance')
+                flowFromElement = ElementTree.SubElement(pathElement, 'FlowFromAppearance')
                 if self._flowFromColor is not None:
-                    colorElement = ElementTree.SubElement(flowFromElement, 'color')
+                    colorElement = ElementTree.SubElement(flowFromElement, 'Color')
                     colorElement.set('r', str(self._flowFromColor[0]))
                     colorElement.set('g', str(self._flowFromColor[1]))
                     colorElement.set('b', str(self._flowFromColor[2]))

@@ -44,7 +44,7 @@ class Neurite(Object):
     def toXMLElement(self, parentElement):
         neuriteElement = Object.toXMLElement(self, parentElement)
         if self.pathway is not None:
-            ElementTree.SubElement(neuriteElement, 'pathwayId').text = str(self.pathway.networkId)
+            neuriteElement.set('pathwayId', str(self.pathway.networkId))
         for neurite in self._neurites:
             neurite.toXMLElement(neuriteElement)
         return neuriteElement

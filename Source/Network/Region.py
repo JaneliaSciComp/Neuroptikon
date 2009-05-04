@@ -42,6 +42,8 @@ class Region(Object):
             network.addObject(region)
         ontologyElement = xmlElement.find('OntologyTerm')
         if ontologyElement is None:
+            ontologyElement = xmlElement.find('ontologyTerm')
+        if ontologyElement is None:
             object.ontologyTerm = None
         else:
             ontology = wx.GetApp().library.ontology(ontologyElement.get('ontologyId'))
@@ -62,7 +64,7 @@ class Region(Object):
     def toXMLElement(self, parentElement):
         regionElement = Object.toXMLElement(self, parentElement)
         if self.ontologyTerm is not None:
-            ElementTree.SubElement(regionElement, 'ontologyTerm', ontologyId = str(self.ontologyTerm.ontology.identifier), ontologyTermId = str(self.ontologyTerm.identifier))
+            ElementTree.SubElement(regionElement, 'OntologyTerm', ontologyId = str(self.ontologyTerm.ontology.identifier), ontologyTermId = str(self.ontologyTerm.identifier))
         for subRegion in self.subRegions:
             subRegion.toXMLElement(regionElement)
         return regionElement

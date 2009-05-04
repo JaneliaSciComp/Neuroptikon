@@ -36,8 +36,9 @@ except ImportError:
         pydot = None
 
 # On Windows pydot 1.0.2 doesn't work right out of the box.  Two changes are required to pydot.py:
-# 1. Add an additional argument to the subprocess.Popen call in Dot.create to keep a command window from flashing every time layout occurs: creationflags = 0x8000000
-# 2. To allow pydot to find the graphviz executables when no "SOFTWARE/ATT/Graphviz" registry entry exists use the following in find_graphviz() instead of the existing "Method 1" code:
+# 1. Add an additional argument to the subprocess.Popen call in Dot.create to keep a command window from flashing every time layout occurs:
+#        creationflags = 0x8000000
+# 2. To allow pydot to find the graphviz executables when no "SOFTWARE/ATT/Graphviz" registry entry exists replace the existing "Method 1" code in find_graphviz() with the following:
 #        # Get the GraphViz install path from the registry#        #        try:#            import winreg#        except:#            try:#                import _winreg as winreg#            except:#                winreg = None#        #        if winreg is not None:#            hkey = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)#            #            try:#                gvkey = winreg.OpenKey(hkey, "SOFTWARE\\ATT\\Graphviz", 0, winreg.KEY_READ)#                #                if gvkey is not None:#                    path = winreg.QueryValueEx(gvkey, "InstallPath")[0]#                    #                    if path is not None:#                        progs = __find_executables(path + os.sep + "bin")#                        if progs is not None :#                            #print "Used Windows registry"#                            return progs#            except:#                pass#            finally:#                winreg.CloseKey(hkey)
 
 
@@ -173,7 +174,9 @@ class Display(wx.glcanvas.GLCanvas):
     def fromXMLElement(self, xmlElement):
         self._suppressRefresh = True
         
-        colorElement = xmlElement.find('backgroundColor')
+        colorElement = xmlElement.find('BackgroundColor')
+        if colorElement is None:
+            colorElement = xmlElement.find('backgroundColor')
         if colorElement is not None:
             red = float(colorElement.get('r'))
             green = float(colorElement.get('g'))
@@ -181,9 +184,13 @@ class Display(wx.glcanvas.GLCanvas):
             alpha = float(colorElement.get('a'))
             self.setBackgroundColor((red, green, blue, alpha))
         
-        flowAppearanceElement = xmlElement.find('defaultFlowAppearance')
+        flowAppearanceElement = xmlElement.find('DefaultFlowAppearance')
+        if flowAppearanceElement is None:
+            flowAppearanceElement = xmlElement.find('defaultFlowAppearance')
         if flowAppearanceElement is not None:
-            colorElement = flowAppearanceElement.find('color')
+            colorElement = flowAppearanceElement.find('Color')
+            if colorElement is None:
+                colorElement = flowAppearanceElement.find('color')
             if colorElement is not None:
                 red = float(colorElement.get('r'))
                 green = float(colorElement.get('g'))
@@ -198,7 +205,7 @@ class Display(wx.glcanvas.GLCanvas):
         
         # Add all of the nodes
         for visibleElement in visibleElements:
-            if visibleElement.find('path') is None:
+            if visibleElement.find('Path') is None and visibleElement.find('path') is None:
                 visible = Visible.fromXMLElement(visibleElement, self)
                 if visible is None:
                     raise ValueError, gettext('Could not create visualized item')
@@ -206,7 +213,7 @@ class Display(wx.glcanvas.GLCanvas):
                 
         # Add all of the paths (must be done after nodes are added)
         for visibleElement in visibleElements:
-            if visibleElement.find('path') is not None:
+            if visibleElement.find('Path') is not None or visibleElement.find('path') is not None:
                 visible = Visible.fromXMLElement(visibleElement, self)
                 if visible is None:
                     raise ValueError, gettext('Could not create visualized item')
@@ -248,15 +255,15 @@ class Display(wx.glcanvas.GLCanvas):
         displayElement = ElementTree.SubElement(parentElement, 'Display')
         
         # Add the background color
-        colorElement = ElementTree.SubElement(displayElement, 'backgroundColor')
+        colorElement = ElementTree.SubElement(displayElement, 'BackgroundColor')
         colorElement.set('r', str(self.backgroundColor[0]))
         colorElement.set('g', str(self.backgroundColor[1]))
         colorElement.set('b', str(self.backgroundColor[2]))
         colorElement.set('a', str(self.backgroundColor[3]))
         
         # Add the deault flow appearance
-        flowAppearanceElement = ElementTree.SubElement(displayElement, 'defaultFlowAppearance')
-        colorElement = ElementTree.SubElement(flowAppearanceElement, 'color')
+        flowAppearanceElement = ElementTree.SubElement(displayElement, 'DefaultFlowAppearance')
+        colorElement = ElementTree.SubElement(flowAppearanceElement, 'Color')
         colorElement.set('r', str(self.defaultFlowColor[0]))
         colorElement.set('g', str(self.defaultFlowColor[1]))
         colorElement.set('b', str(self.defaultFlowColor[2]))

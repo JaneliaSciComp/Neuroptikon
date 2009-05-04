@@ -51,17 +51,27 @@ class Neuron(Object):
     @classmethod
     def fromXMLElement(cls, network, xmlElement):
         object = super(Neuron, cls).fromXMLElement(network, xmlElement)
-        classId = xmlElement.findtext('class')
+        classId = xmlElement.findtext('Class')
+        if classId is None:
+            classId = xmlElement.findtext('class')
         object.neuronClass = wx.GetApp().library.neuronClass(classId)
         if classId is not None and object.neuronClass is None:
             raise ValueError, gettext('Neuron class "%s" does not exist') % (classId)
-        ntId = xmlElement.findtext('neurotransmitter')
+        ntId = xmlElement.findtext('Neurotransmitter')
+        if ntId is None:
+            ntId = xmlElement.findtext('neurotransmitter')
         object.neurotransmitter = wx.GetApp().library.neurotransmitter(ntId)
         if ntId is not None and  object.neurotransmitter is None:
             raise ValueError, gettext('Neurotransmitter "%s" does not exist') % (ntId)
-        object.activation = xmlElement.findtext('activation')
-        object.function = xmlElement.findtext('function')
-        object.polarity = xmlElement.findtext('polarity')
+        object.activation = xmlElement.findtext('Activation')
+        if object.activation is None:
+            object.activation = xmlElement.findtext('activation')
+        object.function = xmlElement.findtext('Function')
+        if object.function is None:
+            object.function = xmlElement.findtext('function')
+        object.polarity = xmlElement.findtext('Polarity')
+        if object.polarity is None:
+            object.polarity = xmlElement.findtext('polarity')
         regionId = xmlElement.get('somaRegionId')
         object.region = network.objectWithId(regionId)
         if regionId is not None and object.region is None:
@@ -82,17 +92,17 @@ class Neuron(Object):
     def toXMLElement(self, parentElement):
         neuronElement = Object.toXMLElement(self, parentElement)
         if self.neuronClass is not None:
-            ElementTree.SubElement(neuronElement, 'class').text = self.neuronClass.identifier
+            ElementTree.SubElement(neuronElement, 'Class').text = self.neuronClass.identifier
         if self.neurotransmitter is not None:
-            ElementTree.SubElement(neuronElement, 'neurotransmitter').text = self.neurotransmitter.identifier
+            ElementTree.SubElement(neuronElement, 'Neurotransmitter').text = self.neurotransmitter.identifier
         if self.activation is not None:
-            ElementTree.SubElement(neuronElement, 'activation').text = self.activation
+            ElementTree.SubElement(neuronElement, 'Activation').text = self.activation
         if self.function is not None:
-            ElementTree.SubElement(neuronElement, 'function').text = self.function
+            ElementTree.SubElement(neuronElement, 'Function').text = self.function
         if self.polarity is not None:
-            ElementTree.SubElement(neuronElement, 'polarity').text = self.polarity
+            ElementTree.SubElement(neuronElement, 'Polarity').text = self.polarity
         if self.region is not None:
-            ElementTree.SubElement(neuronElement, 'somaRegionId').text = str(self.region.networkId)
+            ElementTree.SubElement(neuronElement, 'SomaRegionId').text = str(self.region.networkId)
         for neurite in self._neurites:
             neurite.toXMLElement(neuronElement)
         return neuronElement
