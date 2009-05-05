@@ -1,6 +1,6 @@
 from wx.py import dispatcher
 import xml.etree.ElementTree as ElementTree
-    
+from datetime import datetime, date, time
     
 class Attribute(object):
     
@@ -36,7 +36,27 @@ class Attribute(object):
     def fromXMLElement(cls, object, xmlElement):
         name = xmlElement.findtext('Name')
         type = xmlElement.get('type')
-        value = xmlElement.findtext('Value')
+        valueText = xmlElement.findtext('Value')
+        if type == Attribute.STRING_TYPE:
+            value = valueText
+        elif type == Attribute.INTEGER_TYPE:
+            try:
+                value = int(valueText)
+            except:
+                value = 0
+        elif type == Attribute.DECIMAL_TYPE:
+            try:
+                value = float(valueText)
+            except:
+                value = 0.0
+        elif type == Attribute.BOOLEAN_TYPE:
+            value = valueText in ['True', 'T', '1']
+        elif type == Attribute.DATE_TIME_TYPE:
+            value = datetime.strptime(valueText, '%Y-%m-%d %H:%M:%S')
+        elif type == Attribute.DATE_TYPE:
+            value = datetime.strptime(valueText, '%Y-%m-%d').date()
+        elif type == Attribute.TIME_TYPE:
+            value = datetime.strptime(valueText, '%H:%M:%S').time()
         
         return Attribute(object, name, type, value)
     
@@ -51,7 +71,13 @@ class Attribute(object):
     def toXMLElement(self, parentElement):
         element = ElementTree.SubElement(parentElement, 'Attribute', type = self.type)
         ElementTree.SubElement(element, 'Name').text = self.name
-        ElementTree.SubElement(element, 'Value').text = self.value
+        if self.type == Attribute.DATE_TIME_TYPE:
+            valueText = self.value.strftime('%Y-%m-%d %H:%M:%S')
+        elif self.type == Attribute.TIME_TYPE:
+            valueText = self.value.strftime('%H:%M:%S')
+        else:
+            valueText = str(self.value)
+        ElementTree.SubElement(element, 'Value').text = valueText
         return element
     
     
@@ -61,9 +87,33 @@ class Attribute(object):
     
     
     def setType(self, type):
-        self.type = type
-        # TODO: try to convert the value, else use a default
-        dispatcher.send(('set', 'type'), self)
+        if type not in Attribute.TYPES:
+            raise ValueError, gettext('Unknown type %s') % (type)
+        
+        if type != self.type:
+            self.type = type
+            if type == Attribute.STRING_TYPE:
+                self.value = ''
+            elif type == Attribute.INTEGER_TYPE:
+                try:
+                    self.value = int(self.value)
+                except:
+                    self.value = 0
+            elif type == Attribute.DECIMAL_TYPE:
+                try:
+                    self.value = float(self.value)
+                except:
+                    self.value = 0.0
+            elif type == Attribute.BOOLEAN_TYPE:
+                self.value = True
+            elif type == Attribute.DATE_TIME_TYPE:
+                self.value = datetime.now()
+            elif type == Attribute.DATE_TYPE:
+                self.value = date.today()
+            elif type == Attribute.TIME_TYPE:
+                self.value = datetime.now().time()
+            dispatcher.send(('set', 'type'), self)
+            dispatcher.send(('set', 'value'), self)
     
     
     def setValue(self, value):
