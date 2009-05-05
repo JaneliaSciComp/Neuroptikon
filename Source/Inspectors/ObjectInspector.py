@@ -62,7 +62,7 @@ class ObjectInspector(Inspector):
             objectSizer = self.objectSizer(self._window)
             
             mainSizer = wx.BoxSizer(wx.VERTICAL)
-            mainSizer.Add(headerBox, 0, wx.ALL, 5)
+            mainSizer.Add(headerBox, 0, wx.EXPAND | wx.ALL, 5)
             if objectSizer is not None:
                 mainSizer.Add(objectSizer, 1, wx.ALL, 5)
             self._window.SetSizer(mainSizer)

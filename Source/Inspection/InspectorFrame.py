@@ -15,6 +15,8 @@ class InspectorFrame( wx.Frame ):
         self._lastClickedInspectorClass = None
         
         self.SetSizer(wx.BoxSizer(wx.VERTICAL))
+        
+        self.Bind(wx.EVT_SIZE, self.OnSize)
         self.Bind(wx.EVT_CLOSE, self.Close)
     
     
@@ -68,7 +70,7 @@ class InspectorFrame( wx.Frame ):
                 self.toolBook.AddPage(inspector.window(self.toolBook), inspector.__class__.name(), imageId = imageList.GetImageCount() - 1)
                 # TODO: listen for size changes from each inspector's window and call Fit()?
                 inspector.inspectDisplay(self.display)
-            self.GetSizer().Add(self.toolBook, 0, wx.EXPAND)
+            self.GetSizer().Add(self.toolBook, 1, wx.EXPAND)
             self.Bind(wx.EVT_TOOLBOOK_PAGE_CHANGING, self.onPageChanging, self.toolBook)
             self.Bind(wx.EVT_TOOLBOOK_PAGE_CHANGED, self.onPageChanged, self.toolBook)
         
@@ -120,7 +122,12 @@ class InspectorFrame( wx.Frame ):
     def relayout(self):
         self.Fit()
         self.currentInspector().window().Layout()
-        
+    
+    
+    def OnSize(self, event):
+        self.currentInspector().window().Layout()
+        event.Skip()
+    
     
     def Close(self, event=None):
         self.Hide()
