@@ -24,7 +24,7 @@ class RegionInspector( ObjectInspector ):
             if regionImage is None or not regionImage.IsOk():
                 self._regionBitmap = wx.EmptyBitmap(16, 16)
             else:
-                self._regionBitmap = wx.BitmapFromImage(regionImage.Rescale(16, 16))
+                self._regionBitmap = wx.BitmapFromImage(regionImage.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH))
             
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Ontology term:')))
             ontologySizer = wx.BoxSizer(wx.HORIZONTAL)

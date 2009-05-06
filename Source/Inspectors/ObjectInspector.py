@@ -33,7 +33,7 @@ class ObjectInspector(Inspector):
         if image is None or not image.IsOk():
             return Inspector.bitmap(cls)
         else:
-            scaledImage = image.Rescale(16, 16)
+            scaledImage = image.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH)
             return wx.BitmapFromImage(scaledImage)
     
     
@@ -93,7 +93,7 @@ class ObjectInspector(Inspector):
         if image is None or not image.IsOk():
             pass
         else:
-            scaledImage = image.Rescale(32, 32)
+            scaledImage = image.Rescale(32, 32, wx.IMAGE_QUALITY_HIGH)
             self.iconField.SetBitmap(wx.BitmapFromImage(scaledImage))
         
         self.populateNameField()

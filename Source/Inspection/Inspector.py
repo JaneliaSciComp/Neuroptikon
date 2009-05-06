@@ -23,7 +23,7 @@ class Inspector( object ):
         except:
             image = None
         if image is not None and image.IsOk():
-            image.Rescale(16, 16)
+            image.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH)
             return image.ConvertToBitmap()
         else:
             return wx.EmptyBitmap(16, 16)

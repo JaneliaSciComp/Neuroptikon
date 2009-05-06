@@ -14,7 +14,7 @@ class DisplayInspector(Inspector):
     def bitmap(cls):
         image = wx.Image('Display' + os.sep + 'DisplayInspector.png')
         if image.IsOk():
-            image.Rescale(16, 16)
+            image.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH)
             return image.ConvertToBitmap()
         else:
             return Inspector.bitmap(cls)

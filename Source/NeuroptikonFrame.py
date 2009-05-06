@@ -78,7 +78,7 @@ class NeuroptikonFrame( wx.Frame ):
         if image is None or not image.IsOk():
             image = wx.EmptyImage(32, 32)
         if platform.system() == 'Windows':
-            image.Rescale(16, 16)
+            image.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH)
         return image.ConvertToBitmap()
     
     
@@ -228,7 +228,20 @@ class NeuroptikonFrame( wx.Frame ):
         self.Destroy()
     
     
-    def indentXMLElement(self, element, level=0):        i = "\n" + level*"\t"        if len(element):            if not element.text or not element.text.strip():                element.text = i + "\t"            if not element.tail or not element.tail.strip():                element.tail = i            for element in element:                self.indentXMLElement(element, level+1)            if not element.tail or not element.tail.strip():                element.tail = i        else:            if level and (not element.tail or not element.tail.strip()):                element.tail = i
+    def indentXMLElement(self, element, level=0):
+        i = "\n" + level*"\t"
+        if len(element):
+            if not element.text or not element.text.strip():
+                element.text = i + "\t"
+            if not element.tail or not element.tail.strip():
+                element.tail = i
+            for element in element:
+                self.indentXMLElement(element, level+1)
+            if not element.tail or not element.tail.strip():
+                element.tail = i
+        else:
+            if level and (not element.tail or not element.tail.strip()):
+                element.tail = i
     
     
     def onSaveNetwork(self, event):
