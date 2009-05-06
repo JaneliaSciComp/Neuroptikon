@@ -30,7 +30,7 @@ class AttributesInspector(Inspector):
         except:
             image = None
         if image is not None and image.IsOk():
-            image.Rescale(16, 16)
+            image.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH)
             return image.ConvertToBitmap()
         else:
             return wx.EmptyBitmap(16, 16)
@@ -65,7 +65,7 @@ class AttributesInspector(Inspector):
             self._intRenderer = wx.grid.GridCellNumberRenderer()
             self._intEditor = wx.grid.GridCellNumberEditor()
             self.grid.RegisterDataType(Attribute.INTEGER_TYPE, self._intRenderer, self._intEditor)
-            self._floatRenderer = wx.grid.GridCellFloatRenderer()
+            self._floatRenderer = wx.grid.GridCellFloatRenderer(width = 1, precision = 1)
             self._floatEditor = wx.grid.GridCellFloatEditor()
             self.grid.RegisterDataType(Attribute.DECIMAL_TYPE, self._floatRenderer, self._floatEditor)
             self._boolRenderer = wx.grid.GridCellBoolRenderer()
@@ -118,7 +118,13 @@ class AttributesInspector(Inspector):
         self.grid.AutoSizeColumns()
         self.onResizeLastColumn(None)
         
+        dispatcher.connect(self.attributesDidChange, ('set', 'attributes'), object)
+        
         self._window.Layout()
+    
+    
+    def attributesDidChange(self, signal, sender):
+        self.attributesTable.ResetView()
     
     
     def onCellSelected(self, event):

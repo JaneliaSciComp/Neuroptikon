@@ -4,7 +4,8 @@ if 'OSG_NOTIFY_LEVEL' not in os.environ:
     os.environ['OSG_NOTIFY_LEVEL'] = 'ALWAYS'
 
 if hasattr(sys, "frozen"):
-    rootDir = os.path.dirname(sys.executable)    if platform.system() == 'Darwin':
+    rootDir = os.path.dirname(sys.executable)
+    if platform.system() == 'Darwin':
         rootDir = os.path.dirname(rootDir) + os.sep + 'Resources'
     platformLibPath = rootDir
 else:
@@ -70,6 +71,7 @@ import xml.etree.ElementTree as ElementTree
 from NeuroptikonFrame import NeuroptikonFrame
 from Network.Network import Network
 from Network.Neuron import Neuron
+from Network.Attribute import Attribute
 from Library.Library import Library
 from Library.Neurotransmitter import Neurotransmitter
 from Library.NeuronClass import NeuronClass
@@ -204,7 +206,8 @@ if __name__ == "__main__":
                     'Modality': Modality, 
                     'Ontology': Ontology, 
                     'NeuralPolarity': Neuron.Polarity, 
-                    'NeuralFunction': Neuron.Function}
+                    'NeuralFunction': Neuron.Function, 
+                    'Attribute': Attribute}
         
         
         def onRunScript(self, event):

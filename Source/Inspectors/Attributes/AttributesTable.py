@@ -1,5 +1,6 @@
 import wx, wx.grid
-import weakref
+from wx.py import dispatcher
+import sys, weakref
 from Network.Attribute import Attribute
 
 
@@ -58,14 +59,35 @@ class AttributesTable(wx.grid.PyGridTableBase):
         return False
     
     
+    def CanGetValueAs(self, row, col, type):
+        if col == 2:
+            attribute = self.object.attributes[row]
+            if type == wx.grid.GRID_VALUE_NUMBER:
+                return attribute.type == Attribute.INTEGER_TYPE
+            elif type == wx.grid.GRID_VALUE_FLOAT:
+                return attribute.type == Attribute.DECIMAL_TYPE
+            elif type == wx.grid.GRID_VALUE_BOOL:
+                return attribute.type == Attribute.BOOLEAN_TYPE
+            elif type == wx.grid.GRID_VALUE_DATETIME:
+                return attribute.type == Attribute.DATE_TIME_TYPE
+        return False
+    
+    
     def GetValue(self, row, col):
         attribute = self.object.attributes[row]
+        dispatcher.connect(self.attributeDidChange, ('set', 'type'), attribute)
+        dispatcher.connect(self.attributeDidChange, ('set', 'name'), attribute)
+        dispatcher.connect(self.attributeDidChange, ('set', 'value'), attribute)
         if col == 0:
             return attribute.type
         elif col == 1:
             return attribute.name
         else:
             return attribute.value
+    
+    
+    def attributeDidChange(self, signal, sender):
+        self.ResetView()
     
     
     def GetTypeName(self, row, col):
@@ -85,7 +107,43 @@ class AttributesTable(wx.grid.PyGridTableBase):
         elif col == 1:
             attribute.setName(value)
         else:
-            attribute.setValue(value)
+            try:
+                if attribute.type == Attribute.BOOLEAN_TYPE:
+                    value = value == 1
+                elif attribute.type == Attribute.DATE_TIME_TYPE:
+                    try:
+                        value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+                    except:
+                        raise ValueError, gettext('Date time values must be in YYYY-MM-DD HH:MM:SS format')
+                elif attribute.type == Attribute.DATE_TYPE:
+                    try:
+                        value = datetime.strptime(value, '%Y-%m-%d').date()
+                    except:
+                        raise ValueError, gettext('Date values must be in YYYY-MM-DD format')
+                elif attribute.type == Attribute.TIME_TYPE:
+                    try:
+                        value = datetime.strptime(value, '%H:%M:%S').time()
+                    except:
+                        raise ValueError, gettext('Time values must be in HH:MM:SS format')
+                attribute.setValue(value)
+            except:
+                (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
+                dialog = wx.MessageDialog(self.gridRef().GetTopLevelParent(), exceptionValue.message, gettext('Could not set the value of the attribute:'), style = wx.ICON_ERROR | wx.OK)
+                dialog.ShowModal()
+    
+    
+    def CanSetValueAs(self, row, col, type):
+        if col == 2:
+            attribute = self.object.attributes[row]
+            if type == wx.grid.GRID_VALUE_NUMBER:
+                return attribute.type == Attribute.INTEGER_TYPE
+            elif type == wx.grid.GRID_VALUE_FLOAT:
+                return attribute.type == Attribute.DECIMAL_TYPE
+            elif type == wx.grid.GRID_VALUE_BOOL:
+                return attribute.type == Attribute.BOOLEAN_TYPE
+            elif type == wx.grid.GRID_VALUE_DATETIME:
+                return attribute.type == Attribute.DATE_TIME_TYPE
+        return False
     
     
     def AppendRows(self, numRows):

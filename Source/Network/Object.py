@@ -107,4 +107,29 @@ class Object(object):
             if pathObject != self:
                 path.append(pathObject)
         return path
+    
+    
+    def addAttribute(self, name = None, type = None, value = None):
+        """addAttribute(name = None, type = None, value = None) -> Attribute instance
         
+        The type parameter should be one of the Attribute.*_TYPE values.
+        
+        >>> neuron.addAttribute('Confirmed', Attribute.BOOLEAN_VALUE, True)"""
+        
+        if name is None or type is None or value is None:
+            raise ValueError, gettext('The name, type and value parameters must be specified when adding an attribute.')
+        
+        attribute = Attribute(self, name, type, value)
+        self.attributes.append(attribute)
+        dispatcher.send(('set', 'attributes'), self)
+        return attribute
+    
+    
+    def getAttribute(self, name):
+        """getAttribute(name) -> Attribute instance
+        
+        Return the first attribute of this object with the given name, or None if there is no matching attrbute."""
+        for attribute in self.attributes:
+            if attribute.name == name:
+                return attribute
+        return None
