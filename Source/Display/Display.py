@@ -857,9 +857,36 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def setVisibleColor(self, object, color):
+        """setVisibleColor(object, color)
+        
+        color should be a tuple containing red, green and blue unit float values.
+        
+        (0.0, 0.0, 0.0) -> black
+        (1.0, 0.0, 0.0) -> red
+        (0.0, 1.0, 0.0) -> green
+        (0.0, 0.0, 1.0) -> blue
+        (1.0, 1.0, 1.0) -> white"""
         visibles = self.visiblesForObject(object)
         if len(visibles) == 1:
             visibles[0].setColor(color)
+    
+    
+    def setVisibleShape(self, object, shapeName):
+        """setVisibleShape(object, shapeName)
+        
+        shapeName should one of "ball", "box", "capsule", "cone" or "tube"."""
+        visibles = self.visiblesForObject(object)
+        if len(visibles) == 1:
+            visibles[0].setShape(shapeName)
+    
+    
+    def setVisibleWeight(self, object, weight):
+        """seVisibleWeight(object, weight)
+        
+        weight should be a float value with 1.0 being a neutral weight."""
+        visibles = self.visiblesForObject(object)
+        if len(visibles) == 1:
+            visibles[0].setWeight(weight)
     
     
     def setArrangedAxis(self, object, axis = 'largest', recurse = False):
@@ -1376,6 +1403,14 @@ class Display(wx.glcanvas.GLCanvas):
         return pos
     
     
+    def saveViewAsImage(self, path):
+        width, height = self.GetClientSize()
+        image = osg.Image()
+        self.SetCurrent()
+        image.readPixels(0, 0, width, height, osg.GL_RGB, osg.GL_UNSIGNED_BYTE)
+        osgDB.writeImageFile(image, path)
+    
+    
     def onSaveView(self, event):
         fileTypes = ['JPG', 'Microsoft BMP', 'PNG', 'TIFF']
         fileExtensions = ['jpg', 'bmp', 'png', 'tiff']
@@ -1390,11 +1425,7 @@ class Display(wx.glcanvas.GLCanvas):
             savePath = str(fileDialog.GetPath())
             if not savePath.endswith('.' + extension):
                 savePath += '.' + extension
-            width, height = self.GetClientSize()
-            image = osg.Image()
-            self.SetCurrent()
-            image.readPixels(0, 0, width, height, osg.GL_RGB, osg.GL_UNSIGNED_BYTE)
-            osgDB.writeImageFile(image, savePath)
+            self.saveViewAsImage(savePath)
     
     
     def setDefaultFlowColor(self, color):
