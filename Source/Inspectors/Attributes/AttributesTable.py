@@ -69,7 +69,7 @@ class AttributesTable(wx.grid.PyGridTableBase):
             elif type == wx.grid.GRID_VALUE_BOOL:
                 return attribute.type == Attribute.BOOLEAN_TYPE
             elif type == wx.grid.GRID_VALUE_DATETIME:
-                return attribute.type == Attribute.DATE_TIME_TYPE
+                return attribute.type == Attribute.DATETIME_TYPE
         return False
     
     
@@ -110,7 +110,7 @@ class AttributesTable(wx.grid.PyGridTableBase):
             try:
                 if attribute.type == Attribute.BOOLEAN_TYPE:
                     value = value == 1
-                elif attribute.type == Attribute.DATE_TIME_TYPE:
+                elif attribute.type == Attribute.DATETIME_TYPE:
                     try:
                         value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
                     except:
@@ -142,7 +142,7 @@ class AttributesTable(wx.grid.PyGridTableBase):
             elif type == wx.grid.GRID_VALUE_BOOL:
                 return attribute.type == Attribute.BOOLEAN_TYPE
             elif type == wx.grid.GRID_VALUE_DATETIME:
-                return attribute.type == Attribute.DATE_TIME_TYPE
+                return attribute.type == Attribute.DATETIME_TYPE
         return False
     
     
@@ -164,9 +164,10 @@ class AttributesTable(wx.grid.PyGridTableBase):
     def ResetView(self):
         grid = self.getGrid()
         
-        grid.ProcessTableMessage(wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES))
-        self._rows = self.GetNumberRows()
+        if grid is not None:
+            grid.ProcessTableMessage(wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES))
+            self._rows = self.GetNumberRows()
 
-        grid.AdjustScrollbars()
-        grid.ForceRefresh()
+            grid.AdjustScrollbars()
+            grid.ForceRefresh()
     

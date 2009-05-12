@@ -49,16 +49,24 @@ class AttributesInspector(Inspector):
             self.attributesTable = AttributesTable(self.grid)
             self.grid.SetTable(self.attributesTable)
             self.grid.SetSelectionMode(wx.grid.Grid.SelectRows)
-            typeColAttr = wx.grid.GridCellAttr()            typeColAttr.SetEditor(GridCellAttributeTypeEditor(self))            typeColAttr.SetRenderer(GridCellAttributeTypeRenderer(self))            self.grid.SetColAttr(0, typeColAttr)
+            typeColAttr = wx.grid.GridCellAttr()
+            typeColAttr.SetEditor(GridCellAttributeTypeEditor(self))
+            typeColAttr.SetRenderer(GridCellAttributeTypeRenderer(self))
+            self.grid.SetColAttr(0, typeColAttr)
             nameColAttr = wx.grid.GridCellAttr()
             boldFont = self.grid.GetDefaultCellFont()
             boldFont.SetWeight(wx.FONTWEIGHT_BOLD)
-            nameColAttr.SetFont(boldFont)            self.grid.SetColAttr(1, nameColAttr)
+            nameColAttr.SetFont(boldFont)
+            self.grid.SetColAttr(1, nameColAttr)
             self.grid.SetCellHighlightPenWidth(0)
-            self._window.Bind(wx.EVT_SIZE, self.onResizeLastColumn)            self._window.Bind(wx.EVT_SIZE, self.onResizeLastColumn, self.grid)            self._window.Bind(wx.grid.EVT_GRID_COL_SIZE, self.onResizeLastColumn, self.grid)
+            self._window.Bind(wx.EVT_SIZE, self.onResizeLastColumn)
+            self._window.Bind(wx.EVT_SIZE, self.onResizeLastColumn, self.grid)
+            self._window.Bind(wx.grid.EVT_GRID_COL_SIZE, self.onResizeLastColumn, self.grid)
             self._window.Bind(wx.grid.EVT_GRID_SELECT_CELL, self.onCellSelected, self.grid)
             
-            self._typeRenderer = GridCellAttributeTypeRenderer(self)            self._typeEditor = GridCellAttributeTypeEditor(self)            self.grid.RegisterDataType('Attribute.Type', self._typeRenderer, self._typeEditor)
+            self._typeRenderer = GridCellAttributeTypeRenderer(self)
+            self._typeEditor = GridCellAttributeTypeEditor(self)
+            self.grid.RegisterDataType('Attribute.Type', self._typeRenderer, self._typeEditor)
             self._stringRenderer = wx.grid.GridCellStringRenderer()
             self._stringEditor = wx.grid.GridCellTextEditor()
             self.grid.RegisterDataType(Attribute.STRING_TYPE, self._stringRenderer, self._stringEditor)
@@ -73,10 +81,11 @@ class AttributesInspector(Inspector):
             self.grid.RegisterDataType(Attribute.BOOLEAN_TYPE, self._boolRenderer, self._boolEditor)
             self._dateTimeRenderer = wx.grid.GridCellDateTimeRenderer()
 #            self._dateTimeEditor = wx.grid.GridCellDateTimeEditor()
-            self.grid.RegisterDataType(Attribute.DATE_TIME_TYPE, self._dateTimeRenderer, self._stringEditor)
+            self.grid.RegisterDataType(Attribute.DATETIME_TYPE, self._dateTimeRenderer, self._stringEditor)
             self.grid.RegisterDataType(Attribute.DATE_TYPE, self._dateTimeRenderer, self._stringEditor)
             self.grid.RegisterDataType(Attribute.TIME_TYPE, self._dateTimeRenderer, self._stringEditor)
-                        buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
+            
+            buttonSizer = wx.BoxSizer(wx.HORIZONTAL)
             addButton = wx.BitmapButton(self._window, wx.ID_ANY, self.loadBitmap('Add.png'), wx.DefaultPosition, wx.DefaultSize, wx.BU_EXACTFIT)
             addButton.SetSize(wx.Size(16, 16))
             addButton.SetMinSize(addButton.GetSize())
@@ -134,8 +143,10 @@ class AttributesInspector(Inspector):
     
     
     def enableCellEditControl(self):
-        if self.grid.CanEnableCellControl():            self.grid.EnableCellEditControl()
-        
+        if self.grid.CanEnableCellControl():
+            self.grid.EnableCellEditControl()
+    
+    
     def onAddAttribute(self, event):
         self.grid.AppendRows(1)
         rowNum = self.grid.GetNumberRows() - 1
@@ -147,14 +158,27 @@ class AttributesInspector(Inspector):
     def onRemoveAttribute(self, event):
         rowNums = self.grid.GetSelectedRows()
         if len(rowNums) == 1:
-            if self.grid.IsCellEditControlEnabled():                self.grid.DisableCellEditControl()
+            if self.grid.IsCellEditControlEnabled():
+                self.grid.DisableCellEditControl()
             self.grid.DeleteRows(rowNums[0], 1)
         event.Skip()
     
     
     def onResizeLastColumn(self, event):
-        # We're showing the vertical scrollbar -> allow for scrollbar width        # NOTE: on GTK, the scrollbar is included in the client size, but on        # Windows it is not included
-        gridWidth = self.grid.GetClientSize().width#        if wx.Platform != '__WXMSW__':#            if self.GetItemCount() > self.GetCountPerPage():#                scrollWidth = wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)#                gridWidth = gridWidth - scrollWidth        totColWidth = self.grid.GetColSize(0) + self.grid.GetColSize(1)        resizeColWidth = self.grid.GetColSize(2)        if gridWidth - totColWidth > 100:            self.grid.SetColSize(2, gridWidth - totColWidth)
+        # We're showing the vertical scrollbar -> allow for scrollbar width
+        # NOTE: on GTK, the scrollbar is included in the client size, but on
+        # Windows it is not included
+        gridWidth = self.grid.GetClientSize().width
+#        if wx.Platform != '__WXMSW__':
+#            if self.GetItemCount() > self.GetCountPerPage():
+#                scrollWidth = wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
+#                gridWidth = gridWidth - scrollWidth
+
+        totColWidth = self.grid.GetColSize(0) + self.grid.GetColSize(1)
+        resizeColWidth = self.grid.GetColSize(2)
+
+        if gridWidth - totColWidth > 100:
+            self.grid.SetColSize(2, gridWidth - totColWidth)
         
         if event is not None:
             event.Skip()
@@ -163,5 +187,6 @@ class AttributesInspector(Inspector):
     def willBeClosed(self):
         # Make sure any active edit gets committed.
         # TODO: test this
-        if self.grid.IsCellEditControlEnabled():            self.grid.DisableCellEditControl()
+        if self.grid.IsCellEditControlEnabled():
+            self.grid.DisableCellEditControl()
     
