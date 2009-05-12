@@ -51,3 +51,34 @@ class Arborization(Object):
         if self.receivesInput is not None:
             arborizationElement.set('receives', 'true' if self.receivesInput else 'false')
         return arborizationElement
+    
+    
+    def creationScriptCommand(self, scriptRefs):
+        if self.neurite.networkId in scriptRefs:
+            command = scriptRefs[self.neurite.networkId]
+        else:
+            command = scriptRefs[self.neurite.root.networkId]
+        return command + '.arborize'
+    
+    
+    def creationScriptParams(self, scriptRefs):
+        args, keywords = Object.creationScriptParams(self, scriptRefs)
+        args.insert(0, scriptRefs[self.region.networkId])
+        if self.sendsOutput is not None:
+            keywords['sendsOutput'] = str(self.sendsOutput)
+        if self.receivesInput is not None:
+            keywords['receivesInput'] = str(self.receivesInput)
+        return (args, keywords)
+    
+    
+    def creationScript(self, scriptRefs):
+        if self.neurite.networkId in scriptRefs:
+            script = scriptRefs[self.neurite.networkId]
+        else:
+            script = scriptRefs[self.neurite.root.networkId]
+        script += '.arborize(' + scriptRefs[self.region.networkId] + ', ' + str(self.sendsOutput) + ', ' + str(self.receivesInput)
+        params = self.creationScriptParams(scriptRefs)
+        if len(params) > 0:
+            script+= ', ' + ', '.join(params)
+        script += ')'
+        return script

@@ -73,6 +73,11 @@ class NeuroptikonFrame( wx.Frame ):
         return frameElement
     
     
+    def toScriptFile(self, scriptFile, scriptRefs):
+        # TODO
+        pass
+    
+    
     def loadBitmap(self, fileName):
         image = wx.GetApp().loadImage(fileName)
         if image is None or not image.IsOk():
@@ -90,6 +95,7 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_MENU, wx.GetApp().onOpenNetwork, fileMenu.Append(wx.NewId(), gettext('Open Network...\tCtrl-O'), gettext('Open a previously saved network')))
         self.Bind(wx.EVT_MENU, self.onCloseWindow, fileMenu.Append(wx.ID_CLOSE, gettext('Close Network\tCtrl-W'), gettext('Close the current network window')))
         self.Bind(wx.EVT_MENU, self.onSaveNetwork, fileMenu.Append(wx.NewId(), gettext('Save Network...\tCtrl-S'), gettext('Save the current network')))
+        self.Bind(wx.EVT_MENU, self.onSaveNetworkAs, fileMenu.Append(wx.NewId(), gettext('Save As...\tCtrl-Shift-S'), gettext('Save to a new file')))
         fileMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, self.onRunScript, fileMenu.Append(wx.NewId(), gettext('Run Script...\tCtrl-R'), gettext('Run a console script file')))
         self.Bind(wx.EVT_MENU, wx.GetApp().onBrowseLibrary, fileMenu.Append(wx.NewId(), gettext('Browse the Library\tCtrl-Alt-L'), gettext('Open the Library window')))
@@ -244,6 +250,52 @@ class NeuroptikonFrame( wx.Frame ):
                 element.tail = i
     
     
+    def saveNetworkAndDisplaysAsXML(self, savePath):
+        try:
+            xmlRoot = ElementTree.Element('Neuroptikon')
+            network = self.display.network
+            
+            # Serialize the network
+            networkElement = network.toXMLElement(xmlRoot)
+            if networkElement is None:
+                raise ValueError, gettext('Could not save the network')
+            
+            # Serialize the display(s)
+            for display in network.displays:
+                frameElement = display.GetTopLevelParent().toXMLElement(xmlRoot)
+                if frameElement is None:
+                    raise ValueError, gettext('Could not save one of the windows')
+            
+            self.indentXMLElement(xmlRoot)
+            xmlTree = ElementTree.ElementTree(xmlRoot)
+            xmlTree.write(savePath)
+            
+            # To test the contents of the output use:
+            # xmllint --noout --schema Source/Neuroptikon_v1.0.xsd Test.xml
+        except:
+            raise    # TODO: inform the user nicely
+    
+    
+    def saveNetworkAndDisplaysAsScript(self, savePath):
+        scriptFile = open(savePath, 'w')
+        scriptRefs = {}
+        network = self.display.network
+        
+        scriptFile.write('from datetime import datetime, date, time\n')
+        
+        try:
+            # Serialize the network
+            network.toScriptFile(scriptFile, scriptRefs)
+            
+            # Serialize the display(s)
+            for display in network.displays:
+                display.GetTopLevelParent().toScriptFile(scriptFile, scriptRefs)
+        except:
+            raise    # TODO: inform the user nicely
+        finally:
+            scriptFile.close()
+    
+    
     def onSaveNetwork(self, event):
         network = self.display.network
         if network.savePath is None:
@@ -252,26 +304,26 @@ class NeuroptikonFrame( wx.Frame ):
                 network.savePath = dlg.GetPath()
         
         if network.savePath is not None:
-            try:
-                xmlRoot = ElementTree.Element('Neuroptikon')
-                
-                # Serialize the network
-                networkElement = network.toXMLElement(xmlRoot)
-                if networkElement is None:
-                    raise ValueError, gettext('Could not save the network')
-                
-                # Serialize the display(s)
-                for display in network.displays:
-                    frameElement = display.GetTopLevelParent().toXMLElement(xmlRoot)
-                    if frameElement is None:
-                        raise ValueError, gettext('Could not save one of the windows')
-                
-                self.indentXMLElement(xmlRoot)
-                xmlTree = ElementTree.ElementTree(xmlRoot)
-                xmlTree.write(network.savePath)
-                
-                # To test the contents of the output use:
-                # xmllint --noout --schema Source/Neuroptikon_v1.0.xsd Test.xml
-            except:
-                raise    # TODO: inform the user nicely
+            self.saveNetworkAndDisplaysAsXML(network.savePath)
+    
+    
+    def onSaveNetworkAs(self, event):
+        fileTypes = ['XML File', 'Python Script']
+        fileExtensions = ['xml', 'py']
+        wildcard = ''
+        for index in range(0, len(fileTypes)):
+            if wildcard != '':
+                wildcard += '|'
+            wildcard += fileTypes[index] + '|' + fileExtensions[index]
+        fileDialog = wx.FileDialog(None, gettext('Save As:'), '', '', wildcard, wx.FD_SAVE)
+        if fileDialog.ShowModal() == wx.ID_OK:
+            extension = fileExtensions[fileDialog.GetFilterIndex()]
+            savePath = str(fileDialog.GetPath())
+            if not savePath.endswith('.' + extension):
+                savePath += '.' + extension
+            if extension == 'xml':
+                network.savePath = savePath
+                self.saveNetworkAndDisplaysAsXML(savePath)
+            else:
+                self.saveNetworkAndDisplaysAsScript(savePath)
     

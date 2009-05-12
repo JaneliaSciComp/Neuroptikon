@@ -55,6 +55,7 @@ class Network:
     def toXMLElement(self, parentElement):
         networkElement = ElementTree.SubElement(parentElement, 'Network')
         for object in self.objects:
+            # Nested regions are handled by their parents and neurites are handled by their neurons.
             if not (isinstance(object, Region) and object.parentRegion is not None) and not isinstance(object, Neurite):
                 objectElement = object.toXMLElement(networkElement)
                 if objectElement is None:
@@ -62,6 +63,52 @@ class Network:
         for attribute in self.attributes:
             attribute.toXMLElement(networkElement)
         return networkElement
+    
+    
+    def toScriptFile(self, scriptFile, scriptRefs):
+        if len(self.attributes) > 0:
+            scriptFile.write(gettext('# Create the network') + '\n\n')
+            for attribute in self.attributes:
+                attribute.toScriptFile(scriptFile, scriptRefs)
+        
+        scriptFile.write('\n' + gettext('# Create the regions') + '\n\n')
+        for region in self.objectsOfClass(Region):
+            if region.parentRegion is None:
+                region.toScriptFile(scriptFile, scriptRefs)
+                # The root region will also add its sub-regions to the script
+        
+        scriptFile.write('\n' + gettext('# Create the pathways') + '\n\n')
+        for pathway in self.objectsOfClass(Pathway):
+            pathway.toScriptFile(scriptFile, scriptRefs)
+        
+        scriptFile.write('\n' + gettext('# Create the muscles') + '\n\n')
+        for muscle in self.objectsOfClass(Muscle):
+            muscle.toScriptFile(scriptFile, scriptRefs)
+        
+        scriptFile.write('\n' + gettext('# Create the neurons') + '\n\n')
+        for neuron in self.objectsOfClass(Neuron):
+            neuron.toScriptFile(scriptFile, scriptRefs)
+            # The neuron will also add its neurites, arborizations and innervations to the script
+        
+        scriptFile.write('\n' + gettext('# Create the arborizations') + '\n\n')
+        for arborization in self.objectsOfClass(Arborization):
+            arborization.toScriptFile(scriptFile, scriptRefs)
+        
+        scriptFile.write('\n' + gettext('# Create the gap junctions') + '\n\n')
+        for gapJunction in self.objectsOfClass(GapJunction):
+            gapJunction.toScriptFile(scriptFile, scriptRefs)
+        
+        scriptFile.write('\n' + gettext('# Create the innervations') + '\n\n')
+        for innervation in self.objectsOfClass(Innervation):
+            innervation.toScriptFile(scriptFile, scriptRefs)
+        
+        scriptFile.write('\n' + gettext('# Create the synapses') + '\n\n')
+        for synapse in self.objectsOfClass(Synapse):
+            synapse.toScriptFile(scriptFile, scriptRefs)
+        
+        scriptFile.write('\n' + gettext('# Create the stimuli') + '\n\n')
+        for stimulus in self.objectsOfClass(Stimulus):
+            stimulus.toScriptFile(scriptFile, scriptRefs)
     
     
     def nextUniqueId(self):
@@ -111,9 +158,10 @@ class Network:
     
     
     def createStimulus(self, *args, **keywordArgs):
-        stimulus = Stimulus(self, *args, **keywordArgs)
-        self.addObject(stimulus)
-        return stimulus
+        target = keywordArgs['target']
+        del keywordArgs['target']
+        
+        return target.stimulate(*args, **keywordArgs)
     
     
     def findStimulus(self, name = None):

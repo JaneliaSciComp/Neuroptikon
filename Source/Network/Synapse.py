@@ -47,3 +47,25 @@ class Synapse(Object):
         if self.activation is not None:
             ElementTree.SubElement(synapseElement, 'Activation').text = self.activation
         return synapseElement
+    
+    
+    def creationScriptCommand(self, scriptRefs):
+        if self.preSynapticNeurite.networkId in scriptRefs:
+            return scriptRefs[self.preSynapticNeurite.networkId]+ '.synapseOn'
+        else:
+            return scriptRefs[self.preSynapticNeurite.root.networkId]+ '.synapseOn'
+    
+    
+    def creationScriptParams(self, scriptRefs):
+        args, keywords = Object.creationScriptParams(self, scriptRefs)
+        postRefs = []
+        for postNeurite in self.postSynapticNeurites:
+            if postNeurite.networkId in scriptRefs:
+                postRefs.append(scriptRefs[postNeurite.networkId])
+            else:
+                postRefs.append(scriptRefs[postNeurite.root.networkId])
+        if len(postRefs) == 1:
+            args.insert(0, postRefs[0])
+        else:
+            args.insert(0, '(' + ', '.join(postRefs) + ')')
+        return (args, keywords)

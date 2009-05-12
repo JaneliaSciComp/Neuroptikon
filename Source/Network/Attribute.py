@@ -8,11 +8,11 @@ class Attribute(object):
     INTEGER_TYPE = 'integer'
     DECIMAL_TYPE = 'double'
     BOOLEAN_TYPE = 'boolean'
-    DATE_TIME_TYPE = 'dateTime'
+    DATETIME_TYPE = 'dateTime'
     DATE_TYPE = 'date'
     TIME_TYPE = 'time'
-    TYPES = [STRING_TYPE, INTEGER_TYPE, DECIMAL_TYPE, BOOLEAN_TYPE, DATE_TIME_TYPE, DATE_TYPE, TIME_TYPE]
-    NATIVE_TYPES = { STRING_TYPE: [str, unicode], INTEGER_TYPE: [int], DECIMAL_TYPE: [float], BOOLEAN_TYPE: [bool], DATE_TIME_TYPE: [datetime], DATE_TYPE: [date], TIME_TYPE: [time]}
+    TYPES = [STRING_TYPE, INTEGER_TYPE, DECIMAL_TYPE, BOOLEAN_TYPE, DATETIME_TYPE, DATE_TYPE, TIME_TYPE]
+    NATIVE_TYPES = { STRING_TYPE: [str, unicode], INTEGER_TYPE: [int], DECIMAL_TYPE: [float], BOOLEAN_TYPE: [bool], DATETIME_TYPE: [datetime], DATE_TYPE: [date], TIME_TYPE: [time]}
     
     
     @classmethod
@@ -25,7 +25,7 @@ class Attribute(object):
             return gettext('Decimal')
         elif type == cls.BOOLEAN_TYPE:
             return gettext('True or False')
-        elif type == cls.DATE_TIME_TYPE:
+        elif type == cls.DATETIME_TYPE:
             return gettext('Date & Time')
         elif type == cls.DATE_TYPE:
             return gettext('Date')
@@ -54,7 +54,7 @@ class Attribute(object):
                 value = 0.0
         elif type == Attribute.BOOLEAN_TYPE:
             value = valueText.lower() in ['true', 't', 'yes', 'y', '1']
-        elif type == Attribute.DATE_TIME_TYPE:
+        elif type == Attribute.DATETIME_TYPE:
             value = datetime.strptime(valueText, '%Y-%m-%d %H:%M:%S')
         elif type == Attribute.DATE_TYPE:
             value = datetime.strptime(valueText, '%Y-%m-%d').date()
@@ -74,14 +74,36 @@ class Attribute(object):
     def toXMLElement(self, parentElement):
         element = ElementTree.SubElement(parentElement, 'Attribute', type = self.type)
         ElementTree.SubElement(element, 'Name').text = self.name
-        if self.type == Attribute.DATE_TIME_TYPE:
+        if self.type == Attribute.DATETIME_TYPE:
             valueText = self.value.strftime('%Y-%m-%d %H:%M:%S')
+        if self.type == Attribute.DATE_TYPE:
+            valueText = self.value.strftime('%Y-%m-%d')
         elif self.type == Attribute.TIME_TYPE:
             valueText = self.value.strftime('%H:%M:%S')
         else:
             valueText = str(self.value)
         ElementTree.SubElement(element, 'Value').text = valueText
         return element
+    
+    
+    def toScriptFile(self, scriptFile, scriptRefs):
+        from Network import Network
+        if isinstance(self.object, Network):
+            scriptFile.write('network')
+        else:
+            scriptFile.write(scriptRefs[self.object.networkId])
+        scriptFile.write('.addAttribute(\'' + self.name.replace('\\', '\\\\').replace('\'', '\\\'') + '\', Attribute.' + self.type.upper() + '_TYPE, ')
+        if self.type == Attribute.STRING_TYPE:
+            scriptFile.write('\'' + self.value.replace('\\', '\\\\').replace('\'', '\\\'') + '\'')
+        elif self.type in (Attribute.INTEGER_TYPE, Attribute.DECIMAL_TYPE, Attribute.BOOLEAN_TYPE):
+            scriptFile.write(str(self.value))
+        elif self.type == Attribute.DATETIME_TYPE:
+            scriptFile.write('datetime.strptime(\'' + self.value.strftime('%Y-%m-%d %H:%M:%S') + '\', \'%Y-%m-%d %H:%M:%S\')')
+        elif self.type == Attribute.DATE_TYPE:
+            scriptFile.write('datetime.strptime(\'' + self.value.strftime('%Y-%m-%d') + '\', \'%Y-%m-%d\').date()')
+        elif self.type == Attribute.TIME_TYPE:
+            scriptFile.write('datetime.strptime(\'' + self.value.strftime('%H:%M:%S') + '\', \'%H:%M:%S\').time()')
+        scriptFile.write(')\n')
     
     
     def setName(self, name):
@@ -111,7 +133,7 @@ class Attribute(object):
                     self.value = 0.0
             elif type == Attribute.BOOLEAN_TYPE:
                 self.value = True
-            elif type == Attribute.DATE_TIME_TYPE:
+            elif type == Attribute.DATETIME_TYPE:
                 if isinstance(self.value, date):
                     self.value = datetime.combine(self.value, datetime.now().time().replace(microsecond = 0))
                 elif isinstance(self.value, time):

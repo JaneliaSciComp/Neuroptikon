@@ -34,3 +34,19 @@ class GapJunction(Object):
         gapJunctionElement.set('neurite1Id', str(neurites[0].networkId))
         gapJunctionElement.set('neurite2Id', str(neurites[1].networkId))
         return gapJunctionElement
+    
+    
+    def creationScriptCommand(self, scriptRefs):
+        neurite1, neurite2 = list(self.neurites)
+        if neurite1.networkId not in scriptRefs:
+            neurite1 = neurite1.root
+        return scriptRefs[neurite1.networkId] + '.gapJunctionWith'
+    
+    
+    def creationScriptParams(self, scriptRefs):
+        args, keywords = Object.creationScriptParams(self, scriptRefs)
+        neurite1, neurite2 = list(self.neurites)
+        if neurite2.networkId not in scriptRefs:
+            neurite2 = neurite2.root
+        args.insert(0, scriptRefs[neurite2.networkId])
+        return (args, keywords)

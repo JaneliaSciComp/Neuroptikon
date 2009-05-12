@@ -108,8 +108,35 @@ class Neuron(Object):
         return neuronElement
     
     
-    def createNeurite(self):
-        neurite = Neurite(self.network, self)
+    def needsScriptRef(self):
+        return len(self._neurites) > 0 or Object.needsScriptRef(self)
+    
+    
+    def creationScriptParams(self, scriptRefs):
+        args, keywords = Object.creationScriptParams(self, scriptRefs)
+        if self.neuronClass is not None:
+            keywords['neuronClass'] = 'library.neuronClass(\'' + self.neuronClass.identifier + '\')'
+        if self.neurotransmitter is not None:
+            keywords['neurotransmitter'] = 'library.neurotransmitter(\'' + self.neurotransmitter.identifier + '\')'
+        if self.activation is not None:
+            keywords['activation'] = '\'' + self.activation + '\''  # TODO: this should be 'NeuralActivation.' + self.activation
+        if self.function is not None:
+            keywords['function'] = 'NeuralFunction.' +  self.function
+        if self.polarity is not None:
+            keywords['polarity'] = 'NeuralPolarity.' +  self.polarity
+        if self.region is not None:
+            keywords['region'] = scriptRefs[self.region.networkId]
+        return (args, keywords)
+    
+    
+    def creationScriptChildren(self):
+        children = Object.creationScriptChildren(self)
+        children.extend(self._neurites)
+        return children
+   
+    
+    def createNeurite(self, *args, **keywords):
+        neurite = Neurite(self.network, self, *args, **keywords)
         self._neurites.append(neurite)
         return neurite
     
@@ -122,7 +149,7 @@ class Neuron(Object):
         return neurites
     
     
-    def arborize(self, region, input=True, output=True):
+    def arborize(self, region, input=True, output=True, *args, **keywordArgs):
         """Convenience method for creating a neurite and having it arborize a region."""
         self.createNeurite().arborize(region, input, output)
     
@@ -135,11 +162,10 @@ class Neuron(Object):
         return arborizations
     
     
-    def synapseOn(self, otherNeuron):
+    def synapseOn(self, otherObject, *args, **keywordArgs):
         """Convenience method that creates a neurite for each neuron and then creates a synapse between them."""
         neurite = self.createNeurite()
-        otherNeurite = otherNeuron.createNeurite()
-        return neurite.synapseOn(neurite = otherNeurite, activation = self.activation)
+        return neurite.synapseOn(otherObject, activation = self.activation, *args, **keywordArgs)
     
     
     def incomingSynapses(self):
@@ -156,11 +182,10 @@ class Neuron(Object):
         return outgoingSynapses
     
     
-    def gapJunctionWith(self, otherNeuron):
-        """Convenience method that creates a neurite for each neuron and then creates a gap junction between them."""
+    def gapJunctionWith(self, otherObject, *args, **keywordArgs):
+        """Convenience method that creates a neurite for this neuron and then creates a gap junction with the other object."""
         neurite = self.createNeurite()
-        otherNeurite = otherNeuron.createNeurite()
-        return neurite.gapJunctionWith(otherNeurite)
+        return neurite.gapJunctionWith(otherObject, *args, **keywordArgs)
     
     
     def gapJunctions(self):
@@ -170,10 +195,10 @@ class Neuron(Object):
         return junctions
         
         
-    def innervate(self, muscle):
+    def innervate(self, muscle, *args, **keywordArgs):
         """Convenience method that creates a neurite and has it innervate the muscle."""
         neurite = self.createNeurite()
-        return neurite.innervate(muscle)
+        return neurite.innervate(muscle, *args, **keywordArgs)
     
     
     def innervations(self):

@@ -14,7 +14,6 @@ class Stimulus(Object):
         Object.__init__(self, network, *args, **keywords)
         self.target = target
         self.modality = modality
-        target.addStimulus(self)
     
     
     @classmethod
@@ -37,6 +36,28 @@ class Stimulus(Object):
         stimulusElement.set('targetId', str(self.target.networkId))
         stimulusElement.set('modality', self.modality.identifier)
         return stimulusElement
+    
+    
+    def creationScriptCommand(self, scriptRefs):
+        return scriptRefs[self.target.networkId] + '.stimulate'
+    
+    
+    def creationScriptParams(self, scriptRefs):
+        args, keywords = Object.creationScriptParams(self, scriptRefs)
+        if self.modality is not None:
+            keywords['modality'] = 'library.modality(\'' + self.modality.identifier.replace('\\', '\\\\').replace('\'', '\\\'') + '\')'
+        return (args, keywords)
+    
+    
+    def creationScript(self, scriptRefs):
+        script = 'network.createStimulus(target = ' + scriptRefs[self.target.networkId]
+        if self.modality is not None:
+            script += ', modality = library.modality(\'' + self.modality.identifier + '\')'
+        params = self.creationScriptParams(scriptRefs)
+        if len(params) > 0:
+            script += ', ' + ', '.join(params)
+        script += ')'
+        return script
     
     
     def outputs(self):

@@ -89,6 +89,24 @@ class Pathway(Object):
         self.terminus1.toXMLElement(pathwayElement)
         self.terminus2.toXMLElement(pathwayElement)
         return pathwayElement
+    
+    
+    def needsScriptRef(self):
+        return len(self.neurites) > 0 or Object.needsScriptRef(self)
+        
+        
+    def creationScriptCommand(self, scriptRefs):
+        return scriptRefs[self.terminus1.region.networkId] + '.addPathwayToRegion'
+    
+    
+    def creationScriptParams(self, scriptRefs):
+        args, keywords = Object.creationScriptParams(self, scriptRefs)
+        args.insert(0, scriptRefs[self.terminus2.region.networkId])
+        if self.terminus1.sendsOutput is not None:
+            keywords['sendsOutput'] = str(self.terminus1.sendsOutput)
+        if self.terminus1.receivesInput is not None:
+            keywords['receivesInput'] = str(self.terminus1.receivesInput)
+        return (args, keywords)
    
     
     def addNeurite(self, neurite):

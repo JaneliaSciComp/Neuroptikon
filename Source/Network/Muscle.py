@@ -17,6 +17,10 @@ class Muscle(Object):
         return object
     
     
+    def needsScriptRef(self):
+        return True
+    
+    
     def inputs(self):
         return self.innervations
     

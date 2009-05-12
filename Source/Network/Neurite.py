@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ElementTree
 
 class Neurite(Object):
     
-    def __init__(self, network, root, *args, **keywords):
+    def __init__(self, network, root, pathway = None, *args, **keywords):
         Object.__init__(self, network, *args, **keywords)
         self.root = root
         self._neurites = []
@@ -15,7 +15,9 @@ class Neurite(Object):
         self.synapses = []
         self._gapJunctions = []
         self._innervations = []
-        self.pathway = None
+        self.pathway = pathway
+        if pathway is not None:
+            pathway.neurites.append(self)
         #self.isStretchReceptor ???
     
     
@@ -50,11 +52,60 @@ class Neurite(Object):
         return neuriteElement
     
     
+    def includeInScript(self):
+        # If this neurite is just a dummy neurite used to support a simple arborization, innervation, gap junction or synapse then it does not need to be created.
+        from Neuron import Neuron
+        connections = self.connections()
+        if not self.needsScriptRef() and isinstance(self.root, Neuron) and len(connections) == 1:
+            if isinstance(connections[0], (Arborization, Innervation, GapJunction, Synapse)):
+                return False
+        
+        return Object.includeInScript(self)
+    
+    
+    def needsScriptRef(self):
+        return self.pathway is not None or len(self.connections()) > 1 or Object.needsScriptRef(self)
+    
+    
+    def createScriptRef(self, scriptRefs):
+        neuronRef = scriptRefs[self.neuron().networkId]
+        if neuronRef in scriptRefs:
+            neuriteCount = scriptRefs[neuronRef]
+        else:
+            neuriteCount = 0
+        scriptRefs[neuronRef] = neuriteCount + 1
+        scriptRefs[self.networkId] = neuronRef + '_neurite' + str(neuriteCount + 1)
+        return scriptRefs[self.networkId]
+    
+    
+    def creationScriptCommand(self, scriptRefs):
+        return scriptRefs[self.root.networkId] + '.createNeurite'
+    
+    
+    def creationScriptParams(self, scriptRefs):
+        args, keywords = Object.creationScriptParams(self, scriptRefs)
+        if self.pathway is not None:
+            keywords['pathway'] = scriptRefs[pathway.networkId]
+        return (args, keywords)
+    
+    
+    def creationScriptChildren(self):
+        children = Object.creationScriptChildren(self)
+        children.extend(self._neurites)
+        return children
+    
+    
     def neuron(self):
         parent = self.root
         while isinstance(parent, Neurite):
             parent = parent.root
         return parent
+    
+    
+    def createNeurite(self, *args, **keywords):
+        neurite = Neurite(self.network, self, *args, **keywords)
+        self._neurites.append(neurite)
+        return neurite
     
     
     def neurites(self, recurse = False):
@@ -65,16 +116,25 @@ class Neurite(Object):
         return neurites
     
     
-    def arborize(self, region, sendsOutput=None, receivesInput=None):
-        self.arborization = Arborization(self, region, sendsOutput, receivesInput)
+    def arborize(self, region, sendsOutput=None, receivesInput=None, *args, **keywordArgs):
+        # TODO: This will blow away any existing arborization.  Should a new sub-neurite be created?
+        self.arborization = Arborization(self, region, sendsOutput, receivesInput, *args, **keywordArgs)
         region.arborizations.append(self.arborization)
         self.network.addObject(self.arborization)
     
     
-    def synapseOn(self, neurite, activation = None):
-        synapse = Synapse(self.network, self, [neurite], activation)
+    def synapseOn(self, otherObject, activation = None, *args, **keywordArgs):
+        from Neuron import Neuron
+        if isinstance(otherObject, Neuron):
+            otherNeurite = otherObject.createNeurite()
+        elif isinstance(otherObject, Neurite):
+            otherNeurite = otherObject
+        else:
+            raise ValueError, gettext('Gap junctions can only be made with neurons or neurites')
+        # TODO: handle iteratable
+        synapse = Synapse(self.network, self, [otherNeurite], activation, *args, **keywordArgs)
         self.synapses.append(synapse)
-        neurite.synapses.append(synapse)
+        otherNeurite.synapses.append(synapse)
         self.network.addObject(synapse)
         return synapse
     
@@ -95,10 +155,17 @@ class Neurite(Object):
         return outgoingSynapses
 
 
-    def gapJunctionWith(self, neurite):
-        gapJunction = GapJunction(self.network, self, neurite)
+    def gapJunctionWith(self, otherObject, *args, **keywordArgs):
+        from Neuron import Neuron
+        if isinstance(otherObject, Neuron):
+            otherNeurite = otherObject.createNeurite()
+        elif isinstance(otherObject, Neurite):
+            otherNeurite = otherObject
+        else:
+            raise ValueError, gettext('Gap junctions can only be made with neurons or neurites')
+        gapJunction = GapJunction(self.network, self, otherNeurite, *args, **keywordArgs)
         self._gapJunctions.append(gapJunction)
-        neurite._gapJunctions.append(gapJunction)
+        otherNeurite._gapJunctions.append(gapJunction)
         self.network.addObject(gapJunction)
         return gapJunction
     
@@ -119,8 +186,8 @@ class Neurite(Object):
         pathway.neurites.append(self)
         
         
-    def innervate(self, muscle):
-        innervation = Innervation(self.network, self, muscle)
+    def innervate(self, muscle, *args, **keywordArgs):
+        innervation = Innervation(self.network, self, muscle, *args, **keywordArgs)
         self._innervations.append(innervation)
         muscle.innervations.append(innervation)
         self.network.addObject(innervation)
@@ -134,6 +201,21 @@ class Neurite(Object):
             for subNeurite in self._neurites:
                 innervations.extend(subNeurite.innervations(True))
         return innervations
+    
+    
+    def connections(self):
+        connections = Object.connections(self)
+        if self.arborization is not None:
+            connections.append(self.arborization)
+        for synapse in self.incomingSynapses():
+            connections.append(synapse)
+        for synapse in self.outgoingSynapses():
+            connections.append(synapse)
+        connections.extend(self._gapJunctions)
+        connections.extend(self._innervations)
+        for neurite in self._neurites:
+            connections.extend(neurite.connections())
+        return connections
     
     
     def inputs(self):

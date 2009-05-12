@@ -61,6 +61,71 @@ class Object(object):
         return objectElement
     
     
+    def includeInScript(self):
+        return True
+    
+    
+    def needsScriptRef(self):
+        if len(self.attributes) > 0 or len(self.stimuli) > 0:
+            return True
+        
+        for display in self.network.displays:
+            if len(display.visiblesForObject(self)) > 0:
+                return True
+        
+        # No other code will need to refer to this object.
+        return False
+    
+    
+    def createScriptRef(self, scriptRefs):
+        # TODO: check if abbreviation or name is unique and create variable name from that?
+        className = self.__class__.__name__
+        if className in scriptRefs:
+            instanceCount = scriptRefs[className]
+        else:
+            instanceCount = 0
+        scriptRefs[className] = instanceCount + 1
+        scriptRefs[self.networkId] = className.lower() + str(instanceCount + 1)
+        return scriptRefs[self.networkId]
+    
+    
+    def creationScriptCommand(self, scriptRefs):
+        return 'network.create' + self.__class__.__name__
+    
+    
+    def creationScriptParams(self, scriptRefs):
+        args = []
+        keywords = {}
+        if self.name is not None:
+            keywords['name'] = '\'' + self.name.replace('\\', '\\\\').replace('\'', '\\\'') + '\''
+        if self.abbreviation is not None:
+            keywords['abbreviation'] = '\'' + self.abbreviation.replace('\\', '\\\\').replace('\'', '\\\'') + '\''
+        if self.description is not None:
+            keywords['description'] = '\'' + self.description.replace('\\', '\\\\').replace('\'', '\\\'') + '\''
+        return (args, keywords)
+    
+    
+    def creationScriptChildren(self):
+        return list(self.attributes)
+    
+    
+    def toScriptFile(self, scriptFile, scriptRefs):
+        if self.includeInScript():
+            if self.needsScriptRef():
+                scriptFile.write(self.createScriptRef(scriptRefs) + ' = ')
+            
+            scriptFile.write(self.creationScriptCommand(scriptRefs) + '(')
+            args, keywords = self.creationScriptParams(scriptRefs)
+            for keyword, value in keywords.iteritems():
+                args.append(keyword + ' = ' + value)
+            scriptFile.write(', '.join(args) + ')\n')
+            
+            prevPos = scriptFile.tell()
+            
+            for child in self.creationScriptChildren():
+                child.toScriptFile(scriptFile, scriptRefs)
+    
+    
     @classmethod
     def displayName(cls):
         return gettext(cls.__name__)
@@ -88,16 +153,24 @@ class Object(object):
             dispatcher.send(('set', name), self)
     
     
+    def connections(self):
+        return list(self.stimuli)
+    
+    
     def inputs(self):
-        return self.stimuli
+        return list(self.stimuli)
     
     
     def outputs(self):
         return []
     
     
-    def addStimulus(self, stimulus):
+    def stimulate(self, modality = None, *args, **keywordArgs):
+        from Stimulus import Stimulus
+        stimulus = Stimulus(self.network, target = self, modality = modality, *args, **keywordArgs)
         self.stimuli.append(stimulus)
+        self.network.addObject(stimulus)
+        return stimulus
         
     
     def shortestPathTo(self, otherObject):

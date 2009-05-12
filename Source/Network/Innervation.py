@@ -20,7 +20,7 @@ class Innervation(Object):
         muscleId = xmlElement.get('muscleId')
         object.muscle = network.objectWithId(muscleId)
         if object.muscle is None:
-                raise ValueError, gettext('Muscle with id "%s" does not exist') % (muscleId)
+            raise ValueError, gettext('Muscle with id "%s" does not exist') % (muscleId)
         object.muscle.innervations.append(object)
         return object
     
@@ -30,3 +30,17 @@ class Innervation(Object):
         innervationElement.set('neuriteId', str(self.neurite.networkId))
         innervationElement.set('muscleId', str(self.muscle.networkId))
         return innervationElement
+    
+    
+    def creationScriptCommand(self, scriptRefs):
+        if self.neurite.networkId in scriptRefs:
+            command = scriptRefs[self.neurite.networkId]
+        else:
+            command = scriptRefs[self.neurite.root.networkId]
+        return command + '.innervate'
+    
+    
+    def creationScriptParams(self, scriptRefs):
+        args, keywords = Object.creationScriptParams(self, scriptRefs)
+        args.insert(0, scriptRefs[self.muscle.networkId])
+        return (args, keywords)

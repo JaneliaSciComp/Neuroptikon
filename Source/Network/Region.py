@@ -70,6 +70,27 @@ class Region(Object):
         return regionElement
     
     
+    def needsScriptRef(self):
+        return True
+    
+    
+    def creationScriptParams(self, scriptRefs):
+        args, keywords = Object.creationScriptParams(self, scriptRefs)
+        if self.parentRegion is not None:
+            keywords['parentRegion'] = '' + scriptRefs[self.parentRegion.networkId]
+        if self.ontologyTerm is not None:
+            ontologyId = str(self.ontologyTerm.ontology.identifier).replace('\\', '\\\\').replace('\'', '\\\'')
+            termId = str(self.ontologyTerm.identifier).replace('\\', '\\\\').replace('\'', '\\\'')
+            keywords['ontologyTerm'] = 'library.ontology(\'%s\').findTerm(name = \'%s\')' % (ontologyId, termId)
+        return (args, keywords)
+    
+    
+    def creationScriptChildren(self):
+        children = Object.creationScriptChildren(self)
+        children.extend(self.subRegions)
+        return children
+    
+    
     def addSubRegion(self, subRegion):
         self.subRegions.append(subRegion)
         subRegion.parentRegion = self
