@@ -50,3 +50,8 @@ class GapJunction(Object):
             neurite2 = neurite2.root
         args.insert(0, scriptRefs[neurite2.networkId])
         return (args, keywords)
+    
+    
+    @classmethod
+    def displayName(cls):
+        return gettext('Gap Junction')
