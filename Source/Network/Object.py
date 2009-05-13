@@ -61,7 +61,7 @@ class Object(object):
         return objectElement
     
     
-    def includeInScript(self):
+    def includeInScript(self, atTopLevel = False):
         return True
     
     
