@@ -71,45 +71,16 @@ class Network:
             for attribute in self.attributes:
                 attribute.toScriptFile(scriptFile, scriptRefs)
         
-        scriptFile.write('\n' + gettext('# Create the regions') + '\n\n')
-        for region in self.objectsOfClass(Region):
-            if region.parentRegion is None:
-                region.toScriptFile(scriptFile, scriptRefs)
-                # The root region will also add its sub-regions to the script
-        
-        scriptFile.write('\n' + gettext('# Create the pathways') + '\n\n')
-        for pathway in self.objectsOfClass(Pathway):
-            pathway.toScriptFile(scriptFile, scriptRefs)
-        
-        scriptFile.write('\n' + gettext('# Create the muscles') + '\n\n')
-        for muscle in self.objectsOfClass(Muscle):
-            muscle.toScriptFile(scriptFile, scriptRefs)
-        
-        scriptFile.write('\n' + gettext('# Create the neurons') + '\n\n')
-        for neuron in self.objectsOfClass(Neuron):
-            neuron.toScriptFile(scriptFile, scriptRefs)
-            # The neuron will also add its neurites, arborizations and innervations to the script
-        
-        scriptFile.write('\n' + gettext('# Create the arborizations') + '\n\n')
-        for arborization in self.objectsOfClass(Arborization):
-            arborization.toScriptFile(scriptFile, scriptRefs)
-        
-        scriptFile.write('\n' + gettext('# Create the gap junctions') + '\n\n')
-        for gapJunction in self.objectsOfClass(GapJunction):
-            gapJunction.toScriptFile(scriptFile, scriptRefs)
-        
-        scriptFile.write('\n' + gettext('# Create the innervations') + '\n\n')
-        for innervation in self.objectsOfClass(Innervation):
-            innervation.toScriptFile(scriptFile, scriptRefs)
-        
-        scriptFile.write('\n' + gettext('# Create the synapses') + '\n\n')
-        for synapse in self.objectsOfClass(Synapse):
-            synapse.toScriptFile(scriptFile, scriptRefs)
-        
-        scriptFile.write('\n' + gettext('# Create the stimuli') + '\n\n')
-        for stimulus in self.objectsOfClass(Stimulus):
-            stimulus.toScriptFile(scriptFile, scriptRefs)
-    
+        # Add each network object to the script in an order that guarantees dependent objects will already have been added.
+        # Neurites will be added by their neurons, sub-regions by their root region.
+        for objectClass in (Region, Pathway, Muscle, Neuron, Arborization, GapJunction, Innervation, Synapse, Stimulus):
+            objects = self.objectsOfClass(objectClass)
+            if len(objects) > 0:
+                scriptFile.write('\n# ' + gettext('Create each %s') % (objectClass.displayName().lower()) + '\n\n')
+                for object in objects:
+                    if object.includeInScript(atTopLevel = True):
+                        object.toScriptFile(scriptFile, scriptRefs)
+   
     
     def nextUniqueId(self):
         self._nextUniqueId += 1
