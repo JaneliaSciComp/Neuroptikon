@@ -70,6 +70,11 @@ class Region(Object):
         return regionElement
     
     
+    def includeInScript(self, atTopLevel = False):
+        # The root region will also add its sub-regions to the script
+        return not atTopLevel or self.parentRegion is None
+    
+    
     def needsScriptRef(self):
         return True
     

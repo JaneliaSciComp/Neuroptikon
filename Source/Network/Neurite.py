@@ -52,7 +52,7 @@ class Neurite(Object):
         return neuriteElement
     
     
-    def includeInScript(self):
+    def includeInScript(self, atTopLevel = False):
         # If this neurite is just a dummy neurite used to support a simple arborization, innervation, gap junction or synapse then it does not need to be created.
         from Neuron import Neuron
         connections = self.connections()
@@ -121,6 +121,7 @@ class Neurite(Object):
         self.arborization = Arborization(self, region, sendsOutput, receivesInput, *args, **keywordArgs)
         region.arborizations.append(self.arborization)
         self.network.addObject(self.arborization)
+        return self.arborization
     
     
     def synapseOn(self, otherObject, activation = None, *args, **keywordArgs):
