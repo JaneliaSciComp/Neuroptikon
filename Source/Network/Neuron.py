@@ -149,9 +149,9 @@ class Neuron(Object):
         return neurites
     
     
-    def arborize(self, region, input=True, output=True, *args, **keywordArgs):
+    def arborize(self, region, sendsOutput = True, receivesInput = True, *args, **keywordArgs):
         """Convenience method for creating a neurite and having it arborize a region."""
-        self.createNeurite().arborize(region, input, output)
+        return self.createNeurite().arborize(region, sendsOutput, receivesInput, *args, **keywordArgs)
     
     
     def arborizations(self):
