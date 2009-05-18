@@ -143,7 +143,7 @@ class AttributesInspector(Inspector):
     
     
     def enableCellEditControl(self):
-        if self.grid.CanEnableCellControl():
+        if self.grid is not None and self.grid.CanEnableCellControl():
             self.grid.EnableCellEditControl()
     
     
@@ -186,7 +186,8 @@ class AttributesInspector(Inspector):
     
     def willBeClosed(self):
         # Make sure any active edit gets committed.
-        # TODO: test this
         if self.grid.IsCellEditControlEnabled():
             self.grid.DisableCellEditControl()
-    
+            
+        # Make sure that any queued call to self.enableCellEditControl() won't try to access the grid after the C++ object has been destroyed
+        self.grid = None
