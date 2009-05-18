@@ -224,7 +224,11 @@ class Visible(object):
         if appearanceElement is None:
             appearanceElement = xmlElement.find('appearance')
         if appearanceElement is not None:
-            visible.setLabel(appearanceElement.findtext('Label') or appearanceElement.findtext('label'))
+            labelElement = appearanceElement.find('Label')
+            if labelElement is None:
+                labelElement = appearanceElement.find('label')
+            if labelElement is not None:
+                visible.setLabel(appearanceElement.findtext('Label') or appearanceElement.findtext('label') or '')
             visible.setShape(appearanceElement.findtext('Shape') or appearanceElement.findtext('shape'))
             colorElement = appearanceElement.find('Color')
             if colorElement is None:
