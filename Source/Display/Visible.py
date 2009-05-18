@@ -7,6 +7,8 @@ from Network.Synapse import Synapse
 from Network.Stimulus import Stimulus
 from Network.Innervation import Innervation
 
+from Library.Texture import Texture
+
 import wx
 from wx.py import dispatcher
 from math import atan2, pi, sqrt
@@ -97,7 +99,7 @@ class Visible(object):
         self._positionIsFixed = False
         self._size = (.001, .001, .001)
         self._sizeIsFixed = True
-        self.sizeIsAbsolute = False
+        self._sizeIsAbsolute = False
         self._rotation = (0, 0, 1, 0)
         
         # Appearance attributes
@@ -152,6 +154,17 @@ class Visible(object):
         self.arrangedAxis = 'largest'
         self.arrangedSpacing = 0.02
         self.arrangedWeight = 1.0
+        
+        dispatcher.connect(self.displayChangedSelection, ('set', 'selection'), self.display)
+        
+        self.updateLabel()
+        if isinstance(self.client, Region):
+            dispatcher.connect(self.displayChangedShowName, ('set', 'showRegionNames'), self.display)
+        if isinstance(self.client, Neuron):
+            dispatcher.connect(self.displayChangedShowName, ('set', 'showNeuronNames'), self.display)
+        
+        self.updateOpacity()
+        dispatcher.connect(self.displayChangedGhosting, ('set', 'useGhosts'), self.display)
     
     
     def __repr__(self):
@@ -331,7 +344,7 @@ class Visible(object):
         sizeElement.set('y', str(self._size[1]))
         sizeElement.set('z', str(self._size[2]))
         sizeElement.set('fixed', 'true' if self.sizeIsFixed else 'false')
-        sizeElement.set('absolute', 'true' if self.sizeIsAbsolute else 'false')
+        sizeElement.set('absolute', 'true' if self._sizeIsAbsolute else 'false')
         rotationElement = ElementTree.SubElement(geometryElement, 'Rotation')
         rotationElement.set('x', str(self._rotation[0]))
         rotationElement.set('y', str(self._rotation[1]))
@@ -397,7 +410,107 @@ class Visible(object):
                 raise ValueError, gettext('Could not save visualized item')
         
         return visibleElement
+    
+    
+    def toScriptFile(self, scriptFile, scriptRefs, displayRef):
+        # The stimulus visibles make this complicated because there are two visibles per stimulus object (a node and an path) and some attributes come from one visible and some from the other.
+        # This is worked around by tweaking the value of self as the attributes are queried.  The attributes are grouped as follows to simplify the switching:
+        # Attribute     Stimulus      Non-Stimulus
+        # =========     ========      ============
+        # size                        node
+        # rotation                    node
+        # arr. axis                   node
+        # arr. spacing                node
+        # arr. weight                 node
+        # 
+        # label         node          node
+        # position      node          node
+        # 
+        # weight        path          path
+        # flow color    path          path
+        # flow spread   path          path
+        # 
+        # shape         path          node or path
+        # color         path          node or path
+        # opacity       path          node or path
+        # texture       path          node or path
         
+        defaultParams = self.display.defaultVisualizationParams(self.client)
+        params = {}
+        
+        if isinstance(self.client, Stimulus):
+            visibles = list(self.display.visiblesForObject(self.client))
+            nodeVisible = visibles[0 if visibles[1].isPath() else 1]
+            pathVisible = visibles[0 if visibles[0].isPath() else 1]
+        else:
+            # Size, rotation and arrangement are never applied to stimuli.
+            
+            if not self.isPath():
+                params['size'] = self.size()
+                if not self.sizeIsFixed():
+                    params['sizeIsFixed'] = False
+                if self.parent is not None:
+                    params['sizeIsAbsolute'] = self.sizeIsAbsolute()
+                if self.rotation() != (0, 0, 1, 0):
+                    params['rotation'] = self.rotation()
+            
+            if len(self.children) > 0:
+                if self.arrangedAxis is not None:
+                    params['arrangedAxis'] = self.arrangedAxis
+                if self.arrangedSpacing is not None:
+                    params['arrangedSpacing'] = self.arrangedSpacing
+            if self.parent is not None and self.arrangedWeight != 1.0:
+                params['arrangedWeight'] = self.arrangedWeight
+        
+        # Stimuli label and position are always taken from the node visible.
+        if isinstance(self.client, Stimulus):
+            self = nodeVisible
+        
+        if self._label is None:
+            params['label'] = None
+        else:
+            params['label'] = self._label
+        if not self.isPath():
+            params['position'] = self.position()
+            if self.positionIsFixed():
+                params['positionIsFixed'] = True
+        
+        # All other stimuli attributes are taken from the path visible.
+        if isinstance(self.client, Stimulus):
+            self = pathVisible
+        
+        if self.isPath():
+            params['weight'] = self.weight()
+            if self.flowToColor() != self.display.defaultFlowColor:
+                params['flowToColor'] = self.flowToColor()
+            if self.flowToSpread() != self.display.defaultFlowSpread:
+                params['flowToSpread'] = self.flowToSpread()
+            if self.flowFromColor() != self.display.defaultFlowColor:
+                params['flowFromColor'] = self.flowFromColor()
+            if self.flowFromSpread() != self.display.defaultFlowSpread:
+                params['flowFromSpread'] = self.flowFromSpread()
+        
+        params['shape'] = self.shape()
+        params['color'] = self.color()
+        params['opacity'] = self.opacity()
+        if self._staticTexture is not None:
+            params['texture'] = self._staticTexture
+        
+        scriptFile.write('%s.visualizeObject(%s' % (displayRef, scriptRefs[self.client.networkId]))
+        for key, value in params.iteritems():
+            if not key in defaultParams or value != defaultParams[key]:
+                if isinstance(value, str):
+                    valueText = '\'' + value.replace('\\', '\\\\').replace('\'', '\\\'') + '\''
+                elif isinstance(value, Texture):
+                    valueText = 'library.texture(\'%s\')' % (value.identifier.replace('\\', '\\\\').replace('\'', '\\\''))
+                else:
+                    valueText = str(value)
+                scriptFile.write(', %s = %s' % (key, valueText))
+        scriptFile.write(')\n')
+        
+        for childVisible in self.children:
+            childVisible.toScriptFile(scriptFile, scriptRefs, displayRef)
+    
     
     def shape(self):
         """Return the type of shape set for this visualized object, one of 'ball', 'box', 'capsule', 'cone', 'tube' or None"""
@@ -423,9 +536,22 @@ class Visible(object):
             dispatcher.send(('set', 'shape'), self)
     
     
-    def setLabel(self, label):
-        if label is not None:
+    def displayChangedShowName(self, signal, sender):
+        self.updateLabel()
+    
+    
+    def updateLabel(self):
+        label = self._label
+        if label is None and ((isinstance(self.client, Region) and self.display.showRegionNames()) or (isinstance(self.client, Neuron) and self.display.showNeuronNames())):
+            label = self.client.abbreviation or self.client.name
+        
+        if label is None:
+            if self._textDrawable is not None:
+                self._textGeode.removeDrawable(self._textDrawable)
+                self._textDrawable = None
+        else:
             if self._textDrawable is None:
+                # Create the text drawable
                 # TODO: This works for 2D but not 3D.  The label gets obscured when the camera is rotated.
                 #       It would be ideal to draw the label at the center of the visible and tweak the culling so that the label isn't culled by it's visible's shape.
                 #       It would be even better to draw the label in the center of the portion of the shape that is currently visible.
@@ -440,11 +566,12 @@ class Visible(object):
                 self._textGeode.addDrawable(self._textDrawable)
                 self._textDrawable.setColor(osg.Vec4(0, 0, 0, self._opacity))
             self._textDrawable.setText(str(label))
-        elif label is None and self._textDrawable is not None:
-            self._textGeode.removeDrawable(self._textDrawable)
-            self._textDrawable = None
-        self._label = label
-        dispatcher.send(('set', 'label'), self)
+    
+    
+    def setLabel(self, label):
+        if label != self._label:
+            self._label = label
+            self.updateLabel()
     
     
     def label(self):
@@ -466,6 +593,36 @@ class Visible(object):
         return self._color
     
     
+    def displayChangedSelection(self, sender, signal):
+        self.updateOpacity()
+    
+    
+    def displayChangedGhosting(self, sender, signal):
+        self.updateOpacity()
+    
+    
+    def updateOpacity(self):
+        if self.display.useGhosts() and len(self.display.selection()) > 0 and self not in self.display.highlightedVisibles and self not in self.display.animatedVisibles:
+            opacity = 0.1
+            for ancestor in self.ancestors():
+                if ancestor in self.display.selectedVisibles:
+                    opacity = 0.5
+        else:
+            opacity = self._opacity
+        
+        if self._shapeDrawable is not None:
+            self._material.setAlpha(osg.Material.FRONT_AND_BACK, opacity)
+            if opacity == 1.0:
+                self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.OPAQUE_BIN)
+                self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
+            else:
+                self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
+                self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+        
+        if self._textDrawable is not None:
+            self._textDrawable.setColor(osg.Vec4(0, 0, 0, opacity))
+    
+    
     def setOpacity(self, opacity):
         if opacity < 0.0:
             opacity = 0.0
@@ -473,19 +630,8 @@ class Visible(object):
             opacity = 1.0
         
         if opacity != self.opacity:
-            if self._shapeDrawable is not None:
-                self._material.setAlpha(osg.Material.FRONT_AND_BACK, opacity)
-                if opacity == 1.0:
-                    self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.OPAQUE_BIN)
-                    self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
-                else:
-                    self._shapeDrawable.getOrCreateStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
-                    self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
-            
-            if self._textDrawable is not None:
-                self._textDrawable.setColor(osg.Vec4(0, 0, 0, opacity))
-            
             self._opacity = opacity
+            self.updateOpacity()
             dispatcher.send(('set', 'opacity'), self)
     
     
@@ -496,7 +642,7 @@ class Visible(object):
     def updateTransform(self):
         # update the transform unless we're under an osgGA.Selection node, i.e. being dragged
         if len(self.sgNode.getParents()) == 0 or self.display.dragSelection is None or self.sgNode.getParent(0).__repr__() != self.display.dragSelection.asGroup().__repr__():
-            if self.parent is None or not self.sizeIsAbsolute:
+            if self.parent is None or not self.sizeIsAbsolute():
                 scale = self._size
             else:
                 parentScale = self.parent.worldSize()
@@ -578,9 +724,13 @@ class Visible(object):
             dispatcher.send(('set', 'size is fixed'), self)
     
     
+    def sizeIsAbsolute(self):
+        return self._sizeIsAbsolute
+    
+    
     def setSizeIsAbsolute(self, sizeIsAbsolute = True):
-        if self.sizeIsAbsolute != sizeIsAbsolute:
-            self.sizeIsAbsolute = sizeIsAbsolute
+        if self._sizeIsAbsolute != sizeIsAbsolute:
+            self._sizeIsAbsolute = sizeIsAbsolute
             
             # TODO: convert absolute to relative size or vice versa
             
@@ -589,7 +739,7 @@ class Visible(object):
             self._arrangeChildren()
             
             for ancestor in self.ancestors():
-                if self.sizeIsAbsolute:
+                if self._sizeIsAbsolute:
                     dispatcher.connect(self.maintainAbsoluteSize, ('set', 'position'), ancestor)
                     dispatcher.connect(self.maintainAbsoluteSize, ('set', 'size'), ancestor)
                     dispatcher.connect(self.maintainAbsoluteSize, ('set', 'rotation'), ancestor)
@@ -608,7 +758,7 @@ class Visible(object):
         # TODO: if a parent is rotated does this screw up?
         # TODO: will OSG do this for us?
         
-        if self.parent is None or self.sizeIsAbsolute:
+        if self.parent is None or self.sizeIsAbsolute():
             worldSize = self._size
         else:
             parentSize = self.parent.worldSize()
@@ -650,7 +800,7 @@ class Visible(object):
         childVisible.parent = self
         self.childGroup.addChild(childVisible.sgNode)
         dispatcher.connect(self.childArrangedWeightChanged, ('set', 'arrangedWeight'), childVisible)
-        if childVisible.sizeIsAbsolute:
+        if childVisible.sizeIsAbsolute():
             for ancestor in childVisible.ancestors():
                 dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'position'), ancestor)
                 dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'size'), ancestor)
@@ -665,7 +815,7 @@ class Visible(object):
     
     def removeChildVisible(self, childVisible):
         if childVisible in self.children:
-            if childVisible.sizeIsAbsolute:
+            if childVisible.sizeIsAbsolute():
                 for ancestor in childVisible.ancestors():
                     dispatcher.disconnect(childVisible.maintainAbsoluteSize, ('set', 'position'), ancestor)
                     dispatcher.disconnect(childVisible.maintainAbsoluteSize, ('set', 'size'), ancestor)
@@ -728,7 +878,7 @@ class Visible(object):
                 child = self.children[index]
                 childWidth = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight
                 child.setPosition((curX + childWidth / 2.0, 0.0, 0.0))
-                if not child.sizeIsAbsolute:
+                if not child.sizeIsAbsolute():
                     child.setSize((childWidth, max(ySize, 0.5), max(zSize, 0.5)))
                 child.setPositionIsFixed(True)
                 curX += childWidth + self.arrangedSpacing
@@ -741,7 +891,7 @@ class Visible(object):
                 child = self.children[index]
                 childHeight = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight
                 child.setPosition((0.0, curY - childHeight / 2.0, 0.0))
-                if not child.sizeIsAbsolute:
+                if not child.sizeIsAbsolute():
                     child.setSize((max(xSize, 0.5), childHeight, max(zSize, 0.5)))
                 child.setPositionIsFixed(True)
                 curY -= childHeight + self.arrangedSpacing
@@ -754,7 +904,7 @@ class Visible(object):
                 child = self.children[index]
                 childDepth = (1.0 - self.arrangedSpacing * (childCount + 1.0)) / weightedChildCount * child.arrangedWeight
                 child.setPosition((0.0, 0.0, curZ + childDepth / 2.0))
-                if not child.sizeIsAbsolute:
+                if not child.sizeIsAbsolute():
                     child.setSize((max(xSize, 0.5), max(ySize, 0.5), childDepth))
                 child.setPositionIsFixed(True)
                 curZ += childDepth + self.arrangedSpacing

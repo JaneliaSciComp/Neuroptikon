@@ -39,7 +39,34 @@ except ImportError:
 # 1. Add an additional argument to the subprocess.Popen call in Dot.create to keep a command window from flashing every time layout occurs:
 #        creationflags = 0x8000000
 # 2. To allow pydot to find the graphviz executables when no "SOFTWARE/ATT/Graphviz" registry entry exists replace the existing "Method 1" code in find_graphviz() with the following:
-#        # Get the GraphViz install path from the registry#        #        try:#            import winreg#        except:#            try:#                import _winreg as winreg#            except:#                winreg = None#        #        if winreg is not None:#            hkey = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)#            #            try:#                gvkey = winreg.OpenKey(hkey, "SOFTWARE\\ATT\\Graphviz", 0, winreg.KEY_READ)#                #                if gvkey is not None:#                    path = winreg.QueryValueEx(gvkey, "InstallPath")[0]#                    #                    if path is not None:#                        progs = __find_executables(path + os.sep + "bin")#                        if progs is not None :#                            #print "Used Windows registry"#                            return progs#            except:#                pass#            finally:#                winreg.CloseKey(hkey)
+#        # Get the GraphViz install path from the registry
+#        
+#        try:
+#            import winreg
+#        except:
+#            try:
+#                import _winreg as winreg
+#            except:
+#                winreg = None
+#        
+#        if winreg is not None:
+#            hkey = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
+#            
+#            try:
+#                gvkey = winreg.OpenKey(hkey, "SOFTWARE\\ATT\\Graphviz", 0, winreg.KEY_READ)
+#                
+#                if gvkey is not None:
+#                    path = winreg.QueryValueEx(gvkey, "InstallPath")[0]
+#                    
+#                    if path is not None:
+#                        progs = __find_executables(path + os.sep + "bin")
+#                        if progs is not None :
+#                            #print "Used Windows registry"
+#                            return progs
+#            except:
+#                pass
+#            finally:
+#                winreg.CloseKey(hkey)
 
 
 class Display(wx.glcanvas.GLCanvas):
@@ -143,7 +170,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.selectionShouldExtend = False
         self.findShortestPath = False
         
-        self.useHoverSelect = False
+        self._useMouseOverSelecting = False
         self.hoverSelect = True
         self.hoverSelecting = False
         self.hoverSelected = False  # set to True if the current selection was made by hovering
@@ -233,7 +260,7 @@ class Display(wx.glcanvas.GLCanvas):
         if xmlElement.get('useGhosting') is not None:
             self.setUseGhosts(xmlElement.get('useGhosting') in trueValues)
         if xmlElement.get('useMouseOverSelecting') is not None:
-            self.useHoverSelect = xmlElement.get('useMouseOverSelecting') in trueValues
+            self._useMouseOverSelecting = xmlElement.get('useMouseOverSelecting') in trueValues
         if xmlElement.get('autoVisualize') is not None:
             self.autoVisualize = xmlElement.get('autoVisualize') in trueValues
         
@@ -289,7 +316,7 @@ class Display(wx.glcanvas.GLCanvas):
         displayElement.set('showNeuronNames', 'true' if self._showNeuronNames else 'false')
         displayElement.set('showFlow', 'true' if self._showFlow else 'false')
         displayElement.set('useGhosting', 'true' if self._useGhosts else 'false')
-        displayElement.set('useMouseOverSelecting', 'true' if self.useHoverSelect else 'false')
+        displayElement.set('useMouseOverSelecting', 'true' if self._useMouseOverSelecting else 'false')
         displayElement.set('autoVisualize', 'true' if self.autoVisualize else 'false')
         selectedVisibleIds = []
         for visible in self.selectedVisibles:
@@ -299,6 +326,40 @@ class Display(wx.glcanvas.GLCanvas):
         # TODO: it would be nice to save the console command history
         
         return displayElement
+    
+    
+    def toScriptFile(self, scriptFile, scriptRefs, displayRef):
+        scriptFile.write(displayRef + '.setBackgroundColor(' + str(self.backgroundColor) + ')\n')
+        scriptFile.write(displayRef + '.setDefaultFlowColor(' + str(self.defaultFlowColor) + ')\n')
+        scriptFile.write(displayRef + '.setDefaultFlowSpread(' + str(self.defaultFlowSpread) + ')\n')
+        scriptFile.write(displayRef + '.setViewDimensions(' + str(self.viewDimensions) + ')\n')
+        scriptFile.write(displayRef + '.setShowRegionNames(' + str(self._showRegionNames) + ')\n')
+        scriptFile.write(displayRef + '.setShowNeuronNames(' + str(self._showNeuronNames) + ')\n')
+        scriptFile.write(displayRef + '.setShowFlow(' + str(self._showFlow) + ')\n')
+        scriptFile.write(displayRef + '.setUseGhosts(' + str(self._useGhosts) + ')\n')
+        scriptFile.write(displayRef + '.setUseMouseOverSelecting(' + str(self._useMouseOverSelecting) + ')\n')
+        scriptFile.write('\n')
+        
+        # First visualize all of the nodes
+        for visibles in self.visibles.itervalues():
+            for visible in visibles:
+                if not visible.isPath() and visible.parent is None and not isinstance(visible.client, Stimulus):
+                    visible.toScriptFile(scriptFile, scriptRefs, displayRef)
+        # Next visualize all of the connections between the nodes
+        for visibles in self.visibles.itervalues():
+            for visible in visibles:
+                if visible.isPath():
+                    visible.toScriptFile(scriptFile, scriptRefs, displayRef)
+
+        scriptFile.write('\n' + displayRef + '.autoVisualize = ' + str(self.autoVisualize) + '\n')
+        
+        objectRefs = []
+        for visible in self.selectedVisibles:
+            objectRefs.append(scriptRefs[visible.client.networkId])
+        if len(objectRefs) > 0:
+            scriptFile.write(displayRef + '.selectObjects([' + ', '.join(objectRefs) + '])\n')
+        
+        scriptFile.write('\n' + displayRef + '.centerView()\n')
     
     
     def nextUniqueId(self):
@@ -472,6 +533,16 @@ class Display(wx.glcanvas.GLCanvas):
         self.viewer3D.getCamera().setClearColor(osg.Vec4(*color))
         self.backgroundColor = color
     
+    
+    def setUseMouseOverSelecting(self, flag):
+        if flag != self._useMouseOverSelecting:
+            self._useMouseOverSelecting = flag
+            dispatcher.send(('set', 'useMouseOverSelecting'), self)
+    
+    
+    def useMouseOverSelecting(self):
+        return self._useMouseOverSelecting
+    
         
     def onMouseEvent(self, event):
         if event.ButtonDown():
@@ -482,7 +553,7 @@ class Display(wx.glcanvas.GLCanvas):
             self.graphicsWindow.getEventQueue().mouseButtonRelease(event.GetX(), event.GetY(), event.GetButton())
         elif event.Dragging():
             self.graphicsWindow.getEventQueue().mouseMotion(event.GetX(), event.GetY())
-        elif event.Moving() and self.useHoverSelect and self.hoverSelect:
+        elif event.Moving() and self._useMouseOverSelecting and self.hoverSelect:
             self.hoverSelecting = True
             self.graphicsWindow.getEventQueue().mouseButtonPress(event.GetX(), event.GetY(), wx.MOUSE_BTN_LEFT)
             self.graphicsWindow.getEventQueue().mouseButtonRelease(event.GetX(), event.GetY(), wx.MOUSE_BTN_LEFT)
@@ -590,134 +661,186 @@ class Display(wx.glcanvas.GLCanvas):
         dispatcher.connect(self.visibleChanged, dispatcher.Any, visible)
     
     
-    def visualizeObject(self, object):
+    def defaultVisualizationParams(self, object):
         # TODO: replace this whole block with display rules
         neuralTissueColor = (0.85, 0.75, 0.6)
+        params = {}
+        
+        params['opacity'] = 1.0
+        params['weight'] = 1.0
+        params['label'] = None
+        
         if isinstance(object, Region):
-            visible = Visible(self, object)
-            visible.setShape("box")
-            visible.setSize((0.1, 0.1, 0.01))
-            visible.setColor(neuralTissueColor)
-            if self._showRegionNames:
-                visible.setLabel(object.abbreviation or object.name)
-            parentVisibles = self.visiblesForObject(object.parentRegion)
-            self.addVisible(visible, parentVisibles[0] if len(parentVisibles) == 1 else None)
-            for subRegion in object.subRegions:
-                subVisibles = self.visiblesForObject(subRegion)
-                if len(subVisibles) == 1:
-                    self.rootNode.removeChild(subVisibles[0].sgNode)
-                    visible.addChildVisible(subVisibles[0])
-            for neuron in object.neurons:
-                neuronVisibles = self.visiblesForObject(neuron)
-                if len(neuronVisibles) == 1:
-                    self.rootNode.removeChild(neuronVisibles[0].sgNode)
-                    visible.addChildVisible(neuronVisibles[0])
+            params['shape'] = 'box'
+            params['size'] = (0.1, 0.1, 0.01)
+            params['color'] = neuralTissueColor
         elif isinstance(object, Pathway):
-            region1 = self.visiblesForObject(object.terminus1.region)
-            region2 = self.visiblesForObject(object.terminus2.region)
-            if len(region1) == 1 and len(region2) == 1:
-                visible = Visible(self, object)
-                visible.setShape("tube")
-                visible.setWeight(5.0)
-                visible.setColor(neuralTissueColor)
-                try:
-                    visible.setTexture(wx.GetApp().library.texture('Stripes'))
-                except:
-                    pass
-                visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
-                visible.setFlowDirection(region1[0], region2[0], object.terminus1.sendsOutput, object.terminus1.receivesInput)
-                visible.setPath([], region1[0], region2[0])
-                self.addVisible(visible)
-        elif isinstance(object, Neuron):
-            visible = Visible(self, object)
-            visible.setShape("ball")
-            visible.setSize((.01, .01, .01))
-            visible.setSizeIsAbsolute(True)
-            visible.setColor(neuralTissueColor)
-            if self._showNeuronNames:
-                visible.setLabel(object.abbreviation or object.name)
-            regionVisibles = self.visiblesForObject(object.region)
-            self.addVisible(visible, regionVisibles[0] if len(regionVisibles) == 1 else None)
-            #TODO: dispatcher.connect(self.neuronRegionChanged, ('set', 'region'), object)
-        elif isinstance(object, Muscle):
-            visible = Visible(self, object)
-            visible.setShape('capsule')
-            visible.setSize((.1, .2, .02))
-            visible.setColor((0.5, 0, 0))
+            params['shape'] = 'tube'
+            params['weight'] = 5.0
+            params['color'] = neuralTissueColor
             try:
-                visible.setTexture(wx.GetApp().library.texture('Stripes'))
+                params['texture'] = wx.GetApp().library.texture('Stripes')
             except:
                 pass
-            visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
-            visible.setLabel(object.name)
-            self.addVisible(visible)
+            params['textureTransform'] = (-10,  10,  1)
+        elif isinstance(object, Neuron):
+            params['shape'] = 'ball'
+            params['size'] = (.01, .01, .01)
+            params['sizeIsAbsolute'] = True
+            params['color'] = neuralTissueColor
+        elif isinstance(object, Muscle):
+            params['shape'] = 'capsule'
+            params['size'] = (.1, .2, .02)
+            params['color'] = (0.5, 0, 0)
+            try:
+                params['texture'] = wx.GetApp().library.texture('Stripes')
+            except:
+                pass
+            params['textureTransform'] = (-10,  10,  1)
+            params['label'] = object.abbreviation or object.name
         elif isinstance(object, Arborization):
-            neuronVis = self.visiblesForObject(object.neurite.neuron())
-            regionVis = self.visiblesForObject(object.region)
-            if len(neuronVis) == 1 and len(regionVis) == 1:
-                visible = Visible(self, object)
-                visible.setShape("tube")
-                visible.setColor(neuralTissueColor)
-                visible.setFlowDirection(neuronVis[0], regionVis[0], object.sendsOutput, object.receivesInput)
-                visible.setPath([], neuronVis[0], regionVis[0])
-                if self._showFlow:
-                    visible.animateFlow()
-                dispatcher.connect(self.arborizationChangedFlow, ('set', 'sendsOutput'), object)
-                dispatcher.connect(self.arborizationChangedFlow, ('set', 'receivesInput'), object)
-                self.addVisible(visible)
+            params['shape'] = 'tube'
+            params['color'] = neuralTissueColor
         elif isinstance(object, Synapse):
-            preNeuronVis = self.visiblesForObject(object.preSynapticNeurite.neuron())
-            if len(preNeuronVis) == 1:
-                for neurite in object.postSynapticNeurites:
-                    postNeuronVis = self.visiblesForObject(neurite.neuron())
-                    if len(preNeuronVis) == 1:
-                        visible = Visible(self, object)
-                        visible.setShape("tube")
-                        visible.setColor(neuralTissueColor)
-                        visible.setFlowDirection(preNeuronVis[0], postNeuronVis[0])
-                        visible.setPath([], preNeuronVis[0], postNeuronVis[0])
-                        if self._showFlow:
-                            visible.animateFlow()
-                        self.addVisible(visible)
+            params['shape'] = 'tube'
+            params['color'] = neuralTissueColor
+        elif isinstance(object, GapJunction):
+            params['shape'] = 'tube'
+            params['color'] = (.65, 0.75, 0.4)
+        elif isinstance(object, Innervation):
+            params['shape'] = 'tube'
+            params['color'] = (0.55, 0.35, 0.25)
+        elif isinstance(object, Stimulus):
+            params['shape'] = 'cone'
+            params['size'] = (.02, .02, .02) # so the label is in front (hacky...)
+            params['color'] = (0.5, 0.5, 0.5)
+            params['label'] = object.abbreviation or object.name
+            params['weight'] = 5.0
+        
+        return params
+    
+    
+    def visualizeObject(self, object, **keywordArgs):
+        # TODO: replace this whole block with display rules
+        
+        visible = Visible(self, object)
+        
+        # Start with the default params for this object and override with any supplied params.
+        params = self.defaultVisualizationParams(object)
+        for key, value in keywordArgs.iteritems():
+            params[key] = value
+            
+        parentObject = None
+        childObjects = []
+        pathStart = None
+        pathEnd = None
+        pathFlowsTo = None
+        pathFlowsFrom = None
+        
+        if isinstance(object, Region):
+            parentObject = object.parentRegion
+            childObjects.extend(object.subRegions)
+            childObjects.extend(object.neurons)
+        elif isinstance(object, Pathway):
+            pathStart = object.terminus1.region
+            pathEnd = object.terminus2.region
+            pathFlowsTo = object.terminus1.sendsOutput
+            pathFlowsFrom = object.terminus1.receivesInput
+        elif isinstance(object, Neuron):
+            parentObject = object.region
+            #TODO: dispatcher.connect(self.neuronRegionChanged, ('set', 'region'), object)
+        elif isinstance(object, Arborization):
+            pathStart = object.neurite.neuron()
+            pathEnd = object.region
+            pathFlowsTo = object.sendsOutput
+            pathFlowsFrom = object.receivesInput
+            dispatcher.connect(self.arborizationChangedFlow, ('set', 'sendsOutput'), object)
+            dispatcher.connect(self.arborizationChangedFlow, ('set', 'receivesInput'), object)
+        elif isinstance(object, Synapse):
+            pathStart = object.preSynapticNeurite.neuron()
+            if len(object.postSynapticNeurites) > 0:
+                pathEnd = object.postSynapticNeurites[0].neuron()
+                pathFlowsTo = True
+                pathFlowsFrom = False
         elif isinstance(object, GapJunction):
             neurites = list(object.neurites)
-            neuron1 = self.visiblesForObject(neurites[0].neuron())
-            neuron2 = self.visiblesForObject(neurites[1].neuron())
-            if len(neuron1) == 1 and len(neuron2) == 1:
-                visible = Visible(self, object)
-                visible.setShape("tube")
-                visible.setColor((.65, 0.75, 0.4))
-                visible.setFlowDirection(neuron1[0], neuron2[0], True, True)
-                visible.setPath([], neuron1[0], neuron2[0])
-                self.addVisible(visible)
+            pathStart = neurites[0].neuron()
+            pathEnd = neurites[1].neuron()
+            pathFlowsTo = True
+            pathFlowsFrom = True
         elif isinstance(object, Innervation):
-            neuronVis = self.visiblesForObject(object.neurite.neuron())
-            muscleVis = self.visiblesForObject(object.muscle)
-            if len(neuronVis) == 1 and len(muscleVis) == 1:
-                visible = Visible(self, object)
-                visible.setShape("tube")
-                visible.setColor((0.55, 0.35, 0.25))
-                visible.setFlowDirection(neuronVis[0], muscleVis[0])
-                visible.setPath([], neuronVis[0], muscleVis[0])
-                if self._showFlow:
-                    visible.animateFlow()
-                self.addVisible(visible)
+            pathStart = object.neurite.neuron()
+            pathEnd = object.muscle
+            pathFlowsTo = True
+            pathFlowsFrom = False
         elif isinstance(object, Stimulus):
-            targetVis = self.visiblesForObject(object.target)
-            if len(targetVis) == 1:
-                nodeVis = Visible(self, object)
-                nodeVis.setSize((.02, .02, .02)) # so the label is in front (hacky...)
-                nodeVis.setLabel(object.abbreviation or object.name)
-                self.addVisible(nodeVis)
-                edgeVis = Visible(self, object)
-                edgeVis.setShape("cone")
-                edgeVis.setWeight(5)
-                edgeVis.setColor((0.5, 0.5, 0.5))
-                edgeVis.setFlowDirection(nodeVis, targetVis[0])
-                edgeVis.setPath([], nodeVis, targetVis[0])
+            edgeVisible = visible
+            nodeVisible = Visible(self, object)
+        
+        if 'color' in params:
+            visible.setColor(params['color'])
+        if 'opacity' in params:
+            visible.setWeight(params['opacity'])
+        if 'shape' in params:
+            visible.setShape(params['shape'])
+        if 'sizeIsAbsolute' in params:
+            visible.setSizeIsAbsolute(params['sizeIsAbsolute'])
+        if 'texture' in params:
+            visible.setTexture(params['texture'])
+        if 'textureTransform' in params:
+            visible.setTextureTransform(osg.Matrixd.scale(*params['textureTransform']))
+        if 'weight' in params:
+            visible.setWeight(params['weight'])
+        
+        # Label and position are applied to the node visible of a stimulus.
+        if isinstance(object, Stimulus):
+            visible = nodeVisible
+        
+        if 'size' in params:
+            visible.setSize(params['size'])
+        if 'label' in params:
+            visible.setLabel(params['label'])
+        if 'position' in params:
+            visible.setPosition(params['position'])
+        if 'positionIsFixed' in params:
+            visible.setPositionIsFixed(params['positionIsFixed'])
+        
+        if 'arrangedAxis' in params:
+            visible.setArrangedAxis(params['arrangedAxis'])
+        if 'arrangedSpacing' in params:
+            visible.setArrangedSpacing(params['arrangedSpacing'])
+        if 'arrangedWeight' in params:
+            visible.setArrangedWeight(params['arrangedWeight'])
+            
+        parentVisibles = self.visiblesForObject(parentObject)
+        self.addVisible(visible, parentVisibles[0] if len(parentVisibles) == 1 else None)
+        
+        if isinstance(object, Stimulus):
+            targetVisibles = self.visiblesForObject(object.target)
+            if len(targetVisibles) == 1:
+                edgeVisible.setFlowDirection(nodeVisible, targetVisibles[0], True, False)
+                edgeVisible.setPath([], nodeVisible, targetVisibles[0])
                 if self._showFlow:
-                    edgeVis.animateFlow()
-                self.addVisible(edgeVis)
+                    edgeVisible.animateFlow()
+            self.addVisible(edgeVisible)
+        else:
+            if pathStart is not None and pathEnd is not None:
+                pathStartVisibles = self.visiblesForObject(pathStart)
+                pathEndVisibles = self.visiblesForObject(pathEnd)
+                if len(pathStartVisibles) == 1 and len(pathEndVisibles) == 1:
+                    visible.setFlowDirection(pathStartVisibles[0], pathEndVisibles[0], pathFlowsTo, pathFlowsFrom)
+                    visible.setPath([], pathStartVisibles[0], pathEndVisibles[0])
+                    if self._showFlow:
+                        visible.animateFlow()
+            
+            for childObject in childObjects:
+                subVisibles = self.visiblesForObject(childObject)
+                if len(subVisibles) == 1:
+                    # TODO: what if the subVisible is already a child?
+                    self.rootNode.removeChild(subVisibles[0].sgNode)
+                    visible.addChildVisible(subVisibles[0])
+        
+        return visible
     
     
     def arborizationChangedFlow(self, signal, sender):
@@ -749,7 +872,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def networkChanged(self, affectedObjects=None, **arguments):
-        signal = arguments["signal"]
+        signal = arguments['signal']
         if signal == 'addition' and self.autoVisualize:
             for object in affectedObjects:
                 self.visualizeObject(object)
@@ -776,15 +899,9 @@ class Display(wx.glcanvas.GLCanvas):
     
     def setShowRegionNames(self, flag):
         if flag != self._showRegionNames:
-            for visibles in self.visibles.itervalues():
-                for visible in visibles:
-                    if isinstance(visible, Visible) and isinstance(visible.client, Region):
-                        if flag:
-                            visible.setLabel(visible.client.abbreviation or visible.client.name)
-                        else:
-                            visible.setLabel(None)
             self._showRegionNames = flag
             dispatcher.send(('set', 'showRegionNames'), self)
+            self.Refresh()
     
     
     def showRegionNames(self):
@@ -793,15 +910,9 @@ class Display(wx.glcanvas.GLCanvas):
     
     def setShowNeuronNames(self, flag):
         if flag != self._showNeuronNames:
-            for visibles in self.visibles.itervalues():
-                for visible in visibles:
-                    if isinstance(visible, Visible) and isinstance(visible.client, Neuron):
-                        if flag:
-                            visible.setLabel(visible.client.name)
-                        else:
-                            visible.setLabel(None)
             self._showNeuronNames = flag
             dispatcher.send(('set', 'showNeuronNames'), self)
+            self.Refresh()
     
     
     def showNeuronNames(self):
@@ -821,14 +932,8 @@ class Display(wx.glcanvas.GLCanvas):
     def setUseGhosts(self, flag):
         if flag != self._useGhosts:
             self._useGhosts = flag
-            if len(self.selectedVisibles) > 0:
-                for visibles in self.visibles.itervalues():
-                    for visible in visibles:
-                        if self._useGhosts and visible not in self.highlightedVisibles and visible not in self.animatedVisibles:
-                            visible.setOpacity(0.1)
-                        else:
-                            visible.setOpacity(1)
             dispatcher.send(('set', 'useGhosts'), self)
+            self.Refresh()
     
     
     def useGhosts(self):
@@ -837,15 +942,31 @@ class Display(wx.glcanvas.GLCanvas):
     
     def setLabel(self, object, label):
         visibles = self.visiblesForObject(object)
+        visible = None
         if len(visibles) == 1:
-            visibles[0].setLabel(label)
+            visible = visibles[0]
+        elif isinstance(object, Stimulus):
+            visible = visibles[0 if visibles[1].isPath() else 1]
+        if visible is not None:
+            visible.setLabel(label)
     
     
     def setVisiblePosition(self, object, position, fixed=False):
         visibles = self.visiblesForObject(object)
+        visible = None
         if len(visibles) == 1:
-            visibles[0].setPosition(position)
-            visibles[0].setPositionIsFixed(fixed)
+            visible = visibles[0]
+        elif isinstance(object, Stimulus):
+            visible = visibles[0 if visibles[1].isPath() else 1]
+        if visible is not None:
+            visible.setPosition(position)
+            visible.setPositionIsFixed(fixed)
+    
+    
+    def setVisibleRotation(self, object, rotation):
+        visibles = self.visiblesForObject(object)
+        if len(visibles) == 1:
+            visibles[0].setRotation(rotation)
     
     
     def setVisibleSize(self, object, size, fixed=True, absolute=False):
@@ -867,8 +988,27 @@ class Display(wx.glcanvas.GLCanvas):
         (0.0, 0.0, 1.0) -> blue
         (1.0, 1.0, 1.0) -> white"""
         visibles = self.visiblesForObject(object)
+        visible = None
         if len(visibles) == 1:
-            visibles[0].setColor(color)
+            visible = visibles[0]
+        elif isinstance(object, Stimulus):
+            visible = visibles[0 if visibles[0].isPath() else 1]
+        if visible is not None:
+            visible.setColor(color)
+    
+    
+    def setVisibleTexture(self, object, texture):
+        """setVisibleShape(object, texture)
+        
+        texture should an object returned by library.texture() or library.textures()."""
+        visibles = self.visiblesForObject(object)
+        visible = None
+        if len(visibles) == 1:
+            visible = visibles[0]
+        elif isinstance(object, Stimulus):
+            visible = visibles[0 if visibles[0].isPath() else 1]
+        if visible is not None:
+            visible.setTexture(texture)
     
     
     def setVisibleShape(self, object, shapeName):
@@ -876,8 +1016,27 @@ class Display(wx.glcanvas.GLCanvas):
         
         shapeName should one of "ball", "box", "capsule", "cone" or "tube"."""
         visibles = self.visiblesForObject(object)
+        visible = None
         if len(visibles) == 1:
-            visibles[0].setShape(shapeName)
+            visible = visibles[0]
+        elif isinstance(object, Stimulus):
+            visible = visibles[0 if visibles[0].isPath() else 1]
+        if visible is not None:
+            visible.setShape(shapeName)
+    
+    
+    def setVisibleOpacity(self, object, opacity):
+        """seVisibleOpacity(object, opacity)
+        
+        opacity should be a float value from 0.0 to 1.0."""
+        visibles = self.visiblesForObject(object)
+        visible = None
+        if len(visibles) == 1:
+            visible = visibles[0]
+        elif isinstance(object, Stimulus):
+            visible = visibles[0 if visibles[0].isPath() else 1]
+        if visible is not None:
+            visible.setOpacity(opacity)
     
     
     def setVisibleWeight(self, object, weight):
@@ -885,8 +1044,13 @@ class Display(wx.glcanvas.GLCanvas):
         
         weight should be a float value with 1.0 being a neutral weight."""
         visibles = self.visiblesForObject(object)
+        visible = None
         if len(visibles) == 1:
-            visibles[0].setWeight(weight)
+            visible = visibles[0]
+        elif isinstance(object, Stimulus):
+            visible = visibles[0 if visibles[0].isPath() else 1]
+        if visible is not None:
+            visible.setWeight(weight)
     
     
     def setArrangedAxis(self, object, axis = 'largest', recurse = False):
@@ -923,8 +1087,13 @@ class Display(wx.glcanvas.GLCanvas):
     
     def setVisiblePath(self, object, path, startVisible, endVisible):
         visibles = self.visiblesForObject(object)
+        visible = None
         if len(visibles) == 1:
-            visibles[0].setPath(path, startVisible, endVisible)
+            visible = visibles[0]
+        elif isinstance(object, Stimulus):
+            visible = visibles[0 if visibles[1].isPath() else 1]
+        if visible is not None:
+            visible.setPath(path, startVisible, endVisible)
     
     
     def selectObjectsMatching(self, predicate):
@@ -934,6 +1103,13 @@ class Display(wx.glcanvas.GLCanvas):
                 for visible in self.visiblesForObject(object):
                     matchingVisibles.append(visible)
         self.selectVisibles(matchingVisibles)
+    
+    
+    def selectObjects(self, objects = [], extend = False, findShortestPath = False):
+        visibles = []
+        for object in objects:
+            visibles.extend(self.visiblesForObject(object))
+        self.selectVisibles(visibles, extend, findShortestPath)
     
     
     def selectObject(self, object, extend = False, findShortestPath = False):
@@ -1075,27 +1251,10 @@ class Display(wx.glcanvas.GLCanvas):
                 visibleToHighlight.setGlowColor(self._primarySelectionColor)
             else:
                 visibleToHighlight.setGlowColor(self._secondarySelectionColor)
-            visibleToHighlight.setOpacity(1)
         for visibleToAnimate in visiblesToAnimate:
             visibleToAnimate.animateFlow()
-            visibleToAnimate.setOpacity(1)
         self.highlightedVisibles = visiblesToHighlight
         self.animatedVisibles = visiblesToAnimate
-        
-        if self._useGhosts:
-            # Dim everything that isn't selected, highlighted or animated.
-            selectionIsEmpty = len(self.selectedVisibles) == 0
-            for visibles in self.visibles.itervalues():
-                for visible in visibles:
-                    if selectionIsEmpty or visible in self.highlightedVisibles or visible in self.animatedVisibles:
-                        opacity = 1.0
-                    else:
-                        opacity = 0.1
-                        ancestors = visible.ancestors()
-                        for ancestor in ancestors:
-                            if ancestor in self.selectedVisibles:
-                                opacity = 0.5
-                    visible.setOpacity(opacity)
         
         self._suppressRefresh = False
         
@@ -1127,7 +1286,7 @@ class Display(wx.glcanvas.GLCanvas):
             if not visible.sizeIsFixed():
                 self.compositeDragger = osgManipulator.TabPlaneDragger()
             if self.orthoViewPlane == 'xy':
-                if visible.parent is None or not visible.sizeIsAbsolute:
+                if visible.parent is None or not visible.sizeIsAbsolute():
                     self.draggerOffset = (0.0, 0.0, visible.size()[2])
                 else:
                     self.draggerOffset = (0.0, 0.0, visible.size()[2] / visible.parent.worldSize()[2])
@@ -1136,7 +1295,7 @@ class Display(wx.glcanvas.GLCanvas):
                                 visible.sgNode.getMatrix() * \
                                 osg.Matrixd.translate(*self.draggerOffset)
             elif self.orthoViewPlane == 'xz':
-                if visible.parent is None or not visible.sizeIsAbsolute:
+                if visible.parent is None or not visible.sizeIsAbsolute():
                     self.draggerOffset = (0.0, visible.size()[1], 0.0)
                 else:
                     self.draggerOffset = (0.0, visible.size()[1] / visible.parent.worldSize()[1], 0.0)
@@ -1144,7 +1303,7 @@ class Display(wx.glcanvas.GLCanvas):
                 draggerMatrix = visible.sgNode.getMatrix() * \
                                 osg.Matrixd.translate(*self.draggerOffset)
             elif self.orthoViewPlane == 'yz':
-                if visible.parent is None or not visible.sizeIsAbsolute:
+                if visible.parent is None or not visible.sizeIsAbsolute():
                     self.draggerOffset = (visible.size()[0], 0.0, 0.0)
                 else:
                     self.draggerOffset = (visible.size()[0] / visible.parent.worldSize()[0], 0.0, 0.0)
@@ -1159,7 +1318,7 @@ class Display(wx.glcanvas.GLCanvas):
             self.simpleDragger = osgManipulator.TranslateAxisDragger()
             if not visible.sizeIsFixed():
                 self.compositeDragger = osgManipulator.TabBoxDragger()
-                if visible.parent is not None and visible.sizeIsAbsolute:
+                if visible.parent is not None and visible.sizeIsAbsolute():
                     pixelCutOff /= visible.parent.worldSize()[0]
             draggerMatrix = osg.Matrixd.rotate(pi / 2.0, osg.Vec3d(1, 0, 0)) * \
                             osg.Matrixd.scale(self.draggerScale, self.draggerScale, self.draggerScale) * \
@@ -1199,7 +1358,7 @@ class Display(wx.glcanvas.GLCanvas):
             matrix = self.activeDragger.getMatrix()
             position = matrix.getTrans()
             size = matrix.getScale()
-            if visible.parent is None or not visible.sizeIsAbsolute:
+            if visible.parent is None or not visible.sizeIsAbsolute():
                 parentSize = (1.0, 1.0, 1.0)
             else:
                 parentSize = visible.parent.worldSize()

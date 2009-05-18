@@ -1,4 +1,5 @@
 import wx
+from wx.py import dispatcher
 import os, platform, sys
 import xml.etree.ElementTree as ElementTree
 from xml.dom import minidom
@@ -30,6 +31,11 @@ class NeuroptikonFrame( wx.Frame ):
         self.SetSizer(sizer)
         
         self.SetMenuBar(self.menuBar())
+        self.displayChangedMenuState()
+        dispatcher.connect(self.displayChangedMenuState, ('set', 'useMouseOverSelecting'), self.display)
+        dispatcher.connect(self.displayChangedMenuState, ('set', 'showRegionNames'), self.display)
+        dispatcher.connect(self.displayChangedMenuState, ('set', 'showNeuronNames'), self.display)
+        dispatcher.connect(self.displayChangedMenuState, ('set', 'useGhosts'), self.display)
         
         self.finder = None
         
@@ -73,9 +79,17 @@ class NeuroptikonFrame( wx.Frame ):
         return frameElement
     
     
-    def toScriptFile(self, scriptFile, scriptRefs):
-        # TODO
-        pass
+    def toScriptFile(self, scriptFile, networkScriptRefs):
+        scriptFile.write('\n' + gettext('# Create a display') + '\n\n')
+
+        displayNum = self.display.network.displays.index(self.display)
+        if displayNum == 0:
+            displayRef = 'display'
+        else:
+            displayRef = 'display' + str(displayNum)
+            scriptFile.write(displayRef + ' = displayNetwork(network)\n')
+        
+        self.display.toScriptFile(scriptFile, networkScriptRefs, displayRef)
     
     
     def loadBitmap(self, fileName):
@@ -123,11 +137,10 @@ class NeuroptikonFrame( wx.Frame ):
         
         viewMenu = wx.Menu()
         self.Bind(wx.EVT_MENU, wx.GetApp().onOpenInspector, viewMenu.Append(wx.NewId(), gettext('Open Inspector Window\tCtrl-I'), gettext('Open the inspector window')))
-        self.hoverSelectItem = viewMenu.Append(wx.NewId(), gettext('Use Mouse-Over Highlighting'), gettext('Automatically select the object under the mouse'), True)
-        self.Bind(wx.EVT_MENU, self.onUseHoverSelect, self.hoverSelectItem)
+        self.mouseOverSelectingItem = viewMenu.Append(wx.NewId(), gettext('Use Mouse-Over Highlighting'), gettext('Automatically select the object under the mouse'), True)
+        self.Bind(wx.EVT_MENU, self.OnUseMouseOverSelecting, self.mouseOverSelectingItem)
         viewMenu.AppendSeparator()
         self.showRegionNamesMenuItem = viewMenu.Append(wx.NewId(), gettext('Show Region Names'), gettext('Show/hide the region names'), True)
-        self.showRegionNamesMenuItem.Check(True)
         self.Bind(wx.EVT_MENU, self.onShowHideRegionNames, self.showRegionNamesMenuItem)
         self.showNeuronNamesMenuItem = viewMenu.Append(wx.NewId(), gettext('Show Neuron Names'), gettext('Show/hide the neuron names'), True)
         self.Bind(wx.EVT_MENU, self.onShowHideNeuronNames, self.showNeuronNamesMenuItem)
@@ -145,6 +158,13 @@ class NeuroptikonFrame( wx.Frame ):
         
         return menuBar
     
+    
+    def displayChangedMenuState(self, sender = None, signal = None):
+        self.mouseOverSelectingItem.Check(self.display.useMouseOverSelecting())
+        self.showRegionNamesMenuItem.Check(self.display.showRegionNames())
+        self.showNeuronNamesMenuItem.Check(self.display.showNeuronNames())
+        self.useGhostsMenuItem.Check(self.display.useGhosts())
+        
     
     def onActivate(self, event):
         wx.GetApp().inspector.inspectDisplay(self.display)
@@ -207,8 +227,8 @@ class NeuroptikonFrame( wx.Frame ):
             self.display.selectObjectsMatching(self.finder.predicate)
     
     
-    def onUseHoverSelect(self, event):
-        self.display.useHoverSelect = not self.display.useHoverSelect
+    def OnUseMouseOverSelecting(self, event):
+        self.display.setUseMouseOverSelecting(not self.display.useMouseOverSelecting())
     
     
     def onShowHideRegionNames(self, event):
@@ -281,7 +301,9 @@ class NeuroptikonFrame( wx.Frame ):
         scriptRefs = {}
         network = self.display.network
         
-        scriptFile.write('from datetime import datetime, date, time\n')
+        scriptFile.write('from datetime import datetime, date, time\n\n')
+        
+        scriptFile.write('display.autoVisualize = False\n\n')
         
         try:
             # Serialize the network
@@ -322,7 +344,7 @@ class NeuroptikonFrame( wx.Frame ):
             if not savePath.endswith('.' + extension):
                 savePath += '.' + extension
             if extension == 'xml':
-                network.savePath = savePath
+                self.display.network.savePath = savePath
                 self.saveNetworkAndDisplaysAsXML(savePath)
             else:
                 self.saveNetworkAndDisplaysAsScript(savePath)
