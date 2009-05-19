@@ -712,10 +712,11 @@ class Visible(object):
     
     def setSize(self, size):
         """ Set the size of this visible relative to its parent or in absolute space (depending on the current value of sizeIsAbsolute)."""
-        self._size = size
-        self.updateTransform()
-        dispatcher.send(('set', 'size'), self)
-        self._arrangeChildren()
+        if self._size != size:
+            self._size = size
+            self.updateTransform()
+            dispatcher.send(('set', 'size'), self)
+            self._arrangeChildren()
     
     
     def sizeIsFixed(self):
@@ -781,9 +782,10 @@ class Visible(object):
     
     
     def setRotation(self, rotation):
-        self._rotation = rotation
-        self.updateTransform()
-        dispatcher.send(('set', 'rotation'), self)
+        if self._rotation != rotation:
+            self._rotation = rotation
+            self.updateTransform()
+            dispatcher.send(('set', 'rotation'), self)
     
     
     def weight(self):
@@ -791,30 +793,32 @@ class Visible(object):
     
     
     def setWeight(self, weight):
-        self._weight = weight
-        if self._path is None:
-            self.updateTransform()
-        else:
-            self.setPath(self._path)
-        dispatcher.send(('set', 'weight'), self)
+        if self._weight != weight:
+            self._weight = weight
+            if self._path is None:
+                self.updateTransform()
+            else:
+                self.setPath(self._path)
+            dispatcher.send(('set', 'weight'), self)
     
     
     def addChildVisible(self, childVisible):
-        self.children.append(childVisible)
-        childVisible.parent = self
-        self.childGroup.addChild(childVisible.sgNode)
-        dispatcher.connect(self.childArrangedWeightChanged, ('set', 'arrangedWeight'), childVisible)
-        if childVisible.sizeIsAbsolute():
-            for ancestor in childVisible.ancestors():
-                dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'position'), ancestor)
-                dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'size'), ancestor)
-                dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'rotation'), ancestor)
-        self._stateSet.setAttributeAndModes(osg.PolygonMode(osg.PolygonMode.FRONT_AND_BACK, osg.PolygonMode.LINE), osg.StateAttribute.ON)
-        if self.arrangedAxis is None:
-            childVisible.updateTransform()
-        else:
-            self._arrangeChildren()
-        dispatcher.send(('set', 'children'), self)
+        if childVisible not in self.children:
+            self.children.append(childVisible)
+            childVisible.parent = self
+            self.childGroup.addChild(childVisible.sgNode)
+            dispatcher.connect(self.childArrangedWeightChanged, ('set', 'arrangedWeight'), childVisible)
+            if childVisible.sizeIsAbsolute():
+                for ancestor in childVisible.ancestors():
+                    dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'position'), ancestor)
+                    dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'size'), ancestor)
+                    dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'rotation'), ancestor)
+            self._stateSet.setAttributeAndModes(osg.PolygonMode(osg.PolygonMode.FRONT_AND_BACK, osg.PolygonMode.LINE), osg.StateAttribute.ON)
+            if self.arrangedAxis is None:
+                childVisible.updateTransform()
+            else:
+                self._arrangeChildren()
+            dispatcher.send(('set', 'children'), self)
     
     
     def removeChildVisible(self, childVisible):
@@ -1039,12 +1043,13 @@ class Visible(object):
     
     
     def setTexture(self, texture):
-        if texture is None:
-            self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXTURE)
-        else:
-            self._stateSet.setTextureAttributeAndModes(0, texture.textureData(), osg.StateAttribute.ON)
-        self._staticTexture = texture
-        dispatcher.send(('set', 'texture'), self)
+        if self._staticTexture != texture:
+            if texture is None:
+                self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXTURE)
+            else:
+                self._stateSet.setTextureAttributeAndModes(0, texture.textureData(), osg.StateAttribute.ON)
+            self._staticTexture = texture
+            dispatcher.send(('set', 'texture'), self)
     
     
     def texture(self):
@@ -1052,14 +1057,15 @@ class Visible(object):
     
         
     def setTextureTransform(self, transform):
-        if transform is None:
-            self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXMAT)
-        else:
-            textureMatrix = osg.TexMat()
-            textureMatrix.setMatrix(transform)
-            self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
-        self._staticTextureTransform = transform
-        dispatcher.send(('set', 'textureTransform'), self)
+        if self._staticTextureTransform is not transform:
+            if transform is None:
+                self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXMAT)
+            else:
+                textureMatrix = osg.TexMat()
+                textureMatrix.setMatrix(transform)
+                self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
+            self._staticTextureTransform = transform
+            dispatcher.send(('set', 'textureTransform'), self)
     
     
     def setFlowDirection(self, fromVisible, toVisible, flowTo=True, flowFrom=False):
