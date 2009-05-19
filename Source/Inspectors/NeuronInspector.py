@@ -12,7 +12,7 @@ class NeuronInspector( ObjectInspector ):
     
     @classmethod
     def inspectedAttributes(cls):
-        return ['neuronClass', 'function', 'polarity', 'neurotransmitter']
+        return ['neuronClass', 'function', 'polarity', 'neurotransmitters']
     
     
     def _appendNeuronClass(self, neuronClass, indent):
@@ -24,7 +24,7 @@ class NeuronInspector( ObjectInspector ):
     def objectSizer(self, parentWindow):
         if not hasattr(self, '_sizer'):
             self._sizer = wx.FlexGridSizer(2, 2, 8, 8)
-            self._sizer.SetFlexibleDirection(wx.HORIZONTAL)
+            self._sizer.SetFlexibleDirection(wx.HORIZONTAL | wx.VERTICAL)
             
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Class:')))
             self._neuronClassChoice = wx.Choice(parentWindow, wx.ID_ANY)
@@ -57,15 +57,18 @@ class NeuronInspector( ObjectInspector ):
             self._sizer.Add(self._polarityChoice)
             parentWindow.Bind(wx.EVT_CHOICE, self.onChoosePolarity, self._polarityChoice)
             
-            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Neurotransmitter:')))
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Neurotransmitters:')))
+            self._neurotransmittersOptions = wx.BoxSizer(wx.VERTICAL)
+            self._neurotransmittersSizer = wx.FlexGridSizer(0, 2, 2, 5)
+            self._neurotransmittersSizer.SetFlexibleDirection(wx.HORIZONTAL)
+            self._neurotransmittersOptions.Add(self._neurotransmittersSizer, 1, wx.EXPAND)
             self._neurotransmitterChoice = wx.Choice(parentWindow, wx.ID_ANY)
-            for neurotransmitter in wx.GetApp().library.neurotransmitters():
-                self._neurotransmitterChoice.Append(neurotransmitter.name, neurotransmitter)
-            self._unknownNeurotransmitterId = self._neurotransmitterChoice.Append(gettext('Unknown'), None)
-            self._multipleNeurotransmittersId = wx.NOT_FOUND
-            self._sizer.Add(self._neurotransmitterChoice)
-            parentWindow.Bind(wx.EVT_CHOICE, self.onChooseNeurotransmitter, self._neurotransmitterChoice)
+            self._neurotransmittersOptions.Add(self._neurotransmitterChoice)
+            self._sizer.Add(self._neurotransmittersOptions)
+            parentWindow.Bind(wx.EVT_CHOICE, self.onAddNeurotransmitter, self._neurotransmitterChoice)
             
+            self._parentWindow = parentWindow
+        
         return self._sizer
     
     
@@ -109,21 +112,33 @@ class NeuronInspector( ObjectInspector ):
                 self._multiplePolaritiesId = self._polarityChoice.Append(gettext('Multiple values'), None)
                 self._polarityChoice.SetSelection(self._multiplePolaritiesId)
         
-        if attribute is None or attribute == 'neurotransmitter':
-            # Choose the appropriate item in the pop-up menu.
-            if self.objects.haveEqualAttr('neurotransmitter'):
-                if self.objects[0].neurotransmitter is None:
-                    self._neurotransmitterChoice.SetSelection(self._unknownNeurotransmitterId)
-                else:
-                    self._neurotransmitterChoice.SetStringSelection(self.objects[0].neurotransmitter.name)
+        if attribute is None or attribute == 'neurotransmitters':
+            if self.objects.haveEqualAttr('neurotransmitters'):
+                self._neurotransmittersSizer.Clear(True)
+                self._neurotransmitterChoice.Clear()
+                self._neurotransmitterChoice.Append(gettext('Add...'))
+                self._neurotransmitterChoice.SetSelection(0)
+                for neurotransmitter in wx.GetApp().library.neurotransmitters():
+                    if neurotransmitter in self.objects[0].neurotransmitters:
+                        self._neurotransmittersSizer.Add(wx.StaticText(self._parentWindow, wx.ID_ANY, neurotransmitter.name))
+                        removeButton = wx.Button(self._parentWindow, wx.ID_ANY, gettext('Remove'), style = wx.BU_EXACTFIT)
+                        removeButton.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+                        removeButton.SetSize(wx.Size(60, removeButton.GetSize().GetHeight()))
+                        removeButton.SetMinSize(removeButton.GetSize())
+                        self._parentWindow.Bind(wx.EVT_BUTTON, self.onRemoveNeurotransmitter, removeButton)
+                        self._neurotransmittersSizer.Add(removeButton, 0, 0, 0, neurotransmitter)
+                    else:
+                        self._neurotransmitterChoice.Append(neurotransmitter.name, neurotransmitter)
+                self._neurotransmitterChoice.Enable(self._neurotransmitterChoice.GetCount() > 1)
             else:
-                self._multipleNeurotransmittersId = self._neurotransmitterChoice.Append(gettext('Multiple values'), None)
-                self._neurotransmitterChoice.SetSelection(self._multipleNeurotransmittersId)
+                self._neurotransmittersSizer.Add(wx.StaticText(self._parentWindow, wx.ID_ANY, gettext('Multiple values')))
+                self._neurotransmitterChoice.Disable()
         
         self._sizer.Layout()
         
     
     def onChooseNeuronClass(self, event):
+        self.updatingObjects = True
         neuronClass = self._neuronClassChoice.GetClientData(self._neuronClassChoice.GetSelection())
         for neuron in self.objects:
             neuron.neuronClass = neuronClass
@@ -131,9 +146,11 @@ class NeuronInspector( ObjectInspector ):
         if self._multipleNeuronClassesId != wx.NOT_FOUND:
             self._neuronClassChoice.Delete(self._multipleNeuronClassesId)
             self._multipleNeuronClassesId = wx.NOT_FOUND
+        self.populateObjectSizer('neuronClass')
         
     
     def onChooseFunction(self, event):
+        self.updatingObjects = True
         function = self._functionChoice.GetClientData(self._functionChoice.GetSelection())
         for neuron in self.objects:
             neuron.function = function
@@ -141,9 +158,11 @@ class NeuronInspector( ObjectInspector ):
         if self._multipleFunctionsId != wx.NOT_FOUND:
             self._functionChoice.Delete(self._multipleFunctionsId)
             self._multipleFunctionsId = wx.NOT_FOUND
+        self.populateObjectSizer('function')
         
     
     def onChoosePolarity(self, event):
+        self.updatingObjects = True
         polarity = self._polarityChoice.GetClientData(self._polarityChoice.GetSelection())
         for neuron in self.objects:
             neuron.polarity = polarity
@@ -151,13 +170,21 @@ class NeuronInspector( ObjectInspector ):
         if self._multiplePolaritiesId != wx.NOT_FOUND:
             self._polarityChoice.Delete(self._multiplePolaritiesId)
             self._multiplePolaritiesId = wx.NOT_FOUND
-        
+        self.populateObjectSizer('polarity')
     
-    def onChooseNeurotransmitter(self, event):
+    
+    def onAddNeurotransmitter(self, event):
+        self.updatingObjects = True
         neurotransmitter = self._neurotransmitterChoice.GetClientData(self._neurotransmitterChoice.GetSelection())
         for neuron in self.objects:
-            neuron.neurotransmitter = neurotransmitter
-        # Remove the "multiple values" choice now that all of the neurons have the same value.
-        if self._multipleNeurotransmittersId != wx.NOT_FOUND:
-            self._neurotransmitterChoice.Delete(self._multipleNeurotransmittersId)
-            self._multipleNeurotransmittersId = wx.NOT_FOUND
+            neuron.neurotransmitters.append(neurotransmitter)
+        self.populateObjectSizer('neurotransmitters')
+    
+    
+    def onRemoveNeurotransmitter(self, event):
+        self.updatingObjects = True
+        sizerItem = self._neurotransmittersSizer.GetItem(event.GetEventObject())
+        neurotransmitter = sizerItem.GetUserData()
+        for neuron in self.objects:
+            neuron.neurotransmitters.remove(neurotransmitter)
+        self.populateObjectSizer('neurotransmitters')

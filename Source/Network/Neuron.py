@@ -21,10 +21,15 @@ class Neuron(Object):
     
     
     def __init__(self, network, neuronClass = None, *args, **keywordArgs):
+        # Upconvert old 'neurotransmitter' singleton param to list expected by new 'neurotransmitters' param.
+        if 'neurotransmitter' in keywordArgs:
+            keywordArgs['neurotransmitters'] = [keywordArgs['neurotransmitter']]
+            del keywordArgs['neurotransmitter']
+        
         # Pull out the keyword arguments specific to this class before we call super.
         # We need to do this so we can know if the caller specified an argument or not.
         # For example, the caller might specify a neuron class and one attribute to override.  We need to know which attributes _not_ to set.
-        localAttrNames = ['activation', 'function', 'neurotransmitter', 'polarity', 'region']
+        localAttrNames = ['activation', 'function', 'neurotransmitters', 'polarity', 'region']
         localKeywordArgs = {}
         for attrName in localAttrNames:
             if attrName in keywordArgs:
@@ -37,7 +42,7 @@ class Neuron(Object):
         self.neuronClass = neuronClass
         
         for attrName in localAttrNames:
-            attrValue = None
+            attrValue = [] if attrName == 'neurotransmitters' else None
             if attrName in localKeywordArgs:
                 attrValue = localKeywordArgs[attrName]  # The user has explicitly set the attribute.
             elif self.neuronClass:
@@ -57,12 +62,16 @@ class Neuron(Object):
         object.neuronClass = wx.GetApp().library.neuronClass(classId)
         if classId is not None and object.neuronClass is None:
             raise ValueError, gettext('Neuron class "%s" does not exist') % (classId)
-        ntId = xmlElement.findtext('Neurotransmitter')
-        if ntId is None:
-            ntId = xmlElement.findtext('neurotransmitter')
-        object.neurotransmitter = wx.GetApp().library.neurotransmitter(ntId)
-        if ntId is not None and  object.neurotransmitter is None:
-            raise ValueError, gettext('Neurotransmitter "%s" does not exist') % (ntId)
+        object.neurotransmitters = []
+        for ntName in ['Neurotransmitter', 'neurotransmitter']:
+            for ntElement in xmlElement.findall(ntName):
+                ntId = ntElement.text
+                if ntId is not None:
+                    nt = wx.GetApp().library.neurotransmitter(ntId)
+                    if nt is None:
+                        raise ValueError, gettext('Neurotransmitter "%s" does not exist') % (ntId)
+                    else:
+                        object.neurotransmitters.append(nt)
         object.activation = xmlElement.findtext('Activation')
         if object.activation is None:
             object.activation = xmlElement.findtext('activation')
@@ -93,8 +102,8 @@ class Neuron(Object):
         neuronElement = Object.toXMLElement(self, parentElement)
         if self.neuronClass is not None:
             ElementTree.SubElement(neuronElement, 'Class').text = self.neuronClass.identifier
-        if self.neurotransmitter is not None:
-            ElementTree.SubElement(neuronElement, 'Neurotransmitter').text = self.neurotransmitter.identifier
+        for neurotransmitter in self.neurotransmitters:
+            ElementTree.SubElement(neuronElement, 'Neurotransmitter').text = neurotransmitter.identifier
         if self.activation is not None:
             ElementTree.SubElement(neuronElement, 'Activation').text = self.activation
         if self.function is not None:
@@ -116,8 +125,11 @@ class Neuron(Object):
         args, keywords = Object.creationScriptParams(self, scriptRefs)
         if self.neuronClass is not None:
             keywords['neuronClass'] = 'library.neuronClass(\'' + self.neuronClass.identifier + '\')'
-        if self.neurotransmitter is not None:
-            keywords['neurotransmitter'] = 'library.neurotransmitter(\'' + self.neurotransmitter.identifier + '\')'
+        if len(self.neurotransmitters) > 0:
+            ntCalls = []
+            for neurotransmitter in self.neurotransmitters:
+                ntCalls.append('library.neurotransmitter(\'' + neurotransmitter.identifier + '\')')
+            keywords['neurotransmitters'] = '[' + ', '.join(ntCalls) + ']'
         if self.activation is not None:
             keywords['activation'] = '\'' + self.activation + '\''  # TODO: this should be 'NeuralActivation.' + self.activation
         if self.function is not None:

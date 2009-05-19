@@ -75,6 +75,7 @@ class ObjectInspector(Inspector):
         self.display = display
         
         self.objects = ObjectList()
+        self.updatingObjects = False
         for visible in display.selection():
             if visible.client.__class__ == self.__class__.objectClass():
                 self.objects.append(visible.client)
@@ -121,7 +122,8 @@ class ObjectInspector(Inspector):
     
     
     def inspectedAttributeChanged(self, signal, sender, **arguments):
-        self.populateObjectSizer(signal[1])
+        if not self.updatingObjects:
+            self.populateObjectSizer(signal[1])
     
     
     def selectObject(self, object):
