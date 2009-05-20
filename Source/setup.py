@@ -20,7 +20,7 @@ app_version = '0.9'	# TBD: will this already by set in wx for the app?
 
 setup_options = dict()
 
-resources = ['Images', 'Inspectors', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Textures']
+resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Textures']
 
 sys.path.append('lib/CrossPlatform')
 
@@ -49,14 +49,18 @@ if sys.platform == 'darwin':
     py2app_options['dist_dir'] = dist_dir
     
     py2app_options['packages'] = ['wx', 'xlrd']
-    py2app_options['excludes'] = ['matplotlib', 'scipy']        resources.append('../Artwork/Neuroptikon.icns')    resources.append('lib/Darwin/fdp')
+    py2app_options['excludes'] = ['matplotlib', 'scipy']
+    
+    resources.append('../Artwork/Neuroptikon.icns')
+    resources.append('lib/Darwin/fdp')
     resources.append('lib/Darwin/graphviz')
     resources.append('lib/Darwin/osgdb_qt.so')
     py2app_options['resources'] = ','.join(resources)
     
     py2app_options['argv_emulation'] = True
     py2app_options['plist'] = dict()
-    py2app_options['plist']['CFBundleIconFile'] = 'Neuroptikon.icns'    py2app_options['plist']['PyResourcePackages'] = ['lib/python2.5/lib-dynload']
+    py2app_options['plist']['CFBundleIconFile'] = 'Neuroptikon.icns'
+    py2app_options['plist']['PyResourcePackages'] = ['lib/python2.5/lib-dynload']
     py2app_options['plist']['LSEnvironment'] = dict(DYLD_LIBRARY_PATH = '../Resources')
     
     setup_options['options'] = dict(py2app = py2app_options)

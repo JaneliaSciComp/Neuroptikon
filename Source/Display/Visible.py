@@ -976,38 +976,6 @@ class Visible(object):
 #        return True
     
     
-#    def graphvizRecordLabel(self):
-#        labels = []
-#        for child in self.children:
-#            if len(child.children) == 0:
-#                labels.append(child.graphvizRecordLabel())
-#            else:
-#                subLabel = child.graphvizRecordLabel()
-#                if child.arrangedAxis == self.arrangedAxis:
-#                    labels.append('{' + subLabel + '}')
-#                else:
-#                    labels.append('{{' + subLabel + '}}')
-#        return '|'.join(labels)
-    
-    
-    def graphvizAttributes(self):
-        pos = self.worldPosition()
-        size = self.worldSize()
-        attributes = {'width': str(size[0] * 1000.0 / 72.0), 
-                      'height': str(size[1] * 1000.0 / 72.0), 
-                      'fixedsize': 'true', 
-                      'pos': '%f,%f' % (pos[0] * 1000.0 / 72.0, pos[1] * 1000.0 / 72.0)}
-        if self.positionIsFixed():
-            attributes['pin'] = 'true'
-        if False:   #len(self.children) > 0:
-            attributes['shape'] = 'record'
-            attributes['label'] = '{<00>|<10>|<20>|<30>|<40>|<50>|<60>|<70>|<80>}|{<01>|<11>|<21>|<31>|<41>|<51>|<61>|<71>|<81>}|{<02>|<12>|<22>|<32>|<42>|<52>|<62>|<72>|<82>}|{<03>|<13>|<23>|<33>|<43>|<53>|<63>|<73>|<83>}|{<04>|<14>|<24>|<34>|<44>|<54>|<64>|<74>|<84>}|{<05>|<15>|<25>|<35>|<45>|<55>|<65>|<75>|<85>}|{<06>|<16>|<26>|<36>|<46>|<56>|<66>|<76>|<86>}|{<07>|<17>|<27>|<37>|<47>|<57>|<67>|<77>|<87>}|{<08>|<18>|<28>|<38>|<48>|<58>|<68>|<78>|<88>}'
-        else:
-            attributes['shape'] = 'box'
-            attributes['label'] = ''
-        return attributes
-    
-    
     def addDependency(self, otherVisible, attribute):
         self._dependencies.add(otherVisible)
         dispatcher.connect(self.dependentVisibleChanged, ('set', attribute), otherVisible)

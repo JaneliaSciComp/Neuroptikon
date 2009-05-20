@@ -3,9 +3,11 @@ from wx.py import dispatcher
 import os, platform, sys
 import xml.etree.ElementTree as ElementTree
 from xml.dom import minidom
-from Display.Display import Display
+import Display, Display.Display
 from Network.Network import Network
 from Search.Finder import Finder
+import Layouts
+from Display.LayoutMenuItem import LayoutMenuItem
 
 
 class NeuroptikonFrame( wx.Frame ):
@@ -17,7 +19,7 @@ class NeuroptikonFrame( wx.Frame ):
         
         self.splitter = wx.SplitterWindow(self, wx.ID_ANY, style = wx.SP_LIVE_UPDATE)
         
-        self.display = Display(self.splitter)
+        self.display = Display.Display.Display(self.splitter)
         self.display.setNetwork(network)
         
         self._console = wx.py.shell.Shell(self.splitter, wx.ID_ANY, locals = self.scriptLocals(), introText=gettext('Welcome to Neuroptikon.'))
@@ -149,7 +151,11 @@ class NeuroptikonFrame( wx.Frame ):
         self.useGhostsMenuItem = viewMenu.Append(wx.NewId(), gettext('Use Ghosting'), gettext('Dim objects that are not currently selected'), True)
         self.Bind(wx.EVT_MENU, self.onUseGhosts, self.useGhostsMenuItem)
         viewMenu.AppendSeparator()
-        self.Bind(wx.EVT_MENU, self.display.onAutoLayout, viewMenu.Append(wx.NewId(), gettext('Layout Objects\tCtrl-L'), gettext('Automatically positions all objects')))
+        for layoutId, layoutClass in Display.layoutClasses().iteritems():
+            menuItem = viewMenu.Append(layoutId, gettext('%s Layout') % layoutClass.name())
+            self.Bind(wx.EVT_MENU, self.display.onLayout, menuItem)
+            self.Bind(wx.EVT_UPDATE_UI, self.onUpdateLayoutUI, menuItem)
+        self.Bind(wx.EVT_MENU, self.display.onLayout, viewMenu.Append(wx.NewId(), gettext('Repeat Last Layout\tCtrl-L')))
         viewMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, self.display.onCenterView, viewMenu.Append(wx.NewId(), gettext('Center View'), gettext('Center the display on all objects')))
         viewMenu.AppendSeparator()
@@ -245,8 +251,14 @@ class NeuroptikonFrame( wx.Frame ):
     
     def onUseGhosts(self, event):
         self.display.setUseGhosts(not self.display.useGhosts())
-        
-        
+    
+    
+    def onUpdateLayoutUI(self, event):
+        menuItem = event.GetEventObject().FindItemById(event.GetId())
+        layoutClass = Display.layoutClasses()[event.GetId()]
+        menuItem.Enable(layoutClass.canLayoutDisplay(self.display))
+    
+    
     def onCloseWindow(self, event):
         self.display.deselectAll()
         self.display.setShowFlow(False)

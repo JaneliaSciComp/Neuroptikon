@@ -21,52 +21,8 @@ from wx.py import dispatcher
 from networkx import *
 from math import pi, fabs
 from datetime import datetime
-from numpy import diag, mat, sign, inner, isinf, zeros
-from numpy.linalg import pinv, eigh
 import os, platform, cPickle
 import xml.etree.ElementTree as ElementTree
-
-try:
-    import pygraphviz
-except ImportError:
-    pygraphviz = None
-    try:
-        import pydot
-    except ImportError:
-        pydot = None
-
-# On Windows pydot 1.0.2 doesn't work right out of the box.  Two changes are required to pydot.py:
-# 1. Add an additional argument to the subprocess.Popen call in Dot.create to keep a command window from flashing every time layout occurs:
-#        creationflags = 0x8000000
-# 2. To allow pydot to find the graphviz executables when no "SOFTWARE/ATT/Graphviz" registry entry exists replace the existing "Method 1" code in find_graphviz() with the following:
-#        # Get the GraphViz install path from the registry
-#        
-#        try:
-#            import winreg
-#        except:
-#            try:
-#                import _winreg as winreg
-#            except:
-#                winreg = None
-#        
-#        if winreg is not None:
-#            hkey = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
-#            
-#            try:
-#                gvkey = winreg.OpenKey(hkey, "SOFTWARE\\ATT\\Graphviz", 0, winreg.KEY_READ)
-#                
-#                if gvkey is not None:
-#                    path = winreg.QueryValueEx(gvkey, "InstallPath")[0]
-#                    
-#                    if path is not None:
-#                        progs = __find_executables(path + os.sep + "bin")
-#                        if progs is not None :
-#                            #print "Used Windows registry"
-#                            return progs
-#            except:
-#                pass
-#            finally:
-#                winreg.CloseKey(hkey)
 
 
 class Display(wx.glcanvas.GLCanvas):
@@ -196,6 +152,8 @@ class Display(wx.glcanvas.GLCanvas):
         
         dispatcher.connect(self.onSelectionOrShowFlowChanged, ('set', 'selection'), self)
         dispatcher.connect(self.onSelectionOrShowFlowChanged, ('set', 'showFlow'), self)
+        
+        self.lastUsedLayout = None
     
     
     def fromXMLElement(self, xmlElement):
@@ -640,6 +598,11 @@ class Display(wx.glcanvas.GLCanvas):
     
     def visiblesForObject(self, object):
         return self.visibles[object.networkId] if object and object.networkId in self.visibles else []
+    
+    
+    def Refresh(self, *args, **keywordArgs):
+        if not self._suppressRefresh:
+            wx.glcanvas.GLCanvas.Refresh(self, *args, **keywordArgs)
     
     
     def visibleChanged(self, sender, signal):
@@ -1164,7 +1127,7 @@ class Display(wx.glcanvas.GLCanvas):
                     visible = list(self.selectedVisibles)[0]
                     if visible.isDraggable():
                         self.addDragger(visible)
-                
+            
             dispatcher.send(('set', 'selection'), self)
         
         self.hoverSelected = self.hoverSelecting
@@ -1400,166 +1363,43 @@ class Display(wx.glcanvas.GLCanvas):
             self.draggerLOD = None
     
     
-    def onAutoLayout(self, event):
-        self.autoLayout()
+    def onLayout(self, event):
+        layoutClasses = sys.modules['Display'].layoutClasses()
+        layoutId = event.GetId()
+        if layoutId in layoutClasses:
+            layout = layoutClasses[layoutId]()
+            self.lastUsedLayout = layout
+        else:
+            layout = None
+        self.performLayout(layout)
     
     
-    def autoLayout(self, method=None):
-        """Automatically layout the displayed network without moving visibles with fixed positions (much)"""
+    def autoLayout(self, method = None):
+        # Backwards compatibility method, new code should use performLayout() instead.
+        
+        if (method == 'graphviz' or method is None) and self.viewDimensions == 2:
+            from Layouts.GraphvizLayout import GraphvizLayout
+            self.performLayout(GraphvizLayout())
+        elif (method == 'spectral' or method is None) and self.viewDimensions == 3:
+            from Layouts.SpectralLayout import SpectralLayout
+            self.performLayout(SpectralLayout())
+    
+    
+    def performLayout(self, layout = None):
+        if layout is None or not layout.__class__.canLayoutDisplay(self):
+            layout = self.lastUsedLayout
+        if layout is None or not layout.__class__.canLayoutDisplay(self):
+            # Pick the first layout class capable of laying out the display.
+            for layoutClass in sys.modules['Display'].layoutClasses().itervalues():
+                if layoutClass.canLayoutDisplay(self):
+                    layout = layoutClass()
+                    self.lastUsedLayout = layout
+                    break
         self._suppressRefresh = True
-        if method == 'spectral' or (method is None and self.viewDimensions == 3):
-            nodes = []
-            edges = []
-            for visibles in self.visibles.itervalues():
-                for visible in visibles:
-                    if visible.isPath():
-                        edges.append(visible)
-                    elif visible.parent is None:
-                        nodes.append(visible)
-            n=len(nodes)
-            if n > 0:
-                A = zeros((n, n))
-                for edge in edges:
-                    n1 = nodes.index(edge.pathStart.rootVisible())
-                    n2 = nodes.index(edge.pathEnd.rootVisible())
-                    A[n1, n2] = A[n1, n2] + 1
-                    if isinstance(edge.client, GapJunction):
-                        A[n2, n1] = A[n2, n1] + 1
-                #print A
-                A_prime = A.T   #conj().transpose()?
-                # This is equivalent to the MATLAB code provided by Mitya:
-                #   n=size(A,1);
-                #   c=full((A+A')/2);
-                #   d=diag(sum(c));
-                #   l=d-c;
-                #   b=sum(c.*sign(full(A-A')),2);
-                #   z=pinv(c)*b;
-                #   q=d^(-1/2)*l*d^(-1/2);
-                #   [vx,lambda]=eig(q);
-                #   x=d^(-1/2)*vx(:,2);
-                #   y=d^(-1/2)*vx(:,3);
-                c = (A + A_prime) / 2.0
-                d = diag(c.sum(0))
-                l = mat(d - c)
-                b = (c * sign(A - A_prime)).sum(1).reshape(1, n)
-                z = inner(pinv(c), b)
-                d2 = mat(d**-0.5)
-                d2[isinf(d2)] = 0
-                q = d2 * l * d2
-                (eVal, eVec) = eigh(q)
-                x = d2 * mat(eVec[:,1])
-                y = d2 * mat(eVec[:,2])
-                xMin, xMax = x.min(), x.max()
-                xScale = 1.0 / (xMax - xMin)
-                xOff = (xMax + xMin) / 2.0
-                yMin, yMax = y.min(), y.max()
-                yScale = 1.0 / (yMax - yMin)
-                yOff = (yMax + yMin) / 2.0
-                zMin, zMax = z.min(), z.max()
-                zScale = 1.0 / (zMax - zMin)
-                zOff = (zMax + zMin) / 2.0
-                for i in range(n):
-                    nodes[i].setPosition(((x[i,0] - xOff) * xScale, (y[i,0] - yOff) * yScale, (z[i,0] - zOff) * zScale))
-        elif (method == 'graphviz' or (method is None and self.viewDimensions == 2)) and (pygraphviz is not None or pydot is not None):
-            graphVisibles = {}
-            edgeVisibles = []
-            if pygraphviz is not None:  # Use pygraphviz if it's available as it's faster than pydot.
-                graph = pygraphviz.AGraph(strict = False, overlap = 'vpsc', sep = '+1', splines = 'polyline')
-            else:
-                graph = pydot.Dot(graph_type = 'graph', overlap = 'vpsc', sep = '+1', splines = 'polyline')
-            for visibles in self.visibles.itervalues():
-                for visible in visibles:
-                    if visible.isPath():
-                        edgeVisibles.append(visible)   # don't add edges until all the nodes have been added
-                    elif len(visible.children) == 0:    #visible.parent is None:
-                        graphVisibles[str(visible.displayId)] = visible
-                        if pygraphviz is not None:
-                            graph.add_node(str(visible.displayId), **visible.graphvizAttributes())
-                        else:
-                            graph.add_node(pydot.Node(str(visible.displayId), **visible.graphvizAttributes()))
-            for edgeVisible in edgeVisibles:
-                graphVisibles[str(edgeVisible.displayId)] = edgeVisible
-                if pygraphviz is not None:
-                    graph.add_edge(str(edgeVisible.pathStart.displayId), str(edgeVisible.pathEnd.displayId), str(edgeVisible.displayId))
-                else:
-                    graph.add_edge(pydot.Edge(str(edgeVisible.pathStart.displayId), str(edgeVisible.pathEnd.displayId), tooltip = str(edgeVisible.displayId)))
-            
-            if pygraphviz is not None:
-                #print mainGraph.to_string()
-                graph.layout(prog='fdp')
-                graphData = graph.to_string()
-            else:
-                graphData = graph.create_dot(prog='fdp')
-                graph = pydot.graph_from_dot_data(graphData)
-            
-            # Get the bounding box of the entire graph so we can center it in the display.
-            # The 'bb' attribute doesn't seem to be exposed by pygraphviz so we have to hack it out of the text dump.
-            import re
-            matches = re.search('bb="([0-9,]+)"', graphData)
-            bbx1, bby1, bbx2, bby2 = matches.group(1).split(',')
-            width, height = (float(bbx2) - float(bbx1), float(bby2) - float(bby1))
-            if width > height:
-                scale = 1.0 / width
-            else:
-                scale = 1.0 / height
-            dx, dy = ((float(bbx2) + float(bbx1)) / 2.0, (float(bby2) + float(bby1)) / 2.0)
-            for visibleId, visible in graphVisibles.iteritems():
-                if visible.parent is None:
-                    pos = None
-                    if not visible.isPath():
-                        if not visible.positionIsFixed():
-                            # Set the position of a node
-                            pos = self._graphvizNodePos(graph, visibleId)
-                            if pos is not None:
-                                x, y = pos.split(',') 
-                                # TODO: convert to local coordinates?
-                                visible.setPosition(((float(x) - dx) * scale, (float(y) - dy) * scale, 0))
-                    elif False:
-                        # Set the path of an edge
-                        if pygraphviz is not None:
-                            edge = pygraphviz.Edge(graph, str(visible.pathStart.displayId), str(visible.pathEnd.displayId))
-                            if 'pos' in edge.attr:
-                                pos = edge.attr['pos']
-                        else:
-                            pass    # TODO
-                        if pos is not None:
-                            (startVisX, startVisY, startVisZ) = visible.pathStart.worldPosition()
-                            (endVisX, endVisY, endVisZ) = visible.pathEnd.worldPosition()
-                            startPos = self._graphvizNodePos(graph, str(visible.pathStart.displayId))
-                            startDotX, startDotY = startPos.split(',')
-                            startDotX = float(startDotX)
-                            startDotY = float(startDotY)
-                            endPos = self._graphvizNodePos(graph, str(visible.pathEnd.displayId))
-                            endDotX, endDotY = endPos.split(',')
-                            endDotX = float(endDotX)
-                            endDotY = float(endDotY)
-                            if startDotX != endDotX and startDotY != endDotY and startVisX != endVisX and startVisY != endVisY:
-                                scaleX = (startDotX - endDotX) / (startVisX - endVisX)
-                                translateX = startDotX - scaleX * startVisX
-                                scaleY = (startDotY - endDotY) / (startVisY - endVisY)
-                                translateY = startDotY - scaleY * startVisY
-                                path_3D = []
-                                path = pos.split(' ')
-                                for pathElement in path[1:-1]:
-                                    x, y = pathElement.split(',')
-                                    path_3D.append(((float(x) - translateX) / scaleX, (float(y) - translateY) / scaleY, 0))
-                                visible.setPath(path_3D, visible.pathStart, visible.pathEnd)
+        layout.layoutDisplay(self)
         self._suppressRefresh = False
         self.centerView()
         self.Refresh()
-    
-    
-    def _graphvizNodePos(self, graph, nodeId):
-        pos = None
-        if pygraphviz is not None:
-            node = pygraphviz.Node(graph, nodeId) 
-            if 'pos' in node.attr:
-                pos = node.attr['pos']
-        else:
-            node = graph.get_node(nodeId)
-            if isinstance(node, pydot.Node):
-                pos = node.get_pos()[1:-1] 
-        return pos
     
     
     def saveViewAsImage(self, path):
