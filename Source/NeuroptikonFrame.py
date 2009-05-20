@@ -7,7 +7,6 @@ import Display, Display.Display
 from Network.Network import Network
 from Search.Finder import Finder
 import Layouts
-from Display.LayoutMenuItem import LayoutMenuItem
 
 
 class NeuroptikonFrame( wx.Frame ):

@@ -1,5 +1,5 @@
 from Display.Layout import Layout
-import os, sys
+import os, stat, sys
 import wx
 
 # Make sure all the graphviz pieces can be found and used.
