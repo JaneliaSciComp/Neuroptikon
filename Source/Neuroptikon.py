@@ -14,8 +14,8 @@ else:
     
     
     # Make sure that the library paths are set up correctly for the current location.
-    commonLibPath = rootDir + os.sep + 'lib' + os.sep + 'CrossPlatform'
-    platformLibPath = rootDir + os.sep + 'lib' + os.sep + platform.system()
+    commonLibPath = os.path.join(rootDir, 'lib', 'CrossPlatform')
+    platformLibPath = os.path.join(rootDir, 'lib', platform.system())
 
     if platform.system() == 'Darwin':
         # Use the copy of wx in /Library
@@ -42,33 +42,14 @@ else:
 
     sys.path.insert(0, commonLibPath)
     sys.path.insert(0, platformLibPath)
-
-# Make sure all the graphviz pieces can be found and used.
-try:
-    fdpPath = platformLibPath + os.sep + 'fdp'
-    if os.access(fdpPath, os.F_OK):
-        # Make sure graphviz's binaries can find the graphviz plug-ins.
-        os.environ['GVBINDIR'] = platformLibPath + os.sep + 'graphviz'
-
-        # Make sure our custom build of graphviz's binaries can be found.
-        os.environ['PATH'] = platformLibPath + os.pathsep + os.environ['PATH']
-
-        # Make sure fdp is executable.
-        if os.stat(fdpPath).st_mode & stat.S_IXUSR == 0:
-            os.chmod(fdpPath, os.stat(fdpPath).st_mode | stat.S_IXUSR)
-except:
-    (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-    print 'Could not configure graphviz (' + exceptionValue.message + ')'
     
 # Set up for internationalization.
 import gettext as gettext_module, __builtin__
 __builtin__.gettext = gettext_module.translation('Neuroptikon', fallback = True).lgettext
 
 import wx
-import wx.lib.mixins.inspection
-from wx import py
+import wx.py as py
 import xml.etree.ElementTree as ElementTree
-from NeuroptikonFrame import NeuroptikonFrame
 from Network.Network import Network
 from Network.Neuron import Neuron
 from Network.Attribute import Attribute
@@ -81,7 +62,6 @@ from Library.Texture import Texture
 from Preferences import Preferences
 import Inspectors
 from Inspection.InspectorFrame import InspectorFrame
-import osg
 
 
 def debugException(type, value, tb):
@@ -94,13 +74,12 @@ if __name__ == "__main__":
     #if __debug__:
     #    sys.excepthook = debugException
     
-    class Neuroptikon(wx.lib.mixins.inspection.InspectableApp):
+    class Neuroptikon(wx.App):
         
         def OnInit(self):
             
-            #self.convertRealData(None)
-            
             self.rootDir = rootDir
+            self.platformLibPath = platformLibPath
             
             self.library = Library()
             self._loadDefaultLibraryItems()
@@ -115,8 +94,6 @@ if __name__ == "__main__":
             self._frames = [self.preferences, self.inspector]
             self.SetExitOnFrameDelete(False)
             
-            osg.DisplaySettings.instance().setNumMultiSamples(4);
-            
             # open an empty network by default
             # TODO: pref to re-open last doc?
             self.onNewNetwork()
@@ -125,6 +102,7 @@ if __name__ == "__main__":
         
         
         def _loadDefaultLibraryItems(self):
+            
             self.library.add(Neurotransmitter('ACh', gettext('Acetylcholine')))
             self.library.add(Neurotransmitter('DA', gettext('Dopamine')))
             self.library.add(Neurotransmitter('epinephrine', gettext('Epinephrine')))
@@ -284,45 +262,12 @@ if __name__ == "__main__":
         
         
         def displayNetwork(self, network):
+            from NeuroptikonFrame import NeuroptikonFrame
             frame = NeuroptikonFrame(network = network)
             frame.Show(True)
             frame.Raise()
             self._frames.append(frame)
             return frame.display
-        
-        
-        def convertRealData(self, display):
-            """ Convert the data from the 0.87 prototype to a script """
-            text = 'regions={}\n\n'
-            from realdata import realdata 
-            for regionName in sorted(realdata.regions):
-                props = realdata.regions[regionName]
-                label = props[0]
-                text += "regions['%s'] = network.createRegion(name = '%s', abbreviation = '%s')\n" % (regionName, regionName, label)
-                x, y, width, height = props[1][1]
-                position = ((x + width / 2.0 - 50.0) / 650.0, ((350.0 - y) + height / 2.0) / 650.0, 0.0)
-                size = (width / 650.0, height / 650.0, 0.01)
-                text += "display.setVisiblePosition(regions['%s'], %s, True)\ndisplay.setVisibleSize(regions['%s'], %s)\n\n" % (regionName, position, regionName, size)
-            for neuronName in realdata.connections:
-                props = realdata.connections[neuronName]
-                label = props[0]
-                text += "neuron = network.createNeuron(name = '%s', abbreviation = '%s')\n" % (neuronName, label)
-                nodeList = props[1]
-                for node in nodeList:
-                    iob = node[0]
-                    if iob == 'o' or iob == 'b':
-                        sendsOutput = 'True'
-                    else:
-                        sendsOutput = 'False'
-                    if iob == 'i' or iob == 'b':
-                        receivesInput = 'True'
-                    else:
-                        receivesInput = 'False'
-                    text += "neuron.arborize(regions['%s'], %s, %s)\n" % (node[1], sendsOutput, receivesInput)
-                text += '\n'
-            # TODO: region groups
-            text += 'display.autoLayout("graphviz")\ndisplay.centerView()\n'
-            print text
         
         
         def onOpenPreferences(self, event):
