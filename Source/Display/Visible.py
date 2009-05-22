@@ -80,7 +80,7 @@ class Visible(object):
                                 float glow = max(flowToColor[3] * glowTo, flowFromColor[3] * glowFrom);
                                 float antiGlow = 1.0 - glow;
                                 
-                                gl_FragColor = vec4(glowColor[0] * glow + gl_Color[0] * antiGlow, glowColor[1] * glow + gl_Color[1] * antiGlow, glowColor[2] * glow + gl_Color[2] * antiGlow, gl_Color[3]);
+                                gl_FragColor = vec4(glowColor[0] * glow + gl_Color[0] * antiGlow, glowColor[1] * glow + gl_Color[1] * antiGlow, glowColor[2] * glow + gl_Color[2] * antiGlow, glow + gl_Color[3] * antiGlow);
                             }
                         """
     flowProgram = osg.Program()
@@ -154,8 +154,6 @@ class Visible(object):
         self.arrangedAxis = 'largest'
         self.arrangedSpacing = 0.02
         self.arrangedWeight = 1.0
-        
-        dispatcher.connect(self.displayChangedSelection, ('set', 'selection'), self.display)
         
         self.updateLabel()
         if isinstance(self.client, Region):
@@ -530,7 +528,37 @@ class Visible(object):
             if self._shapeDrawable:
                 self._shapeGeode.removeDrawable(self._shapeDrawable)
             if self._shapeName is not None:
-                self._shapeDrawable = osg.ShapeDrawable(Visible.geometries[self._shapeName])
+                if False:   #self._shapeName == 'box':
+                    # Playing with custom geometry for better performance.  Currently blocked because push_back is not available via osgSwig.
+                    self._shapeDrawable = osg.Geometry()
+
+                    vertices = osg.Vec3Array()
+                    vertices.push_back(osg.Vec3(-0.5, -0.5, -0.5))
+                    vertices.push_back(osg.Vec3(-0.5, -0.5,  0.5))
+                    vertices.push_back(osg.Vec3(-0.5,  0.5, -0.5))
+                    vertices.push_back(osg.Vec3(-0.5,  0.5,  0.5))
+                    vertices.push_back(osg.Vec3( 0.5, -0.5, -0.5))
+                    vertices.push_back(osg.Vec3( 0.5, -0.5,  0.5))
+                    vertices.push_back(osg.Vec3( 0.5,  0.5, -0.5))
+                    vertices.push_back(osg.Vec3( 0.5,  0.5,  0.5))
+                    self._shapeDrawable.setVertexArray(vertices)
+                    
+                    faceVerctices = [(0, 1, 3, 2), (2, 3, 7, 6), (6, 7, 5, 4),  (4, 5, 1, 0), (3, 1, 5, 7), (0, 2, 6, 4)]
+                    for v0, v1, v2, v3 in faceVertices:
+                        face = osg.DrawElementsUInt(osg.PrimitiveSet.QUADS, 0)
+                        face.push_back(v0)
+                        face.push_back(v1)
+                        face.push_back(v2)
+                        face.push_back(v3)
+                        self._shapeDrawable.addPrimitiveSet(face)
+
+                    colors= osg.Vec4Array()
+                    colors.push_back(osg.Vec4(1,1,1,1))
+
+                    self._shapeDrawable.setColorArray(colors)
+                    self._shapeDrawable.setColorBinding(osg.Geometry.BIND_OVERALL)
+                else:
+                    self._shapeDrawable = osg.ShapeDrawable(Visible.geometries[self._shapeName])
                 self._shapeGeode.addDrawable(self._shapeDrawable)
             self.childGroup.setMatrix(Visible.geometryInterior[self._shapeName])
             for child in self.children:

@@ -97,9 +97,9 @@ class Display(wx.glcanvas.GLCanvas):
         self.viewer3D.setLight(light)
         
         config = wx.Config("Neuroptikon")
-        clearColor = (config.ReadFloat("Color/Background/Red", 0.7), \
-                      config.ReadFloat("Color/Background/Green", 0.8), \
-                      config.ReadFloat("Color/Background/Blue", 0.7), \
+        clearColor = (config.ReadFloat("Color/Background/Red", 1.0), \
+                      config.ReadFloat("Color/Background/Green", 1.0), \
+                      config.ReadFloat("Color/Background/Blue", 1.0), \
                       config.ReadFloat("Color/Background/Alpha", 1.0))
         self.setBackgroundColor(clearColor)
         
@@ -1199,7 +1199,7 @@ class Display(wx.glcanvas.GLCanvas):
                 for visible in visibles:
                     if visible.isPath() and (visible.flowTo or visible.flowFrom):
                         visiblesToAnimate.add(visible)
-                    
+        
         # Turn off highlighting/animating for visibles that shouldn't have it anymore.
         for highlightedNode in self.highlightedVisibles:
             if highlightedNode not in visiblesToHighlight:
@@ -1216,9 +1216,12 @@ class Display(wx.glcanvas.GLCanvas):
                 visibleToHighlight.setGlowColor(self._secondarySelectionColor)
         for visibleToAnimate in visiblesToAnimate:
             visibleToAnimate.animateFlow()
+        
         self.highlightedVisibles = visiblesToHighlight
         self.animatedVisibles = visiblesToAnimate
         
+        if self._useGhosts:            # Dim everything that isn't selected, highlighted or animated.            selectionIsEmpty = len(self.selectedVisibles) == 0            for visibles in self.visibles.itervalues():                for visible in visibles:
+                    visible.updateOpacity()        
         self._suppressRefresh = False
         
         # Turn idle callbacks on when any visible is animated and off otherwise.
@@ -1327,6 +1330,7 @@ class Display(wx.glcanvas.GLCanvas):
                 parentSize = visible.parent.worldSize()
             visible.setPosition((position.x() - self.draggerOffset[0], position.y() - self.draggerOffset[1], position.z() - self.draggerOffset[2]))
             visible.setSize((size.x() * parentSize[0] / self.draggerScale, size.y() * parentSize[1] / self.draggerScale, size.z() * parentSize[2] / self.draggerScale))
+            visible.updateTransform()
     
     
     def clearDragger(self):
@@ -1386,8 +1390,13 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def performLayout(self, layout = None):
-        if layout is None or not layout.__class__.canLayoutDisplay(self):
+        if layout is not None and not layout.__class__.canLayoutDisplay(self):
+            raise ValueError, gettext('The supplied layout cannot be used.')
+        
+        if layout is None:
+            # Fall back to the last layout used.
             layout = self.lastUsedLayout
+        
         if layout is None or not layout.__class__.canLayoutDisplay(self):
             # Pick the first layout class capable of laying out the display.
             for layoutClass in sys.modules['Display'].layoutClasses().itervalues():
@@ -1395,6 +1404,7 @@ class Display(wx.glcanvas.GLCanvas):
                     layout = layoutClass()
                     self.lastUsedLayout = layout
                     break
+        
         self._suppressRefresh = True
         layout.layoutDisplay(self)
         self._suppressRefresh = False
