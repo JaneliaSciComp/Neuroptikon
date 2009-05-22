@@ -128,6 +128,26 @@ class Network:
         return self.objectsOfClass(Neuron)
     
     
+    def neurites(self):
+        return self.objectsOfClass(Neurite)
+    
+    
+    def arborizations(self):
+        return self.objectsOfClass(Arborization)
+    
+    
+    def gapJunctions(self):
+        return self.objectsOfClass(GapJunction)
+    
+    
+    def innervations(self):
+        return self.objectsOfClass(Innervation)
+    
+    
+    def synapses(self):
+        return self.objectsOfClass(Synapse)
+    
+    
     def createStimulus(self, *args, **keywordArgs):
         target = keywordArgs['target']
         del keywordArgs['target']
