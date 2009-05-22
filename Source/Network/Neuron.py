@@ -2,6 +2,8 @@ from Object import Object
 from Neurite import Neurite as Neurite
 import xml.etree.ElementTree as ElementTree
 import wx
+from wx.py import dispatcher
+
 
 class Neuron(Object):
     # TODO: neurites method that returns all neurites
@@ -19,8 +21,14 @@ class Neuron(Object):
         INTERNEURON = 'INTERNEURON'
         MOTOR = 'MOTOR'
     
+    Functions = [Function.SENSORY, Function.INTERNEURON, Function.MOTOR]
+    
     
     def __init__(self, network, neuronClass = None, *args, **keywordArgs):
+        # Upconvert old 'function' singleton param to list expected by new 'functions' param.
+        if 'function' in keywordArgs:
+            keywordArgs['functions'] = set([keywordArgs['function']])
+            del keywordArgs['function']
         # Upconvert old 'neurotransmitter' singleton param to list expected by new 'neurotransmitters' param.
         if 'neurotransmitter' in keywordArgs:
             keywordArgs['neurotransmitters'] = [keywordArgs['neurotransmitter']]
@@ -29,7 +37,7 @@ class Neuron(Object):
         # Pull out the keyword arguments specific to this class before we call super.
         # We need to do this so we can know if the caller specified an argument or not.
         # For example, the caller might specify a neuron class and one attribute to override.  We need to know which attributes _not_ to set.
-        localAttrNames = ['activation', 'function', 'neurotransmitters', 'polarity', 'region']
+        localAttrNames = ['activation', 'functions', 'neurotransmitters', 'polarity', 'region']
         localKeywordArgs = {}
         for attrName in localAttrNames:
             if attrName in keywordArgs:
@@ -40,13 +48,25 @@ class Neuron(Object):
         
         self._neurites = []
         self.neuronClass = neuronClass
+        self._functions = set()
         
         for attrName in localAttrNames:
-            attrValue = [] if attrName == 'neurotransmitters' else None
+            if attrName == 'functions':
+                attrValue = set()
+            elif attrName == 'neurotransmitters':
+                attrValue = []
+            else:
+                attrValue = None
             if attrName in localKeywordArgs:
-                attrValue = localKeywordArgs[attrName]  # The user has explicitly set the attribute.
+                # The user has explicitly set the attribute.
+                if attrName == 'functions':
+                    attrValue = set(localKeywordArgs[attrName])
+                else:
+                    attrValue = localKeywordArgs[attrName]  
             elif self.neuronClass:
                 attrValue = getattr(self.neuronClass, attrName) # Inherit the value from the class
+            if attrName == 'functions':
+                attrName = '_functions'
             setattr(self, attrName, attrValue)
         
         if self.region is not None:
@@ -75,9 +95,11 @@ class Neuron(Object):
         object.activation = xmlElement.findtext('Activation')
         if object.activation is None:
             object.activation = xmlElement.findtext('activation')
-        object.function = xmlElement.findtext('Function')
-        if object.function is None:
-            object.function = xmlElement.findtext('function')
+        object._functions = set()
+        for functionName in ['Function', 'function']:
+            for functionElement in xmlElement.findall(functionName):
+                if functionElement.text in Neuron.Functions:
+                    object.setHasFunction(functionElement.text, True)
         object.polarity = xmlElement.findtext('Polarity')
         if object.polarity is None:
             object.polarity = xmlElement.findtext('polarity')
@@ -106,8 +128,8 @@ class Neuron(Object):
             ElementTree.SubElement(neuronElement, 'Neurotransmitter').text = neurotransmitter.identifier
         if self.activation is not None:
             ElementTree.SubElement(neuronElement, 'Activation').text = self.activation
-        if self.function is not None:
-            ElementTree.SubElement(neuronElement, 'Function').text = self.function
+        for function in self._functions:
+            ElementTree.SubElement(neuronElement, 'Function').text = function
         if self.polarity is not None:
             ElementTree.SubElement(neuronElement, 'Polarity').text = self.polarity
         if self.region is not None:
@@ -132,8 +154,8 @@ class Neuron(Object):
             keywords['neurotransmitters'] = '[' + ', '.join(ntCalls) + ']'
         if self.activation is not None:
             keywords['activation'] = '\'' + self.activation + '\''  # TODO: this should be 'NeuralActivation.' + self.activation
-        if self.function is not None:
-            keywords['function'] = 'NeuralFunction.' +  self.function
+        if len(self._functions) > 0:
+            keywords['functions'] = '[NeuralFunction.' + ', NeuralFunction.'.join(self._functions) + ']'
         if self.polarity is not None:
             keywords['polarity'] = 'NeuralPolarity.' +  self.polarity
         if self.region is not None:
@@ -245,3 +267,17 @@ class Neuron(Object):
         for neurite in self._neurites:
             outputs.extend(neurite.outputs())
         return outputs
+    
+    
+    def setHasFunction(self, function, hasFunction):
+        if hasFunction and function not in self._functions:
+            self._functions.add(function)
+            dispatcher.send(('set', 'functions'), self)
+        elif not hasFunction and function in self._functions:
+            self._functions.remove(function)
+            dispatcher.send(('set', 'functions'), self)
+    
+    
+    def hasFunction(self, function):
+        return function in self._functions
+    

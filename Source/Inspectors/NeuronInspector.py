@@ -12,7 +12,7 @@ class NeuronInspector( ObjectInspector ):
     
     @classmethod
     def inspectedAttributes(cls):
-        return ['neuronClass', 'function', 'polarity', 'neurotransmitters']
+        return ['neuronClass', 'functions', 'polarity', 'neurotransmitters']
     
     
     def _appendNeuronClass(self, neuronClass, indent):
@@ -36,15 +36,18 @@ class NeuronInspector( ObjectInspector ):
             self._sizer.Add(self._neuronClassChoice)
             parentWindow.Bind(wx.EVT_CHOICE, self.onChooseNeuronClass, self._neuronClassChoice)
             
-            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Function:')))
-            self._functionChoice = wx.Choice(parentWindow, wx.ID_ANY)
-            self._functionChoice.Append(gettext('Sensory neuron'), Neuron.Function.SENSORY)
-            self._functionChoice.Append(gettext('Interneuron'), Neuron.Function.INTERNEURON)
-            self._functionChoice.Append(gettext('Motor neuron'), Neuron.Function.MOTOR)
-            self._unknownFunctionId = self._functionChoice.Append(gettext('Unknown'), None)
-            self._multipleFunctionsId = wx.NOT_FOUND
-            self._sizer.Add(self._functionChoice)
-            parentWindow.Bind(wx.EVT_CHOICE, self.onChooseFunction, self._functionChoice)
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Functions:')))
+            functionsSizer = wx.BoxSizer(wx.VERTICAL)
+            self._sensoryCheckBox = wx.CheckBox(self._window, wx.ID_ANY, gettext('Sensory'), style=wx.CHK_3STATE)
+            self._window.Bind(wx.EVT_CHECKBOX, self.onSetSensoryFunction, self._sensoryCheckBox)
+            functionsSizer.Add(self._sensoryCheckBox)
+            self._interneuronCheckBox = wx.CheckBox(self._window, wx.ID_ANY, gettext('Interneuron'), style=wx.CHK_3STATE)
+            self._window.Bind(wx.EVT_CHECKBOX, self.onSetInterneuronFunction, self._interneuronCheckBox)
+            functionsSizer.Add(self._interneuronCheckBox)
+            self._motorCheckBox = wx.CheckBox(self._window, wx.ID_ANY, gettext('Motor'), style=wx.CHK_3STATE)
+            self._window.Bind(wx.EVT_CHECKBOX, self.onSetMotorFunction, self._motorCheckBox)
+            functionsSizer.Add(self._motorCheckBox)
+            self._sizer.Add(functionsSizer)
             
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Polarity:')))
             self._polarityChoice = wx.Choice(parentWindow, wx.ID_ANY)
@@ -86,18 +89,19 @@ class NeuronInspector( ObjectInspector ):
                 self._multipleNeuronClassesId = self._neuronClassChoice.Append(gettext('Multiple values'), None)
                 self._neuronClassChoice.SetSelection(self._multipleNeuronClassesId)
         
-        if attribute is None or attribute == 'function':
-            # Choose the appropriate item in the pop-up menu.
-            if self.objects.haveEqualAttr('function'):
-                if self.objects[0].function is None:
-                    self._functionChoice.SetSelection(self._unknownFunctionId)
+        if attribute is None or attribute == 'functions':
+            for function, checkBox in [(Neuron.Function.SENSORY, self._sensoryCheckBox), (Neuron.Function.INTERNEURON, self._interneuronCheckBox), (Neuron.Function.MOTOR, self._motorCheckBox)]:
+                mixedFunction = False
+                hasFunction = self.objects[0].hasFunction(function)
+                for object in self.objects[1:]:
+                    if hasFunction != object.hasFunction(function):
+                        mixedFunction = True
+                if mixedFunction:
+                    checkBox.Set3StateValue(wx.CHK_UNDETERMINED)
+                elif hasFunction:
+                    checkBox.Set3StateValue(wx.CHK_CHECKED)
                 else:
-                    for index in range(0, self._functionChoice.GetCount()):
-                        if self._functionChoice.GetClientData(index) == self.objects[0].function:
-                            self._functionChoice.SetSelection(index)
-            else:
-                self._multipleFunctionsId = self._functionChoice.Append(gettext('Multiple values'), None)
-                self._functionChoice.SetSelection(self._multipleFunctionsId)
+                    checkBox.Set3StateValue(wx.CHK_UNCHECKED)
         
         if attribute is None or attribute == 'polarity':
             # Choose the appropriate item in the pop-up menu.
@@ -147,19 +151,25 @@ class NeuronInspector( ObjectInspector ):
             self._neuronClassChoice.Delete(self._multipleNeuronClassesId)
             self._multipleNeuronClassesId = wx.NOT_FOUND
         self.populateObjectSizer('neuronClass')
-        
     
-    def onChooseFunction(self, event):
-        self.updatingObjects = True
-        function = self._functionChoice.GetClientData(self._functionChoice.GetSelection())
+    
+    def onSetSensoryFunction(self, event):
+        newValue = self._sensoryCheckBox.GetValue()
         for neuron in self.objects:
-            neuron.function = function
-        # Remove the "multiple values" choice now that all of the neurons have the same value.
-        if self._multipleFunctionsId != wx.NOT_FOUND:
-            self._functionChoice.Delete(self._multipleFunctionsId)
-            self._multipleFunctionsId = wx.NOT_FOUND
-        self.populateObjectSizer('function')
-        
+            neuron.setHasFunction(Neuron.Function.SENSORY, newValue == wx.CHK_CHECKED)
+    
+    
+    def onSetInterneuronFunction(self, event):
+        newValue = self._interneuronCheckBox.GetValue()
+        for neuron in self.objects:
+            neuron.setHasFunction(Neuron.Function.INTERNEURON, newValue == wx.CHK_CHECKED)
+    
+    
+    def onSetMotorFunction(self, event):
+        newValue = self._motorCheckBox.GetValue()
+        for neuron in self.objects:
+            neuron.setHasFunction(Neuron.Function.MOTOR, newValue == wx.CHK_CHECKED)
+    
     
     def onChoosePolarity(self, event):
         self.updatingObjects = True

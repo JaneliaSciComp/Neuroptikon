@@ -33,7 +33,7 @@ class NeuronClass(LibraryItem):
         # Pull out the keyword arguments specific to this class before we call super.
         # We need to do this so we can know if the caller specified an argument or not.
         # For example, the caller might specify a parent class and one attribute to override.  We need to know which attributes _not_ to set.
-        localAttrNames = ['activation', 'function', 'neurotransmitters', 'polarity']
+        localAttrNames = ['activation', 'functions', 'neurotransmitters', 'polarity']
         localKeywordArgs = {}
         for attrName in localAttrNames:
             if attrName in keywordArgs:
@@ -49,9 +49,18 @@ class NeuronClass(LibraryItem):
             self.parentClass.subClasses.append(self)
         
         for attrName in localAttrNames:
-            attrValue = [] if attrName == 'neurotransmitters' else None
+            if attrName == 'functions':
+                attrValue = set([])
+            elif attrName == 'neurotransmitters':
+                attrValue = []
+            else:
+                attrValue = None
             if attrName in localKeywordArgs:
-                attrValue = localKeywordArgs[attrName]  # The user has explicitly set the attribute.
+                # The user has explicitly set the attribute.
+                if attrName == 'functions':
+                    attrValue = set(localKeywordArgs[attrName])
+                else:
+                    attrValue = localKeywordArgs[attrName]  
             elif self.parentClass:
                 attrValue = getattr(self.parentClass, attrName) # Inherit the value from the parent class
             setattr(self, attrName, attrValue)
