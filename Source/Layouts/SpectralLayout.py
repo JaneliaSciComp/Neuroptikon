@@ -9,9 +9,11 @@ class SpectralLayout(Layout):
         return gettext('Spectral')
     
     
-    @classmethod
-    def canLayoutDisplay(cls, display):
-        return display.viewDimensions == 3
+    def __init__(self, weightFunction = None, scaling = (1.0, 1.0, 1.0), *args, **keywordArgs):
+        Layout.__init__(self, *args, **keywordArgs)
+    
+        self.weightingFunction = weightFunction
+        self.scaling = scaling
     
     
     def layoutDisplay(self, display):
@@ -30,29 +32,36 @@ class SpectralLayout(Layout):
             for edge in edges:
                 n1 = nodes.index(edge.pathStart.rootVisible())
                 n2 = nodes.index(edge.pathEnd.rootVisible())
+                if self.weightingFunction is None:
+                    weight = 1.0
+                else:
+                    weight = self.weightingFunction(edge)
                 if edge.flowTo is None or edge.flowTo:
-                    A[n1, n2] = A[n1, n2] + 1
+                    A[n1, n2] = A[n1, n2] + weight
                 if edge.flowFrom is None or edge.flowFrom:
-                    A[n2, n1] = A[n2, n1] + 1
-            A_prime = A.T
+                    A[n2, n1] = A[n2, n1] + weight
+            #print A.tolist()
             
-            # This is equivalent to the spectral layout MATLAB code provided by Mitya:
-            #   n=size(A,1);
+            # This is equivalent to the MATLAB code from Mitya's paper <http://mit.edu/lrv/www/elegans/>:
             #   c=full((A+A')/2);
             #   d=diag(sum(c));
             #   l=d-c;
             #   b=sum(c.*sign(full(A-A')),2);
-            #   z=pinv(c)*b;
+            #   z=pinv(l)*b;
             #   q=d^(-1/2)*l*d^(-1/2);
             #   [vx,lambda]=eig(q);
             #   x=d^(-1/2)*vx(:,2);
             #   y=d^(-1/2)*vx(:,3);
             
+            A_prime = A.T
             c = (A + A_prime) / 2.0
             d = diag(c.sum(0))
             l = mat(d - c)
             b = (c * sign(A - A_prime)).sum(1).reshape(1, n)
-            z = inner(pinv(c), b)
+            if display.viewDimensions == 2:
+                z = zeros((n, 1))
+            else:
+                z = inner(pinv(l), b)
             d2 = mat(d**-0.5)
             d2[isinf(d2)] = 0
             q = d2 * l * d2
@@ -60,13 +69,10 @@ class SpectralLayout(Layout):
             x = d2 * mat(eVec[:,1])
             y = d2 * mat(eVec[:,2])
             xMin, xMax = x.min(), x.max()
-            xScale = 1.0 / (xMax - xMin)
             xOff = (xMax + xMin) / 2.0
             yMin, yMax = y.min(), y.max()
-            yScale = 1.0 / (yMax - yMin)
             yOff = (yMax + yMin) / 2.0
             zMin, zMax = z.min(), z.max()
-            zScale = 1.0 / (zMax - zMin)
             zOff = (zMax + zMin) / 2.0
             for i in range(n):
-                nodes[i].setPosition(((x[i,0] - xOff) * xScale, (y[i,0] - yOff) * yScale, (z[i,0] - zOff) * zScale))
+                nodes[i].setPosition(((x[i,0] - xOff) * self.scaling[0], (y[i,0] - yOff) * self.scaling[1], (z[i,0] - zOff) * self.scaling[2]))
