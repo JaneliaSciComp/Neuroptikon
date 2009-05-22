@@ -102,7 +102,6 @@ if __name__ == "__main__":
         
         
         def _loadDefaultLibraryItems(self):
-            
             self.library.add(Neurotransmitter('ACh', gettext('Acetylcholine')))
             self.library.add(Neurotransmitter('DA', gettext('Dopamine')))
             self.library.add(Neurotransmitter('epinephrine', gettext('Epinephrine')))
@@ -227,6 +226,7 @@ if __name__ == "__main__":
         
         
         def onOpenNetwork(self, event):
+            from NeuroptikonFrame import NeuroptikonFrame
             dlg = wx.FileDialog(None, gettext('Choose a saved network to open:'), '', '', '*.xml', wx.OPEN)
             if dlg.ShowModal() == wx.ID_OK:
                 path = dlg.GetPath()
