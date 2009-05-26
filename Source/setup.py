@@ -130,7 +130,10 @@ setup(
 
 if sys.platform == 'darwin':
     import shutil
-    shutil.copytree('Scripts', dist_dir + os.sep + 'Sample Scripts')
+    scriptsDir = os.path.join(dist_dir, 'Sample Scripts')
+    if os.path.exists(scriptsDir):
+        shutil.rmtree(scriptsDir)
+    shutil.copytree('Scripts', scriptsDir)
 
 
 # Strip out any .pyc or .pyo files.
@@ -145,6 +148,8 @@ from subprocess import call
 if sys.platform == 'darwin':
     # Create the disk image
     dmgPath = 'build/Neuroptikon ' + app_version + '.dmg'
+    if os.path.exists(dmgPath):
+        os.remove(dmgPath)
     print 'Creating disk image...'
     print 'hdiutil create -srcfolder \'' + dist_dir + '\' -format UDZO "' + dmgPath + '"'
     retcode = call('hdiutil create -srcfolder \'' + dist_dir + '\' -format UDZO "' + dmgPath + '"', shell=True)
