@@ -17,6 +17,7 @@ from Network.Innervation import Innervation
 from Network.ObjectList import ObjectList
 from Visible import Visible
 from DisplayRule import DisplayRule
+import Layout    # Not needed by the code but insures that the Inspector module gets packaged by setuptools.
 from wx.py import dispatcher
 from networkx import *
 from math import pi, fabs

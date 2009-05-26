@@ -32,6 +32,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
+; TODO: Figure out how to make the build path relative to the path of this file.
 Source: "C:\Documents and Settings\midgleyf\Desktop\Neuroptikon\build\Neuroptikon {#APP_VERSION}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 

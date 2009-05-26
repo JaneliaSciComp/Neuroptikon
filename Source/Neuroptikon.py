@@ -7,6 +7,8 @@ if hasattr(sys, "frozen"):
     rootDir = os.path.dirname(sys.executable)
     if platform.system() == 'Darwin':
         rootDir = os.path.dirname(rootDir) + os.sep + 'Resources'
+    elif platform.system() == 'Windows':
+        sys.path.append(rootDir)
     platformLibPath = rootDir
 else:
     rootDir = os.path.abspath(os.path.dirname(sys.modules['__main__'].__file__))

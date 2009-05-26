@@ -21,6 +21,8 @@ app_version = '0.9.1'	# TBD: will this already by set in wx for the app?
 setup_options = dict()
 
 resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Textures']
+includes = ['wx', 'xlrd']
+excludes = ['Inspectors', 'Layouts', 'matplotlib', 'scipy']
 
 sys.path.append('lib/CrossPlatform')
 
@@ -48,8 +50,8 @@ if sys.platform == 'darwin':
     dist_dir = 'build/Neuroptikon ' + app_version
     py2app_options['dist_dir'] = dist_dir
     
-    py2app_options['packages'] = ['wx', 'xlrd']
-    py2app_options['excludes'] = ['matplotlib', 'scipy']
+    py2app_options['packages'] = includes
+    py2app_options['excludes'] = excludes
     
     resources.append('../Artwork/Neuroptikon.icns')
     resources.append('lib/Darwin/fdp')
@@ -85,8 +87,8 @@ elif sys.platform == 'win32':
     dist_dir = 'build/Neuroptikon ' + app_version
     py2exe_options['dist_dir'] = dist_dir
     
-    py2exe_options['packages'] = ['wx', 'xlrd']
-    py2exe_options['excludes'] = ['matplotlib', 'numarray', 'pyxml', 'scipy', 'Tkinter', '_tkinter']
+    py2exe_options['packages'] = includes
+    py2exe_options['excludes'] = excludes + ['numarray', 'pyxml', 'Tkinter', '_tkinter']
     
     # py2exe doesn't support 'resources' so we have to add each file individually.
     # TODO: use glob instead?

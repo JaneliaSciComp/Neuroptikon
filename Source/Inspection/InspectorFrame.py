@@ -2,6 +2,8 @@ import wx
 import sys
 from wx.py import dispatcher
 import Inspection
+import Inspector    # Not needed by the code but insures that the Inspector module gets packaged by setuptools.
+
 
 class InspectorFrame( wx.Frame ):
     
