@@ -168,20 +168,21 @@ class AttributesInspector(Inspector):
         # We're showing the vertical scrollbar -> allow for scrollbar width
         # NOTE: on GTK, the scrollbar is included in the client size, but on
         # Windows it is not included
-        gridWidth = self.grid.GetClientSize().width
-#        if wx.Platform != '__WXMSW__':
-#            if self.GetItemCount() > self.GetCountPerPage():
-#                scrollWidth = wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
-#                gridWidth = gridWidth - scrollWidth
+        if self.grid is not None:
+            gridWidth = self.grid.GetClientSize().width
+    #        if wx.Platform != '__WXMSW__':
+    #            if self.GetItemCount() > self.GetCountPerPage():
+    #                scrollWidth = wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
+    #                gridWidth = gridWidth - scrollWidth
 
-        totColWidth = self.grid.GetColSize(0) + self.grid.GetColSize(1)
-        resizeColWidth = self.grid.GetColSize(2)
+            totColWidth = self.grid.GetColSize(0) + self.grid.GetColSize(1)
+            resizeColWidth = self.grid.GetColSize(2)
 
-        if gridWidth - totColWidth > 100:
-            self.grid.SetColSize(2, gridWidth - totColWidth)
-        
-        if event is not None:
-            event.Skip()
+            if gridWidth - totColWidth > 100:
+                self.grid.SetColSize(2, gridWidth - totColWidth)
+            
+            if event is not None:
+                event.Skip()
         
     
     def willBeClosed(self):
