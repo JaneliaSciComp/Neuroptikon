@@ -42,7 +42,7 @@ class SpectralLayout(Layout):
                     A[n2, n1] = A[n2, n1] + weight
             #print A.tolist()
             
-            # This is equivalent to the MATLAB code from Mitya's paper <http://mit.edu/lrv/www/elegans/>:
+            # This is equivalent to the MATLAB code from <http://mit.edu/lrv/www/elegans/>:
             #   c=full((A+A')/2);
             #   d=diag(sum(c));
             #   l=d-c;
@@ -57,10 +57,10 @@ class SpectralLayout(Layout):
             c = (A + A_prime) / 2.0
             d = diag(c.sum(0))
             l = mat(d - c)
-            b = (c * sign(A - A_prime)).sum(1).reshape(1, n)
             if display.viewDimensions == 2:
                 z = zeros((n, 1))
             else:
+                b = (c * sign(A - A_prime)).sum(1).reshape(1, n)
                 z = inner(pinv(l), b)
             d2 = mat(d**-0.5)
             d2[isinf(d2)] = 0
