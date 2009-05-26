@@ -100,7 +100,7 @@ class PickHandler(osgGA.GUIEventHandler):
                             if geode != None:
                                 visibleID = int(geode.getName())
                                 visible = self._display.visibleIds[visibleID]
-                                if visible.opacity() == 1.0 and (deepestVisible is None or deepestVisible in visible.ancestors()):
+                                if (visible in self._display.highlightedVisibles or visible in self._display.animatedVisibles) and (deepestVisible is None or deepestVisible in visible.ancestors()):
                                     deepestVisible = visible
                     if deepestVisible is not None:
                         self._display.selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)
