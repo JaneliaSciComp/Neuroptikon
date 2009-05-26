@@ -253,8 +253,7 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     def onUpdateLayoutUI(self, event):
-        menuItem = event.GetEventObject().FindItemById(event.GetId())
-        layoutClass = Display.layoutClasses()[event.GetId()]
+        menuItem = self.GetMenuBar().FindItemById(event.GetId())        layoutClass = Display.layoutClasses()[event.GetId()]
         menuItem.Enable(layoutClass.canLayoutDisplay(self.display))
     
     
