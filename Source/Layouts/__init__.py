@@ -21,4 +21,5 @@ try:
             if isinstance(layoutClass, Layout.__class__) and layoutClass.shouldBeRegistered():
                 Display.registerLayoutClass(layoutClass)
 except:
-    pass
+    (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
+    print 'Could not load layouts (' + exceptionValue.message + ')'
