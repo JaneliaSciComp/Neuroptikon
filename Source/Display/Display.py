@@ -339,7 +339,7 @@ class Display(wx.glcanvas.GLCanvas):
                 # TODO: approximate the 2D settings
 #                self.viewer3D.getCamera().setViewport(osg.Viewport(0, 0, width, height))
                 self.graphicsWindow = self.viewer3D.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
-                self.viewer3D.getCamera().setProjectionMatrixAsPerspective(30.0, width / height, 1.0, 10000.0)
+                self.viewer3D.getCamera().setProjectionMatrixAsPerspective(30.0, float(width)/height, 1.0, 10000.0)
                 self.centerView()
             self.Refresh()
             dispatcher.send(('set', 'viewDimensions'), self)
@@ -1220,8 +1220,13 @@ class Display(wx.glcanvas.GLCanvas):
         self.highlightedVisibles = visiblesToHighlight
         self.animatedVisibles = visiblesToAnimate
         
-        if self._useGhosts:            # Dim everything that isn't selected, highlighted or animated.            selectionIsEmpty = len(self.selectedVisibles) == 0            for visibles in self.visibles.itervalues():                for visible in visibles:
-                    visible.updateOpacity()        
+        if self._useGhosts:
+            # Dim everything that isn't selected, highlighted or animated.
+            selectionIsEmpty = len(self.selectedVisibles) == 0
+            for visibles in self.visibles.itervalues():
+                for visible in visibles:
+                    visible.updateOpacity()
+        
         self._suppressRefresh = False
         
         # Turn idle callbacks on when any visible is animated and off otherwise.
@@ -1402,11 +1407,11 @@ class Display(wx.glcanvas.GLCanvas):
             for layoutClass in sys.modules['Display'].layoutClasses().itervalues():
                 if layoutClass.canLayoutDisplay(self):
                     layout = layoutClass()
-                    self.lastUsedLayout = layout
                     break
         
         self._suppressRefresh = True
         layout.layoutDisplay(self)
+        self.lastUsedLayout = layout
         self._suppressRefresh = False
         self.centerView()
         self.Refresh()
