@@ -156,11 +156,12 @@ class AttributesInspector(Inspector):
     
     
     def onRemoveAttribute(self, event):
-        rowNums = self.grid.GetSelectedRows()
-        if len(rowNums) == 1:
-            if self.grid.IsCellEditControlEnabled():
-                self.grid.DisableCellEditControl()
-            self.grid.DeleteRows(rowNums[0], 1)
+        if self.grid is not None:
+            rowNums = self.grid.GetSelectedRows()
+            if len(rowNums) == 1:
+                if self.grid.IsCellEditControlEnabled():
+                    self.grid.DisableCellEditControl()
+                self.grid.DeleteRows(rowNums[0], 1)
         event.Skip()
     
     
@@ -187,7 +188,7 @@ class AttributesInspector(Inspector):
     
     def willBeClosed(self):
         # Make sure any active edit gets committed.
-        if self.grid.IsCellEditControlEnabled():
+        if self.grid is not None and self.grid.IsCellEditControlEnabled():
             self.grid.DisableCellEditControl()
             
         # Make sure that any queued call to self.enableCellEditControl() won't try to access the grid after the C++ object has been destroyed
