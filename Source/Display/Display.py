@@ -517,6 +517,7 @@ class Display(wx.glcanvas.GLCanvas):
             self.graphicsWindow.getEventQueue().mouseButtonPress(event.GetX(), event.GetY(), wx.MOUSE_BTN_LEFT)
             self.graphicsWindow.getEventQueue().mouseButtonRelease(event.GetX(), event.GetY(), wx.MOUSE_BTN_LEFT)
         self.Refresh()
+        event.Skip()
     
     
     def onMouseWheel(self, event):
@@ -534,6 +535,7 @@ class Display(wx.glcanvas.GLCanvas):
         elif self.viewDimensions == 3:
             self.trackball.setDistance(self.trackball.getDistance() - event.GetWheelRotation() * .02 * self.scrollWheelScale)
         self.Refresh()
+        event.Skip()
     
     
     def onEraseBackground(self, event):
@@ -1015,6 +1017,58 @@ class Display(wx.glcanvas.GLCanvas):
             visible = visibles[0 if visibles[0].isPath() else 1]
         if visible is not None:
             visible.setWeight(weight)
+    
+    
+    def setVisibleFlowTo(self, object, show = True, color = None, spread = None):
+        """seVisibleFlowTo(object, weight, show, color, spread)
+        
+        color should be a tuple containing red, green and blue unit float values.
+        
+        (0.0, 0.0, 0.0) -> black
+        (1.0, 0.0, 0.0) -> red
+        (0.0, 1.0, 0.0) -> green
+        (0.0, 0.0, 1.0) -> blue
+        (1.0, 1.0, 1.0) -> white
+        
+        spread should be a float between 0.0 and 1.0"""
+        visibles = self.visiblesForObject(object)
+        visible = None
+        if len(visibles) == 1:
+            visible = visibles[0]
+        elif isinstance(object, Stimulus):
+            visible = visibles[0 if visibles[0].isPath() else 1]
+        if visible is not None:
+            visible.setFlowDirection(visible.pathStart, visible.pathEnd, flowTo = show, flowFrom = visible.flowFrom)
+            if color is not None:
+                visible.setFlowToColor(color)
+            if spread is not None:
+                visible.setFlowToSpread(color)
+    
+    
+    def setVisibleFlowFrom(self, object, show = True, color = None, spread = None):
+        """seVisibleFlowFrom(object, weight, show, color, spread)
+        
+        color should be a tuple containing red, green and blue unit float values.
+        
+        (0.0, 0.0, 0.0) -> black
+        (1.0, 0.0, 0.0) -> red
+        (0.0, 1.0, 0.0) -> green
+        (0.0, 0.0, 1.0) -> blue
+        (1.0, 1.0, 1.0) -> white
+        
+        spread should be a float between 0.0 and 1.0"""
+        visibles = self.visiblesForObject(object)
+        visible = None
+        if len(visibles) == 1:
+            visible = visibles[0]
+        elif isinstance(object, Stimulus):
+            visible = visibles[0 if visibles[0].isPath() else 1]
+        if visible is not None:
+            visible.setFlowDirection(visible.pathStart, visible.pathEnd, flowTo = visible.flowTo, flowFrom = show)
+            if color is not None:
+                visible.setFlowFromColor(color)
+            if spread is not None:
+                visible.setFlowFromSpread(color)
     
     
     def setArrangedAxis(self, object, axis = 'largest', recurse = False):
