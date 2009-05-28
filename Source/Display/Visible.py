@@ -635,7 +635,7 @@ class Visible(object):
     
     def updateOpacity(self):
         if self.display.useGhosts() and len(self.display.selection()) > 0 and self not in self.display.highlightedVisibles and self not in self.display.animatedVisibles:
-            opacity = 0.1
+            opacity = 0.05
             for ancestor in self.ancestors():
                 if ancestor in self.display.selectedVisibles:
                     opacity = 0.5
@@ -1077,6 +1077,8 @@ class Visible(object):
     
     
     def setFlowToColor(self, color):
+        if len(color) == 3:
+            color = (color[0], color[1], color[2], 1.0)
         if color != self._flowToColor:
             self._flowToColor = color
             if self._flowToColor is None:
@@ -1107,6 +1109,8 @@ class Visible(object):
     
     
     def setFlowFromColor(self, color):
+        if len(color) == 3:
+            color = (color[0], color[1], color[2], 1.0)
         if color != self._flowFromColor:
             self._flowFromColor = color
             if self._flowFromColor is None:
