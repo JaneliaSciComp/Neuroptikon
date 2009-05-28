@@ -66,7 +66,7 @@ class NeuronInspector( ObjectInspector ):
             self._neurotransmittersSizer.SetFlexibleDirection(wx.HORIZONTAL)
             self._neurotransmittersOptions.Add(self._neurotransmittersSizer, 1, wx.EXPAND)
             self._neurotransmitterChoice = wx.Choice(parentWindow, wx.ID_ANY)
-            self._neurotransmittersOptions.Add(self._neurotransmitterChoice)
+            self._neurotransmittersOptions.Add(self._neurotransmitterChoice, 0, wx.TOP, 4)
             self._sizer.Add(self._neurotransmittersOptions)
             parentWindow.Bind(wx.EVT_CHOICE, self.onAddNeurotransmitter, self._neurotransmitterChoice)
             
@@ -133,6 +133,8 @@ class NeuronInspector( ObjectInspector ):
                         self._neurotransmittersSizer.Add(removeButton, 0, 0, 0, neurotransmitter)
                     else:
                         self._neurotransmitterChoice.Append(neurotransmitter.name, neurotransmitter)
+                if len(self.objects[0].neurotransmitters) == 0:
+                    self._neurotransmittersSizer.Add(wx.StaticText(self._parentWindow, wx.ID_ANY, gettext('Unknown')))
                 self._neurotransmitterChoice.Enable(self._neurotransmitterChoice.GetCount() > 1)
             else:
                 self._neurotransmittersSizer.Add(wx.StaticText(self._parentWindow, wx.ID_ANY, gettext('Multiple values')))
