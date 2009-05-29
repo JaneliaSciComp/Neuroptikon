@@ -11,14 +11,29 @@ class InspectorFrame( wx.Frame ):
         wx.Frame.__init__(self, parent, -1, gettext('Inspector'), size=(200,300), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
         
         self.display = None
-        self.toolBook = None
         
         self._updatingInspectors = False
         self._lastClickedInspectorClass = None
         
-        self.SetSizer(wx.BoxSizer(wx.VERTICAL))
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        self.SetSizer(mainSizer)
         
-        self.Bind(wx.EVT_SIZE, self.OnSize)
+        # Create an instance of each inspector class.
+        self._inspectors = []
+        for inspectorClass in Inspection.inspectorClasses():
+            inspector = inspectorClass()
+            inspectorWindow = inspector.window(self)
+            self._inspectors.append(inspector)
+            mainSizer.Add(inspectorWindow, 1, wx.EXPAND)
+            mainSizer.Hide(inspectorWindow)
+        self._inspectors.sort()
+        
+        self._activeInspectors = []
+        self._activeInspector = None
+        
+        self.CreateToolBar()
+        
+        self.Bind(wx.EVT_SIZE, self.onSize)
         self.Bind(wx.EVT_CLOSE, self.Close)
     
     
@@ -33,102 +48,81 @@ class InspectorFrame( wx.Frame ):
             # TODO: Are there display attributes other than the selection that would cause the list of inspectors to change?
     
     
-    def onDisplaySelectionChanged( self, signal, sender, event=None, value=None, **arguments):
+    def onDisplaySelectionChanged(self, signal, sender):
         self.updateInspectors()
     
     
     def updateInspectors(self):
         # Update the available inspectors based on the current selection.
-        # wx.ToolBook is buggy when modifying the pages so the safest thing to do is to nuke the whole thing and start from scratch.
         
-        self._updatingInspectors = True
+        self.setActiveInspector(None)
         
-        if self.toolBook is not None:
-            self.currentInspector().willBeClosed()
-            self.Unbind(wx.EVT_TOOLBOOK_PAGE_CHANGING, self.toolBook)
-            self.Unbind(wx.EVT_TOOLBOOK_PAGE_CHANGED, self.toolBook)
-            self.toolBook.DeleteAllPages()
-            self.GetSizer().Remove(self.toolBook)
-            self.toolBook.Destroy()
+        self._activeInspectors = []
+        self._minWidth = self._minHeight = 0
+        toolbar = self.GetToolBar()
+        toolbar.ClearTools()
+        for inspector in self._inspectors:
+            inspector.toolbarId = None
+            if inspector.canInspectDisplay(self.display):
+                self._activeInspectors.append(inspector)
+                inspector.toolbarId = wx.NewId()
+                toolbar.AddRadioLabelTool(inspector.toolbarId, inspector.__class__.name(), inspector.__class__.bitmap())
+                self.Bind(wx.EVT_TOOL, self.onShowInspector, id = inspector.toolbarId)
+                bestSize = inspector.window().GetBestSize()
+                self._minWidth = max(self._minWidth, bestSize.GetWidth())
+                self._minHeight = max(self._minHeight, bestSize.GetHeight())
+        toolbar.Realize()
         
-        self.toolBook = wx.Toolbook(self, wx.ID_ANY)
-        
-        self.inspectors = []
-        if self.display is not None:
-            for inspectorClass in Inspection.inspectorClasses():
-                # Create a new inspector instance
-                if inspectorClass.canInspectDisplay(self.display):
-                    inspector = inspectorClass()
-                    self.inspectors.append(inspector)
-        
-        if len(self.inspectors) == 0:
-            self.toolBook = None
-        else:
-            imageList = wx.ImageList(16, 16)
-            self.toolBook.SetImageList(imageList)
-            self.toolBook.SetFitToCurrentPage(True)
-            for inspector in self.inspectors:
-                imageList.Add(inspector.__class__.bitmap())
-                self.toolBook.AddPage(inspector.window(self.toolBook), inspector.__class__.name(), imageId = imageList.GetImageCount() - 1)
-                # TODO: listen for size changes from each inspector's window and call Fit()?
-                inspector.inspectDisplay(self.display)
-            self.GetSizer().Add(self.toolBook, 1, wx.EXPAND)
-            self.Bind(wx.EVT_TOOLBOOK_PAGE_CHANGING, self.onPageChanging, self.toolBook)
-            self.Bind(wx.EVT_TOOLBOOK_PAGE_CHANGED, self.onPageChanged, self.toolBook)
-        
-        # Try to re-select the same inspector that was most recently chosen by the user.
-        if self._lastClickedInspectorClass is not None:
-            foundInspector = False
-            for i in range(0, len(self.inspectors)):
-                if isinstance(self.inspectors[i], self._lastClickedInspectorClass):
-                    self.toolBook.ChangeSelection(i)
-                    foundInspector = True
-            if not foundInspector:
-                # No exact match in the current list of inspectors, see if there is one with the same base class.
-                lastInspectorBaseClass = self._lastClickedInspectorClass.__bases__[0]
-                for i in range(0, len(self.inspectors)):
-                    inspectorBaseClasses = self.inspectors[i].__class__.__bases__
-                    if lastInspectorBaseClass in inspectorBaseClasses:
-                        self.toolBook.ChangeSelection(i)
-        
-        self._updatingInspectors = False
+        if len(self._activeInspectors) > 0:
+            # Try to re-select the same inspector that was most recently chosen by the user.
+            if self._lastClickedInspectorClass is not None:
+                for inspector in self._activeInspectors:
+                    if isinstance(inspector, self._lastClickedInspectorClass):
+                        self.setActiveInspector(inspector)
+                        break
+                if self._activeInspector is None:
+                    # No exact match in the current list of inspectors, see if there is one with the same base class.
+                    lastInspectorBaseClass = self._lastClickedInspectorClass.__bases__[0]
+                    for inspector in self._activeInspectors:
+                        inspectorBaseClasses = inspector.__class__.__bases__
+                        if lastInspectorBaseClass in inspectorBaseClasses:
+                            self.setActiveInspector(inspector)
+                            break
+            if self._activeInspector is None:
+                self.setActiveInspector(self._activeInspectors[0])
     
     
-    def currentInspector(self):
-        return self.inspectors[self.toolBook.GetSelection()]
+    def setActiveInspector(self, inspector):
+        if inspector != self._activeInspector:
+            if self._activeInspector is not None:
+                self._activeInspector.willBeClosed()
+                self.GetSizer().Hide(self._activeInspector.window())
+            self._activeInspector = inspector
+            if self._activeInspector is None:
+                self.SetTitle(gettext('Inspector'))
+            else:
+                self._activeInspector.willBeShown()
+                self._activeInspector.inspectDisplay(self.display)
+                self.GetSizer().Show(self._activeInspector.window())
+                self.SetTitle(inspector.name() + ' ' + gettext('Inspector'))
+                toolbarWidth = len(self._activeInspectors) * 32
+                self.SetMinSize(wx.Size(max(self._minWidth, toolbarWidth), self._minHeight + 40))
+                self._activeInspector.window().Layout()
+                self.Layout()
     
     
-    def onPageChanging(self, event):
-        inspector = self.inspectors[event.GetOldSelection()]
-        if inspector is not None:
-            inspector.willBeClosed()
-        inspector = self.inspectors[event.GetSelection()]
-        if inspector is not None:
-            inspector.willBeShown()
-    
-    
-    def onPageChanged(self, event):
-        inspector = self.inspectors[event.GetSelection()]
-        if inspector is not None:
-            self.SetTitle(inspector.name() + ' ' + gettext('Inspector'))
-            if not self._updatingInspectors:
+    def onShowInspector(self, event):
+        for inspector in self._activeInspectors:
+            if inspector.toolbarId == event.GetId():
                 self._lastClickedInspectorClass = inspector.__class__
+                self.setActiveInspector(inspector)
+                break
+    
+    
+    def onSize(self, event):
+        if self._activeInspector is not None:
+            self._activeInspector.window().Layout()
             self.Layout()
-            self.Fit()
-            
-            # wx.StaticBoxSizers in wx.ToolBooks are flaky with the current wx.  Any static boxes in the inspector won't be laid out correctly at this point.
-            # We have to wait until they get realized and rendered once and then layout again.
-            wx.CallAfter(self.relayout)
-    
-    
-    def relayout(self):
-        self.Fit()
-        self.currentInspector().window().Layout()
-    
-    
-    def OnSize(self, event):
-        self.currentInspector().window().Layout()
-        event.Skip()
     
     
     def Close(self, event=None):
