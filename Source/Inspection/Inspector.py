@@ -23,10 +23,10 @@ class Inspector( object ):
         except:
             image = None
         if image is not None and image.IsOk():
-            image.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH)
+            image.Rescale(32, 32, wx.IMAGE_QUALITY_HIGH)
             return image.ConvertToBitmap()
         else:
-            return wx.EmptyBitmap(16, 16)
+            return wx.EmptyBitmap(32, 32)
     
     
     @classmethod
@@ -48,3 +48,28 @@ class Inspector( object ):
     
     def willBeClosed(self):
         pass
+    
+    
+    @classmethod
+    def __cmp_name__(cls):
+        superClass = cls.__bases__[0]
+        if hasattr(superClass, '__cmp_name__'):
+            return superClass.__cmp_name__() + ': ' + cls.name()
+        else:
+            return cls.name()
+        
+    
+    def __cmp__(self, other):
+        if isinstance(other, Inspector):
+            selfStr = self.__cmp_name__()
+            otherStr = other.__cmp_name__()
+            if selfStr < otherStr:
+                return -1
+            elif selfStr == otherStr:
+                return 0
+            else:
+                return 1
+        else:
+            return 1
+    
+    
