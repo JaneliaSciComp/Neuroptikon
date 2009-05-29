@@ -143,7 +143,7 @@ class AttributesInspector(Inspector):
     
     
     def enableCellEditControl(self):
-        if self.grid is not None and self.grid.CanEnableCellControl():
+        if self.grid.CanEnableCellControl():
             self.grid.EnableCellEditControl()
     
     
@@ -156,12 +156,11 @@ class AttributesInspector(Inspector):
     
     
     def onRemoveAttribute(self, event):
-        if self.grid is not None:
-            rowNums = self.grid.GetSelectedRows()
-            if len(rowNums) == 1:
-                if self.grid.IsCellEditControlEnabled():
-                    self.grid.DisableCellEditControl()
-                self.grid.DeleteRows(rowNums[0], 1)
+        rowNums = self.grid.GetSelectedRows()
+        if len(rowNums) == 1:
+            if self.grid.IsCellEditControlEnabled():
+                self.grid.DisableCellEditControl()
+            self.grid.DeleteRows(rowNums[0], 1)
         event.Skip()
     
     
@@ -169,27 +168,23 @@ class AttributesInspector(Inspector):
         # We're showing the vertical scrollbar -> allow for scrollbar width
         # NOTE: on GTK, the scrollbar is included in the client size, but on
         # Windows it is not included
-        if self.grid is not None:
-            gridWidth = self.grid.GetClientSize().width
-    #        if wx.Platform != '__WXMSW__':
-    #            if self.GetItemCount() > self.GetCountPerPage():
-    #                scrollWidth = wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
-    #                gridWidth = gridWidth - scrollWidth
+        gridWidth = self.grid.GetClientSize().width
+#        if wx.Platform != '__WXMSW__':
+#            if self.GetItemCount() > self.GetCountPerPage():
+#                scrollWidth = wx.SystemSettings_GetMetric(wx.SYS_VSCROLL_X)
+#                gridWidth = gridWidth - scrollWidth
 
-            totColWidth = self.grid.GetColSize(0) + self.grid.GetColSize(1)
-            resizeColWidth = self.grid.GetColSize(2)
+        totColWidth = self.grid.GetColSize(0) + self.grid.GetColSize(1)
+        resizeColWidth = self.grid.GetColSize(2)
 
-            if gridWidth - totColWidth > 100:
-                self.grid.SetColSize(2, gridWidth - totColWidth)
-            
-            if event is not None:
-                event.Skip()
+        if gridWidth - totColWidth > 100:
+            self.grid.SetColSize(2, gridWidth - totColWidth)
+        
+        if event is not None:
+            event.Skip()
         
     
     def willBeClosed(self):
         # Make sure any active edit gets committed.
-        if self.grid is not None and self.grid.IsCellEditControlEnabled():
+        if self.grid.IsCellEditControlEnabled():
             self.grid.DisableCellEditControl()
-            
-        # Make sure that any queued call to self.enableCellEditControl() won't try to access the grid after the C++ object has been destroyed
-        self.grid = None
