@@ -41,14 +41,17 @@ class NeuroptikonFrame( wx.Frame ):
         self.finder = None
         
         toolbar = wx.ToolBar(self)
-        view2DId = wx.NewId()
-        toolbar.AddLabelTool(view2DId, gettext('2D View'), self.loadBitmap("View2D.png"))
-        self.Bind(wx.EVT_TOOL, self.display.onViewIn2D, id=view2DId)
-        view3DId = wx.NewId()
-        toolbar.AddLabelTool(view3DId, gettext('3D View'), self.loadBitmap("View3D.png"))
-        self.Bind(wx.EVT_TOOL, self.display.onViewIn3D, id=view3DId)
+        self._view2DId = wx.NewId()
+        toolbar.AddCheckLabelTool(self._view2DId, gettext('2D View'), self.loadBitmap("View2D.png"))
+        self.Bind(wx.EVT_TOOL, self.display.onViewIn2D, id=self._view2DId)
+        self._view3DId = wx.NewId()
+        toolbar.AddCheckLabelTool(self._view3DId, gettext('3D View'), self.loadBitmap("View3D.png"))
+        self.Bind(wx.EVT_TOOL, self.display.onViewIn3D, id=self._view3DId)
         toolbar.Realize()
         self.SetToolBar(toolbar)
+        
+        dispatcher.connect(self.viewDimensionsDidChange, ('set', 'viewDimensions'), self.display)
+        self.viewDimensionsDidChange()
         
         self.Show(1)
         self.splitter.SetSashPosition(-100)
@@ -169,7 +172,12 @@ class NeuroptikonFrame( wx.Frame ):
         self.showRegionNamesMenuItem.Check(self.display.showRegionNames())
         self.showNeuronNamesMenuItem.Check(self.display.showNeuronNames())
         self.useGhostsMenuItem.Check(self.display.useGhosts())
-        
+    
+    
+    def viewDimensionsDidChange(self, sender = None, signal = None):
+        self.GetToolBar().ToggleTool(self._view2DId, self.display.viewDimensions == 2)
+        self.GetToolBar().ToggleTool(self._view3DId, self.display.viewDimensions == 3)
+    
     
     def onActivate(self, event):
         wx.GetApp().inspector.inspectDisplay(self.display)
@@ -253,7 +261,8 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     def onUpdateLayoutUI(self, event):
-        menuItem = self.GetMenuBar().FindItemById(event.GetId())        layoutClass = Display.layoutClasses()[event.GetId()]
+        menuItem = self.GetMenuBar().FindItemById(event.GetId())
+        layoutClass = Display.layoutClasses()[event.GetId()]
         menuItem.Enable(layoutClass.canLayoutDisplay(self.display))
     
     
