@@ -30,9 +30,9 @@ class DisplayInspector(Inspector):
             self._window.Bind(wx.EVT_RADIOBUTTON, self.onSetOrthoViewXZ, self.xzButton)
             self._sizer.Add(self.xzButton, 0)
             self._sizer.AddStretchSpacer()
-            self.yzButton = wx.RadioButton(self._window, wx.ID_ANY, gettext('YZ'))
-            self._window.Bind(wx.EVT_RADIOBUTTON, self.onSetOrthoViewYZ, self.yzButton)
-            self._sizer.Add(self.yzButton, 0)
+            self.zyButton = wx.RadioButton(self._window, wx.ID_ANY, gettext('ZY'))
+            self._window.Bind(wx.EVT_RADIOBUTTON, self.onSetOrthoViewZY, self.zyButton)
+            self._sizer.Add(self.zyButton, 0)
             
             mainSizer = wx.BoxSizer(wx.VERTICAL)
             mainSizer.Add(self._sizer, 1, wx.ALL, 5)
@@ -55,8 +55,8 @@ class DisplayInspector(Inspector):
             self.xyButton.SetValue(True)
         elif self.display.orthoViewPlane == 'xz':
             self.xzButton.SetValue(True)
-        elif self.display.orthoViewPlane == 'yz':
-            self.yzButton.SetValue(True)
+        elif self.display.orthoViewPlane == 'zy':
+            self.zyButton.SetValue(True)
     
     
     def onColorChanged(self, event):
@@ -72,6 +72,6 @@ class DisplayInspector(Inspector):
         self.display.setOrthoViewPlane('xz')
     
     
-    def onSetOrthoViewYZ(self, event):
-        self.display.setOrthoViewPlane('yz')
+    def onSetOrthoViewZY(self, event):
+        self.display.setOrthoViewPlane('zy')
     

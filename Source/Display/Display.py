@@ -363,11 +363,11 @@ class Display(wx.glcanvas.GLCanvas):
             elif self.orthoViewPlane == 'xz':
                 self.orthoXPlane = 0
                 self.orthoYPlane = 2
-            elif self.orthoViewPlane == 'yz':
+            elif self.orthoViewPlane == 'zy':
                 self.orthoXPlane = 1
                 self.orthoYPlane = 2
             else:
-                raise ValueError, gettext("orthographic view plane must be one of 'xy', 'xz' or 'yz'")
+                raise ValueError, gettext("orthographic view plane must be one of 'xy', 'xz' or 'zy'")
             self.resetView()
             self.Refresh()
             dispatcher.send(('set', 'orthoViewPlane'), self)
@@ -399,7 +399,7 @@ class Display(wx.glcanvas.GLCanvas):
             elif self.orthoViewPlane == 'xz':
                 self.viewer2D.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(0.0, self.visiblesMax[1] + 2.0, 0.0)) * \
                                                         osg.Matrixd.rotate(osg.Quat(pi / -2.0, osg.Vec3d(1, 0, 0))))
-            elif self.orthoViewPlane == 'yz':
+            elif self.orthoViewPlane == 'zy':
                 self.viewer2D.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(self.visiblesMax[0] + 2.0, 0.0, 0.0)) * \
                                                         osg.Matrixd.rotate(osg.Quat(pi / 2.0, osg.Vec3d(0, 1, 0))))
             self.SetScrollbar(wx.HORIZONTAL, (self.orthoCenter[0] - self.visiblesMin[0]) / self.visiblesSize[0] * width - width / zoom / 2.0, width / zoom, width, True)
@@ -1328,7 +1328,7 @@ class Display(wx.glcanvas.GLCanvas):
                     pixelCutOff /= visible.parent.worldSize()[0]
                 draggerMatrix = visible.sgNode.getMatrix() * \
                                 osg.Matrixd.translate(*self.draggerOffset)
-            elif self.orthoViewPlane == 'yz':
+            elif self.orthoViewPlane == 'zy':
                 if visible.parent is None or not visible.sizeIsAbsolute():
                     self.draggerOffset = (visible.size()[0], 0.0, 0.0)
                 else:
