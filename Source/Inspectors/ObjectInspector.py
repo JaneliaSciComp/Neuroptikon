@@ -28,12 +28,12 @@ class ObjectInspector(Inspector):
     
     
     @classmethod
-    def bitmap(cls):
+    def bitmap(cls, size = 32):
         image = cls.objectClass().image()
         if image is None or not image.IsOk():
             return Inspector.bitmap(cls)
         else:
-            scaledImage = image.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH)
+            scaledImage = image.Rescale(size, size, wx.IMAGE_QUALITY_HIGH)
             return wx.BitmapFromImage(scaledImage)
     
     

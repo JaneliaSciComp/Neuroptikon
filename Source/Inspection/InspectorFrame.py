@@ -1,5 +1,5 @@
 import wx
-import sys
+import platform, sys
 from wx.py import dispatcher
 import Inspection
 import Inspector    # Not needed by the code but insures that the Inspector module gets packaged by setuptools.
@@ -66,7 +66,8 @@ class InspectorFrame( wx.Frame ):
             if inspector.canInspectDisplay(self.display):
                 self._activeInspectors.append(inspector)
                 inspector.toolbarId = wx.NewId()
-                toolbar.AddRadioLabelTool(inspector.toolbarId, inspector.__class__.name(), inspector.__class__.bitmap())
+                bitmapSize = 16 if platform.system() == 'Windows' else 32
+                toolbar.AddRadioLabelTool(inspector.toolbarId, inspector.__class__.name(), inspector.__class__.bitmap(bitmapSize), wx.NullBitmap, inspector.__class__.name() + ' ' + gettext('Inspector'))
                 self.Bind(wx.EVT_TOOL, self.onShowInspector, id = inspector.toolbarId)
                 bestSize = inspector.window().GetBestSize()
                 self._minWidth = max(self._minWidth, bestSize.GetWidth())
