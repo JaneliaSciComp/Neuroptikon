@@ -160,8 +160,10 @@ if __name__ == "__main__":
         
         
         def onQuit(self, event):
-            for frame in self._frames:
+            for frame in list(self._frames):
                 frame.Close()
+            if len(self._frames) == 0 and platform.system() != 'Windows':
+                self.ExitMainLoop()
         
         
         def loadImage(self, imageFileName):
