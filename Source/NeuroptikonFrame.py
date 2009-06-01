@@ -267,10 +267,8 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     def onCloseWindow(self, event):
-        self.display.deselectAll()
-        self.display.setShowFlow(False)
-        wx.GetApp()._frames.remove(self)    # hackish
         self.Destroy()
+        wx.GetApp().displayWasClosed(self)
     
     
     def indentXMLElement(self, element, level=0):

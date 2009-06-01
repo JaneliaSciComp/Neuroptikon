@@ -93,7 +93,7 @@ if __name__ == "__main__":
             
             # Keep track of open frames so we can close them on quit.
             # TODO: use wxWidget's document/view framework instead
-            self._frames = [self.preferences, self.inspector]
+            self._frames = []
             self.SetExitOnFrameDelete(False)
             
             # open an empty network by default
@@ -160,12 +160,8 @@ if __name__ == "__main__":
         
         
         def onQuit(self, event):
-            ok2Quit = True
             for frame in self._frames:
-                if not frame.Close():
-                    ok2Quit = False
-            if ok2Quit:
-                self.ExitMainLoop()
+                frame.Close()
         
         
         def loadImage(self, imageFileName):
@@ -272,6 +268,12 @@ if __name__ == "__main__":
             return frame.display
         
         
+        def displayWasClosed(self, display):
+            self._frames.remove(display)
+            if len(self._frames) == 0 and platform.system() == 'Windows':
+                self.ExitMainLoop()
+
+        
         def onOpenPreferences(self, event):
             self.preferences.Show(True)
             self.preferences.Raise()
@@ -290,7 +292,7 @@ if __name__ == "__main__":
         
         def onOpenWxinspector(self, event):
             self.ShowInspectionTool()
-            
+        
     
     def run():
         app = Neuroptikon(None)
