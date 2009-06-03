@@ -287,7 +287,7 @@ class NeuroptikonFrame( wx.Frame ):
                 element.tail = i
     
     
-    def saveNetworkAndDisplaysAsXML(self, savePath):
+    def saveNetworkAndDisplaysAsXML(self, savePath, saveDisplays = True):
         try:
             xmlRoot = ElementTree.Element('Neuroptikon')
             network = self.display.network
@@ -297,11 +297,12 @@ class NeuroptikonFrame( wx.Frame ):
             if networkElement is None:
                 raise ValueError, gettext('Could not save the network')
             
-            # Serialize the display(s)
-            for display in network.displays:
-                frameElement = display.GetTopLevelParent().toXMLElement(xmlRoot)
-                if frameElement is None:
-                    raise ValueError, gettext('Could not save one of the windows')
+            if saveDisplays:
+                # Serialize the display(s)
+                for display in network.displays:
+                    frameElement = display.GetTopLevelParent().toXMLElement(xmlRoot)
+                    if frameElement is None:
+                        raise ValueError, gettext('Could not save one of the windows')
             
             self.indentXMLElement(xmlRoot)
             xmlTree = ElementTree.ElementTree(xmlRoot)
@@ -313,22 +314,26 @@ class NeuroptikonFrame( wx.Frame ):
             raise    # TODO: inform the user nicely
     
     
-    def saveNetworkAndDisplaysAsScript(self, savePath):
+    def saveNetworkAndDisplaysAsScript(self, savePath, saveDisplays = True):
         scriptFile = open(savePath, 'w')
         scriptRefs = {}
         network = self.display.network
         
         scriptFile.write('from datetime import datetime, date, time\n\n')
         
-        scriptFile.write('display.autoVisualize = False\n\n')
+        if saveDisplays:
+            scriptFile.write('display.autoVisualize = False\n\n')
         
         try:
             # Serialize the network
             network.toScriptFile(scriptFile, scriptRefs)
             
-            # Serialize the display(s)
-            for display in network.displays:
-                display.GetTopLevelParent().toScriptFile(scriptFile, scriptRefs)
+            if saveDisplays:
+                # Serialize the display(s)
+                for display in network.displays:
+                    display.GetTopLevelParent().toScriptFile(scriptFile, scriptRefs)
+            else:
+                scriptFile.write('\n# Reveal the default visualization\ndisplay.centerView()\n')
         except:
             raise    # TODO: inform the user nicely
         finally:
@@ -347,8 +352,8 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     def onSaveNetworkAs(self, event):
-        fileTypes = ['XML File', 'Python Script']
-        fileExtensions = ['xml', 'py']
+        fileTypes = ['XML File', 'XML File (without display)', 'Python Script', 'Python Script (without display)']
+        fileExtensions = ['xml', 'xml', 'py', 'py']
         wildcard = ''
         for index in range(0, len(fileTypes)):
             if wildcard != '':
@@ -356,13 +361,15 @@ class NeuroptikonFrame( wx.Frame ):
             wildcard += fileTypes[index] + '|' + fileExtensions[index]
         fileDialog = wx.FileDialog(None, gettext('Save As:'), '', '', wildcard, wx.FD_SAVE)
         if fileDialog.ShowModal() == wx.ID_OK:
-            extension = fileExtensions[fileDialog.GetFilterIndex()]
+            filterIndex = fileDialog.GetFilterIndex()
+            saveDisplays = (filterIndex % 2 == 0)
+            extension = fileExtensions[filterIndex]
             savePath = str(fileDialog.GetPath())
             if not savePath.endswith('.' + extension):
                 savePath += '.' + extension
             if extension == 'xml':
                 self.display.network.savePath = savePath
-                self.saveNetworkAndDisplaysAsXML(savePath)
+                self.saveNetworkAndDisplaysAsXML(savePath, saveDisplays = saveDisplays)
             else:
-                self.saveNetworkAndDisplaysAsScript(savePath)
+                self.saveNetworkAndDisplaysAsScript(savePath, saveDisplays)
     
