@@ -507,7 +507,7 @@ class Visible(object):
         scriptRef = scriptRefs[self.client.networkId]
         if self.display.autoVisualize:
             # Change the existing visualization of the object.
-            if len(params) > 1:
+            if '(' in scriptRef and len(params) > 1:
                 scriptFile.write('object = ' + scriptRef + '\n')
                 scriptRef = 'object'
             if 'position' in params:
