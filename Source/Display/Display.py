@@ -49,7 +49,7 @@ class Display(wx.glcanvas.GLCanvas):
         self._showRegionNames = True
         self._showNeuronNames = False
         self._showFlow = False
-        self._useGhosts = False
+        self._useGhosts = True
         self._primarySelectionColor = (0, 0, 1, .25)
         self._secondarySelectionColor = (0, 0, 1, .125)
         self.viewDimensions = 2
@@ -309,8 +309,6 @@ class Display(wx.glcanvas.GLCanvas):
             for visible in visibles:
                 if visible.isPath():
                     visible.toScriptFile(scriptFile, scriptRefs, displayRef)
-
-        scriptFile.write('\n' + displayRef + '.autoVisualize = ' + str(self.autoVisualize) + '\n')
         
         objectRefs = []
         for visible in self.selectedVisibles:
@@ -635,6 +633,7 @@ class Display(wx.glcanvas.GLCanvas):
         params['opacity'] = 1.0
         params['weight'] = 1.0
         params['label'] = None
+        params['texture'] = None
         
         if isinstance(object, Region):
             params['shape'] = 'box'
@@ -1103,13 +1102,15 @@ class Display(wx.glcanvas.GLCanvas):
         # TODO: should probably be returning the visible itself...
     
     
-    def setVisiblePath(self, object, path, startVisible, endVisible):
+    def setVisiblePath(self, object, path, startObject, endObject):
         visibles = self.visiblesForObject(object)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
         elif isinstance(object, Stimulus):
             visible = visibles[0 if visibles[1].isPath() else 1]
+        startVisible = self.visiblesForObject(startObject)[0]
+        endVisible = self.visiblesForObject(endObject)[0]
         if visible is not None:
             visible.setPath(path, startVisible, endVisible)
     
@@ -1187,6 +1188,7 @@ class Display(wx.glcanvas.GLCanvas):
         
         self.hoverSelected = self.hoverSelecting
         self.hoverSelecting = False
+        self.Refresh()
    
     
     def selection(self):
@@ -1442,20 +1444,24 @@ class Display(wx.glcanvas.GLCanvas):
         # Backwards compatibility method, new code should use performLayout() instead.
         
         if (method == 'graphviz' or method is None) and self.viewDimensions == 2:
-            from Layouts.GraphvizLayout import GraphvizLayout
-            self.performLayout(GraphvizLayout())
+            from Layouts.ForceDirectedLayout import ForceDirectedLayout
+            self.performLayout(ForceDirectedLayout())
         elif (method == 'spectral' or method is None) and self.viewDimensions == 3:
             from Layouts.SpectralLayout import SpectralLayout
             self.performLayout(SpectralLayout())
     
     
     def performLayout(self, layout = None):
-        if layout is not None and not layout.__class__.canLayoutDisplay(self):
-            raise ValueError, gettext('The supplied layout cannot be used.')
-        
         if layout is None:
             # Fall back to the last layout used.
             layout = self.lastUsedLayout
+        else:
+            # If a layout class was passed in then create a default instance.
+            if isinstance(layout, type(self.__class__)):
+                layout = layout()
+            
+            if not layout.__class__.canLayoutDisplay(self):
+                raise ValueError, gettext('The supplied layout cannot be used.')
         
         if layout is None or not layout.__class__.canLayoutDisplay(self):
             # Pick the first layout class capable of laying out the display.
