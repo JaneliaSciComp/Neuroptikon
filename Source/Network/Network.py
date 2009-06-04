@@ -130,6 +130,10 @@ class Network:
         return self.objectsOfClass(Region)
     
     
+    def pathways(self):
+        return self.objectsOfClass(Pathway)
+    
+    
     def createNeuron(self, *args, **keywordArgs):
         neuron = Neuron(self, *args, **keywordArgs)
         self.addObject(neuron)
