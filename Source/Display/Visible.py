@@ -483,24 +483,90 @@ class Visible(object):
         
         if self.isPath():
             params['weight'] = self.weight()
-            if self.flowToColor() != self.display.defaultFlowColor:
-                params['flowToColor'] = self.flowToColor()
-            if self.flowToSpread() != self.display.defaultFlowSpread:
-                params['flowToSpread'] = self.flowToSpread()
-            if self.flowFromColor() != self.display.defaultFlowColor:
-                params['flowFromColor'] = self.flowFromColor()
-            if self.flowFromSpread() != self.display.defaultFlowSpread:
-                params['flowFromSpread'] = self.flowFromSpread()
+            if self.flowTo:
+                if self.flowToColor() != self.display.defaultFlowColor:
+                    params['flowToColor'] = self.flowToColor()
+                if self.flowToSpread() != self.display.defaultFlowSpread:
+                    params['flowToSpread'] = self.flowToSpread()
+            if self.flowFrom:
+                if self.flowFromColor() != self.display.defaultFlowColor:
+                    params['flowFromColor'] = self.flowFromColor()
+                if self.flowFromSpread() != self.display.defaultFlowSpread:
+                    params['flowFromSpread'] = self.flowFromSpread()
         
         params['shape'] = self.shape()
         params['color'] = self.color()
         params['opacity'] = self.opacity()
-        if self._staticTexture is not None:
-            params['texture'] = self._staticTexture
+        params['texture'] = self._staticTexture
         
-        scriptFile.write('%s.visualizeObject(%s' % (displayRef, scriptRefs[self.client.networkId]))
-        for key, value in params.iteritems():
-            if not key in defaultParams or value != defaultParams[key]:
+        # Strip out values that are the same as the default.
+        for key in params.keys():
+            if key in defaultParams and params[key] == defaultParams[key]:
+                del params[key]
+        
+        scriptRef = scriptRefs[self.client.networkId]
+        if self.display.autoVisualize:
+            # Change the existing visualization of the object.
+            if len(params) > 1:
+                scriptFile.write('object = ' + scriptRef + '\n')
+                scriptRef = 'object'
+            if 'position' in params:
+                scriptFile.write('%s.setVisiblePosition(%s, %s' % (displayRef, scriptRef, str(self.position())))
+                if 'positionIsFixed' in params:
+                    scriptFile.write(', fixed = ' + str(self.positionIsFixed()))
+                scriptFile.write(')\n')
+            if 'size' in params or 'sizeIsFixed' in params or 'sizeIsAbsolute' in params:
+                scriptFile.write('%s.setVisibleSize(%s, %s' % (displayRef, scriptRef, str(self.size())))
+                if 'sizeIsFixed' in params:
+                    scriptFile.write(', fixed = ' + str(self.sizeIsFixed()))
+                if 'sizeIsAbsolute' in params:
+                    scriptFile.write(', absolute = ' + str(self.sizeIsAbsolute()))
+                scriptFile.write(')\n')
+            if 'rotation' in params:
+                scriptFile.write('%s.setVisibleRotation(%s, %s)\n' % (displayRef, scriptRef, str(self.rotation())))
+            if 'label' in params:
+                scriptFile.write('%s.setLabel(%s, \'%s\')\n' % (displayRef, scriptRef, self.label().replace('\\', '\\\\').replace('\'', '\\\'')))
+            if 'shape' in params:
+                scriptFile.write('%s.setVisibleShape(%s, \'%s\')\n' % (displayRef, scriptRef, self.shape()))
+            if 'color' in params:
+                scriptFile.write('%s.setVisibleColor(%s, %s)\n' % (displayRef, scriptRef, str(self.color())))
+            if 'opacity' in params:
+                scriptFile.write('%s.setVisibleOpacity(%s, %s)\n' % (displayRef, scriptRef, str(self.opacity())))
+            if 'weight' in params:
+                scriptFile.write('%s.setVisibleWeight(%s, %s)\n' % (displayRef, scriptRef, str(self.weight())))
+            if 'texture' in params:
+                if self._staticTexture == None:
+                    scriptFile.write('%s.setVisibleTexture(%s, None)\n' % (displayRef, scriptRef))
+                else:
+                    scriptFile.write('%s.setVisibleTexture(%s, library.texture(\'%s\'))\n' % (displayRef, scriptRef, self._staticTexture.identifier.replace('\\', '\\\\').replace('\'', '\\\'')))
+                # TODO: texture transform needs to be restored as well
+            if 'arrangedAxis' in params:
+                scriptFile.write('%s.setArrangedAxis(%s, \'%s\')\n' % (displayRef, scriptRef, self.arrangedAxis))
+            if 'arrangedSpacing' in params:
+                scriptFile.write('%s.setArrangedSpacing(%s, %s)\n' % (displayRef, scriptRef, str(self.arrangedSpacing)))
+            if 'arrangedWeight' in params:
+                scriptFile.write('%s.setArrangedWeight(%s, %s)\n' % (displayRef, scriptRef, str(self.arrangedWeight)))
+# TODO:
+#            if self.isPath():
+#                scriptFile.write('%s.setVisiblePath(%s, [], %s, %s)\n' % (displayRef, scriptRef, scriptRefs[self.pathStart.client.networkId], scriptRefs[self.pathEnd.client.networkId]))
+            if 'flowToColor' in params or 'flowToSpreod' in params:
+                scriptFile.write('%s.setVisibleFlowTo(%s, True' % (displayRef, scriptRef))
+                if 'flowToColor' in params:
+                    scriptFile.write(', flowToColor = ' + str(self.flowToColor))
+                if 'flowToSpreod' in params:
+                    scriptFile.write(', flowToSpreod = ' + str(self.flowToSpreod))
+                scriptFile.write(')\n')
+            if 'flowFromColor' in params or 'flowFromSpreod' in params:
+                scriptFile.write('%s.setVisibleFlowFrom(%s, True' % (displayRef, scriptRef))
+                if 'flowFromColor' in params:
+                    scriptFile.write(', flowFromColor = ' + str(self.flowFromColor))
+                if 'flowFromSpreod' in params:
+                    scriptFile.write(', flowFromSpreod = ' + str(self.flowFromSpreod))
+                scriptFile.write(')\n')
+        else:
+            # Manually visualize the object.
+            scriptFile.write('%s.visualizeObject(%s' % (displayRef, scriptRef))
+            for key, value in params.iteritems():
                 if isinstance(value, str):
                     valueText = '\'' + value.replace('\\', '\\\\').replace('\'', '\\\'') + '\''
                 elif isinstance(value, Texture):
@@ -508,7 +574,7 @@ class Visible(object):
                 else:
                     valueText = str(value)
                 scriptFile.write(', %s = %s' % (key, valueText))
-        scriptFile.write(')\n')
+            scriptFile.write(')\n')
         
         for childVisible in self.children:
             childVisible.toScriptFile(scriptFile, scriptRefs, displayRef)

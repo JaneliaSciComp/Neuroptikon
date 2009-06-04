@@ -10,7 +10,11 @@ import Layouts
 
 
 class NeuroptikonFrame( wx.Frame ):
-    def __init__(self, network = None, id=wx.ID_ANY, title=gettext('Neuroptikon')):
+    def __init__(self, network = None, id = wx.ID_ANY):
+        if network is None:
+            title = Network().name()
+        else:
+            title = network.name()
         wx.Frame.__init__(self, None, id, title, size=(800,600), style=wx.DEFAULT_FRAME_STYLE|wx.FULL_REPAINT_ON_RESIZE)
         
         self.Bind(wx.EVT_ACTIVATE, self.onActivate)
@@ -20,6 +24,7 @@ class NeuroptikonFrame( wx.Frame ):
         
         self.display = Display.Display.Display(self.splitter)
         self.display.setNetwork(network)
+        dispatcher.connect(self.networkDidChangeSavePath, ('set', 'savePath'), network)
         
         self._console = wx.py.shell.Shell(self.splitter, wx.ID_ANY, locals = self.scriptLocals(), introText=gettext('Welcome to Neuroptikon.'))
         
@@ -57,6 +62,10 @@ class NeuroptikonFrame( wx.Frame ):
         self.splitter.SetSashPosition(-100)
     
     
+    def networkDidChangeSavePath(self, signal = None, sender = None):
+        self.SetTitle(self.display.network.name())
+    
+    
     @classmethod
     def fromXMLElement(cls, xmlElement, network = None):
         frame = NeuroptikonFrame()
@@ -70,6 +79,7 @@ class NeuroptikonFrame( wx.Frame ):
         frame.display.autoVisualize = False
         frame.display.setNetwork(network)
         frame.display.fromXMLElement(displayElement)
+        frame.networkDidChangeSavePath()
         
         return frame
     
@@ -201,7 +211,7 @@ class NeuroptikonFrame( wx.Frame ):
                 execfile(dlg.GetPath(), locals)
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-                dialog = wx.MessageDialog(self, exceptionValue.message, gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
+                dialog = wx.MessageDialog(self, exceptionValue.message, gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_lineno, style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
         dlg.Destroy()
         self.Refresh(False)
@@ -314,19 +324,57 @@ class NeuroptikonFrame( wx.Frame ):
             raise    # TODO: inform the user nicely
     
     
-    def saveNetworkAndDisplaysAsScript(self, savePath, saveDisplays = True):
-        scriptFile = open(savePath, 'w')
+    def saveNetworkAndDisplaysAsScript(self, savePath, saveNetwork = True, saveDisplays = True):
         scriptRefs = {}
         network = self.display.network
         
-        scriptFile.write('from datetime import datetime, date, time\n\n')
-        
         if saveDisplays:
-            scriptFile.write('display.autoVisualize = False\n\n')
+            if len(network.displays) == 1:
+                scriptRefs[self.display] = 'display'
+            else:
+                for display in network.displays:
+                    scriptRefs[display] = 'display' + str(network.displays.index(display))
+        
+        if not saveNetwork:
+            # Attempt to create script refs for all objects using the network.find* methods.
+            objectNames = {}
+            for object in network.objects:
+                if object.includeInScript():
+                    objectName = object.name
+                    defaultName = object.defaultName()
+                    if objectName == None and defaultName == None:
+                        for display in network.displays:
+                            display.selectObject(object)
+                        raise ValueError, gettext('The display of the selected object cannot be saved because it does not have a name.')
+                    if objectName != None:
+                        nameKey = object.__class__.__name__ + ': ' + objectName
+                        if nameKey in objectNames:
+                            raise ValueError, gettext('The display cannot be saved because there is more than one %s with the name \'%s\'.') % (object.__class__.__name__.lower(), objectName)
+                    else:
+                        nameKey = object.__class__.__name__ + ': ' + defaultName
+                        if nameKey in objectNames:
+                            raise ValueError, gettext('The display cannot be saved because there is more than one %s with the default name \'%s\'.') % (object.__class__.__name__.lower(), defaultName)
+                    if 'find' + object.__class__.__name__ in dir(network):
+                        prefix = 'network.find' + object.__class__.__name__ + '(\''
+                    else:
+                        prefix = 'network.findObject(' + object.__class__.__name__ + ', \''
+                    if objectName != None:
+                        scriptRefs[object.networkId] = prefix + objectName + '\')'
+                    else:
+                        scriptRefs[object.networkId] = prefix + defaultName + '\', default = True)'
+        
+        scriptFile = open(savePath, 'w')
+        scriptFile.write('from datetime import datetime, date, time\n\n')
         
         try:
             # Serialize the network
-            network.toScriptFile(scriptFile, scriptRefs)
+            if saveNetwork:
+                if saveDisplays:
+                    for display in network.displays:
+                        if not display.autoVisualize:
+                            scriptFile.write(scriptRefs[display] + '.autoVisualize = False\n')
+                    scriptFile.write('\n')
+                network.toScriptFile(scriptFile, scriptRefs)
             
             if saveDisplays:
                 # Serialize the display(s)
@@ -342,18 +390,18 @@ class NeuroptikonFrame( wx.Frame ):
     
     def onSaveNetwork(self, event):
         network = self.display.network
-        if network.savePath is None:
+        if network.savePath() is None:
             dlg = wx.FileDialog(None, gettext('Save as:'), '', '', '*.xml', wx.SAVE)
             if dlg.ShowModal() == wx.ID_OK:
-                network.savePath = dlg.GetPath()
+                network.setSavePath(dlg.GetPath())
         
-        if network.savePath is not None:
-            self.saveNetworkAndDisplaysAsXML(network.savePath)
+        if network.savePath() is not None:
+            self.saveNetworkAndDisplaysAsXML(network.savePath())
     
     
     def onSaveNetworkAs(self, event):
-        fileTypes = ['XML File', 'XML File (without display)', 'Python Script', 'Python Script (without display)']
-        fileExtensions = ['xml', 'xml', 'py', 'py']
+        fileTypes = ['XML File', 'XML File (network only)', 'Python Script', 'Python Script (network only)', 'Python Script (display only)']
+        fileExtensions = ['xml', 'xml', 'py', 'py', 'py']
         wildcard = ''
         for index in range(0, len(fileTypes)):
             if wildcard != '':
@@ -362,14 +410,20 @@ class NeuroptikonFrame( wx.Frame ):
         fileDialog = wx.FileDialog(None, gettext('Save As:'), '', '', wildcard, wx.FD_SAVE)
         if fileDialog.ShowModal() == wx.ID_OK:
             filterIndex = fileDialog.GetFilterIndex()
-            saveDisplays = (filterIndex % 2 == 0)
+            saveNetwork = (filterIndex != 4)
+            saveDisplays = (filterIndex in [0, 2, 4])
             extension = fileExtensions[filterIndex]
             savePath = str(fileDialog.GetPath())
             if not savePath.endswith('.' + extension):
                 savePath += '.' + extension
-            if extension == 'xml':
-                self.display.network.savePath = savePath
-                self.saveNetworkAndDisplaysAsXML(savePath, saveDisplays = saveDisplays)
-            else:
-                self.saveNetworkAndDisplaysAsScript(savePath, saveDisplays)
+            try:
+                if extension == 'xml':
+                    self.display.network.setSavePath(savePath)
+                    self.saveNetworkAndDisplaysAsXML(savePath, saveDisplays)
+                else:
+                    self.saveNetworkAndDisplaysAsScript(savePath, saveNetwork, saveDisplays)
+            except:
+                (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
+                dialog = wx.MessageDialog(self, exceptionValue.message, gettext('The file could not be saved.'), style = wx.ICON_ERROR | wx.OK)
+                dialog.ShowModal()
     
