@@ -16,6 +16,10 @@ class Stimulus(Object):
         self.modality = modality
     
     
+    def defaultName(self):
+        return self.modality.identifier + ' -> ' + str(self.target.name)
+    
+    
     @classmethod
     def fromXMLElement(cls, network, xmlElement):
         object = super(Stimulus, cls).fromXMLElement(network, xmlElement)

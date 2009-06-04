@@ -1,5 +1,5 @@
 from networkx import *
-import sys
+import os.path, sys
 from wx.py import dispatcher
 import xml.etree.ElementTree as ElementTree
 from Region import Region
@@ -28,7 +28,7 @@ class Network:
         self.idDict = {}   # TODO: weak ref dict?
         self.displays = []
         self._nextUniqueId = -1
-        self.savePath = None
+        self._savePath = None
         self.attributes = []
     
     
@@ -81,16 +81,32 @@ class Network:
                     if object.includeInScript(atTopLevel = True):
                         object.toScriptFile(scriptFile, scriptRefs)
    
+   
+    def setSavePath(self, path):
+        if path != self._savePath:
+            self._savePath = path
+            dispatcher.send(('set', 'savePath'), self)
+    
+    
+    def savePath(self):
+        return self._savePath
+    
+    
+    def name(self):
+        if self._savePath is None:
+            return gettext('Untitled Network')
+        else:
+            return os.path.splitext(os.path.basename(self._savePath))[0]
     
     def nextUniqueId(self):
         self._nextUniqueId += 1
         return self._nextUniqueId
     
     
-    def findObject(self, objectClass, name = None):
+    def findObject(self, objectClass, name = None, default = False):
         if name is not None:
             for object in self.objects:
-                if isinstance(object, objectClass) and object.name == name:
+                if isinstance(object, objectClass) and ((not default and object.name == name) or (default and object.defaultName() == name)):
                     return object
         return None
     

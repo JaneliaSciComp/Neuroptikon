@@ -153,6 +153,10 @@ class Object(object):
             dispatcher.send(('set', name), self)
     
     
+    def defaultName(self):
+        return None
+    
+    
     def connections(self):
         return list(self.stimuli)
     

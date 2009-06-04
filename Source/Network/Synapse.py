@@ -11,6 +11,14 @@ class Synapse(Object):
         self.activation = activation
     
     
+    def defaultName(self):
+        names = []
+        for postNeurite in self.postSynapticNeurites:
+            names += [str(postNeurite.neuron().name)]
+        names.sort()
+        return str(self.preSynapticNeurite.neuron().name) + ' -> ' + ', '.join(names)
+    
+    
     @classmethod
     def fromXMLElement(cls, network, xmlElement):
         object = super(Synapse, cls).fromXMLElement(network, xmlElement)

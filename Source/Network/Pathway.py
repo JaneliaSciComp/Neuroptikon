@@ -66,6 +66,12 @@ class Pathway(Object):
         self.terminus2 = PathwayTerminus(self, region2, receivesInput, sendsOutput)
     
     
+    def defaultName(self):
+        names = [str(self.terminus1.region.name), str(self.terminus2.region.name)]
+        names.sort()
+        return names[0] + ' <-> ' + names[1]
+    
+    
     @classmethod
     def fromXMLElement(cls, network, xmlElement):
         object = super(Pathway, cls).fromXMLElement(network, xmlElement)

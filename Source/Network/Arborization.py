@@ -12,6 +12,10 @@ class Arborization(Object):
         self.receivesInput = receivesInput  # does the neurite receive input from the arbor?  None = unknown
     
     
+    def defaultName(self):
+        return str(self.neurite.neuron().name) + ' -> ' + str(self.region.name)
+    
+    
     @classmethod
     def fromXMLElement(cls, network, xmlElement):
         object = super(Arborization, cls).fromXMLElement(network, xmlElement)

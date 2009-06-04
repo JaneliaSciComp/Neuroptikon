@@ -9,6 +9,10 @@ class Innervation(Object):
         self.muscle = muscle
     
     
+    def defaultName(self):
+        return str(self.neurite.neuron().name) + ' -> ' + str(self.muscle.name)
+    
+    
     @classmethod
     def fromXMLElement(cls, network, xmlElement):
         object = super(Innervation, cls).fromXMLElement(network, xmlElement)

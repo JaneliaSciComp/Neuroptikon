@@ -10,6 +10,13 @@ class GapJunction(Object):
         self.neurites = set([neurite1, neurite2])
     
     
+    def defaultName(self):
+        neurite1, neurite2 = list(self.neurites)
+        names = [str(neurite1.neuron().name), str(neurite2.neuron().name)]
+        names.sort()
+        return names[0] + ' <-> ' + names[1]
+    
+    
     @classmethod
     def fromXMLElement(cls, network, xmlElement):
         object = super(GapJunction, cls).fromXMLElement(network, xmlElement)
