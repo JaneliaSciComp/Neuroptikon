@@ -11,15 +11,19 @@ try:
     layoutsDir = os.path.dirname(__file__)
     for fileName in os.listdir(layoutsDir):
         layoutName, extension = os.path.splitext(fileName)
-        if os.path.exists(os.path.join(layoutsDir, fileName, '__init__.py')):
-            # Import a sub-package.  The sub-package is responsible for registering any layouts it contains.
-            exec('import ' + layoutName)
-        elif fileName != '__init__.py' and extension == '.py':
-            # Import a module and register the class if it is an inspector.
-            exec('from ' + layoutName + ' import ' + layoutName)
-            layoutClass = eval(layoutName)
-            if isinstance(layoutClass, Layout.__class__) and layoutClass.shouldBeRegistered():
-                Display.registerLayoutClass(layoutClass)
+        try:
+            if os.path.exists(os.path.join(layoutsDir, fileName, '__init__.py')):
+                # Import a sub-package.  The sub-package is responsible for registering any layouts it contains.
+                exec('import ' + layoutName)
+            elif fileName != '__init__.py' and extension == '.py':
+                # Import a module and register the class if it is an inspector.
+                exec('from ' + layoutName + ' import ' + layoutName)
+                layoutClass = eval(layoutName)
+                if isinstance(layoutClass, Layout.__class__) and layoutClass.shouldBeRegistered():
+                    Display.registerLayoutClass(layoutClass)
+        except:
+            (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
+            print 'Could not load layout %s (%s)' % (layoutName, exceptionValue.message)
 except:
     (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
     print 'Could not load layouts (' + exceptionValue.message + ')'
