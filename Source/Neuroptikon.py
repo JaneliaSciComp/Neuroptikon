@@ -53,6 +53,7 @@ import wx
 import wx.py as py
 import xml.etree.ElementTree as ElementTree
 from Network.Network import Network
+from Network.Object import Object
 from Network.Neuron import Neuron
 from Network.Attribute import Attribute
 from Library.Library import Library
@@ -64,7 +65,7 @@ from Library.Texture import Texture
 from Preferences import Preferences
 import Inspectors
 from Inspection.InspectorFrame import InspectorFrame
-
+import Display
 
 def debugException(type, value, tb):
     import traceback; traceback.print_tb(tb)
@@ -175,16 +176,23 @@ if __name__ == "__main__":
         
         
         def scriptLocals(self):
-            return {'createNetwork': self.createNetwork, 
-                    'displayNetwork': self.displayNetwork, 
-                    'networks': self.networks, 
-                    'library': self.library, 
-                    'Neurotransmitter': Neurotransmitter, 
-                    'Modality': Modality, 
-                    'Ontology': Ontology, 
-                    'NeuralPolarity': Neuron.Polarity, 
-                    'NeuralFunction': Neuron.Function, 
-                    'Attribute': Attribute}
+            layoutClasses = {}
+            for layoutClass in Display.layoutClasses().itervalues():
+                layoutClasses[layoutClass.__name__] = layoutClass
+            locals = {'createNetwork': self.createNetwork, 
+                      'displayNetwork': self.displayNetwork, 
+                      'networks': self.networks, 
+                      'library': self.library, 
+                      'Neurotransmitter': Neurotransmitter, 
+                      'Modality': Modality, 
+                      'Ontology': Ontology, 
+                      'NeuralPolarity': Neuron.Polarity, 
+                      'NeuralFunction': Neuron.Function, 
+                      'Attribute': Attribute, 
+                      'layouts': layoutClasses}
+            for objectClass in Object.__subclasses__():
+                locals[objectClass.__name__] = objectClass
+            return locals
         
         
         def onRunScript(self, event):
@@ -238,7 +246,7 @@ if __name__ == "__main__":
                     network = Network.fromXMLElement(networkElement)
                     if network is None:
                         raise ValueError, gettext('Could not load the network')
-                    network.savePath = path
+                    network.setSavePath(path)
                     self._networks.append(network)
                     
                     # Instantiate any displays
