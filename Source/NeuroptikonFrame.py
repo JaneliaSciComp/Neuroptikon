@@ -211,7 +211,7 @@ class NeuroptikonFrame( wx.Frame ):
                 execfile(dlg.GetPath(), locals)
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-                dialog = wx.MessageDialog(self, exceptionValue.message, gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_lineno, style = wx.ICON_ERROR | wx.OK)
+                dialog = wx.MessageDialog(self, exceptionValue.message, gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
         dlg.Destroy()
         self.Refresh(False)
@@ -342,23 +342,34 @@ class NeuroptikonFrame( wx.Frame ):
                 if object.includeInScript():
                     objectName = object.name
                     defaultName = object.defaultName()
-                    if objectName == None and defaultName == None:
+                    
+                    # Make sure the object has a name.
+                    if not objectName and not defaultName:
                         for display in network.displays:
                             display.selectObject(object)
                         raise ValueError, gettext('The display of the selected object cannot be saved because it does not have a name.')
-                    if objectName != None:
+                    
+                    # Make sure the name is unique.
+                    if objectName:
                         nameKey = object.__class__.__name__ + ': ' + objectName
                         if nameKey in objectNames:
+                            for display in network.displays:
+                                display.selectObjects([object, objectNames[nameKey]])
                             raise ValueError, gettext('The display cannot be saved because there is more than one %s with the name \'%s\'.') % (object.__class__.__name__.lower(), objectName)
                     else:
                         nameKey = object.__class__.__name__ + ': ' + defaultName
                         if nameKey in objectNames:
+                            for display in network.displays:
+                                display.selectObjects([object, objectNames[nameKey]])
                             raise ValueError, gettext('The display cannot be saved because there is more than one %s with the default name \'%s\'.') % (object.__class__.__name__.lower(), defaultName)
+                    
+                    # Create the script ref.
+                    objectNames[nameKey] = object
                     if 'find' + object.__class__.__name__ in dir(network):
                         prefix = 'network.find' + object.__class__.__name__ + '(\''
                     else:
                         prefix = 'network.findObject(' + object.__class__.__name__ + ', \''
-                    if objectName != None:
+                    if objectName:
                         scriptRefs[object.networkId] = prefix + objectName + '\')'
                     else:
                         scriptRefs[object.networkId] = prefix + defaultName + '\', default = True)'
