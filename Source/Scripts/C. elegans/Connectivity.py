@@ -1,5 +1,4 @@
 import os, os.path
-from Layouts.SpectralLayout import SpectralLayout
 
 display.setViewDimensions(3)
 display.setShowNeuronNames(True)
@@ -26,4 +25,4 @@ for gapJunction in display.network.gapJunctions():
 def weightByCount(edgeVisible):
 	return edgeVisible.client.getAttribute('Count').value
 
-display.performLayout(SpectralLayout(weightFunction = weightByCount, scaling = (-40.0, 12.5, 0.25)))
+display.performLayout(layouts['SpectralLayout'](weightFunction = weightByCount, scaling = (-40.0, 12.5, 0.25)))
