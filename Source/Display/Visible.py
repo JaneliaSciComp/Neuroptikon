@@ -635,7 +635,7 @@ class Visible(object):
     
     def updateOpacity(self):
         if self.display.useGhosts() and len(self.display.selection()) > 0 and self not in self.display.highlightedVisibles and self not in self.display.animatedVisibles:
-            opacity = 0.05
+            opacity = 0.1
             for ancestor in self.ancestors():
                 if ancestor in self.display.selectedVisibles:
                     opacity = 0.5
