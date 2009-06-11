@@ -56,6 +56,7 @@ if sys.platform == 'darwin':
     resources.append('../Artwork/Neuroptikon.icns')
     resources.append('lib/Darwin/fdp')
     resources.append('lib/Darwin/graphviz')
+    resources.append('lib/Darwin/osgdb_freetype.so')
     resources.append('lib/Darwin/osgdb_qt.so')
     py2app_options['resources'] = ','.join(resources)
     

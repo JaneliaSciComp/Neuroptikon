@@ -35,8 +35,13 @@ class Visible(object):
                         "cone": osg.Matrixd.scale(sqrt(1.0 / 8.0), 0.5, sqrt(1.0 / 8.0)) * osg.Matrixd.translate(0.0, -0.25, 0.0), 
                         "tube": osg.Matrixd.scale(1.0 / sqrt(2), 1.0, 1.0 / sqrt(2)), 
                         None: osg.Matrixd.identity()}
-        
-    # TODO: osgText::Font* font = osgText::readFontFile("fonts/arial.ttf");
+    
+    try:
+        labelFont = osgText.readFontFile("Arial.ttf")
+    except:
+        (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
+        print 'Could not load Arial font (' + exceptionValue.message + ')'
+        labelFont = None
     
     flowShaderSource = """	uniform float animationPhase;
                             uniform bool flowTo;
@@ -657,16 +662,19 @@ class Visible(object):
                 #       It would be ideal to draw the label at the center of the visible and tweak the culling so that the label isn't culled by it's visible's shape.
                 #       It would be even better to draw the label in the center of the portion of the shape that is currently visible.
                 self._textDrawable = osgText.Text()
+                if Visible.labelFont is None:
+                    self._textDrawable.setCharacterSize(48.0)
+                else:
+                    self._textDrawable.setFont(Visible.labelFont)
+                    self._textDrawable.setCharacterSize(18.0)
                 self._textDrawable.setAxisAlignment(osgText.Text.SCREEN)
                 self._textDrawable.setAlignment(osgText.Text.CENTER_CENTER)
                 self._textDrawable.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
-                self._textDrawable.setColor(osg.Vec4(0, 0, 0, 1))
-                self._textDrawable.setBackdropType(osgText.Text.DROP_SHADOW_BOTTOM_RIGHT)
-                self._textDrawable.setBackdropColor(osg.Vec4(1, 1, 1, 0.5))
-                self._textDrawable.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
-                self._textDrawable.setCharacterSize(48)
-                self._textGeode.addDrawable(self._textDrawable)
                 self._textDrawable.setColor(osg.Vec4(0, 0, 0, self._opacity))
+                self._textDrawable.setBackdropType(osgText.Text.DROP_SHADOW_BOTTOM_RIGHT)   #OUTLINE)
+                self._textDrawable.setBackdropColor(osg.Vec4(1, 1, 1, self._opacity * 0.75))
+                self._textDrawable.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
+                self._textGeode.addDrawable(self._textDrawable)
             
             if self.display.viewDimensions == 3 or self.display.labelsFloatOnTop():
                 self._textDrawable.setPosition(osg.Vec3(0, 0, 0))
@@ -734,7 +742,7 @@ class Visible(object):
                 self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
         
         if self._textDrawable is not None:
-            self._textDrawable.setColor(osg.Vec4(0, 0, 0, opacity))
+            self.updateLabel()
     
     
     def setOpacity(self, opacity):

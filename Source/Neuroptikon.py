@@ -44,7 +44,22 @@ else:
 
     sys.path.insert(0, commonLibPath)
     sys.path.insert(0, platformLibPath)
-    
+
+if platform.system() == 'Darwin':
+    # Make sure fonts are found on Mac OS X
+    fontPaths = []
+    try:
+        from Carbon import File, Folder, Folders
+        for domain in [Folders.kUserDomain, Folders.kLocalDomain, Folders.kNetworkDomain, Folders.kSystemDomain]:
+            try:
+                fsref = Folder.FSFindFolder(domain, Folders.kFontsFolderType, False)
+                fontPaths.append(File.pathname(fsref))
+            except:
+                pass
+    except:
+        fontPaths.extend([os.path.expanduser('~/Library/Fonts'), '/Library/Fonts', '/Network/Library/Fonts', '/System/Library/Fonts'])
+    os.environ['OSG_FILE_PATH'] = ':'.join(fontPaths)
+
 # Set up for internationalization.
 import gettext as gettext_module, __builtin__
 __builtin__.gettext = gettext_module.translation('Neuroptikon', fallback = True).lgettext
