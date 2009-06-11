@@ -158,6 +158,8 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_MENU, self.onShowHideRegionNames, self.showRegionNamesMenuItem)
         self.showNeuronNamesMenuItem = viewMenu.Append(wx.NewId(), gettext('Show Neuron Names'), gettext('Show/hide the neuron names'), True)
         self.Bind(wx.EVT_MENU, self.onShowHideNeuronNames, self.showNeuronNamesMenuItem)
+        self.labelsFloatOnTopMenuItem = viewMenu.Append(wx.NewId(), gettext('Float Labels On Top'), gettext('Always show object labels even when the object is behind another'), True)
+        self.Bind(wx.EVT_MENU, self.onSetLabelsFloatOnTop, self.labelsFloatOnTopMenuItem)
         self.showFlowMenuItem = viewMenu.Append(wx.NewId(), gettext('Show Flow of Information'), gettext('Animate the connections between objects'), True)
         self.Bind(wx.EVT_MENU, self.onShowFlow, self.showFlowMenuItem)
         self.useGhostsMenuItem = viewMenu.Append(wx.NewId(), gettext('Use Ghosting'), gettext('Dim objects that are not currently selected'), True)
@@ -181,6 +183,7 @@ class NeuroptikonFrame( wx.Frame ):
         self.mouseOverSelectingItem.Check(self.display.useMouseOverSelecting())
         self.showRegionNamesMenuItem.Check(self.display.showRegionNames())
         self.showNeuronNamesMenuItem.Check(self.display.showNeuronNames())
+        self.labelsFloatOnTopMenuItem.Check(self.display.labelsFloatOnTop())
         self.useGhostsMenuItem.Check(self.display.useGhosts())
     
     
@@ -260,6 +263,10 @@ class NeuroptikonFrame( wx.Frame ):
     
     def onShowHideNeuronNames(self, event):
         self.display.setShowNeuronNames(not self.display.showNeuronNames())
+    
+    
+    def onSetLabelsFloatOnTop(self, event):
+        self.display.setLabelsFloatOnTop(not self.display.labelsFloatOnTop())
     
     
     def onShowFlow(self, event):

@@ -48,6 +48,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.selectConnectedVisibles = True
         self._showRegionNames = True
         self._showNeuronNames = False
+        self._labelsFloatOnTop = False
         self._showFlow = False
         self._useGhosts = True
         self._primarySelectionColor = (0, 0, 1, .25)
@@ -882,6 +883,17 @@ class Display(wx.glcanvas.GLCanvas):
     
     def showNeuronNames(self):
         return self._showNeuronNames
+    
+    
+    def setLabelsFloatOnTop(self, flag):
+        if flag != self._labelsFloatOnTop:
+            self._labelsFloatOnTop = flag
+            dispatcher.send(('set', 'labelsFloatOnTop'), self)
+            self.Refresh()
+    
+    
+    def labelsFloatOnTop(self):
+        return self._labelsFloatOnTop
     
     
     def setShowFlow(self, flag):

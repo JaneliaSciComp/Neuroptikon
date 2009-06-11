@@ -160,6 +160,9 @@ class Visible(object):
             dispatcher.connect(self.displayChangedShowName, ('set', 'showRegionNames'), self.display)
         if isinstance(self.client, Neuron):
             dispatcher.connect(self.displayChangedShowName, ('set', 'showNeuronNames'), self.display)
+        dispatcher.connect(self.displayChangedShowName, ('set', 'viewDimensions'), self.display)
+        dispatcher.connect(self.displayChangedShowName, ('set', 'orthoViewPlane'), self.display)
+        dispatcher.connect(self.displayChangedShowName, ('set', 'labelsFloatOnTop'), self.display)
         
         self.updateOpacity()
         dispatcher.connect(self.displayChangedGhosting, ('set', 'useGhosts'), self.display)
@@ -654,15 +657,28 @@ class Visible(object):
                 #       It would be ideal to draw the label at the center of the visible and tweak the culling so that the label isn't culled by it's visible's shape.
                 #       It would be even better to draw the label in the center of the portion of the shape that is currently visible.
                 self._textDrawable = osgText.Text()
-                self._textDrawable.setPosition(osg.Vec3(0, 0, 1))
                 self._textDrawable.setAxisAlignment(osgText.Text.SCREEN)
                 self._textDrawable.setAlignment(osgText.Text.CENTER_CENTER)
                 self._textDrawable.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
                 self._textDrawable.setColor(osg.Vec4(0, 0, 0, 1))
+                self._textDrawable.setBackdropType(osgText.Text.DROP_SHADOW_BOTTOM_RIGHT)
+                self._textDrawable.setBackdropColor(osg.Vec4(1, 1, 1, 0.5))
                 self._textDrawable.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
                 self._textDrawable.setCharacterSize(48)
                 self._textGeode.addDrawable(self._textDrawable)
                 self._textDrawable.setColor(osg.Vec4(0, 0, 0, self._opacity))
+            
+            if self.display.viewDimensions == 3 or self.display.labelsFloatOnTop():
+                self._textDrawable.setPosition(osg.Vec3(0, 0, 0))
+                self._textGeode.getOrCreateStateSet().setAttribute(osg.Depth(osg.Depth.ALWAYS))
+            else:
+                if self.display.orthoViewPlane == 'xy':
+                    self._textDrawable.setPosition(osg.Vec3(0, 0, 1))
+                elif self.display.orthoViewPlane == 'xz':
+                    self._textDrawable.setPosition(osg.Vec3(0, -1, 0))
+                else:
+                    self._textDrawable.setPosition(osg.Vec3(-1, 0, 0))
+                self._textGeode.getOrCreateStateSet().removeAttribute(osg.StateAttribute.DEPTH)
             self._textDrawable.setText(str(label))
     
     
