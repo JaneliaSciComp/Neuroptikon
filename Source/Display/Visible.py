@@ -646,7 +646,7 @@ class Visible(object):
         self.updateLabel()
     
     
-    def updateLabel(self):
+    def updateLabel(self, opacity = 1.0):
         label = self._label
         if label is None and ((isinstance(self.client, Region) and self.display.showRegionNames()) or (isinstance(self.client, Neuron) and self.display.showNeuronNames())):
             label = self.client.abbreviation or self.client.name
@@ -670,11 +670,12 @@ class Visible(object):
                 self._textDrawable.setAxisAlignment(osgText.Text.SCREEN)
                 self._textDrawable.setAlignment(osgText.Text.CENTER_CENTER)
                 self._textDrawable.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
-                self._textDrawable.setColor(osg.Vec4(0, 0, 0, self._opacity))
                 self._textDrawable.setBackdropType(osgText.Text.DROP_SHADOW_BOTTOM_RIGHT)   #OUTLINE)
-                self._textDrawable.setBackdropColor(osg.Vec4(1, 1, 1, self._opacity * 0.75))
                 self._textDrawable.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
                 self._textGeode.addDrawable(self._textDrawable)
+            
+            self._textDrawable.setColor(osg.Vec4(0, 0, 0, self._opacity * opacity))
+            self._textDrawable.setBackdropColor(osg.Vec4(1, 1, 1, self._opacity * opacity * 0.75))
             
             if self.display.viewDimensions == 3 or self.display.labelsFloatOnTop():
                 self._textDrawable.setPosition(osg.Vec3(0, 0, 0))
@@ -742,7 +743,7 @@ class Visible(object):
                 self._shapeDrawable.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
         
         if self._textDrawable is not None:
-            self.updateLabel()
+            self.updateLabel(opacity)
     
     
     def setOpacity(self, opacity):
