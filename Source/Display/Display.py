@@ -928,7 +928,7 @@ class Display(wx.glcanvas.GLCanvas):
             visible.setLabel(label)
     
     
-    def setVisiblePosition(self, object, position, fixed=False):
+    def setVisiblePosition(self, object, position = None, fixed = None):
         visibles = self.visiblesForObject(object)
         visible = None
         if len(visibles) == 1:
@@ -936,8 +936,10 @@ class Display(wx.glcanvas.GLCanvas):
         elif isinstance(object, Stimulus):
             visible = visibles[0 if visibles[1].isPath() else 1]
         if visible is not None:
-            visible.setPosition(position)
-            visible.setPositionIsFixed(fixed)
+            if position is not None:
+                visible.setPosition(position)
+            if fixed is not None:
+                visible.setPositionIsFixed(fixed)
     
     
     def setVisibleRotation(self, object, rotation):
@@ -1051,6 +1053,8 @@ class Display(wx.glcanvas.GLCanvas):
         if visible is not None:
             visible.setFlowDirection(visible.pathStart, visible.pathEnd, flowTo = show, flowFrom = visible.flowFrom)
             if color is not None:
+                if len(color) == 3:
+                    color = (color[0], color[1], color[2], 1.0)
                 visible.setFlowToColor(color)
             if spread is not None:
                 visible.setFlowToSpread(color)
@@ -1077,6 +1081,8 @@ class Display(wx.glcanvas.GLCanvas):
         if visible is not None:
             visible.setFlowDirection(visible.pathStart, visible.pathEnd, flowTo = visible.flowTo, flowFrom = show)
             if color is not None:
+                if len(color) == 3:
+                    color = (color[0], color[1], color[2], 1.0)
                 visible.setFlowFromColor(color)
             if spread is not None:
                 visible.setFlowFromSpread(color)
@@ -1516,6 +1522,9 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def setDefaultFlowColor(self, color):
+        if len(color) == 3:
+            color = (color[0], color[1], color[2], 1.0)
+        
         if color != self.defaultFlowColor:
             self.defaultFlowColor = color
             self.defaultFlowToColorUniform.set(osg.Vec4f(*color))
