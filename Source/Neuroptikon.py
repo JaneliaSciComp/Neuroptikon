@@ -3,7 +3,9 @@ import os, platform, stat, sys
 if 'OSG_NOTIFY_LEVEL' not in os.environ:
     os.environ['OSG_NOTIFY_LEVEL'] = 'ALWAYS'
 
-if hasattr(sys, "frozen"):
+runningFromSource = not hasattr(sys, "frozen")
+
+if not runningFromSource:
     rootDir = os.path.dirname(sys.executable)
     if platform.system() == 'Darwin':
         rootDir = os.path.dirname(rootDir) + os.sep + 'Resources'
@@ -12,8 +14,6 @@ if hasattr(sys, "frozen"):
     platformLibPath = rootDir
 else:
     rootDir = os.path.abspath(os.path.dirname(sys.modules['__main__'].__file__))
-    
-    
     
     # Make sure that the library paths are set up correctly for the current location.
     commonLibPath = os.path.join(rootDir, 'lib', 'CrossPlatform')
@@ -50,12 +50,15 @@ if platform.system() == 'Darwin':
     fontPaths = []
     try:
         from Carbon import File, Folder, Folders
-        for domain in [Folders.kUserDomain, Folders.kLocalDomain, Folders.kNetworkDomain, Folders.kSystemDomain]:
+        domains = [Folders.kUserDomain, Folders.kLocalDomain, Folders.kSystemDomain]
+        if not runningFromSource:
+            domains.append(Folders.kNetworkDomain)
+        for domain in domains:
             try:
                 fsref = Folder.FSFindFolder(domain, Folders.kFontsFolderType, False)
                 fontPaths.append(File.pathname(fsref))
             except:
-                pass
+                pass    # Folder probably doesn't exist.
     except:
         fontPaths.extend([os.path.expanduser('~/Library/Fonts'), '/Library/Fonts', '/Network/Library/Fonts', '/System/Library/Fonts'])
     os.environ['OSG_FILE_PATH'] = ':'.join(fontPaths)
