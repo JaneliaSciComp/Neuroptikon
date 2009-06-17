@@ -43,53 +43,79 @@ class Visible(object):
         print 'Could not load Arial font (' + exceptionValue.message + ')'
         labelFont = None
     
-    flowShaderSource = """	uniform float animationPhase;
-                            uniform bool flowTo;
-                            uniform vec4 flowToColor;
-                            uniform float flowToSpread;
-                            uniform bool flowFrom;
-                            uniform vec4 flowFromColor;
-                            uniform float flowFromSpread;
-                            
-                            void main()
-                            {
-                                float texCoord = mod(gl_TexCoord[0].t, 1.0);
-                                
-                                float glowTo = 0.0;
-                                if (flowTo)
-                                {
-                                    glowTo = texCoord - animationPhase;
-                                    if (glowTo < 0.0)
-                                        glowTo += 1.0;
-                                    if (glowTo > 1.0 - flowToSpread)
-                                        glowTo = (glowTo - 1.0 + flowToSpread) / flowToSpread;
-                                    else
-                                        glowTo = 0.0;
-                                }
-                                
-                                float glowFrom = 0.0;
-                                if (flowFrom)
-                                {
-                                    glowFrom = (1.0 - animationPhase) - texCoord;
-                                    if (glowFrom < 0.0)
-                                        glowFrom += 1.0;
-                                    if (glowFrom > 1.0 - flowFromSpread)
-                                        glowFrom = (glowFrom - 1.0 + flowFromSpread) / flowFromSpread;
-                                    else
-                                        glowFrom = 0.0;
-                                }
-                                
-                                vec3  glowColor = vec3(max(flowToColor[0] * glowTo, flowFromColor[0] * glowFrom), 
-                                                       max(flowToColor[1] * glowTo, flowFromColor[1] * glowFrom), 
-                                                       max(flowToColor[2] * glowTo, flowFromColor[2] * glowFrom));
-                                float glow = max(flowToColor[3] * glowTo, flowFromColor[3] * glowFrom);
-                                float antiGlow = 1.0 - glow;
-                                
-                                gl_FragColor = vec4(glowColor[0] * glow + gl_Color[0] * antiGlow, glowColor[1] * glow + gl_Color[1] * antiGlow, glowColor[2] * glow + gl_Color[2] * antiGlow, glow + gl_Color[3] * antiGlow);
-                            }
+    flowVertexShader = """ varying vec3 normal, lightDir, halfVector;
+                           void main()
+                           {
+                               gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
+                               normal     = normalize ( gl_NormalMatrix * gl_Normal      ) ;
+                               lightDir   = normalize ( gl_LightSource[0].position.xyz   ) ;
+                               halfVector = normalize ( gl_LightSource[0].halfVector.xyz ) ;
+                               gl_Position = ftransform () ;
+                           }
+                       """
+    flowFragmentShader = """	uniform float animationPhase;
+                              uniform bool flowTo;
+                              uniform vec4 flowToColor;
+                              uniform float flowToSize;
+                              uniform float flowToSpread;
+                              uniform bool flowFrom;
+                              uniform vec4 flowFromColor;
+                              uniform float flowFromSize;
+                              uniform float flowFromSpread;
+                              uniform bool hasTexture;
+                              uniform sampler2D textureUnit;
+                              varying vec3 normal, lightDir, halfVector ;
+                              void main()
+                              {
+                                  vec3  dl = gl_LightSource[0].diffuse .rgb * gl_FrontMaterial.diffuse.rgb ;
+                                  vec3  al = gl_LightSource[0].ambient .rgb * gl_FrontMaterial.ambient.rgb + gl_FrontMaterial.emission.rgb ;
+                                  vec3  sl = gl_LightSource[0].specular.rgb * gl_FrontMaterial.specular.rgb ;
+                                  vec3  tx = (hasTexture ? texture2D ( textureUnit, gl_TexCoord[0].st ).rgb : vec3(1.0, 1.0, 1.0));
+                                  float sh = gl_FrontMaterial.shininess ;
+                                  vec3 n = normalize ( normal ) ;
+                                  vec3 d = tx * ( dl * max ( dot ( n, lightDir                 ), 0.0 ) + al ) ;
+                                  vec3 s = sl *  pow ( max ( dot ( n, normalize ( halfVector ) ), 0.0 ), sh ) ;
+                                  vec4 baseColor = vec4 ( min ( d + s, 1.0) , 1.0 ) ;
+                                  
+                                  float texCoord = mod(gl_TexCoord[0].t, 1.0);
+                                  
+                                  float glowTo = 0.0;
+                                  if (flowTo)
+                                  {
+                                      glowTo = mod(texCoord * flowToSize, 1.0) - animationPhase;
+                                      if (glowTo < 0.0)
+                                          glowTo += 1.0;
+                                      if (glowTo > 1.0 - flowToSpread)
+                                          glowTo = (glowTo - 1.0 + flowToSpread) / flowToSpread;
+                                      else
+                                          glowTo = 0.0;
+                                  }
+                                  
+                                  float glowFrom = 0.0;
+                                  if (flowFrom)
+                                  {
+                                      glowFrom = (1.0 - animationPhase) - mod(texCoord * flowFromSize, 1.0);
+                                      if (glowFrom < 0.0)
+                                          glowFrom += 1.0;
+                                      if (glowFrom > 1.0 - flowFromSpread)
+                                          glowFrom = (glowFrom - 1.0 + flowFromSpread) / flowFromSpread;
+                                      else
+                                          glowFrom = 0.0;
+                                  }
+                                  
+                                  vec4  glowColor = vec4(max(flowToColor[0] * glowTo, flowFromColor[0] * glowFrom), 
+                                                         max(flowToColor[1] * glowTo, flowFromColor[1] * glowFrom), 
+                                                         max(flowToColor[2] * glowTo, flowFromColor[2] * glowFrom), 
+                                                         1.0);
+                                  float glow = max(flowToColor[3] * glowTo, flowFromColor[3] * glowFrom);
+                                  float antiGlow = 1.0 - glow;
+                                  
+                                  gl_FragColor = vec4(glowColor* glow + baseColor * antiGlow);
+                              }
                         """
     flowProgram = osg.Program()
-    flowProgram.addShader(osg.Shader(osg.Shader.FRAGMENT, flowShaderSource))
+    flowProgram.addShader(osg.Shader(osg.Shader.VERTEX, flowVertexShader))
+    flowProgram.addShader(osg.Shader(osg.Shader.FRAGMENT, flowFragmentShader))
     
     
     def __init__(self, display, client):
@@ -127,9 +153,11 @@ class Visible(object):
         self.flowTo = False
         self._flowToColor = None
         self._flowToSpread = None
+        self._flowToSize = None
         self.flowFrom = False
         self._flowFromColor = None
         self._flowFromSpread = None
+        self._flowFromSize = None
         
         self.sgNode = osg.MatrixTransform()
         self._shapeGeode = osg.Geode()
@@ -1233,17 +1261,20 @@ class Visible(object):
     
     def updateFlowAnimation(self):
         if self._animateFlow and (self.flowTo or self.flowFrom):
-            textureMatrix = osg.TexMat(osg.Matrixd.scale(10,  self.size()[1] / 400.0 * 5000.0,  10))
-            self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
+            # TODO: adjust flow sizes for texture transform (or use real geometries so we can use a separate texture unit)
             self._stateSet.addUniform(osg.Uniform('flowTo', True if self.flowTo else False))
+            self._stateSet.addUniform(osg.Uniform('flowToSize', self.worldSize()[1] * 20.0))
             self._stateSet.addUniform(osg.Uniform('flowFrom', True if self.flowFrom else False))
+            self._stateSet.addUniform(osg.Uniform('flowFromSize', self.worldSize()[1] * 20.0))
+            self._stateSet.addUniform(osg.Uniform('hasTexture', True if self._staticTexture is not None else False))
             self._stateSet.setAttributeAndModes(Visible.flowProgram, osg.StateAttribute.ON)
         elif self._stateSet.getAttribute(osg.StateAttribute.PROGRAM) is not None:
             self._stateSet.removeAttribute(osg.StateAttribute.PROGRAM)
             self._stateSet.removeUniform('flowTo')
+            self._stateSet.removeUniform('flowToSize')
             self._stateSet.removeUniform('flowFrom')
-            self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXMAT)
-            self.setTextureTransform(self._staticTextureTransform)
+            self._stateSet.removeUniform('flowFromSize')
+            self._stateSet.removeUniform('hasTexture')
     
     
     def animateFlow(self, animate=True):
