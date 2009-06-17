@@ -99,9 +99,9 @@ class Display(wx.glcanvas.GLCanvas):
         self.viewer3D.setLight(light)
         
         config = wx.Config("Neuroptikon")
-        clearColor = (config.ReadFloat("Color/Background/Red", 1.0), \
-                      config.ReadFloat("Color/Background/Green", 1.0), \
-                      config.ReadFloat("Color/Background/Blue", 1.0), \
+        clearColor = (config.ReadFloat("Color/Background/Red", 0.75), \
+                      config.ReadFloat("Color/Background/Green", 0.75), \
+                      config.ReadFloat("Color/Background/Blue", 0.75), \
                       config.ReadFloat("Color/Background/Alpha", 1.0))
         self.setBackgroundColor(clearColor)
         
@@ -146,7 +146,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.rootStateSet.addUniform(self.defaultFlowToColorUniform)
         self.defaultFlowFromColorUniform = osg.Uniform('flowFromColor', osg.Vec4f(*self.defaultFlowColor))
         self.rootStateSet.addUniform(self.defaultFlowFromColorUniform)
-        self.defaultFlowSpread = 0.1
+        self.defaultFlowSpread = 0.2
         self.defaultFlowToSpreadUniform = osg.Uniform('flowToSpread', self.defaultFlowSpread)
         self.rootStateSet.addUniform(self.defaultFlowToSpreadUniform)
         self.defaultFlowFromSpreadUniform = osg.Uniform('flowFromSpread', self.defaultFlowSpread)
