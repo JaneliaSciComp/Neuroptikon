@@ -116,8 +116,6 @@ class Display(wx.glcanvas.GLCanvas):
         
         self._animationTimer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.onAnimate, self._animationTimer)
-        self.animationPhaseUniform = osg.Uniform('animationPhase', 0.0)
-        self.rootStateSet.addUniform(self.animationPhaseUniform)
         
         self.dragSelection = None
         self.draggerLOD = None
@@ -146,6 +144,16 @@ class Display(wx.glcanvas.GLCanvas):
         self.rootStateSet.addUniform(self.defaultFlowToColorUniform)
         self.defaultFlowFromColorUniform = osg.Uniform('flowFromColor', osg.Vec4f(*self.defaultFlowColor))
         self.rootStateSet.addUniform(self.defaultFlowFromColorUniform)
+        self.defaultFlowSpacing = 1.0
+        self.defaultFlowToSpacingUniform = osg.Uniform('flowToSpacing', self.defaultFlowSpacing)
+        self.rootStateSet.addUniform(self.defaultFlowToSpacingUniform)
+        self.defaultFlowFromSpacingUniform = osg.Uniform('flowFromSpacing', self.defaultFlowSpacing)
+        self.rootStateSet.addUniform(self.defaultFlowFromSpacingUniform)
+        self.defaultFlowSpeed = 1.0
+        self.defaultFlowToSpeedUniform = osg.Uniform('flowToSpeed', self.defaultFlowSpeed)
+        self.rootStateSet.addUniform(self.defaultFlowToSpeedUniform)
+        self.defaultFlowFromSpeedUniform = osg.Uniform('flowFromSpeed', self.defaultFlowSpeed)
+        self.rootStateSet.addUniform(self.defaultFlowFromSpeedUniform)
         self.defaultFlowSpread = 0.2
         self.defaultFlowToSpreadUniform = osg.Uniform('flowToSpread', self.defaultFlowSpread)
         self.rootStateSet.addUniform(self.defaultFlowToSpreadUniform)
@@ -184,6 +192,10 @@ class Display(wx.glcanvas.GLCanvas):
                 blue = float(colorElement.get('b'))
                 alpha = float(colorElement.get('a'))
                 self.setDefaultFlowColor((red, green, blue, alpha))
+            if flowAppearanceElement.get('spacing') is not None:
+                self.setDefaultFlowSpacing(float(flowAppearanceElement.get('spacing')))
+            if flowAppearanceElement.get('speed') is not None:
+                self.setDefaultFlowSpeed(float(flowAppearanceElement.get('speed')))
             if flowAppearanceElement.get('spread') is not None:
                 self.setDefaultFlowSpread(float(flowAppearanceElement.get('spread')))
                 
@@ -255,6 +267,8 @@ class Display(wx.glcanvas.GLCanvas):
         colorElement.set('g', str(self.defaultFlowColor[1]))
         colorElement.set('b', str(self.defaultFlowColor[2]))
         colorElement.set('a', str(self.defaultFlowColor[3]))
+        flowAppearanceElement.set('spacing', str(self.defaultFlowSpacing))
+        flowAppearanceElement.set('speed', str(self.defaultFlowSpeed))
         flowAppearanceElement.set('spread', str(self.defaultFlowSpread))
         
         # Add the display rules
@@ -291,6 +305,8 @@ class Display(wx.glcanvas.GLCanvas):
     def toScriptFile(self, scriptFile, scriptRefs, displayRef):
         scriptFile.write(displayRef + '.setBackgroundColor(' + str(self.backgroundColor) + ')\n')
         scriptFile.write(displayRef + '.setDefaultFlowColor(' + str(self.defaultFlowColor) + ')\n')
+        scriptFile.write(displayRef + '.setDefaultFlowSpacing(' + str(self.defaultFlowSpacing) + ')\n')
+        scriptFile.write(displayRef + '.setDefaultFlowSpeed(' + str(self.defaultFlowSpeed) + ')\n')
         scriptFile.write(displayRef + '.setDefaultFlowSpread(' + str(self.defaultFlowSpread) + ')\n')
         scriptFile.write(displayRef + '.setViewDimensions(' + str(self.viewDimensions) + ')\n')
         scriptFile.write(displayRef + '.setShowRegionNames(' + str(self._showRegionNames) + ')\n')
@@ -542,9 +558,6 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def onAnimate(self, event):
-        # TODO: does setting the animation phase this way limit the slowest speed an animation can be?
-        self.animationPhaseUniform.set(datetime.now().microsecond / 1000000.0)
-        
         self.Refresh()
     
     
@@ -648,7 +661,7 @@ class Display(wx.glcanvas.GLCanvas):
                 params['texture'] = wx.GetApp().library.texture('Stripes')
             except:
                 pass
-            params['textureTransform'] = (-10,  10,  1)
+            params['textureScale'] = 10.0
         elif isinstance(object, Neuron):
             params['shape'] = 'ball'
             params['size'] = (.01, .01, .01)
@@ -662,7 +675,7 @@ class Display(wx.glcanvas.GLCanvas):
                 params['texture'] = wx.GetApp().library.texture('Stripes')
             except:
                 pass
-            params['textureTransform'] = (-10,  10,  1)
+            params['textureScale'] = 10.0
             params['label'] = object.abbreviation or object.name
         elif isinstance(object, Arborization):
             params['shape'] = 'tube'
@@ -753,8 +766,8 @@ class Display(wx.glcanvas.GLCanvas):
             visible.setSizeIsAbsolute(params['sizeIsAbsolute'])
         if 'texture' in params:
             visible.setTexture(params['texture'])
-        if 'textureTransform' in params:
-            visible.setTextureTransform(osg.Matrixd.scale(*params['textureTransform']))
+        if 'textureScale' in params:
+            visible.setTextureScale(params['textureScale'])
         if 'weight' in params:
             visible.setWeight(params['weight'])
         
@@ -976,7 +989,7 @@ class Display(wx.glcanvas.GLCanvas):
             visible.setColor(color)
     
     
-    def setVisibleTexture(self, object, texture):
+    def setVisibleTexture(self, object, texture, scale = 1.0):
         """setVisibleShape(object, texture)
         
         texture should an object returned by library.texture() or library.textures()."""
@@ -988,6 +1001,7 @@ class Display(wx.glcanvas.GLCanvas):
             visible = visibles[0 if visibles[0].isPath() else 1]
         if visible is not None:
             visible.setTexture(texture)
+            visible.setTextureScale(scale)
     
     
     def setVisibleShape(self, object, shapeName):
@@ -1032,8 +1046,8 @@ class Display(wx.glcanvas.GLCanvas):
             visible.setWeight(weight)
     
     
-    def setVisibleFlowTo(self, object, show = True, color = None, spread = None):
-        """seVisibleFlowTo(object, weight, show, color, spread)
+    def setVisibleFlowTo(self, object, show = True, color = None, spacing = None, speed = None, spread = None):
+        """seVisibleFlowTo(object, weight, show, color, spacing, speed, spread)
         
         color should be a tuple containing red, green and blue unit float values.
         
@@ -1043,6 +1057,8 @@ class Display(wx.glcanvas.GLCanvas):
         (0.0, 0.0, 1.0) -> blue
         (1.0, 1.0, 1.0) -> white
         
+        spacing should be a float, 1.0 being the default
+        speed should be a float, 1.0 being the default
         spread should be a float between 0.0 and 1.0"""
         visibles = self.visiblesForObject(object)
         visible = None
@@ -1056,12 +1072,16 @@ class Display(wx.glcanvas.GLCanvas):
                 if len(color) == 3:
                     color = (color[0], color[1], color[2], 1.0)
                 visible.setFlowToColor(color)
+            if spacing is not None:
+                visible.setFlowToSpacing(spacing)
+            if speed is not None:
+                visible.setFlowToSpeed(speed)
             if spread is not None:
-                visible.setFlowToSpread(color)
+                visible.setFlowToSpread(spread)
     
     
-    def setVisibleFlowFrom(self, object, show = True, color = None, spread = None):
-        """seVisibleFlowFrom(object, weight, show, color, spread)
+    def setVisibleFlowFrom(self, object, show = True, color = None, spacing = None, speed = None, spread = None):
+        """seVisibleFlowFrom(object, weight, show, color, spacing, speed, spread)
         
         color should be a tuple containing red, green and blue unit float values.
         
@@ -1071,6 +1091,8 @@ class Display(wx.glcanvas.GLCanvas):
         (0.0, 0.0, 1.0) -> blue
         (1.0, 1.0, 1.0) -> white
         
+        spacing should be a float, 1.0 being the default
+        speed should be a float, 1.0 being the default
         spread should be a float between 0.0 and 1.0"""
         visibles = self.visiblesForObject(object)
         visible = None
@@ -1084,6 +1106,10 @@ class Display(wx.glcanvas.GLCanvas):
                 if len(color) == 3:
                     color = (color[0], color[1], color[2], 1.0)
                 visible.setFlowFromColor(color)
+            if spacing is not None:
+                visible.setFlowFromSpacing(spacing)
+            if speed is not None:
+                visible.setFlowFromSpeed(speed)
             if spread is not None:
                 visible.setFlowFromSpread(color)
     
@@ -1306,7 +1332,7 @@ class Display(wx.glcanvas.GLCanvas):
         
         # Turn idle callbacks on when any visible is animated and off otherwise.
         if not self._animationTimer.IsRunning() and len(self.animatedVisibles) > 0:
-            self._animationTimer.Start(1000/30, wx.TIMER_CONTINUOUS)
+            self._animationTimer.Start(1000/60, wx.TIMER_CONTINUOUS)
         elif self._animationTimer.IsRunning() and len(self.animatedVisibles) == 0:
             self._animationTimer.Stop()
     
@@ -1532,11 +1558,27 @@ class Display(wx.glcanvas.GLCanvas):
             dispatcher.send(('set', 'defaultFlowColor'), self)
     
     
+    def setDefaultFlowSpacing(self, spacing):
+        if spacing != self.defaultFlowSpacing:
+            self.defaultFlowSpacing = float(spacing)
+            self.defaultFlowToSpacingUniform.set(self.defaultFlowSpacing)
+            self.defaultFlowFromSpacingUniform.set(self.defaultFlowSpacing)
+            dispatcher.send(('set', 'defaultFlowSpacing'), self)
+    
+    
+    def setDefaultFlowSpeed(self, speed):
+        if speed != self.defaultFlowSpeed:
+            self.defaultFlowSpeed = float(speed)
+            self.defaultFlowToSpeedUniform.set(self.defaultFlowSpeed)
+            self.defaultFlowFromSpeedUniform.set(self.defaultFlowSpeed)
+            dispatcher.send(('set', 'defaultFlowSpeed'), self)
+    
+    
     def setDefaultFlowSpread(self, spread):
         if spread != self.defaultFlowSpread:
-            self.defaultFlowSpread = spread
-            self.defaultFlowToSpreadUniform.set(spread)
-            self.defaultFlowFromSpreadUniform.set(spread)
+            self.defaultFlowSpread = float(spread)
+            self.defaultFlowToSpreadUniform.set(self.defaultFlowSpread)
+            self.defaultFlowFromSpreadUniform.set(self.defaultFlowSpread)
             dispatcher.send(('set', 'defaultFlowSpread'), self)
     
 

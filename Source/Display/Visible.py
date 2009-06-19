@@ -44,6 +44,7 @@ class Visible(object):
         labelFont = None
     
     flowVertexShader = """ varying vec3 normal, lightDir, halfVector;
+                           
                            void main()
                            {
                                gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
@@ -53,18 +54,22 @@ class Visible(object):
                                gl_Position = ftransform () ;
                            }
                        """
-    flowFragmentShader = """	uniform float animationPhase;
+    flowFragmentShader = """	uniform float osg_FrameTime;  // in seconds
                               uniform bool flowTo;
                               uniform vec4 flowToColor;
-                              uniform float flowToSize;
+                              uniform float flowToSpacing;
+                              uniform float flowToSpeed;
                               uniform float flowToSpread;
                               uniform bool flowFrom;
                               uniform vec4 flowFromColor;
-                              uniform float flowFromSize;
+                              uniform float flowFromSpacing;
+                              uniform float flowFromSpeed;
                               uniform float flowFromSpread;
                               uniform bool hasTexture;
                               uniform sampler2D textureUnit;
-                              varying vec3 normal, lightDir, halfVector ;
+                              uniform float textureScale;
+                              varying vec3 normal, lightDir, halfVector;
+                              
                               void main()
                               {
                                   vec3  dl = gl_LightSource[0].diffuse .rgb * gl_FrontMaterial.diffuse.rgb ;
@@ -77,30 +82,31 @@ class Visible(object):
                                   vec3 s = sl *  pow ( max ( dot ( n, normalize ( halfVector ) ), 0.0 ), sh ) ;
                                   vec4 baseColor = vec4 ( min ( d + s, 1.0) , 1.0 ) ;
                                   
-                                  float texCoord = mod(gl_TexCoord[0].t, 1.0);
+                                  float texCoord = gl_TexCoord[0].t * textureScale;
                                   
                                   float glowTo = 0.0;
                                   if (flowTo)
                                   {
-                                      glowTo = mod(texCoord * flowToSize, 1.0) - animationPhase;
-                                      if (glowTo < 0.0)
-                                          glowTo += 1.0;
-                                      if (glowTo > 1.0 - flowToSpread)
-                                          glowTo = (glowTo - 1.0 + flowToSpread) / flowToSpread;
-                                      else
-                                          glowTo = 0.0;
+                                      float peakGlow = mod(osg_FrameTime, flowToSpacing / flowToSpeed) * flowToSpeed;
+                                      float glowWidth = flowToSpacing * flowToSpread;
+                                      float distanceFromPeakGlow = peakGlow - mod(texCoord, flowToSpacing);
+                                      if (distanceFromPeakGlow < 0.0)
+                                          distanceFromPeakGlow += flowToSpacing;
+                                      if (distanceFromPeakGlow < glowWidth)
+                                          glowTo = 1.0 - distanceFromPeakGlow / glowWidth;
                                   }
                                   
                                   float glowFrom = 0.0;
                                   if (flowFrom)
                                   {
-                                      glowFrom = (1.0 - animationPhase) - mod(texCoord * flowFromSize, 1.0);
-                                      if (glowFrom < 0.0)
-                                          glowFrom += 1.0;
-                                      if (glowFrom > 1.0 - flowFromSpread)
-                                          glowFrom = (glowFrom - 1.0 + flowFromSpread) / flowFromSpread;
-                                      else
-                                          glowFrom = 0.0;
+                                      float period = flowFromSpacing / flowFromSpeed;
+                                      float peakGlow = (1.0 - mod(osg_FrameTime, period) / period) * flowFromSpacing;
+                                      float glowWidth = flowFromSpacing * flowFromSpread;
+                                      float distanceFromPeakGlow = mod(texCoord, flowFromSpacing) - peakGlow;
+                                      if (distanceFromPeakGlow < 0.0)
+                                          distanceFromPeakGlow += flowFromSpacing;
+                                      if (distanceFromPeakGlow < glowWidth)
+                                          glowFrom = 1.0 - distanceFromPeakGlow / glowWidth;
                                   }
                                   
                                   vec4  glowColor = vec4(max(flowToColor[0] * glowTo, flowFromColor[0] * glowFrom), 
@@ -108,9 +114,8 @@ class Visible(object):
                                                          max(flowToColor[2] * glowTo, flowFromColor[2] * glowFrom), 
                                                          1.0);
                                   float glow = max(flowToColor[3] * glowTo, flowFromColor[3] * glowFrom);
-                                  float antiGlow = 1.0 - glow;
                                   
-                                  gl_FragColor = vec4(glowColor* glow + baseColor * antiGlow);
+                                  gl_FragColor = vec4(glowColor * glow + baseColor * (1.0 - glow));
                               }
                         """
     flowProgram = osg.Program()
@@ -152,12 +157,14 @@ class Visible(object):
         self._animateFlow = False
         self.flowTo = False
         self._flowToColor = None
+        self._flowToSpacing = None
+        self._flowToSpeed = None
         self._flowToSpread = None
-        self._flowToSize = None
         self.flowFrom = False
         self._flowFromColor = None
+        self._flowFromSpacing = None
+        self._flowFromSpeed = None
         self._flowFromSpread = None
-        self._flowFromSize = None
         
         self.sgNode = osg.MatrixTransform()
         self._shapeGeode = osg.Geode()
@@ -175,7 +182,7 @@ class Visible(object):
         self._textDrawable = None
         self.sgNode.addChild(self._textGeode)
         self._staticTexture = None
-        self._staticTextureTransform = None
+        self._staticTextureScale = 1.0
         
         # Parent and children
         self.parent = None
@@ -278,10 +285,19 @@ class Visible(object):
             weightText = appearanceElement.findtext('Weight') or appearanceElement.findtext('weight')
             if weightText is not None:
                 visible.setWeight(float(weightText))
-            textureId = appearanceElement.findtext('Texture') or appearanceElement.findtext('texture')
-            if textureId is not None:
-                visible.setTexture(wx.GetApp().library.texture(textureId))
-                visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
+            textureElement = appearanceElement.find('Texture')
+            if textureElement is None:
+                textureElement = appearanceElement.find('texture')
+            if textureElement is not None:
+                textureId = textureElement.get('identifier')
+                textureScale = textureElement.get('scale')
+                if textureId is None:
+                    textureId = textureElement.text
+                    textureScale = "10.0"
+                if textureId is not None:
+                    visible.setTexture(wx.GetApp().library.texture(textureId))
+                if textureScale is not None:
+                    visible.setTextureScale(float(textureScale))
         
         # Set up any arrangement
         arrangementElement = xmlElement.find('Arrangement')
@@ -336,6 +352,10 @@ class Visible(object):
                     blue = float(colorElement.get('b'))
                     alpha = float(colorElement.get('a'))
                     visible.setFlowToColor((red, green, blue, alpha))
+                if flowToElement.get('spacing') is not None:
+                    visible.setFlowToSpacing(float(flowToElement.get('spacing')))
+                if flowToElement.get('speed') is not None:
+                    visible.setFlowToSpeed(float(flowToElement.get('speed')))
                 if flowToElement.get('spread') is not None:
                     visible.setFlowToSpread(float(flowToElement.get('spread')))
             flowFromElement = pathElement.find('FlowFromAppearance')
@@ -351,6 +371,10 @@ class Visible(object):
                     blue = float(colorElement.get('b'))
                     alpha = float(colorElement.get('a'))
                     visible.setFlowFromColor((red, green, blue, alpha))
+                if flowFromElement.get('spacing') is not None:
+                    visible.setFlowFromSpacing(float(flowFromElement.get('spacing')))
+                if flowFromElement.get('speed') is not None:
+                    visible.setFlowFromSpeed(float(flowFromElement.get('speed')))
                 if flowFromElement.get('spread') is not None:
                     visible.setFlowFromSpread(float(flowFromElement.get('spread')))
         
@@ -402,8 +426,9 @@ class Visible(object):
         ElementTree.SubElement(appearanceElement, 'Opacity').text = str(self._opacity)  # TODO: ghosting will confuse this
         ElementTree.SubElement(appearanceElement, 'Weight').text = str(self._weight)
         if self._staticTexture is not None:
-            ElementTree.SubElement(appearanceElement, 'Texture').text = self._staticTexture.identifier
-        # TODO: textureTransform?
+            textureElement = ElementTree.SubElement(appearanceElement, 'Texture')
+            textureElement.set('identifier', self._staticTexture.identifier)
+            textureElement.set('scale', str(self._staticTextureScale))
         
         # Add the arrangement
         arrangementElement = ElementTree.SubElement(visibleElement, 'Arrangement')
@@ -428,6 +453,10 @@ class Visible(object):
                     colorElement.set('g', str(self._flowToColor[1]))
                     colorElement.set('b', str(self._flowToColor[2]))
                     colorElement.set('a', str(self._flowToColor[3]))
+                if self._flowToSpacing is not None:
+                    flowToElement.set('spacing', str(self._flowToSpacing))
+                if self._flowToSpeed is not None:
+                    flowToElement.set('speed', str(self._flowToSpeed))
                 if self._flowToSpread is not None:
                     flowToElement.set('spread', str(self._flowToSpread))
             if self._flowFromColor is not None or self._flowFromSpread is not None:
@@ -438,6 +467,10 @@ class Visible(object):
                     colorElement.set('g', str(self._flowFromColor[1]))
                     colorElement.set('b', str(self._flowFromColor[2]))
                     colorElement.set('a', str(self._flowFromColor[3]))
+                if self._flowFromSpacing is not None:
+                    flowFromElement.set('spacing', str(self._flowFromSpacing))
+                if self._flowFromSpeed is not None:
+                    flowFromElement.set('speed', str(self._flowFromSpeed))
                 if self._flowFromSpread is not None:
                     flowFromElement.set('spread', str(self._flowFromSpread))
         
@@ -522,11 +555,19 @@ class Visible(object):
             if self.flowTo:
                 if self.flowToColor() != self.display.defaultFlowColor:
                     params['flowToColor'] = self.flowToColor()
+                if self.flowToSpacing() != self.display.defaultFlowSpacing:
+                    params['flowToSpacing'] = self.flowToSpacing()
+                if self.flowToSpeed() != self.display.defaultFlowSpeed:
+                    params['flowToSpeed'] = self.flowToSpeed()
                 if self.flowToSpread() != self.display.defaultFlowSpread:
                     params['flowToSpread'] = self.flowToSpread()
             if self.flowFrom:
                 if self.flowFromColor() != self.display.defaultFlowColor:
                     params['flowFromColor'] = self.flowFromColor()
+                if self.flowFromSpacing() != self.display.defaultFlowSpacing:
+                    params['flowFromSpacing'] = self.flowFromSpacing()
+                if self.flowFromSpeed() != self.display.defaultFlowSpeed:
+                    params['flowFromSpeed'] = self.flowFromSpeed()
                 if self.flowFromSpread() != self.display.defaultFlowSpread:
                     params['flowFromSpread'] = self.flowFromSpread()
         
@@ -547,9 +588,9 @@ class Visible(object):
                 scriptFile.write('object = ' + scriptRef + '\n')
                 scriptRef = 'object'
             if 'position' in params:
-                scriptFile.write('%s.setVisiblePosition(%s, %s' % (displayRef, scriptRef, str(self.position())))
+                scriptFile.write('%s.setVisiblePosition(%s, %s' % (displayRef, scriptRef, str(params['position'])))
                 if 'positionIsFixed' in params:
-                    scriptFile.write(', fixed = ' + str(self.positionIsFixed()))
+                    scriptFile.write(', fixed = ' + str(params['positionIsFixed']))
                 scriptFile.write(')\n')
             if 'size' in params or 'sizeIsFixed' in params or 'sizeIsAbsolute' in params:
                 scriptFile.write('%s.setVisibleSize(%s, %s' % (displayRef, scriptRef, str(self.size())))
@@ -561,7 +602,7 @@ class Visible(object):
             if 'rotation' in params:
                 scriptFile.write('%s.setVisibleRotation(%s, %s)\n' % (displayRef, scriptRef, str(self.rotation())))
             if 'label' in params:
-                scriptFile.write('%s.setLabel(%s, \'%s\')\n' % (displayRef, scriptRef, self.label().replace('\\', '\\\\').replace('\'', '\\\'')))
+                scriptFile.write('%s.setLabel(%s, \'%s\')\n' % (displayRef, scriptRef, params['label'].replace('\\', '\\\\').replace('\'', '\\\'')))
             if 'shape' in params:
                 scriptFile.write('%s.setVisibleShape(%s, \'%s\')\n' % (displayRef, scriptRef, self.shape()))
             if 'color' in params:
@@ -574,8 +615,7 @@ class Visible(object):
                 if self._staticTexture == None:
                     scriptFile.write('%s.setVisibleTexture(%s, None)\n' % (displayRef, scriptRef))
                 else:
-                    scriptFile.write('%s.setVisibleTexture(%s, library.texture(\'%s\'))\n' % (displayRef, scriptRef, self._staticTexture.identifier.replace('\\', '\\\\').replace('\'', '\\\'')))
-                # TODO: texture transform needs to be restored as well
+                    scriptFile.write('%s.setVisibleTexture(%s, library.texture(\'%s\'), scale = %s)\n' % (displayRef, scriptRef, self._staticTexture.identifier.replace('\\', '\\\\').replace('\'', '\\\''), str(self._staticTextureScale)))
             if 'arrangedAxis' in params:
                 scriptFile.write('%s.setArrangedAxis(%s, \'%s\')\n' % (displayRef, scriptRef, self.arrangedAxis))
             if 'arrangedSpacing' in params:
@@ -585,19 +625,27 @@ class Visible(object):
 # TODO:
 #            if self.isPath():
 #                scriptFile.write('%s.setVisiblePath(%s, [], %s, %s)\n' % (displayRef, scriptRef, scriptRefs[self.pathStart.client.networkId], scriptRefs[self.pathEnd.client.networkId]))
-            if 'flowToColor' in params or 'flowToSpreod' in params:
+            if 'flowToColor' in params or 'flowToSpacing' in params or 'flowToSpeed' in params or 'flowToSpread' in params:
                 scriptFile.write('%s.setVisibleFlowTo(%s, True' % (displayRef, scriptRef))
                 if 'flowToColor' in params:
                     scriptFile.write(', flowToColor = ' + str(self.flowToColor))
-                if 'flowToSpreod' in params:
-                    scriptFile.write(', flowToSpreod = ' + str(self.flowToSpreod))
+                if 'flowToSpacing' in params:
+                    scriptFile.write(', flowToSpacing = ' + str(self.flowToSpacing))
+                if 'flowToSpeed' in params:
+                    scriptFile.write(', flowToSpeed = ' + str(self.flowToSpeed))
+                if 'flowToSpread' in params:
+                    scriptFile.write(', flowToSpread = ' + str(self.flowToSpread))
                 scriptFile.write(')\n')
-            if 'flowFromColor' in params or 'flowFromSpreod' in params:
+            if 'flowFromColor' in params or 'flowFromSpacing' in params or 'flowFromSpeed' in params or 'flowFromSpread' in params:
                 scriptFile.write('%s.setVisibleFlowFrom(%s, True' % (displayRef, scriptRef))
                 if 'flowFromColor' in params:
                     scriptFile.write(', flowFromColor = ' + str(self.flowFromColor))
-                if 'flowFromSpreod' in params:
-                    scriptFile.write(', flowFromSpreod = ' + str(self.flowFromSpreod))
+                if 'flowFromSpacing' in params:
+                    scriptFile.write(', flowFromSpacing = ' + str(self.flowFromSpacing))
+                if 'flowFromSpeed' in params:
+                    scriptFile.write(', flowFromSpeed = ' + str(self.flowFromSpeed))
+                if 'flowFromSpread' in params:
+                    scriptFile.write(', flowFromSpread = ' + str(self.flowFromSpread))
                 scriptFile.write(')\n')
         else:
             # Manually visualize the object.
@@ -690,6 +738,7 @@ class Visible(object):
                 #       It would be ideal to draw the label at the center of the visible and tweak the culling so that the label isn't culled by it's visible's shape.
                 #       It would be even better to draw the label in the center of the portion of the shape that is currently visible.
                 self._textDrawable = osgText.Text()
+                self._textDrawable.setDataVariance(osg.Object.DYNAMIC)
                 if Visible.labelFont is None:
                     self._textDrawable.setCharacterSize(48.0)
                 else:
@@ -1171,16 +1220,16 @@ class Visible(object):
         return self._staticTexture
     
         
-    def setTextureTransform(self, transform):
-        if self._staticTextureTransform is not transform:
-            if transform is None:
+    def setTextureScale(self, scale):
+        if self._staticTextureScale != scale:
+            if scale == 1.0:
                 self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXMAT)
             else:
                 textureMatrix = osg.TexMat()
-                textureMatrix.setMatrix(transform)
+                textureMatrix.setMatrix(osg.Matrixd.scale(scale, scale, scale))
                 self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
-            self._staticTextureTransform = transform
-            dispatcher.send(('set', 'textureTransform'), self)
+            self._staticTextureScale = scale
+            dispatcher.send(('set', 'textureScale'), self)
     
     
     def setFlowDirection(self, fromVisible, toVisible, flowTo=True, flowFrom=False):
@@ -1212,9 +1261,39 @@ class Visible(object):
         return self._flowToColor or self.display.defaultFlowColor
     
     
+    def setFlowToSpacing(self, spacing):
+        if spacing != self._flowToSpacing:
+            self._flowToSpacing =float(spacing)
+            if self._flowToSpacing is None:
+                self._stateSet.removeUniform('flowToSpacing')
+            else:
+                self._stateSet.addUniform(osg.Uniform('flowToSpacing', self._flowToSpacing))
+            self.updateFlowAnimation()
+            dispatcher.send(('set', 'flowToSpacing'), self)
+    
+    
+    def flowToSpacing(self):
+        return self._flowToSpacing or self.display.defaultFlowSpacing
+    
+    
+    def setFlowToSpeed(self, speed):
+        if speed != self._flowToSpeed:
+            self._flowToSpeed = float(speed)
+            if self._flowToSpeed is None:
+                self._stateSet.removeUniform('flowToSpeed')
+            else:
+                self._stateSet.addUniform(osg.Uniform('flowToSpeed', self._flowToSpeed))
+            self.updateFlowAnimation()
+            dispatcher.send(('set', 'flowToSpeed'), self)
+    
+    
+    def flowToSpeed(self):
+        return self._flowToSpeed or self.display.defaultFlowSpeed
+    
+    
     def setFlowToSpread(self, spread):
         if spread != self._flowToSpread:
-            self._flowToSpread = spread
+            self._flowToSpread = float(spread)
             if self._flowToSpread is None:
                 self._stateSet.removeUniform('flowToSpread')
             else:
@@ -1244,9 +1323,39 @@ class Visible(object):
         return self._flowFromColor or self.display.defaultFlowColor
     
     
+    def setFlowFromSpacing(self, spacing):
+        if spacing != self._flowFromSpacing:
+            self._flowFromSpacing = float(spacing)
+            if self._flowFromSpacing is None:
+                self._stateSet.removeUniform('flowFromSpacing')
+            else:
+                self._stateSet.addUniform(osg.Uniform('flowFromSpacing', self._flowFromSpacing))
+            self.updateFlowAnimation()
+            dispatcher.send(('set', 'flowFromSpacing'), self)
+    
+    
+    def flowFromSpacing(self):
+        return self._flowFromSpacing or self.display.defaultFlowSpacing
+    
+    
+    def setFlowFromSpeed(self, speed):
+        if speed != self._flowFromSpeed:
+            self._flowFromSpeed = float(speed)
+            if self._flowFromSpeed is None:
+                self._stateSet.removeUniform('flowFromSpeed')
+            else:
+                self._stateSet.addUniform(osg.Uniform('flowFromSpeed', self._flowFromSpeed))
+            self.updateFlowAnimation()
+            dispatcher.send(('set', 'flowFromSpeed'), self)
+    
+    
+    def flowFromSpeed(self):
+        return self._flowFromSpeed or self.display.defaultFlowSpeed
+    
+    
     def setFlowFromSpread(self, spread):
         if spread != self._flowFromSpread:
-            self._flowFromSpread = spread
+            self._flowFromSpread = float(spread)
             if self._flowFromSpread is None:
                 self._stateSet.removeUniform('flowFromSpread')
             else:
@@ -1263,17 +1372,15 @@ class Visible(object):
         if self._animateFlow and (self.flowTo or self.flowFrom):
             # TODO: adjust flow sizes for texture transform (or use real geometries so we can use a separate texture unit)
             self._stateSet.addUniform(osg.Uniform('flowTo', True if self.flowTo else False))
-            self._stateSet.addUniform(osg.Uniform('flowToSize', self.worldSize()[1] * 20.0))
             self._stateSet.addUniform(osg.Uniform('flowFrom', True if self.flowFrom else False))
-            self._stateSet.addUniform(osg.Uniform('flowFromSize', self.worldSize()[1] * 20.0))
+            self._stateSet.addUniform(osg.Uniform('textureScale', self.worldSize()[1] * 20.0 / self._staticTextureScale))
             self._stateSet.addUniform(osg.Uniform('hasTexture', True if self._staticTexture is not None else False))
             self._stateSet.setAttributeAndModes(Visible.flowProgram, osg.StateAttribute.ON)
         elif self._stateSet.getAttribute(osg.StateAttribute.PROGRAM) is not None:
             self._stateSet.removeAttribute(osg.StateAttribute.PROGRAM)
             self._stateSet.removeUniform('flowTo')
-            self._stateSet.removeUniform('flowToSize')
             self._stateSet.removeUniform('flowFrom')
-            self._stateSet.removeUniform('flowFromSize')
+            self._stateSet.removeUniform('textureScale')
             self._stateSet.removeUniform('hasTexture')
     
     
@@ -1326,6 +1433,7 @@ class Visible(object):
                     # TODO: handle other shapes
                     print "oops"
                 self._shapeGeode.addDrawable(osg.ShapeDrawable(segment))
+        self.updateFlowAnimation()
         dispatcher.send(('set', 'path'), self)
     
     

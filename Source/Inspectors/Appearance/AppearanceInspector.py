@@ -159,7 +159,7 @@ class AppearanceInspector(Inspector):
         texture = self._textureChoice.GetClientData(self._textureChoice.GetSelection())
         for visible in self.visibles:
             visible.setTexture(texture)
-            visible.setTextureTransform(osg.Matrixd.scale(-10,  10,  1))
+            visible.setTextureScale(10.0)
         # Remove the "multiple values" choice now that all of the visibles have the same value.
         if self._multipleTexturesId != wx.NOT_FOUND:
             self._textureChoice.Delete(self._multipleTexturesId)

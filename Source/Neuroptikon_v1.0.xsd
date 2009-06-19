@@ -285,6 +285,11 @@
 		<xs:attribute name="a" type="xs:float"/>
 	</xs:complexType>
 	
+	<xs:complexType name="Texture">
+		<xs:attribute name="identifier" type="xs:string" use="required"/>
+		<xs:attribute name="scale" type="xs:float" default="1.0"/>
+	</xs:complexType>
+	
 	<xs:complexType name="VisibleAppearance">
 		<xs:sequence>
 			<xs:element name="Label" type="xs:string" minOccurs="0"/>
@@ -292,7 +297,7 @@
 			<xs:element name="Color" type="Color" minOccurs="0"/>
 			<xs:element name="Opacity" type="xs:float" minOccurs="0"/>
 			<xs:element name="Weight" type="xs:float" minOccurs="0"/>
-			<xs:element name="Texture" type="xs:string" minOccurs="0"/>
+			<xs:element name="Texture" type="Texture" minOccurs="0"/>
 			<!--texture transform?-->
 		</xs:sequence>
 	</xs:complexType>

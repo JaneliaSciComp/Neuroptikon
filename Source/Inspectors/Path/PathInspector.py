@@ -41,15 +41,25 @@ class PathInspector(Inspector):
             flowToGridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Color:')), 0)
             flowToGridSizer.Add(self._flowToColorPicker, 1)
             
-            self._flowToSlider = wx.Slider(self._window, wx.ID_ANY, 10, 0, 100)
-            self._flowToSlider.Bind(wx.EVT_SCROLL, self.onSetFlowToSpread, self._flowToSlider)
+            self._flowToSpacingSlider = wx.Slider(self._window, wx.ID_ANY, 0, -99, 99)
+            self._flowToSpacingSlider.Bind(wx.EVT_SCROLL, self.onSetFlowToSpacing, self._flowToSpacingSlider)
+            flowToGridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Spacing:')), 0)
+            flowToGridSizer.Add(self._flowToSpacingSlider, 1)
+            
+            self._flowToSpeedSlider = wx.Slider(self._window, wx.ID_ANY, 0, -99, 99)
+            self._flowToSpeedSlider.Bind(wx.EVT_SCROLL, self.onSetFlowToSpeed, self._flowToSpeedSlider)
+            flowToGridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Speed:')), 0)
+            flowToGridSizer.Add(self._flowToSpeedSlider, 1)
+            
+            self._flowToSpreadSlider = wx.Slider(self._window, wx.ID_ANY, 10, 0, 100)
+            self._flowToSpreadSlider.Bind(wx.EVT_SCROLL, self.onSetFlowToSpread, self._flowToSpreadSlider)
             flowToGridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Spread:')), 0)
-            flowToGridSizer.Add(self._flowToSlider, 1)
+            flowToGridSizer.Add(self._flowToSpreadSlider, 1)
             
             self._flowToBoxSizer.Add(flowToGridSizer, 1, wx.EXPAND)
             self._sizer.Add(self._flowToBoxSizer, 1, wx.EXPAND | wx.ALL, 5)
             
-            self._flowFromBoxSizer = wx.StaticBoxSizer(wx.StaticBox(self._window, wx.ID_ANY, gettext('Flow from')), wx.HORIZONTAL)
+            self._flowFromBoxSizer = wx.StaticBoxSizer(wx.StaticBox(self._window, wx.ID_ANY, gettext('Flow to')), wx.HORIZONTAL)
             
             flowFromGridSizer = wx.FlexGridSizer(3, 2, 8, 0)
             flowFromGridSizer.SetFlexibleDirection(wx.HORIZONTAL)
@@ -64,10 +74,20 @@ class PathInspector(Inspector):
             flowFromGridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Color:')), 0)
             flowFromGridSizer.Add(self._flowFromColorPicker, 1)
             
-            self._flowFromSlider = wx.Slider(self._window, wx.ID_ANY, 10, 0, 100)
-            self._flowFromSlider.Bind(wx.EVT_SCROLL, self.onSetFlowFromSpread, self._flowFromSlider)
+            self._flowFromSpacingSlider = wx.Slider(self._window, wx.ID_ANY, 0, -50, 50)
+            self._flowFromSpacingSlider.Bind(wx.EVT_SCROLL, self.onSetFlowFromSpacing, self._flowFromSpacingSlider)
+            flowFromGridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Spacing:')), 0)
+            flowFromGridSizer.Add(self._flowFromSpacingSlider, 1)
+            
+            self._flowFromSpeedSlider = wx.Slider(self._window, wx.ID_ANY, 0, -50, 50)
+            self._flowFromSpeedSlider.Bind(wx.EVT_SCROLL, self.onSetFlowFromSpeed, self._flowFromSpeedSlider)
+            flowFromGridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Speed:')), 0)
+            flowFromGridSizer.Add(self._flowFromSpeedSlider, 1)
+            
+            self._flowFromSpreadSlider = wx.Slider(self._window, wx.ID_ANY, 10, 0, 100)
+            self._flowFromSpreadSlider.Bind(wx.EVT_SCROLL, self.onSetFlowFromSpread, self._flowFromSpreadSlider)
             flowFromGridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Spread:')), 0)
-            flowFromGridSizer.Add(self._flowFromSlider, 1)
+            flowFromGridSizer.Add(self._flowFromSpreadSlider, 1)
             
             self._flowFromBoxSizer.Add(flowFromGridSizer, 1, wx.EXPAND)
             self._sizer.Add(self._flowFromBoxSizer, 1, wx.EXPAND | wx.ALL, 5)
@@ -121,7 +141,7 @@ class PathInspector(Inspector):
                 flowFromName = self.paths[0].pathStart.client.name or gettext('<unnamed %s>') % ( self.paths[0].pathStart.client.__class__.displayName())
             else:
                 flowFromName = gettext('multiple objects')
-            self._flowFromBoxSizer.GetStaticBox().SetLabel(gettext('Flow from %s') % (flowFromName))
+            self._flowFromBoxSizer.GetStaticBox().SetLabel(gettext('Flow to %s') % (flowFromName))
         
         if updatedAttribute is None or updatedAttribute == 'flowTo':
             if usingDefault:
@@ -149,17 +169,47 @@ class PathInspector(Inspector):
                 self._flowToColorPicker.SetColour(wx.NamedColour('GRAY'))  # TODO: be clever and pick the average color?
                 self._flowToColorPicker.SetLabel(gettext('Multiple values'))
         
+        if updatedAttribute is None or updatedAttribute == 'flowToSpacing' or updatedAttribute == 'defaultFlowSpacing':
+            if usingDefault or self.paths.haveEqualAttr('flowToSpacing'):
+                if usingDefault:
+                    spacing = self.display.defaultFlowSpacing
+                else:
+                    spacing = self.paths[0].flowToSpacing()
+                self._flowToSpacingSlider.SetLabel('')
+                if spacing < 1.0:
+                    self._flowToSpacingSlider.SetValue(99 * (spacing - 1.0) / 0.9)
+                else:
+                    self._flowToSpacingSlider.SetValue(99 * (spacing - 1.0) / 9.0)
+            else:
+                self._flowToSpacingSlider.SetLabel(gettext('Multiple values'))
+                self._flowToSpacingSlider.SetValue(0)
+        
+        if updatedAttribute is None or updatedAttribute == 'flowToSpeed' or updatedAttribute == 'defaultFlowSpeed':
+            if usingDefault or self.paths.haveEqualAttr('flowToSpeed'):
+                if usingDefault:
+                    speed = self.display.defaultFlowSpeed
+                else:
+                    speed = self.paths[0].flowToSpeed()
+                self._flowToSpeedSlider.SetLabel('')
+                if speed < 1.0:
+                    self._flowToSpeedSlider.SetValue(99 * (speed - 1.0) / 0.9)
+                else:
+                    self._flowToSpeedSlider.SetValue(99 * (speed - 1.0) / 9.0)
+            else:
+                self._flowToSpeedSlider.SetLabel(gettext('Multiple values'))
+                self._flowToSpeedSlider.SetValue(0)
+        
         if updatedAttribute is None or updatedAttribute == 'flowToSpread' or updatedAttribute == 'defaultFlowSpread':
             if usingDefault or self.paths.haveEqualAttr('flowToSpread'):
                 if usingDefault:
                     spread = self.display.defaultFlowSpread
                 else:
                     spread = self.paths[0].flowToSpread()
-                self._flowToSlider.SetLabel('')
-                self._flowToSlider.SetValue(spread * 100.0)
+                self._flowToSpreadSlider.SetLabel('')
+                self._flowFromSpreadSlider.SetValue(spread * 100.0)
             else:
-                self._flowToSlider.SetLabel(gettext('Multiple values'))
-                self._flowToSlider.SetValue(50)
+                self._flowToSpreadSlider.SetLabel(gettext('Multiple values'))
+                self._flowToSpreadSlider.SetValue(50)
         
         if (updatedAttribute is None or updatedAttribute == 'flowFrom') and not usingDefault:
             if self.paths.haveEqualAttr('flowFrom'):
@@ -180,14 +230,44 @@ class PathInspector(Inspector):
                 self._flowFromColorPicker.SetColour(wx.NamedColour('GRAY'))  # TODO: be clever and pick the average color?
                 self._flowFromColorPicker.SetLabel(gettext('Multiple values'))
         
+        if updatedAttribute is None or updatedAttribute == 'flowFromSpacing' or updatedAttribute == 'defaultFlowSpacing':
+            if usingDefault or self.paths.haveEqualAttr('flowFromSpacing'):
+                if usingDefault:
+                    spacing = self.display.defaultFlowSpacing
+                else:
+                    spacing = self.paths[0].flowFromSpacing()
+                self._flowFromSpacingSlider.SetLabel('')
+                if spacing < 1.0:
+                    self._flowFromSpacingSlider.SetValue(99 * (spacing - 1.0) / 0.9)
+                else:
+                    self._flowFromSpacingSlider.SetValue(99 * (spacing - 1.0) / 9.0)
+            else:
+                self._flowFromSpacingSlider.SetLabel(gettext('Multiple values'))
+                self._flowFromSpacingSlider.SetValue(0)
+        
+        if updatedAttribute is None or updatedAttribute == 'flowFromSpeed' or updatedAttribute == 'defaultFlowSpeed':
+            if usingDefault or self.paths.haveEqualAttr('flowFromSpeed'):
+                if usingDefault:
+                    speed = self.display.defaultFlowSpeed
+                else:
+                    speed = self.paths[0].flowFromSpeed()
+                self._flowFromSpeedSlider.SetLabel('')
+                if speed < 1.0:
+                    self._flowFromSpeedSlider.SetValue(99 * (speed - 1.0) / 0.9)
+                else:
+                    self._flowFromSpeedSlider.SetValue(99 * (speed - 1.0) / 9.0)
+            else:
+                self._flowFromSpeedSlider.SetLabel(gettext('Multiple values'))
+                self._flowFromSpeedSlider.SetValue(0)
+        
         if (updatedAttribute is None or updatedAttribute == 'flowFromSpread') and not usingDefault:
             if self.paths.haveEqualAttr('flowFromSpread'):
                 spread = self.paths[0].flowFromSpread()
-                self._flowFromSlider.SetLabel('')
-                self._flowFromSlider.SetValue(spread * 100.0)
+                self._flowFromSpreadSlider.SetLabel('')
+                self._flowFromSpreadSlider.SetValue(spread * 100.0)
             else:
-                self._flowFromSlider.SetLabel(gettext('Multiple values'))
-                self._flowFromSlider.SetValue(50)
+                self._flowFromSpreadSlider.SetLabel(gettext('Multiple values'))
+                self._flowFromSpreadSlider.SetValue(50)
         
         self._window.Layout()
     
@@ -208,8 +288,34 @@ class PathInspector(Inspector):
                 path.setFlowToColor(newColor)
         
     
+    def onSetFlowToSpacing(self, event):
+        newSpacing = self._flowToSpacingSlider.GetValue()
+        if newSpacing < 0:
+           newSpacing = 1.0 + 0.9 * newSpacing / 99.0
+        else:
+           newSpacing = 1.0 + 9.0 * newSpacing / 99.0
+        if len(self.paths) == 0:
+            self.display.setDefaultFlowSpacing(newSpacing)
+        else:
+            for path in self.paths:
+                path.setFlowToSpacing(newSpacing)
+    
+    
+    def onSetFlowToSpeed(self, event):
+        newSpeed = self._flowToSpeedSlider.GetValue()
+        if newSpeed < 0:
+           newSpeed = 1.0 + 0.9 * newSpeed / 99.0
+        else:
+           newSpeed = 1.0 + 9.0 * newSpeed / 99.0
+        if len(self.paths) == 0:
+            self.display.setDefaultFlowSpeed(newSpeed)
+        else:
+            for path in self.paths:
+                path.setFlowToSpeed(newSpeed)
+    
+    
     def onSetFlowToSpread(self, event):
-        newSpread = self._flowToSlider.GetValue() / 100.0
+        newSpread = self._flowToSpreadSlider.GetValue() / 100.0
         if len(self.paths) == 0:
             self.display.setDefaultFlowSpread(newSpread)
         else:
@@ -230,8 +336,34 @@ class PathInspector(Inspector):
             path.setFlowFromColor(newColor)
         
     
+    def onSetFlowFromSpacing(self, event):
+        newSpacing = self._flowFromSpacingSlider.GetValue()
+        if newSpacing < 0:
+           newSpacing = 1.0 + 0.9 * newSpacing / 99.0
+        else:
+           newSpacing = 1.0 + 9.0 * newSpacing / 99.0
+        if len(self.paths) == 0:
+            self.display.setDefaultFlowSpacing(newSpacing)
+        else:
+            for path in self.paths:
+                path.setFlowFromSpacing(newSpacing)
+    
+    
+    def onSetFlowFromSpeed(self, event):
+        newSpeed = self._flowFromSpeedSlider.GetValue()
+        if newSpeed < 0:
+           newSpeed = 1.0 + 0.9 * newSpeed / 99.0
+        else:
+           newSpeed = 1.0 + 9.0 * newSpeed / 99.0
+        if len(self.paths) == 0:
+            self.display.setDefaultFlowSpeed(newSpeed)
+        else:
+            for path in self.paths:
+                path.setFlowFromSpeed(newSpeed)
+        
+    
     def onSetFlowFromSpread(self, event):
-        newSpread = self._flowFromSlider.GetValue() / 100.0
+        newSpread = self._flowFromSpreadSlider.GetValue() / 100.0
         for path in self.paths:
             path.setFlowFromSpread(newSpread)
   
