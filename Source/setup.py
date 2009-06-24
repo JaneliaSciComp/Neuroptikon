@@ -16,7 +16,8 @@ import os, sys
 from setuptools import setup
 
 app_scripts = ['Neuroptikon.py']
-app_version = '0.9.3'	# TBD: will this already by set in wx for the app?
+
+import __version__app_version = __version__.version
 
 setup_options = dict()
 
