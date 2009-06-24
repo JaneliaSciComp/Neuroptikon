@@ -30,6 +30,7 @@ class Network:
         self._nextUniqueId = -1
         self._savePath = None
         self.attributes = []
+        self._displaysAreSynchronized = True
     
     
     @classmethod
@@ -243,11 +244,21 @@ class Network:
     
     def addDisplay(self, display):
         self.displays.append(display)
+        dispatcher.connect(self.synchronizeDisplays, ('set', 'selection'), display)
     
     
     def removeDisplay(self, display):
         self.displays.remove(display)
-
+        dispatcher.disconnect(self.synchronizeDisplays, ('set', 'selection'), display)
+    
+    
+    def synchronizeDisplays(self, signal, sender):
+        if self._displaysAreSynchronized:
+            selection = sender.selectedObjects()
+            for display in self.displays:
+                if display != sender:
+                    display.selectObjects(selection)
+    
 
     def to_pydot(self, graph_attr=None, node_attr=None, edge_attr=None):
         # This is a custom version of networkx.drawing.nx_pydot.to_pydot() that works around a bug in pydot 1.0.2.
