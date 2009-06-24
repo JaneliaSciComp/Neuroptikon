@@ -1,7 +1,8 @@
 import os.path
 
 # Load the base network.
-execfile(os.path.join(os.path.dirname(__file__), 'C. elegans.py'))
+if len(network.objects) == 0:
+    execfile(os.path.join(os.path.dirname(__file__), 'C. elegans.py'))
 
 # Load the positions of the soma.
 somaPositions = {}

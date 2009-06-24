@@ -6,7 +6,11 @@ display.setUseGhosts(True)
 display.setDefaultFlowColor((1.0, 1.0, 1.0))
 display.setDefaultFlowSpread(0.5)
 
-execfile(os.path.dirname(__file__) + os.sep + 'C. elegans.py')
+# Load the base network.
+if len(network.objects) == 0:
+    execfile(os.path.dirname(__file__) + os.sep + 'C. elegans.py')
+
+# Set up the visualization
 
 for neuron in display.network.neurons():
     red = green = blue = 0.0
