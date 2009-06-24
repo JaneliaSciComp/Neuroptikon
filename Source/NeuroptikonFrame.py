@@ -176,7 +176,10 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_MENU, self.display.onSaveView, viewMenu.Append(wx.NewId(), gettext('Save View as...'), gettext('Save the current view to a file')))
         menuBar.Append(viewMenu, gettext('&View'))
         
-        return menuBar
+        helpMenu = wx.Menu()
+        self.Bind(wx.EVT_MENU, wx.GetApp().onAboutNeuroptikon, helpMenu.Append(wx.ID_ABOUT, gettext('About Neuroptikon'), gettext('Information about this program')))
+        menuBar.Append(helpMenu, gettext('&Help'))
+                return menuBar
     
     
     def displayChangedMenuState(self, sender = None, signal = None):

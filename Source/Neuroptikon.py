@@ -321,6 +321,10 @@ if __name__ == "__main__":
         def onOpenWxinspector(self, event):
             self.ShowInspectionTool()
         
+        
+        def onAboutNeuroptikon(self, event):
+            import __version__
+            dialog = wx.MessageDialog(None, gettext("Version %s") % (__version__.version), gettext("Neuroptikon"), wx.ICON_INFORMATION | wx.OK)            dialog.ShowModal()            dialog.Destroy()        
     
     def run():
         app = Neuroptikon(None)
