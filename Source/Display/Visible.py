@@ -9,8 +9,18 @@ from Network.Innervation import Innervation
 
 from Library.Texture import Texture
 
+
 import wx
 from wx.py import dispatcher
+import weakref
+
+# The standard wx.py.dispatcher is dog slow for a large connection pool.  The bottleneck shown by profiling is the attempt to avoid duplicate connections.  Since we never attempt duplicate connections this expensive check is not necessary.
+# Here we replace the normal connect method with a version that doesn't check for duplicate connections.def dispatcher_connect(receiver, signal=dispatcher.Any, sender=dispatcher.Any, weak=True):    if signal is None:        raise dispatcher.DispatcherError, 'signal cannot be None'    if weak:        receiver = dispatcher.safeRef(receiver)    senderkey = id(sender)    signals = {}    if dispatcher.connections.has_key(senderkey):        signals = dispatcher.connections[senderkey]    else:        dispatcher.connections[senderkey] = signals        # Keep track of senders for cleanup.        if sender not in (None, dispatcher.Any):            def remove(object, senderkey=senderkey):                dispatcher._removeSender(senderkey=senderkey)            # Skip objects that can not be weakly referenced, which means            # they won't be automatically cleaned up, but that's too bad.            try:                weakSender = weakref.ref(sender, remove)                senders[senderkey] = weakSender            except:                pass    receivers = []    if signals.has_key(signal):        receivers = signals[signal]    else:        signals[signal] = receivers
+# This is the disabled block.
+#    try:#        receivers.remove(receiver)#    except ValueError:
+#        pass    receivers.append(receiver)
+dispatcher.connect = dispatcher_connect
+
 from math import atan2, pi, sqrt
 import random
 import xml.etree.ElementTree as ElementTree
