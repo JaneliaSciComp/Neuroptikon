@@ -45,3 +45,9 @@ Name: "{commondesktop}\Neuroptikon"; Filename: "{app}\Neuroptikon.exe"; Tasks: d
 [Run]
 Filename: "{app}\Neuroptikon.exe"; Description: "{cm:LaunchProgram,Neuroptikon}"; Flags: nowait postinstall skipifsilent
 
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\Images"
+Type: filesandordirs; Name: "{app}\Inspectors"
+Type: filesandordirs; Name: "{app}\Layouts"
+Type: filesandordirs; Name: "{app}\Textures"
+
