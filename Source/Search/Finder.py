@@ -183,7 +183,6 @@ class Finder(wx.Dialog):
                 self.predicate.addStatement(lambda x: x in inputs or x in outputs)
             
         self.EndModal(wx.ID_OK)
-        event.Skip()
     
     
 # end of class Finder
