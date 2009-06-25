@@ -23,7 +23,7 @@ except:
 class Network:
     
     def __init__(self):
-        self.graph = XGraph()
+        self.graph = XGraph(multiedges = True)
         self.objects = []
         self.idDict = {}   # TODO: weak ref dict?
         self.displays = []
