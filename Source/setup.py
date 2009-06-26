@@ -116,7 +116,7 @@ elif sys.platform == 'win32':
     # Include all of the libraries that OSG needs.
     dataFilesList.append(('', ['lib/Windows/freetype6.dll', 'lib/Windows/libimage.dll', 'lib/Windows/libpng3.dll', 'lib/Windows/libpng12.dll', 'lib/Windows/librle3.dll', 'lib/Windows/libtiff3.dll']))
     # Include the OSG plug-ins we use.
-    dataFilesList.append(('', ['lib/Windows/osgdb_jpeg.dll', 'lib/Windows/osgdb_png.dll', 'lib/Windows/osgdb_tiff.dll']))
+    dataFilesList.append(('', ['lib/Windows/osgdb_freetype.dll', 'lib/Windows/osgdb_jpeg.dll', 'lib/Windows/osgdb_png.dll', 'lib/Windows/osgdb_tiff.dll']))
     setup_options['data_files'] = dataFilesList
     
     setup_options['options'] = dict(py2exe = py2exe_options)
