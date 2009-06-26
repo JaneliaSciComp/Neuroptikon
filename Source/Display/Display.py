@@ -107,15 +107,13 @@ class Display(wx.glcanvas.GLCanvas):
         
         self.Bind(wx.EVT_SIZE, self.onSize)
         self.Bind(wx.EVT_PAINT, self.onPaint)
+        self.Bind(wx.EVT_IDLE, self.onIdle)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
         self.Bind(wx.EVT_MOUSE_EVENTS, self.onMouseEvent)  # TODO: factor this out into individual events
         self.Bind(wx.EVT_MOUSEWHEEL, self.onMouseWheel)
         self.Bind(wx.EVT_SCROLLWIN, self.onScroll)
-        
-        self._animationTimer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.onAnimate, self._animationTimer)
         
         self.dragSelection = None
         self.draggerLOD = None
@@ -557,10 +555,6 @@ class Display(wx.glcanvas.GLCanvas):
         pass
     
     
-    def onAnimate(self, event):
-        self.Refresh()
-    
-    
     def onSize(self, event):
         w, h = self.GetClientSize()
         
@@ -586,6 +580,13 @@ class Display(wx.glcanvas.GLCanvas):
             else:
                 self.viewer3D.frame()
             self.SwapBuffers()
+    
+    
+    def onIdle(self, event):
+        if len(self.animatedVisibles) > 0:
+            self.Refresh()
+        event.RequestMore()
+        event.Skip()
     
     
     def GetConvertedKeyCode(self,evt):
@@ -1329,12 +1330,6 @@ class Display(wx.glcanvas.GLCanvas):
                     visible.updateOpacity()
         
         self._suppressRefresh = False
-        
-        # Turn idle callbacks on when any visible is animated and off otherwise.
-        if not self._animationTimer.IsRunning() and len(self.animatedVisibles) > 0:
-            self._animationTimer.Start(1000/60, wx.TIMER_CONTINUOUS)
-        elif self._animationTimer.IsRunning() and len(self.animatedVisibles) == 0:
-            self._animationTimer.Stop()
     
     
     def addDragger(self, visible):
