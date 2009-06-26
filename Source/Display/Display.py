@@ -585,7 +585,7 @@ class Display(wx.glcanvas.GLCanvas):
     def onIdle(self, event):
         if len(self.animatedVisibles) > 0:
             self.Refresh()
-        event.RequestMore()
+            event.RequestMore()
         event.Skip()
     
     
