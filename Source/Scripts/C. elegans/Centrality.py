@@ -14,6 +14,9 @@ for (node1, node2, object) in network.graph.edges():
         count = object.getAttribute('Count')
         if count:
             weight = count.value
+    # Gap junctions are undirected which is represented in the original graph by two directed edges.  Divide the weight in half so the strength of the connection is correct.
+    if isinstance(object, GapJunction):
+        weight /= 2.0
     if graph.has_edge(node1, node2):
         previousWeight = 1.0 / graph.get_edge(node1, node2)
     else:
