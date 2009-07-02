@@ -23,7 +23,7 @@ except:
 class Network:
     
     def __init__(self):
-        self.graph = XGraph(multiedges = True)
+        self.graph = XDiGraph(multiedges = True, )
         self.objects = []
         self.idDict = {}   # TODO: weak ref dict?
         self.displays = []
@@ -209,14 +209,22 @@ class Network:
             self._nextUniqueId = object.networkId
         
         if isinstance(object, Arborization):
-            self.graph.add_edge(object.neurite.neuron().networkId, object.region.networkId, object)
+            if object.sendsOutput == None or object.sendsOutput:
+                self.graph.add_edge(object.neurite.neuron().networkId, object.region.networkId, object)
+            if object.receivesInput == None or object.receivesInput:
+                self.graph.add_edge(object.region.networkId, object.neurite.neuron().networkId, object)
         elif isinstance(object, Synapse):
-            self.graph.add_edge(object.preSynapticNeurite.neuron().networkId, object.postSynapticNeurites[0].neuron().networkId, object) # TODO: need to handle hyper-edges?
+            for postSynapticNeurite in object.postSynapticNeurites:
+                self.graph.add_edge(object.preSynapticNeurite.neuron().networkId, postSynapticNeurite.neuron().networkId, object)
         elif isinstance(object, GapJunction):
             neurites = list(object.neurites)
             self.graph.add_edge(neurites[0].neuron().networkId, neurites[1].neuron().networkId, object)
+            self.graph.add_edge(neurites[1].neuron().networkId, neurites[0].neuron().networkId, object)
         elif isinstance(object, Pathway):
-            self.graph.add_edge(object.terminus1.region.networkId, object.terminus2.region.networkId, object)
+            if object.terminus1.sendsOutput == None or object.terminus1.sendsOutput:
+                self.graph.add_edge(object.terminus1.region.networkId, object.terminus2.region.networkId, object)
+            if object.terminus2.sendsOutput == None or object.terminus2.sendsOutput:
+                self.graph.add_edge(object.terminus2.region.networkId, object.terminus1.region.networkId, object)
         elif isinstance(object, Innervation):
             self.graph.add_edge(object.neurite.neuron().networkId, object.muscle.networkId, object)
         elif isinstance(object, Stimulus):

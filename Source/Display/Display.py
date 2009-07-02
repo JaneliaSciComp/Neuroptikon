@@ -1205,9 +1205,15 @@ class Display(wx.glcanvas.GLCanvas):
             # Add the visibles that exist along the path to the selection.
             for visible in visibles:
                 for startVisible in self.selectedVisibles:
+                    prevObject = startVisible.client if startVisible.client.networkId in self.network.graph else None
                     for pathObject in startVisible.client.shortestPathTo(visible.client):
                         for pathVisible in self.visiblesForObject(pathObject):
                             newSelection.add(pathVisible)
+                        if prevObject != None:
+                            edgeObject = self.network.graph.get_edge(prevObject.networkId, pathObject.networkId)[0]
+                            for pathVisible in self.visiblesForObject(edgeObject):
+                                newSelection.add(pathVisible)
+                        prevObject = pathObject
         elif extend and len(visibles) == 1 and visibles[0] in newSelection:
             # Remove the visible from the selection
             newSelection.remove(visibles[0])
@@ -1215,6 +1221,8 @@ class Display(wx.glcanvas.GLCanvas):
             # Add the visibles to the new selection.
             for visible in visibles:
                 newSelection.add(visible)
+        
+        self._selectedShortestPath = findShortestPath
         
         if newSelection != self.selectedVisibles or (self.hoverSelected and not self.hoverSelecting):
             self.clearDragger()
@@ -1284,8 +1292,9 @@ class Display(wx.glcanvas.GLCanvas):
                 visiblesToHighlight.add(visible.pathStart) 
                 visiblesToHighlight.add(visible.pathEnd)
             else:
-                singleSelection = (len(self.selectedVisibles) == 1)
-                if self.selectConnectedVisibles:
+                if self.selectConnectedVisibles and not self._selectedShortestPath:
+                    singleSelection = (len(self.selectedVisibles) == 1)
+                    
                     # Animate paths connecting to this non-path visible and highlight the other end of the paths.
                     for pathVisible in visible.connectedPaths:
                         otherVis = pathVisible.pathEnd if pathVisible.pathStart == visible else pathVisible.pathStart

@@ -178,11 +178,32 @@ class Object(object):
         
     
     def shortestPathTo(self, otherObject):
+        startNodeIds = []
+        if self.networkId in self.network.graph:
+            startNodeIds.append(self.networkId)
+        else:
+            for startId, endId, edgeObject in self.network.graph.edges():
+                if edgeObject == self:
+                    startNodeIds.append(endId)
+        endNodeIds = []
+        if otherObject.networkId in self.network.graph:
+            endNodeIds.append(otherObject.networkId)
+        else:
+            for startId, endId, edgeObject in self.network.graph.edges():
+                if edgeObject == otherObject:
+                    endNodeIds.append(startId)
         path = []
-        for nodeID in shortest_path(self.network.graph, self.networkId, otherObject.networkId):
-            pathObject = self.network.objectWithId(nodeID)
-            if pathObject != self:
-                path.append(pathObject)
+        shortestPathLen = 1000000
+        for startNodeId in startNodeIds:
+            for endNodeId in endNodeIds:
+                nodeList = shortest_path(self.network.graph, startNodeId, endNodeId)
+                if nodeList and len(nodeList) < shortestPathLen:
+                    path = []
+                    for nodeID in nodeList:
+                        pathObject = self.network.objectWithId(nodeID)
+                        if pathObject != self:
+                            path.append(pathObject)
+                    shortestPathLen = len(nodeList)
         return path
     
     
