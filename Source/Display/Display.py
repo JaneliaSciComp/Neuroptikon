@@ -41,7 +41,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.displayRules = []
         self.autoVisualize = True
         self.visibles = {}
-        self.visibleIds = {}
+        self._visibleIds = {}
         self.selectedVisibles = set()
         self.highlightedVisibles = []
         self.animatedVisibles = []
@@ -238,8 +238,8 @@ class Display(wx.glcanvas.GLCanvas):
         visiblesToSelect = []
         if selectedVisibleIds is not None:
             for visibleId in selectedVisibleIds.split(','):
-                if visibleId.isdigit() and int(visibleId) in self.visibleIds:
-                    visiblesToSelect.append(self.visibleIds[int(visibleId)])
+                if visibleId.isdigit() and int(visibleId) in self._visibleIds:
+                    visiblesToSelect.append(self._visibleIds[int(visibleId)])
         self.selectVisibles(visiblesToSelect)
         
         self._suppressRefresh = False
@@ -632,12 +632,19 @@ class Display(wx.glcanvas.GLCanvas):
                 self.visibles[visible.client.networkId].append(visible)
             else:
                 self.visibles[visible.client.networkId] = [visible]
-        self.visibleIds[visible.displayId] = visible
+        self._visibleIds[visible.displayId] = visible
         if parentVisible is None:
             self.rootNode.addChild(visible.sgNode)
         else:
             parentVisible.addChildVisible(visible)
         dispatcher.connect(self.visibleChanged, dispatcher.Any, visible)
+    
+    
+    def visibleWithId(self, visibleId):
+        if visibleId in self._visibleIds:
+            return self._visibleIds[visibleId]
+        else:
+            return None
     
     
     def defaultVisualizationParams(self, object):
