@@ -188,7 +188,7 @@ class Visible(object):
         self._opacity = 1.0
         
         # Path attributes
-        self._path = None
+        self.pathMidPoints = None
         self.pathStart = None
         self.pathEnd = None
         self.connectedPaths = []
@@ -378,7 +378,13 @@ class Visible(object):
             if pathStart is None or pathEnd is None:
                 raise ValueError, gettext('Could not create path')
             visible.setFlowDirection(pathStart, pathEnd, flowTo, flowFrom)
-            visible.setPath([], pathStart, pathEnd)
+            midPoints = []
+            for midPointElement in pathElement.findall('MidPoint'):
+                x = float(midPointElement.get('x'))
+                y = float(midPointElement.get('y'))
+                z = float(midPointElement.get('z'))
+                midPoints.append((x, y, z))
+            visible.setPath(midPoints, pathStart, pathEnd)
             flowToElement = pathElement.find('FlowToAppearance')
             if flowToElement is None:
                 flowToElement = pathElement.find('flowToAppearance')
@@ -513,6 +519,11 @@ class Visible(object):
                     flowFromElement.set('speed', str(self._flowFromSpeed))
                 if self._flowFromSpread is not None:
                     flowFromElement.set('spread', str(self._flowFromSpread))
+            for midPoint in self.pathMidPoints:
+                midPointElement = ElementTree.SubElement(pathElement, 'MidPoint')
+                midPointElement.set('x', str(midPoint[0]))
+                midPointElement.set('y', str(midPoint[1]))
+                midPointElement.set('z', '0.0' if len(midPoint) == 2 else str(midPoint[2]))
         
         # Add any child visibles
         for childVisible in self.children:
@@ -610,6 +621,8 @@ class Visible(object):
                     params['flowFromSpeed'] = self.flowFromSpeed()
                 if self.flowFromSpread() != self.display.defaultFlowSpread:
                     params['flowFromSpread'] = self.flowFromSpread()
+            params['midPoints'] = self.pathMidPoints
+            
         
         params['shape'] = self.shape()
         params['color'] = self.color()
@@ -662,9 +675,8 @@ class Visible(object):
                 scriptFile.write('%s.setArrangedSpacing(%s, %s)\n' % (displayRef, scriptRef, str(self.arrangedSpacing)))
             if 'arrangedWeight' in params:
                 scriptFile.write('%s.setArrangedWeight(%s, %s)\n' % (displayRef, scriptRef, str(self.arrangedWeight)))
-# TODO:
-#            if self.isPath():
-#                scriptFile.write('%s.setVisiblePath(%s, [], %s, %s)\n' % (displayRef, scriptRef, scriptRefs[self.pathStart.client.networkId], scriptRefs[self.pathEnd.client.networkId]))
+            if 'midPoints' in params:
+                scriptFile.write('%s.setVisiblePath(%s, %s, %s, %s)\n' % (displayRef, scriptRef, str(self.pathMidPoints), scriptRefs[self.pathStart.client.networkId], scriptRefs[self.pathEnd.client.networkId]))
             if 'flowToColor' in params or 'flowToSpacing' in params or 'flowToSpeed' in params or 'flowToSpread' in params:
                 scriptFile.write('%s.setVisibleFlowTo(%s, True' % (displayRef, scriptRef))
                 if 'flowToColor' in params:
@@ -1031,10 +1043,10 @@ class Visible(object):
     def setWeight(self, weight):
         if self._weight != weight:
             self._weight = weight
-            if self._path is None:
+            if self.pathMidPoints is None:
                 self.updateTransform()
             else:
-                self.setPath(self._path)
+                self.setPath(self.pathMidPoints)
             dispatcher.send(('set', 'weight'), self)
     
     
@@ -1222,8 +1234,8 @@ class Visible(object):
     
     
     def dependentVisibleChanged( self, signal, sender, event=None, value=None, **arguments):
-        if self._path is not None and len(self._dependencies) == 2:
-            self.setPath(self._path)
+        if self.pathMidPoints is not None and len(self._dependencies) == 2:
+            self.setPath(self.pathMidPoints)
     
     
     def positionSizeRotation(self, startPoint, endPoint):
@@ -1434,19 +1446,19 @@ class Visible(object):
             self.updateFlowAnimation()
         
         
-    def setPath(self, path, startVisible=None, endVisible=None):
+    def setPath(self, midPoints, startVisible=None, endVisible=None):
         if startVisible is not None:
             self.addDependency(startVisible, 'position')
             if startVisible != self.pathStart:
-                path.reverse()
+                midPoints.reverse()
             startVisible.connectedPaths.append(self)
         if endVisible is not None:
             self.addDependency(endVisible, 'position')
             endVisible.connectedPaths.append(self)
         
-        self._path = path
+        self.pathMidPoints = midPoints
         
-        path = list(path)
+        path = list(midPoints)
         path.insert(0, self.pathStart.worldPosition())
         path.append(self.pathEnd.worldPosition())
         
@@ -1457,6 +1469,8 @@ class Visible(object):
             self.setPosition(position)
             self.setSize(size)
             self.setRotation(rotation)
+            self._shapeDrawable = osg.ShapeDrawable(Visible.geometries[self._shapeName])
+            self._shapeGeode.addDrawable(self._shapeDrawable)
         else:
             # Create a multi-segmented path from start to end.  This mostly works but looks really bad.  Probably need to wait for the Python wrapper of osgModeling <http://code.google.com/p/osgmodeling/> to make this look good.
             while self._shapeGeode.getNumDrawables() > 0:

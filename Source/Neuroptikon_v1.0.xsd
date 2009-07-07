@@ -319,6 +319,7 @@
 		<xs:sequence>
 			<xs:element name="FlowToAppearance" type="FlowAppearance" minOccurs="0"/>
 			<xs:element name="FlowFromAppearance" type="FlowAppearance" minOccurs="0"/>
+			<xs:element name="MidPoint" type="VisiblePosition" minOccurs="0" maxOccurs="unbounded"/>
 		</xs:sequence>
 		<xs:attribute name="startVisibleId" type="xs:nonNegativeInteger" use="required"/>
 		<xs:attribute name="endVisibleId" type="xs:nonNegativeInteger" use="required"/>

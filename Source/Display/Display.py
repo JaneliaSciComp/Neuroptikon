@@ -816,7 +816,7 @@ class Display(wx.glcanvas.GLCanvas):
                 pathEndVisibles = self.visiblesForObject(pathEnd)
                 if len(pathStartVisibles) == 1 and len(pathEndVisibles) == 1:
                     visible.setFlowDirection(pathStartVisibles[0], pathEndVisibles[0], pathFlowsTo, pathFlowsFrom)
-                    visible.setPath([], pathStartVisibles[0], pathEndVisibles[0])
+                    visible.setPath(params.get('path', []), pathStartVisibles[0], pathEndVisibles[0])
                     if self._showFlow:
                         visible.animateFlow()
             
@@ -1160,7 +1160,7 @@ class Display(wx.glcanvas.GLCanvas):
         if len(visibles) == 1:
             visible = visibles[0]
         elif isinstance(object, Stimulus):
-            visible = visibles[0 if visibles[1].isPath() else 1]
+            visible = visibles[0 if visibles[0].isPath() else 1]
         startVisible = self.visiblesForObject(startObject)[0]
         endVisible = self.visiblesForObject(endObject)[0]
         if visible is not None:
