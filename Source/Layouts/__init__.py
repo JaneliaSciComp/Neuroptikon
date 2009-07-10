@@ -16,7 +16,7 @@ try:
                 # Import a sub-package.  The sub-package is responsible for registering any layouts it contains.
                 exec('import ' + layoutName)
             elif fileName != '__init__.py' and extension == '.py':
-                # Import a module and register the class if it is an inspector.
+                # Import a module and register the class if it is a layout.
                 exec('from ' + layoutName + ' import ' + layoutName)
                 layoutClass = eval(layoutName)
                 if isinstance(layoutClass, Layout.__class__) and layoutClass.shouldBeRegistered():
