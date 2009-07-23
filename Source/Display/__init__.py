@@ -6,6 +6,7 @@ __version__ = "1.0.0"
 import wx
 
 __layoutClasses__ = {}
+__shapeClasses__ = {}
 
 def registerLayoutClass(layoutClass):
     __layoutClasses__[wx.NewId()] = layoutClass
@@ -13,4 +14,11 @@ def registerLayoutClass(layoutClass):
 def layoutClasses(*args, **keywordArgs):
     return __layoutClasses__
 
-# TODO: add API/prefs for permanent layout registration
+def registerShapeClass(shapeClass):
+    __shapeClasses__[wx.NewId()] = shapeClass
+
+def shapeClasses(*args, **keywordArgs):
+    return __shapeClasses__
+
+
+# TODO: add API/prefs for permanent layout/shape registration

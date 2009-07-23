@@ -37,9 +37,11 @@ class AppearanceInspector(Inspector):
             
             # Add a pop-up for choosing the shape.
             self._shapeChoice = wx.Choice(self._window, wx.ID_ANY)
-            for geometryName in sorted(Visible.geometries.keys()):
-                self._shapeChoice.Append(gettext(geometryName), geometryName)
-            self._shapeChoice.Append(gettext('none'), None)
+            shapes = wx.GetApp().scriptLocals()['shapes']
+            for shapeKey in sorted(shapes.keys()):
+                shapeClass = shapes[shapeKey]
+                self._shapeChoice.Append(shapeClass.name(), shapeClass)
+            self._shapeChoice.Append(gettext('None'), None)
             self._multipleShapesId = wx.NOT_FOUND
             gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Shape:')), 0)
             gridSizer.Add(self._shapeChoice, 0)
@@ -99,13 +101,19 @@ class AppearanceInspector(Inspector):
                 self._opacitySlider.SetValue(100)
         
         if updatedAttribute is None or updatedAttribute == 'shape':
-            if self.visibles.haveEqualAttr('shape'):
+            shapeClass = type(self.visibles[0].shape())
+            equalClasses = True
+            for visible in self.visibles[1:]:
+                if type(visible) != shapeClass:
+                    equalClasses = False
+            if equalClasses:
                 for index in range(0, self._shapeChoice.GetCount()):
-                    if self._shapeChoice.GetClientData(index) == self.visibles[0].shape():
+                    if self._shapeChoice.GetClientData(index) == shapeClass:
                         self._shapeChoice.SetSelection(index)
                         break
             else:
-                self._multipleShapesId = self._shapeChoice.Append(gettext('Multiple values'), None)
+                if self._multipleShapesId == wx.NOT_FOUND:
+                    self._multipleShapesId = self._shapeChoice.Append(gettext('Multiple values'), None)
                 self._shapeChoice.SetSelection(self._multipleShapesId)
         
         if updatedAttribute is None or updatedAttribute == 'texture':
@@ -115,7 +123,8 @@ class AppearanceInspector(Inspector):
                         self._textureChoice.SetSelection(index)
                         break
             else:
-                self._multipleTexturesId = self._textureChoice.Append(gettext('Multiple values'), None)
+                if self._multipleTexturesId == wx.NOT_FOUND:
+                    self._multipleTexturesId = self._textureChoice.Append(gettext('Multiple values'), None)
                 self._textureChoice.SetSelection(self._multipleTexturesId)
         
         if updatedAttribute is None or updatedAttribute == 'weight':
@@ -146,13 +155,13 @@ class AppearanceInspector(Inspector):
         
     
     def onSetShape(self, event):
-        shape = self._shapeChoice.GetClientData(self._shapeChoice.GetSelection())
+        shapeClass = self._shapeChoice.GetClientData(self._shapeChoice.GetSelection())
         for visible in self.visibles:
-            visible.setShape(shape)
+            visible.setShape(None if shapeClass is None else shapeClass())
         # Remove the "multiple values" choice now that all of the visibles have the same value.
         if self._multipleShapesId != wx.NOT_FOUND:
             self._shapeChoice.Delete(self._multipleShapesId)
-            self._multipleShapesId = wx.NOT_FOUND
+            self._multipleShapesId = None
         
     
     def onSetTexture(self, event):
@@ -163,7 +172,7 @@ class AppearanceInspector(Inspector):
         # Remove the "multiple values" choice now that all of the visibles have the same value.
         if self._multipleTexturesId != wx.NOT_FOUND:
             self._textureChoice.Delete(self._multipleTexturesId)
-            self._multipleTexturesId = wx.NOT_FOUND
+            self._multipleTexturesId = None
         
     
     def onSetWeight(self, event):

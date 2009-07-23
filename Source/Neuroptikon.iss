@@ -49,5 +49,6 @@ Filename: "{app}\Neuroptikon.exe"; Description: "{cm:LaunchProgram,Neuroptikon}"
 Type: filesandordirs; Name: "{app}\Images"
 Type: filesandordirs; Name: "{app}\Inspectors"
 Type: filesandordirs; Name: "{app}\Layouts"
+Type: filesandordirs; Name: "{app}\Shapes"
 Type: filesandordirs; Name: "{app}\Textures"
 

@@ -17,13 +17,14 @@ from setuptools import setup
 
 app_scripts = ['Neuroptikon.py']
 
-import __version__app_version = __version__.version
+import __version__
+app_version = __version__.version
 
 setup_options = dict()
 
-resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Textures']
+resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
 includes = ['wx', 'xlrd']
-excludes = ['Inspectors', 'Layouts', 'matplotlib', 'scipy']
+excludes = ['Inspectors', 'Layouts', 'matplotlib', 'scipy', 'Shapes']
 
 sys.path.append('lib/CrossPlatform')
 

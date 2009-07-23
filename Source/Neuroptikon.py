@@ -81,7 +81,6 @@ from Library.Modality import Modality
 from Library.Ontology import Ontology
 from Library.Texture import Texture
 from Preferences import Preferences
-import Inspectors
 from Inspection.InspectorFrame import InspectorFrame
 import Display
 
@@ -101,6 +100,8 @@ if __name__ == "__main__":
             
             self.rootDir = rootDir
             self.platformLibPath = platformLibPath
+            
+            import Inspectors, Layouts, Shapes
             
             self.library = Library()
             self._loadDefaultLibraryItems()
@@ -197,6 +198,9 @@ if __name__ == "__main__":
             layoutClasses = {}
             for layoutClass in Display.layoutClasses().itervalues():
                 layoutClasses[layoutClass.__name__] = layoutClass
+            shapeClasses = {}
+            for shapeClass in Display.shapeClasses().itervalues():
+                shapeClasses[shapeClass.__name__] = shapeClass
             locals = {'createNetwork': self.createNetwork, 
                       'displayNetwork': self.displayNetwork, 
                       'networks': self.networks, 
@@ -207,7 +211,8 @@ if __name__ == "__main__":
                       'NeuralPolarity': Neuron.Polarity, 
                       'NeuralFunction': Neuron.Function, 
                       'Attribute': Attribute, 
-                      'layouts': layoutClasses}
+                      'layouts': layoutClasses, 
+                      'shapes': shapeClasses}
             for objectClass in Object.__subclasses__():
                 locals[objectClass.__name__] = objectClass
             return locals
@@ -216,12 +221,15 @@ if __name__ == "__main__":
         def onRunScript(self, event):
             dlg = wx.FileDialog(None, gettext('Choose a script to run'), 'Scripts', '', '*.py', wx.OPEN)
             if dlg.ShowModal() == wx.ID_OK:
+                prevDir = os.getcwd()
+                os.chdir(os.path.dirname(dlg.GetPath()))
                 try:
                     execfile(dlg.GetPath(), self.scriptLocals())
                 except:
                     (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                     dialog = wx.MessageDialog(self, exceptionValue.message, gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
                     dialog.ShowModal()
+                os.chdir(prevDir)
             dlg.Destroy()
         
         
@@ -324,7 +332,10 @@ if __name__ == "__main__":
         
         def onAboutNeuroptikon(self, event):
             import __version__
-            dialog = wx.MessageDialog(None, gettext("Version %s") % (__version__.version), gettext("Neuroptikon"), wx.ICON_INFORMATION | wx.OK)            dialog.ShowModal()            dialog.Destroy()        
+            dialog = wx.MessageDialog(None, gettext("Version %s") % (__version__.version), gettext("Neuroptikon"), wx.ICON_INFORMATION | wx.OK)
+            dialog.ShowModal()
+            dialog.Destroy()
+        
     
     def run():
         app = Neuroptikon(None)

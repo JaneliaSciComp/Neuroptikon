@@ -17,7 +17,14 @@ from Network.Innervation import Innervation
 from Network.ObjectList import ObjectList
 from Visible import Visible
 from DisplayRule import DisplayRule
-import Layout    # Not needed by the code but insures that the Inspector module gets packaged by setuptools.
+import Layout, Shape    # Not needed by the code but insures that the Layout and Shape modules gets packaged by setuptools.
+
+from Shapes.Box import Box
+from Shapes.Capsule import Capsule
+from Shapes.Cone import Cone
+from Shapes.Line import Line
+from Shapes.Ball import Ball
+
 from wx.py import dispatcher
 from networkx import *
 from math import pi, fabs
@@ -54,10 +61,13 @@ class Display(wx.glcanvas.GLCanvas):
         self._primarySelectionColor = (0, 0, 1, .25)
         self._secondarySelectionColor = (0, 0, 1, .125)
         self.viewDimensions = 2
+        
+        self._recomputeBounds = True
         self.visiblesMin = [-100, -100, -100]
         self.visiblesMax = [100, 100, 100]
         self.visiblesCenter = [0, 0, 0]
         self.visiblesSize = [200, 200, 200]
+        
         self.orthoCenter = (0, 0)
         self.orthoViewPlane = 'xy'
         self.orthoXPlane = 0
@@ -142,17 +152,17 @@ class Display(wx.glcanvas.GLCanvas):
         self.rootStateSet.addUniform(self.defaultFlowToColorUniform)
         self.defaultFlowFromColorUniform = osg.Uniform('flowFromColor', osg.Vec4f(*self.defaultFlowColor))
         self.rootStateSet.addUniform(self.defaultFlowFromColorUniform)
-        self.defaultFlowSpacing = 1.0
+        self.defaultFlowSpacing = 0.05   # Distance between pulses
         self.defaultFlowToSpacingUniform = osg.Uniform('flowToSpacing', self.defaultFlowSpacing)
         self.rootStateSet.addUniform(self.defaultFlowToSpacingUniform)
         self.defaultFlowFromSpacingUniform = osg.Uniform('flowFromSpacing', self.defaultFlowSpacing)
         self.rootStateSet.addUniform(self.defaultFlowFromSpacingUniform)
-        self.defaultFlowSpeed = 1.0
+        self.defaultFlowSpeed = 0.05     # Pulse speed 
         self.defaultFlowToSpeedUniform = osg.Uniform('flowToSpeed', self.defaultFlowSpeed)
         self.rootStateSet.addUniform(self.defaultFlowToSpeedUniform)
         self.defaultFlowFromSpeedUniform = osg.Uniform('flowFromSpeed', self.defaultFlowSpeed)
         self.rootStateSet.addUniform(self.defaultFlowFromSpeedUniform)
-        self.defaultFlowSpread = 0.2
+        self.defaultFlowSpread = 0.2    # The pulse should cover 20% of the path
         self.defaultFlowToSpreadUniform = osg.Uniform('flowToSpread', self.defaultFlowSpread)
         self.rootStateSet.addUniform(self.defaultFlowToSpreadUniform)
         self.defaultFlowFromSpreadUniform = osg.Uniform('flowFromSpread', self.defaultFlowSpread)
@@ -196,6 +206,10 @@ class Display(wx.glcanvas.GLCanvas):
                 self.setDefaultFlowSpeed(float(flowAppearanceElement.get('speed')))
             if flowAppearanceElement.get('spread') is not None:
                 self.setDefaultFlowSpread(float(flowAppearanceElement.get('spread')))
+            if self.defaultFlowSpacing == 1.0 and self.defaultFlowSpeed == 1.0 and self.defaultFlowSpread == 0.2:
+                # Switch to new world-space relative defaults.
+                self.setDefaultFlowSpacing(0.05)
+                self.setDefaultFlowSpeed(0.05)
                 
         
         visibleElements = xmlElement.findall('Visible')
@@ -403,10 +417,10 @@ class Display(wx.glcanvas.GLCanvas):
         if self.viewDimensions == 2:
             width, height = self.GetClientSize()
             zoom = 2.0 ** (self.orthoZoom / 10.0)
-            self.viewer2D.getCamera().setProjectionMatrixAsOrtho2D(self.orthoCenter[0] - width * self.zoomScale / 2.0 / zoom, 
-                                                                   self.orthoCenter[0] + width * self.zoomScale / 2.0 / zoom, 
-                                                                   self.orthoCenter[1] - height * self.zoomScale / 2.0 / zoom, 
-                                                                   self.orthoCenter[1] + height * self.zoomScale / 2.0 / zoom)
+            self.viewer2D.getCamera().setProjectionMatrixAsOrtho2D(self.orthoCenter[0] - (width + 20) * self.zoomScale / 2.0 / zoom, 
+                                                                   self.orthoCenter[0] + (width + 20) * self.zoomScale / 2.0 / zoom, 
+                                                                   self.orthoCenter[1] - (height + 20) * self.zoomScale / 2.0 / zoom, 
+                                                                   self.orthoCenter[1] + (height + 20) * self.zoomScale / 2.0 / zoom)
             if self.orthoViewPlane == 'xy':
                 self.viewer2D.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(0.0, 0.0, self.visiblesMin[2] - 2.0)))
             elif self.orthoViewPlane == 'xz':
@@ -420,32 +434,34 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def computeVisiblesBound(self):
-        # This:
-        #     boundingSphere = node.getBound()
-        #     sphereCenter = boundingSphere.center()
-        # computes a screwy center.  Because there's no camera?
-        # Manually compute the bounding box instead.
-        # TODO: figure out how to let the faster C++ code do this
-        self.visiblesMin = [100000, 100000, 100000]
-        self.visiblesMax = [-100000, -100000, -100000]
-        for visibles in self.visibles.values():
-            for visible in visibles:
-                x, y, z = visible.worldPosition()
-                w, h, d = visible.worldSize()
-                if x - w / 2.0 < self.visiblesMin[0]:
-                    self.visiblesMin[0] = x - w / 2.0
-                if x + w / 2.0 > self.visiblesMax[0]:
-                    self.visiblesMax[0] = x + w / 2.0
-                if y - h / 2.0 < self.visiblesMin[1]:
-                    self.visiblesMin[1] = y - h / 2.0
-                if y + h / 2.0 > self.visiblesMax[1]:
-                    self.visiblesMax[1] = y + h / 2.0
-                if z - d / 2.0 < self.visiblesMin[2]:
-                    self.visiblesMin[2] = z - d / 2.0
-                if z + d / 2.0 > self.visiblesMax[2]:
-                    self.visiblesMax[2] = z + d / 2.0
-        self.visiblesCenter = ((self.visiblesMin[0] + self.visiblesMax[0]) / 2.0, (self.visiblesMin[1] + self.visiblesMax[1]) / 2.0, (self.visiblesMin[2] + self.visiblesMax[2]) / 2.0)
-        self.visiblesSize = (self.visiblesMax[0] - self.visiblesMin[0], self.visiblesMax[1] - self.visiblesMin[1], self.visiblesMax[2] - self.visiblesMin[2])
+        if self._recomputeBounds:
+            # This:
+            #     boundingSphere = node.getBound()
+            #     sphereCenter = boundingSphere.center()
+            # computes a screwy center.  Because there's no camera?
+            # Manually compute the bounding box instead.
+            # TODO: figure out how to let the faster C++ code do this
+            self.visiblesMin = [100000, 100000, 100000]
+            self.visiblesMax = [-100000, -100000, -100000]
+            for visibles in self.visibles.values():
+                for visible in visibles:
+                    x, y, z = visible.worldPosition()
+                    w, h, d = visible.worldSize()
+                    if x - w / 2.0 < self.visiblesMin[0]:
+                        self.visiblesMin[0] = x - w / 2.0
+                    if x + w / 2.0 > self.visiblesMax[0]:
+                        self.visiblesMax[0] = x + w / 2.0
+                    if y - h / 2.0 < self.visiblesMin[1]:
+                        self.visiblesMin[1] = y - h / 2.0
+                    if y + h / 2.0 > self.visiblesMax[1]:
+                        self.visiblesMax[1] = y + h / 2.0
+                    if z - d / 2.0 < self.visiblesMin[2]:
+                        self.visiblesMin[2] = z - d / 2.0
+                    if z + d / 2.0 > self.visiblesMax[2]:
+                        self.visiblesMax[2] = z + d / 2.0
+            self.visiblesCenter = ((self.visiblesMin[0] + self.visiblesMax[0]) / 2.0, (self.visiblesMin[1] + self.visiblesMax[1]) / 2.0, (self.visiblesMin[2] + self.visiblesMax[2]) / 2.0)
+            self.visiblesSize = (self.visiblesMax[0] - self.visiblesMin[0], self.visiblesMax[1] - self.visiblesMin[1], self.visiblesMax[2] - self.visiblesMin[2])
+            self._recomputeBounds = False
             
         width, height = self.GetClientSize()
         xZoom = self.visiblesSize[self.orthoXPlane] / (width - 10.0)
@@ -473,6 +489,8 @@ class Display(wx.glcanvas.GLCanvas):
             self.trackball.computeHomePosition()
             self.viewer3D.home()
             self.trackball.setRotation(osg.Quat(0, 0, 0, 1))
+        
+        self.Refresh()
         
         #osgDB.writeNodeFile(self.rootNode, "test.osg");
     
@@ -622,6 +640,8 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def visibleChanged(self, sender, signal):
+        if signal[1] in ('position', 'size', 'rotation', 'path'):
+            self._recomputeBounds = True
         if not self._suppressRefresh:
             self.Refresh()
     
@@ -657,12 +677,14 @@ class Display(wx.glcanvas.GLCanvas):
         params['label'] = None
         params['texture'] = None
         
+        shapes = wx.GetApp().scriptLocals()['shapes']
+        
         if isinstance(object, Region):
-            params['shape'] = 'box'
+            params['shape'] = shapes['Box']()
             params['size'] = (0.1, 0.1, 0.01)
             params['color'] = neuralTissueColor
         elif isinstance(object, Pathway):
-            params['shape'] = 'tube'
+            params['shape'] = shapes['Line']()
             params['weight'] = 5.0
             params['color'] = neuralTissueColor
             try:
@@ -671,12 +693,12 @@ class Display(wx.glcanvas.GLCanvas):
                 pass
             params['textureScale'] = 10.0
         elif isinstance(object, Neuron):
-            params['shape'] = 'ball'
+            params['shape'] = shapes['Ball']()
             params['size'] = (.01, .01, .01)
             params['sizeIsAbsolute'] = True
             params['color'] = neuralTissueColor
         elif isinstance(object, Muscle):
-            params['shape'] = 'capsule'
+            params['shape'] = shapes['Capsule']()
             params['size'] = (.1, .2, .02)
             params['color'] = (0.5, 0, 0)
             try:
@@ -686,19 +708,19 @@ class Display(wx.glcanvas.GLCanvas):
             params['textureScale'] = 10.0
             params['label'] = object.abbreviation or object.name
         elif isinstance(object, Arborization):
-            params['shape'] = 'tube'
+            params['shape'] = shapes['Line']()
             params['color'] = neuralTissueColor
         elif isinstance(object, Synapse):
-            params['shape'] = 'tube'
+            params['shape'] = shapes['Line']()
             params['color'] = neuralTissueColor
         elif isinstance(object, GapJunction):
-            params['shape'] = 'tube'
+            params['shape'] = shapes['Line']()
             params['color'] = (.65, 0.75, 0.4)
         elif isinstance(object, Innervation):
-            params['shape'] = 'tube'
+            params['shape'] = shapes['Line']()
             params['color'] = (0.55, 0.35, 0.25)
         elif isinstance(object, Stimulus):
-            params['shape'] = 'cone'
+            params['shape'] = shapes['Cone']()
             params['size'] = (.02, .02, .02) # so the label is in front (hacky...)
             params['color'] = (0.5, 0.5, 0.5)
             params['label'] = object.abbreviation or object.name
@@ -1012,10 +1034,24 @@ class Display(wx.glcanvas.GLCanvas):
             visible.setTextureScale(scale)
     
     
-    def setVisibleShape(self, object, shapeName):
+    def setVisibleShape(self, object, shape):
         """setVisibleShape(object, shapeName)
         
         shapeName should one of "ball", "box", "capsule", "cone" or "tube"."""
+        
+        if isinstance(shape, str):
+            shapes = wx.GetApp().scriptLocals()['shapes']
+            if shape == 'ball':
+                shape = shapes['Ball']()
+            elif shape == 'box':
+                shape = shapes['Box']()
+            elif shape == 'capsule':
+                shape = shapes['Capsule']()
+            elif shape == 'cone':
+                shape = shapes['Cone']()
+            elif shape == 'tube':
+                shape = shapes['Line']()
+        
         visibles = self.visiblesForObject(object)
         visible = None
         if len(visibles) == 1:
@@ -1023,7 +1059,7 @@ class Display(wx.glcanvas.GLCanvas):
         elif isinstance(object, Stimulus):
             visible = visibles[0 if visibles[0].isPath() else 1]
         if visible is not None:
-            visible.setShape(shapeName)
+            visible.setShape(shape)
     
     
     def setVisibleOpacity(self, object, opacity):

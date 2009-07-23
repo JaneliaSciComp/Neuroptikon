@@ -1,4 +1,7 @@
 import osg, osgGA, osgManipulator, osgUtil, osgViewer
+import wx
+
+from Shape import UnitShape
 
 
 class PickHandler(osgGA.GUIEventHandler): 
@@ -41,7 +44,7 @@ class PickHandler(osgGA.GUIEventHandler):
                     self.pointerInfo.reset()
                     # TODO: is this where visible's size and position should get updated?
                 elif self._lastMouse == (eventAdaptor.getX(), eventAdaptor.getY()):
-                    eventWasHandled = self.pick(eventAdaptor.getXnormalized(), eventAdaptor.getYnormalized(), viewer)
+                    eventWasHandled = self.pick(eventAdaptor.getX(), eventAdaptor.getY(), viewer)
         return eventWasHandled
     
     
@@ -55,8 +58,8 @@ class PickHandler(osgGA.GUIEventHandler):
                     self._display.draggerLOD.removeChild(self._display.compositeDragger)
                 if self._display.activeDragger == self._display.compositeDragger:
                     self._display.draggerLOD.removeChild(self._display.simpleDragger)
-            x, y = eventAdaptor.getXnormalized(), eventAdaptor.getYnormalized()
-            picker = osgUtil.LineSegmentIntersector(osgUtil.Intersector.PROJECTION, x, y)
+            x, y = eventAdaptor.getX(), eventAdaptor.getY()
+            picker = osgUtil.PolytopeIntersector(osgUtil.Intersector.WINDOW, x - 2.0, y - 2.0, x + 2.0, y + 2.0)
             intersectionVisitor = osgUtil.IntersectionVisitor(picker)
             intersectionVisitor.setTraversalMode(osg.NodeVisitor.TRAVERSE_ACTIVE_CHILDREN)
             viewer.getCamera().accept(intersectionVisitor)
@@ -69,7 +72,7 @@ class PickHandler(osgGA.GUIEventHandler):
                         if self.dragger is None:
                             self.dragger = osgManipulator.NodeToDragger(node)
                         if self.dragger is not None:
-                            localPoint = intersection.getLocalIntersectPoint()  # have to do stupid conversion from Vec3d to Vec3
+                            localPoint = intersection.localIntersectionPoint  # have to do stupid conversion from Vec3d to Vec3
                             self.pointerInfo.addIntersection(intersection.nodePath, osg.Vec3(localPoint.x(), localPoint.y(), localPoint.z()))
                 if self.dragger is not None:
                     self.dragger.handle(self.pointerInfo, eventAdaptor, viewer)
@@ -85,35 +88,49 @@ class PickHandler(osgGA.GUIEventHandler):
     # TODO: have this return the picked object (or None) and leave the action up to the caller
     def pick(self, x, y, viewer):
         if viewer.getSceneData():
-            picker = osgUtil.LineSegmentIntersector(osgUtil.Intersector.PROJECTION, x, y)
+            picker = osgUtil.PolytopeIntersector(osgUtil.Intersector.WINDOW, x - 2.0, y - 2.0, x + 2.0, y + 2.0)
             intersectionVisitor = osgUtil.IntersectionVisitor(picker)
             viewer.getCamera().accept(intersectionVisitor)
             if picker.containsIntersections():
-                # Loop through all of the hits to find the "deepest" one in the sense of the region hierarchy.  So a child of a region will be picked instead of its parent.
-                if self._display.useGhosts():
-                    # Make a first pass only picking non-ghosted items.
-                    # TODO: this could be done with node masks...
-                    deepestVisible = None
-                    for intersection in picker.getIntersections():
-                        for node in intersection.nodePath:
-                            geode = osg.NodeToGeode(node)
-                            if geode != None:
-                                visibleID = int(geode.getName())
-                                visible = self._display.visibleWithId(visibleID)
-                                if (visible in self._display.highlightedVisibles or visible in self._display.animatedVisibles) and (deepestVisible is None or deepestVisible in visible.ancestors()):
-                                    deepestVisible = visible
-                    if deepestVisible is not None:
-                        self._display.selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)
-                        return True
-                deepestVisible = None
-                for intersection in picker.getIntersections():
+                intersections = picker.getIntersections()
+                
+                # The PolytopeIntersector mis-calculates the eye distance for geoemetry nested under a transform, which is true for all UnitShapes.  (See the thread at http://www.mail-archive.com/osg-users@lists.openscenegraph.org/msg29195.html for some discussion.)
+                # Calculate the correct distance and re-sort.
+                # This will probably still work correctly after that bug is fixed but will be inefficient.
+                visibleHits = []
+                eye, center, up = (osg.Vec3(), osg.Vec3(), osg.Vec3())
+                viewer.getCamera().getViewMatrixAsLookAt(eye, center, up)
+                eye = (eye.x(), eye.y(), eye.z())
+                for intersection in intersections:
                     for node in intersection.nodePath:
                         geode = osg.NodeToGeode(node)
                         if geode != None:
                             visibleID = int(geode.getName())
                             visible = self._display.visibleWithId(visibleID)
-                            if deepestVisible is None or deepestVisible in visible.ancestors():
-                                deepestVisible = visible
+                            intersectionPoint = intersection.localIntersectionPoint
+                            if isinstance(visible.shape(), UnitShape):
+                                position = visible.worldPosition()
+                                size = visible.worldSize()
+                                intersectionPoint = (position[0] + size[0] * intersectionPoint.x(), position[1] + size[1] * intersectionPoint.y(), position[2] + size[2] * intersectionPoint.z())
+                            eyeDistance = (intersectionPoint[0] - eye[0]) ** 2 + (intersectionPoint[1] - eye[1]) ** 2 + (intersectionPoint[2] - eye[2]) ** 2
+                            visibleHits += [(eyeDistance, visible)]
+                visibleHits.sort()
+                
+                # Loop through all of the hits to find the "deepest" one in the sense of the visible hierarchy.  For example, a neuron in a region will be picked instead of the region even though the region hit is closer.
+                if self._display.useGhosts():
+                    # Make a first pass only picking non-ghosted items.
+                    # TODO: this could be done with node masks...
+                    deepestVisible = None
+                    for distance, visible in visibleHits:
+                        if (visible in self._display.highlightedVisibles or visible in self._display.animatedVisibles) and (deepestVisible is None or deepestVisible in visible.ancestors()):
+                            deepestVisible = visible
+                    if deepestVisible is not None:
+                        self._display.selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)
+                        return True
+                deepestVisible = None
+                for distance, visible in visibleHits:
+                    if deepestVisible is None or deepestVisible in visible.ancestors():
+                        deepestVisible = visible
                 self._display.selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)
             else:
                 self._display.deselectAll()

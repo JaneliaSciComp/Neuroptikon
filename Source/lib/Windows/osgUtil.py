@@ -3350,9 +3350,13 @@ class Intersection(_object):
         """__lt__(self, Intersection rhs) -> bool"""
         return _osgUtil.Intersection___lt__(*args)
 
-    __swig_setmethods__["ratio"] = _osgUtil.Intersection_ratio_set
-    __swig_getmethods__["ratio"] = _osgUtil.Intersection_ratio_get
-    if _newclass:ratio = _swig_property(_osgUtil.Intersection_ratio_get, _osgUtil.Intersection_ratio_set)
+    MaxNumIntesectionPoints = _osgUtil.Intersection_MaxNumIntesectionPoints
+    __swig_setmethods__["distance"] = _osgUtil.Intersection_distance_set
+    __swig_getmethods__["distance"] = _osgUtil.Intersection_distance_get
+    if _newclass:distance = _swig_property(_osgUtil.Intersection_distance_get, _osgUtil.Intersection_distance_set)
+    __swig_setmethods__["maxDistance"] = _osgUtil.Intersection_maxDistance_set
+    __swig_getmethods__["maxDistance"] = _osgUtil.Intersection_maxDistance_get
+    if _newclass:maxDistance = _swig_property(_osgUtil.Intersection_maxDistance_get, _osgUtil.Intersection_maxDistance_set)
     __swig_setmethods__["nodePath"] = _osgUtil.Intersection_nodePath_set
     __swig_getmethods__["nodePath"] = _osgUtil.Intersection_nodePath_get
     if _newclass:nodePath = _swig_property(_osgUtil.Intersection_nodePath_get, _osgUtil.Intersection_nodePath_set)
@@ -3365,114 +3369,100 @@ class Intersection(_object):
     __swig_setmethods__["localIntersectionPoint"] = _osgUtil.Intersection_localIntersectionPoint_set
     __swig_getmethods__["localIntersectionPoint"] = _osgUtil.Intersection_localIntersectionPoint_get
     if _newclass:localIntersectionPoint = _swig_property(_osgUtil.Intersection_localIntersectionPoint_get, _osgUtil.Intersection_localIntersectionPoint_set)
-    __swig_setmethods__["localIntersectionNormal"] = _osgUtil.Intersection_localIntersectionNormal_set
-    __swig_getmethods__["localIntersectionNormal"] = _osgUtil.Intersection_localIntersectionNormal_get
-    if _newclass:localIntersectionNormal = _swig_property(_osgUtil.Intersection_localIntersectionNormal_get, _osgUtil.Intersection_localIntersectionNormal_set)
-    __swig_setmethods__["indexList"] = _osgUtil.Intersection_indexList_set
-    __swig_getmethods__["indexList"] = _osgUtil.Intersection_indexList_get
-    if _newclass:indexList = _swig_property(_osgUtil.Intersection_indexList_get, _osgUtil.Intersection_indexList_set)
-    __swig_setmethods__["ratioList"] = _osgUtil.Intersection_ratioList_set
-    __swig_getmethods__["ratioList"] = _osgUtil.Intersection_ratioList_get
-    if _newclass:ratioList = _swig_property(_osgUtil.Intersection_ratioList_get, _osgUtil.Intersection_ratioList_set)
+    __swig_setmethods__["numIntersectionPoints"] = _osgUtil.Intersection_numIntersectionPoints_set
+    __swig_getmethods__["numIntersectionPoints"] = _osgUtil.Intersection_numIntersectionPoints_get
+    if _newclass:numIntersectionPoints = _swig_property(_osgUtil.Intersection_numIntersectionPoints_get, _osgUtil.Intersection_numIntersectionPoints_set)
+    __swig_setmethods__["intersectionPoints"] = _osgUtil.Intersection_intersectionPoints_set
+    __swig_getmethods__["intersectionPoints"] = _osgUtil.Intersection_intersectionPoints_get
+    if _newclass:intersectionPoints = _swig_property(_osgUtil.Intersection_intersectionPoints_get, _osgUtil.Intersection_intersectionPoints_set)
     __swig_setmethods__["primitiveIndex"] = _osgUtil.Intersection_primitiveIndex_set
     __swig_getmethods__["primitiveIndex"] = _osgUtil.Intersection_primitiveIndex_get
     if _newclass:primitiveIndex = _swig_property(_osgUtil.Intersection_primitiveIndex_get, _osgUtil.Intersection_primitiveIndex_set)
-    def getLocalIntersectPoint(*args):
-        """getLocalIntersectPoint(self) -> Vec3d"""
-        return _osgUtil.Intersection_getLocalIntersectPoint(*args)
-
-    def getWorldIntersectPoint(*args):
-        """getWorldIntersectPoint(self) -> Vec3d"""
-        return _osgUtil.Intersection_getWorldIntersectPoint(*args)
-
-    def getLocalIntersectNormal(*args):
-        """getLocalIntersectNormal(self) -> Vec3"""
-        return _osgUtil.Intersection_getLocalIntersectNormal(*args)
-
-    def getWorldIntersectNormal(*args):
-        """getWorldIntersectNormal(self) -> Vec3"""
-        return _osgUtil.Intersection_getWorldIntersectNormal(*args)
-
     __swig_destroy__ = _osgUtil.delete_Intersection
     __del__ = lambda self : None;
 Intersection_swigregister = _osgUtil.Intersection_swigregister
 Intersection_swigregister(Intersection)
 
-OSGUTIL_LINESEGMENTINTERSECTOR = _osgUtil.OSGUTIL_LINESEGMENTINTERSECTOR
-class LineSegmentIntersector(Intersector):
-    """Proxy of C++ LineSegmentIntersector class"""
+OSGUTIL_POLYTOPEINTERSECTOR = _osgUtil.OSGUTIL_POLYTOPEINTERSECTOR
+class PolytopeIntersector(Intersector):
+    """Proxy of C++ PolytopeIntersector class"""
     __swig_setmethods__ = {}
     for _s in [Intersector]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, LineSegmentIntersector, name, value)
+    __setattr__ = lambda self, name, value: _swig_setattr(self, PolytopeIntersector, name, value)
     __swig_getmethods__ = {}
     for _s in [Intersector]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
-    __getattr__ = lambda self, name: _swig_getattr(self, LineSegmentIntersector, name)
+    __getattr__ = lambda self, name: _swig_getattr(self, PolytopeIntersector, name)
     __repr__ = _swig_repr
+    DimZero = _osgUtil.PolytopeIntersector_DimZero
+    DimOne = _osgUtil.PolytopeIntersector_DimOne
+    DimTwo = _osgUtil.PolytopeIntersector_DimTwo
+    AllDims = _osgUtil.PolytopeIntersector_AllDims
     def __init__(self, *args): 
         """
-        __init__(self, Vec3d start, Vec3d end) -> LineSegmentIntersector
-        __init__(self, CoordinateFrame cf, Vec3d start, Vec3d end) -> LineSegmentIntersector
-        __init__(self, CoordinateFrame cf, double x, double y) -> LineSegmentIntersector
+        __init__(self, Polytope polytope) -> PolytopeIntersector
+        __init__(self, CoordinateFrame cf, Polytope polytope) -> PolytopeIntersector
+        __init__(self, CoordinateFrame cf, double xMin, double yMin, double xMax, 
+            double yMax) -> PolytopeIntersector
         """
-        this = _osgUtil.new_LineSegmentIntersector(*args)
+        this = _osgUtil.new_PolytopeIntersector(*args)
         try: self.this.append(this)
         except: self.this = this
     def insertIntersection(*args):
         """insertIntersection(self, Intersection intersection)"""
-        return _osgUtil.LineSegmentIntersector_insertIntersection(*args)
+        return _osgUtil.PolytopeIntersector_insertIntersection(*args)
 
     def getIntersections(*args):
         """getIntersections(self) -> Intersections"""
-        return _osgUtil.LineSegmentIntersector_getIntersections(*args)
+        return _osgUtil.PolytopeIntersector_getIntersections(*args)
 
     def getFirstIntersection(*args):
         """getFirstIntersection(self) -> Intersection"""
-        return _osgUtil.LineSegmentIntersector_getFirstIntersection(*args)
+        return _osgUtil.PolytopeIntersector_getFirstIntersection(*args)
 
-    def setStart(*args):
-        """setStart(self, Vec3d start)"""
-        return _osgUtil.LineSegmentIntersector_setStart(*args)
+    def getDimensionMask(*args):
+        """getDimensionMask(self) -> unsigned int"""
+        return _osgUtil.PolytopeIntersector_getDimensionMask(*args)
 
-    def getStart(*args):
-        """getStart(self) -> Vec3d"""
-        return _osgUtil.LineSegmentIntersector_getStart(*args)
+    def setDimensionMask(*args):
+        """setDimensionMask(self, unsigned int dimensionMask)"""
+        return _osgUtil.PolytopeIntersector_setDimensionMask(*args)
 
-    def setEnd(*args):
-        """setEnd(self, Vec3d end)"""
-        return _osgUtil.LineSegmentIntersector_setEnd(*args)
+    def getReferencePlane(*args):
+        """getReferencePlane(self) -> Plane"""
+        return _osgUtil.PolytopeIntersector_getReferencePlane(*args)
 
-    def getEnd(*args):
-        """getEnd(self) -> Vec3d"""
-        return _osgUtil.LineSegmentIntersector_getEnd(*args)
+    def setReferencePlane(*args):
+        """setReferencePlane(self, Plane plane)"""
+        return _osgUtil.PolytopeIntersector_setReferencePlane(*args)
 
     def clone(*args):
         """clone(self, IntersectionVisitor iv) -> Intersector"""
-        return _osgUtil.LineSegmentIntersector_clone(*args)
+        return _osgUtil.PolytopeIntersector_clone(*args)
 
     def enter(*args):
         """enter(self, Node node) -> bool"""
-        return _osgUtil.LineSegmentIntersector_enter(*args)
+        return _osgUtil.PolytopeIntersector_enter(*args)
 
     def leave(*args):
         """leave(self)"""
-        return _osgUtil.LineSegmentIntersector_leave(*args)
+        return _osgUtil.PolytopeIntersector_leave(*args)
 
     def intersect(*args):
         """intersect(self, IntersectionVisitor iv, Drawable drawable)"""
-        return _osgUtil.LineSegmentIntersector_intersect(*args)
+        return _osgUtil.PolytopeIntersector_intersect(*args)
 
     def reset(*args):
         """reset(self)"""
-        return _osgUtil.LineSegmentIntersector_reset(*args)
+        return _osgUtil.PolytopeIntersector_reset(*args)
 
     def containsIntersections(*args):
         """containsIntersections(self) -> bool"""
-        return _osgUtil.LineSegmentIntersector_containsIntersections(*args)
+        return _osgUtil.PolytopeIntersector_containsIntersections(*args)
 
-    __swig_destroy__ = _osgUtil.delete_LineSegmentIntersector
+    __swig_destroy__ = _osgUtil.delete_PolytopeIntersector
     __del__ = lambda self : None;
-LineSegmentIntersector_swigregister = _osgUtil.LineSegmentIntersector_swigregister
-LineSegmentIntersector_swigregister(LineSegmentIntersector)
+PolytopeIntersector_swigregister = _osgUtil.PolytopeIntersector_swigregister
+PolytopeIntersector_swigregister(PolytopeIntersector)
 
 
 
