@@ -1,10 +1,9 @@
-import os, os.path
-
 display.autoVisualize = False
 display.setShowNeuronNames(True)
 display.setUseGhosts(True)
 
-execfile(os.path.dirname(__file__) + os.sep + 'C. elegans.py')
+if not any(network.neurons()):
+    execfile('Neurons.py')
 
 neurons = []
 
