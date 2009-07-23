@@ -17,10 +17,13 @@ class Inspector( object ):
     @classmethod
     def bitmap(cls, size = 32):
         # Check for an Icon.png in the same directory as this class's module's source file, otherwise return an empty bitmap.
-        iconDir = os.path.dirname(sys.modules[cls.__module__].__file__)
-        try:
-            image = wx.Image(iconDir + os.sep + 'Icon.png')
-        except:
+        iconPath = os.path.join(os.path.dirname(sys.modules[cls.__module__].__file__), 'Icon.png')
+        if os.path.exists(iconPath):
+            try:
+                image = wx.Image(iconPath)
+            except:
+                image = None
+        else:
             image = None
         if image is not None and image.IsOk():
             image.Rescale(size, size, wx.IMAGE_QUALITY_HIGH)
