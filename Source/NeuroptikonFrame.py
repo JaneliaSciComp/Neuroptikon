@@ -179,7 +179,8 @@ class NeuroptikonFrame( wx.Frame ):
         helpMenu = wx.Menu()
         self.Bind(wx.EVT_MENU, wx.GetApp().onAboutNeuroptikon, helpMenu.Append(wx.ID_ABOUT, gettext('About Neuroptikon'), gettext('Information about this program')))
         menuBar.Append(helpMenu, gettext('&Help'))
-                return menuBar
+        
+        return menuBar
     
     
     def displayChangedMenuState(self, sender = None, signal = None):
@@ -211,14 +212,16 @@ class NeuroptikonFrame( wx.Frame ):
         # TODO: It would be nice to provide progress for long running scripts.  Would need some kind of callback for scripts to indicate how far along they were.
         dlg = wx.FileDialog(None, 'Choose a script to run', './Scripts', '', '*.py', wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
+            prevDir = os.getcwd()
+            os.chdir(os.path.dirname(dlg.GetPath()))
             locals = self.scriptLocals()
-            locals['__file__'] = dlg.GetPath()
             try:
                 execfile(dlg.GetPath(), locals)
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                 dialog = wx.MessageDialog(self, exceptionValue.message, gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
+            os.chdir(prevDir)
         dlg.Destroy()
         self.Refresh(False)
         self.Show(True)
