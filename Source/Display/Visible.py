@@ -121,7 +121,7 @@ class Visible(object):
                                   vec3  dl = gl_LightSource[0].diffuse .rgb * gl_FrontMaterial.diffuse.rgb;
                                   vec3  al = gl_LightSource[0].ambient .rgb * gl_FrontMaterial.ambient.rgb + gl_FrontMaterial.emission.rgb;
                                   vec3  sl = gl_LightSource[0].specular.rgb * gl_FrontMaterial.specular.rgb;
-                                  vec3  tx = (hasTexture ? texture2D ( textureUnit, gl_TexCoord[0].st * textureScale ).rgb : vec3(1.0, 1.0, 1.0));
+                                  vec3  tx = (hasTexture ? texture2D ( textureUnit, gl_TexCoord[0].st ).rgb : vec3(1.0, 1.0, 1.0));
                                   float sh = gl_FrontMaterial.shininess;
                                   vec3 d, s;
                                   if (normal[0] == 0.0 && normal[1] == 0.0 && normal[2] == 0.0)
@@ -136,7 +136,7 @@ class Visible(object):
                                   }
                                   vec4 baseColor = vec4 ( min ( d + s, 1.0) , 1.0 );
                                   
-                                  float texCoord = gl_TexCoord[0].t;
+                                  float texCoord = gl_TexCoord[0].t * textureScale;
                                   
                                   float glowTo = 0.0;
                                   if (flowTo)
@@ -237,6 +237,7 @@ class Visible(object):
         self._textGeode = osg.Geode()
         self._textGeode.setName(str(self.displayId))
         self._textGeode.getOrCreateStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+        self._textGeode.setDataVariance(osg.Object.DYNAMIC)
         self._textDrawable = None
         self.sgNode.addChild(self._textGeode)
         self._staticTexture = None
@@ -342,7 +343,7 @@ class Visible(object):
                     shapeClassName = 'Cone'
                 elif shapeName in ['Line', 'tube']:
                     shapeClassName = 'Line'
-                else:
+                elif shapeName != None:
                     shapeClassName = 'Box' # the default
             else:
                 # Get any attributes
@@ -350,9 +351,12 @@ class Visible(object):
                     attribute = Attribute.fromXMLElement(object, element)
                     if attribute is not None:
                         shapeAttrs[attribute.name] = attribute.value
-            shapes = wx.GetApp().scriptLocals()['shapes']
-            shape = shapes[shapeClassName](**shapeAttrs)
-            visible.setShape(shape)
+            if shapeClassName == None:
+                visible.setShape(None)
+            else:
+                shapes = wx.GetApp().scriptLocals()['shapes']
+                shape = shapes[shapeClassName](**shapeAttrs)
+                visible.setShape(shape)
             
             colorElement = appearanceElement.find('Color')
             if colorElement is None:
@@ -940,7 +944,7 @@ class Visible(object):
     
     
     def updateTransform(self):
-        if isinstance(self._shape, UnitShape):
+        if isinstance(self._shape, (UnitShape, type(None))):
             # update the transform unless we're under an osgGA.Selection node, i.e. being dragged
             if len(self.sgNode.getParents()) == 0 or self.display.dragSelection is None or self.sgNode.getParent(0).__repr__() != self.display.dragSelection.asGroup().__repr__():
                 if self.parent is None or not self.sizeIsAbsolute():
@@ -1479,7 +1483,7 @@ class Visible(object):
         if self._animateFlow and (self.flowTo or self.flowFrom):
             self._stateSet.addUniform(osg.Uniform('flowTo', True if self.flowTo else False))
             self._stateSet.addUniform(osg.Uniform('flowFrom', True if self.flowFrom else False))
-            self._stateSet.addUniform(osg.Uniform('textureScale', self._staticTextureScale))
+            self._stateSet.addUniform(osg.Uniform('textureScale', self._size[1] if isinstance(self._shape, UnitShape) else 1.0))
             self._stateSet.addUniform(osg.Uniform('hasTexture', True if self._staticTexture is not None else False))
             self._stateSet.setAttributeAndModes(Visible.flowProgram, osg.StateAttribute.ON)
         elif self._stateSet.getAttribute(osg.StateAttribute.PROGRAM) is not None:
@@ -1513,17 +1517,21 @@ class Visible(object):
         path.insert(0, self.pathStart.worldPosition())
         path.append(self.pathEnd.worldPosition())
         
-        minBound = (1e1000, 1e1000, 1e1000)
-        maxBound = (-1e1000, -1e1000, -1e1000)
-        for point in path:
-            minBound = (min(minBound[0], point[0]), min(minBound[1], point[1]), min(minBound[2], point[2]))
-            maxBound = (max(maxBound[0], point[0]), max(maxBound[1], point[1]), max(maxBound[2], point[2]))
-            
-        if isinstance(self._shape, PathShape):
-            self._shape.setPoints(path)
+        if isinstance(self._shape, UnitShape):
+            # Create a straight connection from start to end            # TODO: Will this object ever have a parent?  If so then we'll have to translate world to local coordinates here.            position, size, rotation = self.positionSizeRotation(path[0], path[-1])            self.setPosition(position)            self.setSize(size)            self.setRotation(rotation)
+        else:            minBound = (1e1000, 1e1000, 1e1000)
+            maxBound = (-1e1000, -1e1000, -1e1000)
+            for point in path:
+                minBound = (min(minBound[0], point[0]), min(minBound[1], point[1]), min(minBound[2], point[2]))
+                maxBound = (max(maxBound[0], point[0]), max(maxBound[1], point[1]), max(maxBound[2], point[2]))
+                
             self._position = ((maxBound[0] + minBound[0]) / 2.0, (maxBound[1] + minBound[1]) / 2.0, (maxBound[2] + minBound[2]) / 2.0)
             self._size = (maxBound[0] - minBound[0], maxBound[1] - minBound[1], maxBound[2] - minBound[2])
             self._rotation = (0, 1, 0, 0)
+            
+            if isinstance(self._shape, PathShape):
+                self._shape.setPoints(path)
+            
             self.updateTransform()
         
         self.updateFlowAnimation()

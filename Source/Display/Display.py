@@ -789,7 +789,9 @@ class Display(wx.glcanvas.GLCanvas):
         if 'color' in params:
             visible.setColor(params['color'])
         if 'opacity' in params:
-            visible.setWeight(params['opacity'])
+            visible.setOpacity(params['opacity'])
+            if isinstance(object, Stimulus):
+                nodeVisible.setOpacity(params['opacity'])
         if 'shape' in params:
             visible.setShape(params['shape'])
         if 'sizeIsAbsolute' in params:
@@ -831,6 +833,8 @@ class Display(wx.glcanvas.GLCanvas):
                 edgeVisible.setPath([], nodeVisible, targetVisibles[0])
                 if self._showFlow:
                     edgeVisible.animateFlow()
+            nodeVisible.setShape(None)
+            edgeVisible.setPositionIsFixed(True)
             self.addVisible(edgeVisible)
         else:
             if pathStart is not None and pathEnd is not None:
