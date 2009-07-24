@@ -162,7 +162,7 @@ class OrthogonalPathLayout(Layout):
         return display.viewDimensions == 2
     
     
-    def __init__(self, nodeSpacing = 0.003, objectPadding = 0.0, *args, **keywordArgs):
+    def __init__(self, nodeSpacing = 0.005, objectPadding = 0.0, *args, **keywordArgs):
         Layout.__init__(self, *args, **keywordArgs)
         
         # TODO: determine these values automatically based on visible spacing and connection counts
@@ -175,8 +175,8 @@ class OrthogonalPathLayout(Layout):
         centerPositions = {}
         minPositions = {}
         maxPositions = {}
-        minBound = N.ones(display.viewDimensions) * 99999.0 #float('+inf')
-        maxBound = N.ones(display.viewDimensions) * -99999.0 #float('-inf')
+        minBound = N.ones(display.viewDimensions) * 1e1000
+        maxBound = N.ones(display.viewDimensions) * -1e1000
         edges = []
         ports = {}
         for visibles in display.visibles.itervalues():
@@ -209,8 +209,8 @@ class OrthogonalPathLayout(Layout):
                     ports[visible] = []
         
         # Determine the bounds of all nodes and the mapping scale.
-        minBound -= self.nodeSpacing * 20 + (minBound % self.nodeSpacing)
-        maxBound += self.nodeSpacing * 20 + self.nodeSpacing - (maxBound % self.nodeSpacing)
+        minBound -= self.nodeSpacing * len(edges) / 2 + (minBound % self.nodeSpacing)
+        maxBound += self.nodeSpacing * len(edges) / 2 + self.nodeSpacing - (maxBound % self.nodeSpacing)
         mapSize = (maxBound - minBound) / self.nodeSpacing
         
         # Build the node map
@@ -245,6 +245,8 @@ class OrthogonalPathLayout(Layout):
             edgeCount += 1
             print 'Routing path from ' + (edge.pathStart.client.abbreviation or '???') + ' to ' + (edge.pathEnd.client.abbreviation or '???') + ' (' + str(edgeCount) + ' of ' + str(len(edges)) + ')'
             
+            # TODO: weight the search based on any previous path
+            
             # Make a copy of the map to hold our tentative routing.  Once the actual route is determined this map will be discarded and the main map will be updated.
             edgeMap = map.copy()
             
@@ -272,7 +274,7 @@ class OrthogonalPathLayout(Layout):
                 x  = pyheapq.heappop(openHeap)
                 
                 if x.node in goalPorts:
-                    # Build the path in world space and update the global map.
+                    # The goal has been reached.  Build the path in world space and update the global map.
                     path = []
                     prevNode = None
                     for node, hoppedNeighbors in reconstruct_path(came_from, x.node):  #[:-1]:
@@ -280,7 +282,8 @@ class OrthogonalPathLayout(Layout):
                         for hoppedNeighbor in hoppedNeighbors:
                             map.addNodeOccupier(hoppedNeighbor, edge)
                         prevNode = node
-                        path.append(tuple(N.array(node) * self.nodeSpacing + minBound))
+                        pathPoint = tuple(N.array(node) * self.nodeSpacing + minBound)
+                        path += [(pathPoint[0], pathPoint[1], 0.0 if len(pathPoint) == 2 else pathPoint[2])]
                     # Combine consectutive path segments with the same slope.
                     originalLen = len(path)
                     for index in range(len(path) - 2, 0, -1):
@@ -288,8 +291,8 @@ class OrthogonalPathLayout(Layout):
                         delta1 = N.array(path[index]) - N.array(path[index - 1])
                         sameSlope = True
                         for dim in range(1, display.viewDimensions):
-                            slope0 = float('inf') if delta0[0] == 0.0 else delta0[dim] / delta0[0]
-                            slope1 = float('inf') if delta1[0] == 0.0 else delta1[dim] / delta1[0]
+                            slope0 = 1e1000 if delta0[0] == 0.0 else delta0[dim] / delta0[0]
+                            slope1 = 1e1000 if delta1[0] == 0.0 else delta1[dim] / delta1[0]
                             if abs(slope0 - slope1) > 0.00001:
                                 sameSlope = False
                                 break
@@ -320,8 +323,8 @@ class OrthogonalPathLayout(Layout):
                         delta0 = N.array(x.node) - N.array(prevNode)
                         delta1 = N.array(node_y) - N.array(x.node)
                         for dim in range(1, display.viewDimensions):
-                            slope0 = float('inf') if delta0[0] == 0.0 else delta0[dim] / delta0[0]
-                            slope1 = float('inf') if delta1[0] == 0.0 else delta1[dim] / delta1[0]
+                            slope0 = 1e1000 if delta0[0] == 0.0 else delta0[dim] / delta0[0]
+                            slope1 = 1e1000 if delta1[0] == 0.0 else delta1[dim] / delta1[0]
                             if slope0 != slope1:
                                 g_score += 20.0
                                 break
@@ -352,7 +355,7 @@ class OrthogonalPathLayout(Layout):
                 #edgeMap.show()
             
             if 'edgeMap' in dir():
-                print 'Could not find route from ' + (edge.pathStart.client.abbreviation or '???') + ' to ' + (edge.pathEnd.client.abbreviation or '???')
+                print '\tCould not find route from ' + (edge.pathStart.client.abbreviation or '???') + ' to ' + (edge.pathEnd.client.abbreviation or '???')
         
         #map.show()
 
