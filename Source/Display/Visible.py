@@ -235,6 +235,7 @@ class Visible(object):
         self.sgNode.addChild(self._shapeGeode)
         self._textGeode = osg.Geode()
         self._textGeode.setName(str(self.displayId))
+        self._textGeode.getOrCreateStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
         self._textDrawable = None
         self.sgNode.addChild(self._textGeode)
         self._staticTexture = None
@@ -808,7 +809,7 @@ class Visible(object):
                 self._textGeode.addDrawable(self._textDrawable)
             
             self._textDrawable.setColor(osg.Vec4(0, 0, 0, self._opacity * opacity))
-            self._textDrawable.setBackdropColor(osg.Vec4(1.0, 1.0, 1.0, self._opacity * opacity * 0.5))
+            self._textDrawable.setBackdropColor(osg.Vec4(1.0, 1.0, 1.0, self._opacity * opacity * 0.25))
             
             if self.display.viewDimensions == 3 or self.display.labelsFloatOnTop():
                 self._textDrawable.setPosition(osg.Vec3(0, 0, 0))
@@ -860,7 +861,6 @@ class Visible(object):
     
     
     def updateOpacity(self):
-        
         if self.display.useGhosts() and len(self.display.selection()) > 0 and self not in self.display.highlightedVisibles and self not in self.display.animatedVisibles:
             opacity = 0.1
             for ancestor in self.ancestors():
