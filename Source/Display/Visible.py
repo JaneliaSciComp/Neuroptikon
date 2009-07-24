@@ -9,6 +9,7 @@ from Network.Stimulus import Stimulus
 
 from Library.Texture import Texture
 
+from Network.Attribute import Attribute
 
 import wx
 from wx.py import dispatcher
@@ -327,21 +328,32 @@ class Visible(object):
                 labelElement = appearanceElement.find('label')
             if labelElement is not None:
                 visible.setLabel(appearanceElement.findtext('Label') or appearanceElement.findtext('label') or '')
+            
+            shapeElement = appearanceElement.find('Shape')
+            shapeClassName = None if shapeElement == None else shapeElement.get('class')
+            shapeAttrs = {}
+            if shapeClassName == None:
+                shapeName = appearanceElement.findtext('Shape') or appearanceElement.findtext('shape')
+                if shapeName == 'ball':
+                    shapeClassName = 'Ball'
+                elif shapeName == 'capsule':
+                    shapeClassName = 'Capsule'
+                elif shapeName == 'cone':
+                    shapeClassName = 'Cone'
+                elif shapeName in ['Line', 'tube']:
+                    shapeClassName = 'Line'
+                else:
+                    shapeClassName = 'Box' # the default
+            else:
+                # Get any attributes
+                for element in shapeElement.findall('Attribute'):
+                    attribute = Attribute.fromXMLElement(object, element)
+                    if attribute is not None:
+                        shapeAttrs[attribute.name] = attribute.value
             shapes = wx.GetApp().scriptLocals()['shapes']
-            shape = appearanceElement.findtext('Shape') or appearanceElement.findtext('shape')
-            if shape == 'ball':
-                shape = shapes['Ball']()
-            elif shape == 'box':
-                shape = shapes['Box']()
-            elif shape == 'capsule':
-                shape = shapes['Capsule']()
-            elif shape == 'cone':
-                shape = shapes['Cone']()
-            elif shape == 'tube':
-                shape = shapes['Line']()
-            elif shape != None:
-                shape = shapes[shape]()
+            shape = shapes[shapeClassName](**shapeAttrs)
             visible.setShape(shape)
+            
             colorElement = appearanceElement.find('Color')
             if colorElement is None:
                 colorElement = appearanceElement.find('color')
@@ -496,7 +508,21 @@ class Visible(object):
             ElementTree.SubElement(appearanceElement, 'Label').text = self._label
         if self._shape is not None:
             # TODO: save the properties of the shape somehow, e.g. an isosurface shape
-            ElementTree.SubElement(appearanceElement, 'Shape').text = self._shape.__class__.__name__
+            shapeElement = ElementTree.SubElement(appearanceElement, 'Shape')
+            shapeElement.set('class', self._shape.__class__.__name__)
+            for attributeName, attributeValue in self._shape.persistentAttributes().iteritems():
+                attribute = None
+                if isinstance(attributeValue, str):
+                    attribute = Attribute(self._shape, attributeName, Attribute.STRING_TYPE, attributeValue)
+                elif isinstance(attributeValue, int):
+                    attribute = Attribute(self._shape, attributeName, Attribute.INTEGER_TYPE, attributeValue)
+                elif isinstance(attributeValue, float):
+                    attribute = Attribute(self._shape, attributeName, Attribute.DECIMAL_TYPE, attributeValue)
+                elif isinstance(attributeValue, bool):
+                    attribute = Attribute(self._shape, attributeName, Attribute.BOOLEAN_TYPE, attributeValue)
+                if attribute != None:
+                    attribute.toXMLElement(shapeElement)
+                
         colorElement = ElementTree.SubElement(appearanceElement, 'Color')
         colorElement.set('r', str(self._color[0]))
         colorElement.set('g', str(self._color[1]))
@@ -689,7 +715,10 @@ class Visible(object):
             if 'label' in params:
                 scriptFile.write('%s.setLabel(%s, \'%s\')\n' % (displayRef, scriptRef, params['label'].replace('\\', '\\\\').replace('\'', '\\\'')))
             if 'shape' in params:
-                scriptFile.write('%s.setVisibleShape(%s, \'%s\')\n' % (displayRef, scriptRef, self.shape()))
+                scriptFile.write('%s.setVisibleShape(%s, shapes[\'%s\'](' % (displayRef, scriptRef, self.shape().__class__.__name__))
+                for attributeName, attributeValue in self._shape.persistentAttributes().iteritems():
+                    scriptFile.write(attributeName + ' = ' + repr(attributeValue) + ', ')
+                scriptFile.write('))\n')
             if 'color' in params:
                 scriptFile.write('%s.setVisibleColor(%s, %s)\n' % (displayRef, scriptRef, str(self.color())))
             if 'opacity' in params:
@@ -754,6 +783,7 @@ class Visible(object):
         
     
     def setShape(self, shape):
+        # The supplied shape must be a Shape instance or None.
         if not isinstance(shape, (Shape, type(None))):
             raise ValueError, 'fix me!'
         
@@ -775,6 +805,7 @@ class Visible(object):
             # Recreate the glow shape if needed
             self.setGlowColor(glowColor)
             dispatcher.send(('set', 'shape'), self)
+            self.updateTransform()
     
     
     def displayChangedShowName(self, signal, sender):

@@ -65,6 +65,6 @@ class Capsule(UnitShape):
         self.geometry().addPrimitiveSet(faceSet)
     
     
-    def persistentProperties(self):
+    def persistentAttributes(self):
         return {'capiness': self.capiness}
     

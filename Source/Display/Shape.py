@@ -79,7 +79,7 @@ class Shape(object):
         self._geometry.dirtyDisplayList()
     
     
-    def persistentProperties(self):
+    def persistentAttributes(self):
         return {}
     
     

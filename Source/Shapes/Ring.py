@@ -57,6 +57,6 @@ class Ring(UnitShape):
             self.geometry().addPrimitiveSet(faceSet)
     
     
-    def persistentProperties(self):
+    def persistentAttributes(self):
         return {'holeSize': self.holeSize}
     
