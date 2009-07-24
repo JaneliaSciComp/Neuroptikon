@@ -107,12 +107,17 @@ class PickHandler(osgGA.GUIEventHandler):
                         if geode != None:
                             visibleID = int(geode.getName())
                             visible = self._display.visibleWithId(visibleID)
-                            intersectionPoint = intersection.localIntersectionPoint
-                            if isinstance(visible.shape(), UnitShape):
-                                position = visible.worldPosition()
-                                size = visible.worldSize()
-                                intersectionPoint = (position[0] + size[0] * intersectionPoint.x(), position[1] + size[1] * intersectionPoint.y(), position[2] + size[2] * intersectionPoint.z())
-                            eyeDistance = (intersectionPoint[0] - eye[0]) ** 2 + (intersectionPoint[1] - eye[1]) ** 2 + (intersectionPoint[2] - eye[2]) ** 2
+                            if geode.getOrCreateStateSet().getAttribute(osg.StateAttribute.DEPTH):
+                                # If a geode has this attribute set then (currently) it is being rendered in front of all other nodes.  Simulate this here by placing the geode right at the eye.
+                                # If depths other than the default or osg.Depth.ALWAYS are used in the future then this check will need to be modified.
+                                eyeDistance = 0.0
+                            else:
+                                intersectionPoint = intersection.localIntersectionPoint
+                                if isinstance(visible.shape(), UnitShape):
+                                    position = visible.worldPosition()
+                                    size = visible.worldSize()
+                                    intersectionPoint = (position[0] + size[0] * intersectionPoint.x(), position[1] + size[1] * intersectionPoint.y(), position[2] + size[2] * intersectionPoint.z())
+                                eyeDistance = (intersectionPoint[0] - eye[0]) ** 2 + (intersectionPoint[1] - eye[1]) ** 2 + (intersectionPoint[2] - eye[2]) ** 2
                             visibleHits += [(eyeDistance, visible)]
                 visibleHits.sort()
                 
