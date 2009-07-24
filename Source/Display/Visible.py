@@ -1340,6 +1340,7 @@ class Visible(object):
                 textureMatrix.setMatrix(osg.Matrixd.scale(scale, scale, scale))
                 self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
             self._staticTextureScale = scale
+            self.updateFlowAnimation()
             dispatcher.send(('set', 'textureScale'), self)
     
     
@@ -1483,7 +1484,7 @@ class Visible(object):
         if self._animateFlow and (self.flowTo or self.flowFrom):
             self._stateSet.addUniform(osg.Uniform('flowTo', True if self.flowTo else False))
             self._stateSet.addUniform(osg.Uniform('flowFrom', True if self.flowFrom else False))
-            self._stateSet.addUniform(osg.Uniform('textureScale', self._size[1] if isinstance(self._shape, UnitShape) else 1.0))
+            self._stateSet.addUniform(osg.Uniform('textureScale', (self._size[1] if isinstance(self._shape, UnitShape) else 1.0) / self._staticTextureScale))
             self._stateSet.addUniform(osg.Uniform('hasTexture', True if self._staticTexture is not None else False))
             self._stateSet.setAttributeAndModes(Visible.flowProgram, osg.StateAttribute.ON)
         elif self._stateSet.getAttribute(osg.StateAttribute.PROGRAM) is not None:
