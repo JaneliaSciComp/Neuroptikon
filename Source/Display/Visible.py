@@ -60,23 +60,6 @@ import xml.etree.ElementTree as ElementTree
 class Visible(object):
     """Instances of this class map a network object (neurion, region, etc.) to a specific display.  They capture all of the attributes needed to render the object(s)."""
     
-#    # Objects inside a unit cube
-#    geometries = {"ball": osg.Sphere(osg.Vec3(0, 0, 0), 0.5), 
-#                  "box": osg.Box(osg.Vec3(0, 0, 0), 1), 
-#                  "capsule": osg.Capsule(osg.Vec3(0, 0, 0), 0.25, 0.5), 
-#                  "cone": osg.Cone(osg.Vec3(0, -0.25, 0), 0.5, 1), # have to offset center <http://www.mail-archive.com/osg-users@lists.openscenegraph.org/msg07081.html>
-#                  "tube": osg.Cylinder(osg.Vec3(0, 0, 0), 0.5, 1)}
-#    geometries["capsule"].setRotation( osg.Quat(-pi / 2.0, osg.Vec3d(1, 0, 0)))
-#    geometries["cone"].setRotation( osg.Quat(-pi / 2.0, osg.Vec3d(1, 0, 0)))
-#    geometries["tube"].setRotation( osg.Quat(-pi / 2.0, osg.Vec3d(1, 0, 0)))
-#    
-#    geometryInterior = {"ball": osg.Matrixd.scale(1.0 / sqrt(3), 1.0 / sqrt(3), 1.0 / sqrt(3)), 
-#                        "box": osg.Matrixd.identity(), 
-#                        "capsule": osg.Matrixd.scale(sqrt(1.0 / 8.0) * 0.9, 1.0 - 0.5 / sqrt(3), sqrt(1.0 / 8.0) * 0.9), 
-#                        "cone": osg.Matrixd.scale(sqrt(1.0 / 8.0), 0.5, sqrt(1.0 / 8.0)) * osg.Matrixd.translate(0.0, -0.25, 0.0), 
-#                        "tube": osg.Matrixd.scale(1.0 / sqrt(2), 1.0, 1.0 / sqrt(2)), 
-#                        None: osg.Matrixd.identity()}
-    
     try:
         if osgText.readFontFile("Arial Bold.ttf"):
             labelFont = 'Arial Bold.ttf'
@@ -802,9 +785,11 @@ class Visible(object):
             if self._shape:
                 self._shapeDrawable = self._shape.geometry()
                 self._shapeGeode.addDrawable(self._shapeDrawable)
-# TODO:
-#                if isinstance(self._shape, UnitShape):
-#                    self.childGroup.setMatrix(self._shape.interiorBounds???)
+                if self._shape.interiorBounds() != None:
+                    minBound, maxBound = self._shape.interiorBounds()
+                    minBound = osg.Vec3(*minBound)
+                    maxBound = osg.Vec3(*maxBound)
+                    self.childGroup.setMatrix(osg.Matrixd.scale(maxBound - minBound) * osg.Matrixd.translate((minBound + maxBound) / 2.0))
             for child in self.children:
                 dispatcher.send(('set', 'position'), child)
             # Recreate the glow shape if needed
@@ -896,11 +881,13 @@ class Visible(object):
     
     
     def updateOpacity(self):
-        if self.display.useGhosts() and len(self.display.selection()) > 0 and self not in self.display.highlightedVisibles and self not in self.display.animatedVisibles:
+        if self.display.useGhosts() and any(self.display.selection()) and self not in self.display.highlightedVisibles and self not in self.display.animatedVisibles:
             opacity = 0.1
             for ancestor in self.ancestors():
                 if ancestor in self.display.selectedVisibles:
                     opacity = 0.5
+        elif any(self.children):
+            opacity = 0.5
         else:
             opacity = self._opacity
         
@@ -1116,7 +1103,7 @@ class Visible(object):
                     dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'position'), ancestor)
                     dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'size'), ancestor)
                     dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'rotation'), ancestor)
-            self._stateSet.setAttributeAndModes(osg.PolygonMode(osg.PolygonMode.FRONT_AND_BACK, osg.PolygonMode.LINE), osg.StateAttribute.ON)
+            self.updateOpacity()
             if self.arrangedAxis is None:
                 childVisible.updateTransform()
             else:
@@ -1135,8 +1122,8 @@ class Visible(object):
             self.childGroup.removeChild(childVisible.sgNode)
             childVisible.parent = None
             self.children.remove(childVisible)
-            if len(self.children) == 0:
-                self._stateSet.removeAttribute(osg.StateAttribute.POLYGONMODE)
+            if not any(self.children):
+                self.updateOpacity()
             if self.arrangedAxis is None:
                 childVisible.updateTransform()
             else:
