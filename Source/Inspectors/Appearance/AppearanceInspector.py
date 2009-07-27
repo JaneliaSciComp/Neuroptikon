@@ -161,7 +161,7 @@ class AppearanceInspector(Inspector):
         # Remove the "multiple values" choice now that all of the visibles have the same value.
         if self._multipleShapesId != wx.NOT_FOUND:
             self._shapeChoice.Delete(self._multipleShapesId)
-            self._multipleShapesId = None
+            self._multipleShapesId = wx.NOT_FOUND
         
     
     def onSetTexture(self, event):
@@ -172,7 +172,7 @@ class AppearanceInspector(Inspector):
         # Remove the "multiple values" choice now that all of the visibles have the same value.
         if self._multipleTexturesId != wx.NOT_FOUND:
             self._textureChoice.Delete(self._multipleTexturesId)
-            self._multipleTexturesId = None
+            self._multipleTexturesId = wx.NOT_FOUND
         
     
     def onSetWeight(self, event):
