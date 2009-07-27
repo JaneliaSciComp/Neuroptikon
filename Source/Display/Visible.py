@@ -78,14 +78,15 @@ class Visible(object):
 #                        None: osg.Matrixd.identity()}
     
     try:
-        labelFont = osgText.readFontFile("Arial Bold.ttf")
-        if labelFont == None:
-            labelFont = osgText.readFontFile("ArialBD.ttf")
+        if osgText.readFontFile("Arial Bold.ttf"):
+            labelFont = 'Arial Bold.ttf'
+        elif osgText.readFontFile("ArialBD.ttf"):
+            labelFont = 'ArialBD.ttf'
     except:
         (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
         print 'Could not load Arial font (' + exceptionValue.message + ')'
         labelFont = None
-    
+
     flowVertexShader = """ varying vec3 normal, lightDir, halfVector;
                            
                            void main()
@@ -830,6 +831,7 @@ class Visible(object):
                 # Create the text drawable
                 self._textDrawable = osgText.Text()
                 self._textDrawable.setDataVariance(osg.Object.DYNAMIC)
+                self._textDrawable.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
                 if Visible.labelFont is None:
                     self._textDrawable.setCharacterSize(48.0)
                 else:
@@ -837,10 +839,7 @@ class Visible(object):
                     self._textDrawable.setCharacterSize(18.0)
                 self._textDrawable.setAxisAlignment(osgText.Text.SCREEN)
                 self._textDrawable.setAlignment(osgText.Text.CENTER_CENTER)
-                self._textDrawable.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
                 self._textDrawable.setBackdropType(osgText.Text.OUTLINE)
-                self._textDrawable.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
-                self._textDrawable.setFontResolution(64, 64)
                 self._textGeode.addDrawable(self._textDrawable)
             
             self._textDrawable.setColor(osg.Vec4(0, 0, 0, self._opacity * opacity))
@@ -864,6 +863,7 @@ class Visible(object):
         if label != self._label:
             self._label = label
             self.updateLabel()
+            dispatcher.send(('set', 'label'), self)
     
     
     def label(self):
