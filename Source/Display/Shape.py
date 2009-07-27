@@ -83,6 +83,11 @@ class Shape(object):
         return {}
     
     
+    def interiorBounds(self):
+        """ The largest bounding box that can fit inside the shape in the form ((x_min, y_min, z_min), (x_max, y_max, z_max)) or None if the shape has no interior. """
+        return None
+    
+    
     def intersectionPoint(self, rayOrigin, rayDirection):
 # TODO:        raise NotImplementedError, gettext('Shape sub-classes must override the intersectionPoint method.')
         pass

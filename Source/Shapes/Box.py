@@ -27,3 +27,6 @@ class Box(UnitShape):
             faceSet = Shape.primitiveSetFromList(osg.PrimitiveSet.QUADS, faceVertices)
             self.geometry().addPrimitiveSet(faceSet)
     
+    
+    def interiorBounds(self):
+        return ((-0.5, -0.5, -0.5), (0.5, 0.5, 0.5))

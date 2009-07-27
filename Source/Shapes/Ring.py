@@ -60,3 +60,8 @@ class Ring(UnitShape):
     def persistentAttributes(self):
         return {'holeSize': self.holeSize}
     
+
+    def intersectionPoint(self, rayOrigin, rayDirection):
+        # TODO: <http://tog.acm.org/resources/GraphicsGems/gemsii/intersect/inttor.c>
+        pass
+    

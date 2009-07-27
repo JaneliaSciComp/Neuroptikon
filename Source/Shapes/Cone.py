@@ -1,6 +1,6 @@
 from Display.Shape import Shape, UnitShape
 import osg
-from math import pi, cos, sin
+from math import pi, cos, sin, sqrt
 
 
 class Cone(UnitShape):
@@ -45,3 +45,7 @@ class Cone(UnitShape):
         
         self.geometry().setTexCoordArray(0, Shape.vectorArrayFromList(textureCoords))
     
+    
+    def interiorBounds(self):
+        halfSize = sqrt(0.125) / 2.0
+        return ((-halfSize, -0.5, -halfSize), (halfSize, 0.0, halfSize))

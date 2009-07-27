@@ -109,3 +109,7 @@ class Ball(UnitShape):
         self.geometry().setTexCoordArray(0, texCoords)
         self.geometry().addPrimitiveSet(faceSet)
     
+    
+    def interiorBounds(self):
+        halfSize = 0.5 / sqrt(3)
+        return ((-halfSize, -halfSize, -halfSize), (halfSize, halfSize, halfSize))

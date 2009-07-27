@@ -1,6 +1,6 @@
 from Display.Shape import Shape, UnitShape
 import osg
-from math import cos, pi, sin
+from math import cos, pi, sin, sqrt
 
 
 class Capsule(UnitShape):
@@ -10,13 +10,20 @@ class Capsule(UnitShape):
         return gettext('Capsule')
     
     
-    def __init__(self, capiness = 0.5, *args, **keywordArgs):
+    def __init__(self, capiness = 0.5, interiorIncludesCaps = False, *args, **keywordArgs):
+        """ Create a new capsule shape.
+        
+        The 'capiness' parameter controls how much of the shape is made up of the caps.  A 1.0 value would be all caps and effectively be a sphere.  A 0.0 value would be no caps and effectively be a cylinder. 
+        
+        The interiorIncludesCaps parameter controls whether nested shapes should extend up into the caps or should be restrained to the cylinder portion of the capsule."""
+        
         Shape.__init__(self, *args, **keywordArgs)
         
         # TODO: use VBO's so all instances share the same data?
         # TODO: fix seams caused by texture coords
         
         self.capiness = capiness
+        self.interiorIncludesCaps = interiorIncludesCaps
         
         steps = 32  # must be multiple of four
         angleIncrement = 2.0 * pi / steps
@@ -68,3 +75,12 @@ class Capsule(UnitShape):
     def persistentAttributes(self):
         return {'capiness': self.capiness}
     
+    
+    def interiorBounds(self):
+        if self.interiorIncludesCaps:
+            halfWidth = 0.5 / sqrt(3)
+            halfHeight = self.capiness / 2.0 / sqrt(3)
+            return ((-halfWidth, -0.5 + self.capiness / 2.0 - halfHeight, -halfWidth), (halfWidth, 0.5 - self.capiness / 2.0 + halfHeight, halfWidth))
+        else:
+            halfSize = 0.5 / sqrt(2)
+            return ((-halfSize, -0.5 + self.capiness / 2.0, -halfSize), (halfSize, 0.5 - self.capiness / 2.0, halfSize))
