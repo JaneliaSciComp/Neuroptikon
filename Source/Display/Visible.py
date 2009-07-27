@@ -886,7 +886,7 @@ class Visible(object):
             for ancestor in self.ancestors():
                 if ancestor in self.display.selectedVisibles:
                     opacity = 0.5
-        elif any(self.children):
+        elif any(self.children) and self._shape != None:
             opacity = 0.5
         else:
             opacity = self._opacity
