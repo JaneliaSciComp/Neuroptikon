@@ -853,6 +853,9 @@ class Display(wx.glcanvas.GLCanvas):
                     self.rootNode.removeChild(subVisibles[0].sgNode)
                     visible.addChildVisible(subVisibles[0])
         
+        # The visible may be outside of the previously computed bounds.
+        _recomputeBounds = True
+
         return visible
     
     
