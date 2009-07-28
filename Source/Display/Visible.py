@@ -947,6 +947,12 @@ class Visible(object):
             for ancestor in self.ancestors():
                 if ancestor in self.display.selectedVisibles:
                     opacity = 0.5
+                    break
+            if opacity == 0.1:
+                for child in self.allChildren():
+                    if child in self.display.selectedVisibles:
+                        opacity = 0.5
+                        break
         elif any(self.children) and self._shape != None:
             opacity = 0.5
         else:
@@ -1205,6 +1211,14 @@ class Visible(object):
             ancestors.append(self.parent)
             ancestors.extend(self.parent.ancestors())
         return ancestors
+    
+    
+    def allChildren(self):
+        children = []
+        for child in self.children:
+            children += [child]
+            children += child.allChildren()
+        return children
     
     
     def _arrangeChildren(self, recurse = True):
