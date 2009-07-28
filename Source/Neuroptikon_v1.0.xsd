@@ -292,12 +292,20 @@
 	
 	<xs:complexType name="VisibleAppearance">
 		<xs:sequence>
-			<xs:element name="Label" type="xs:string" minOccurs="0"/>
+			<xs:element name="Label" type="Label" minOccurs="0"/>
 			<xs:element name="Shape" type="VisibleShape" minOccurs="0"/>
 			<xs:element name="Color" type="Color" minOccurs="0"/>
 			<xs:element name="Opacity" type="xs:float" minOccurs="0"/>
 			<xs:element name="Weight" type="xs:float" minOccurs="0"/>
 			<xs:element name="Texture" type="Texture" minOccurs="0"/>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="Label">
+		<xs:sequence>
+			<xs:element name="Text" type="xs:string"/>
+			<xs:element name="Color" type="Color" minOccurs="0"/>
+			<xs:element name="Position" type="VisiblePosition" minOccurs="0"/>
 		</xs:sequence>
 	</xs:complexType>
 	

@@ -181,6 +181,8 @@ class Visible(object):
         self._dependencies = set()
         self._label = None
         self._labelNode = None
+        self._labelPosition = (0.0, 0.0, 0.0)   # in local coordinates
+        self._labelColor = (0.0, 0.0, 0.0)
         self._shape = None
         self._color = (0.5, 0.5, 0.5)
         self._opacity = 1.0
@@ -311,8 +313,19 @@ class Visible(object):
             labelElement = appearanceElement.find('Label')
             if labelElement is None:
                 labelElement = appearanceElement.find('label')
-            if labelElement is not None:
-                visible.setLabel(appearanceElement.findtext('Label') or appearanceElement.findtext('label') or '')
+            if labelElement != None:
+                textElement = labelElement.find('Text')
+                colorElement = labelElement.find('Color')
+                positionElement = labelElement.find('Position')
+                if textElement != None or colorElement != None or positionElement != None:
+                    if textElement != None:
+                        visible.setLabel(textElement.text or '')
+                    if colorElement != None:
+                        visible.setLabelColor((float(colorElement.get('r')), float(colorElement.get('g')), float(colorElement.get('b')), float(colorElement.get('a') or '1.0')))
+                    if positionElement != None:
+                        visible.setLabelPosition((float(positionElement.get('x')), float(positionElement.get('y')), float(positionElement.get('z'))))
+                else:
+                    visible.setLabel(labelElement.text or '') # previous XML format
             
             shapeElement = appearanceElement.find('Shape')
             shapeClassName = None if shapeElement == None else shapeElement.get('class')
@@ -376,8 +389,7 @@ class Visible(object):
             arrangementElement = xmlElement.find('arrangement')
         if arrangementElement is not None:
             axis = arrangementElement.get('axis')
-            if axis is not None:
-                visible.setArrangedAxis(axis)
+            visible.setArrangedAxis(None if axis == 'None' else axis)
             spacing = arrangementElement.get('spacing')
             if spacing is not None:
                 visible.setArrangedSpacing(float(spacing))
@@ -492,8 +504,23 @@ class Visible(object):
         
         # Add the appearance
         appearanceElement = ElementTree.SubElement(visibleElement, 'Appearance')
-        if self._label is not None:
-            ElementTree.SubElement(appearanceElement, 'Label').text = self._label
+        if self._label is not None or self._labelColor != (0.0, 0.0, 0.0) or self._labelPosition != (0.0, 0.0, 0.0):
+            labelElement = ElementTree.SubElement(appearanceElement, 'Label')
+            if self._label is not None:
+                textElement = ElementTree.SubElement(labelElement, 'Text')
+                textElement.text = self._label
+            if self._labelColor != (0.0, 0.0, 0.0):
+                colorElement = ElementTree.SubElement(labelElement, 'Color')
+                colorElement.set('r', str(self._labelColor[0]))
+                colorElement.set('g', str(self._labelColor[1]))
+                colorElement.set('b', str(self._labelColor[2]))
+                if len(self._labelColor) > 3:
+                    colorElement.set('a', str(self._labelColor[3]))
+            if self._labelPosition != (0.0, 0.0, 0.0):
+                positionElement = ElementTree.SubElement(labelElement, 'Position')
+                positionElement.set('x', str(self._labelPosition[0]))
+                positionElement.set('y', str(self._labelPosition[1]))
+                positionElement.set('z', str(self._labelPosition[2]))
         if self._shape is not None:
             # TODO: save the properties of the shape somehow, e.g. an isosurface shape
             shapeElement = ElementTree.SubElement(appearanceElement, 'Shape')
@@ -638,6 +665,10 @@ class Visible(object):
             params['label'] = None
         else:
             params['label'] = self._label
+        if self._labelColor != (0.0, 0.0, 0.0):
+            params['labelColor'] = self._labelColor
+        if self._labelPosition != (0.0, 0.0, 0.0):
+            params['labelPosition'] = self._labelPosition
         if not self.isPath():
             params['position'] = self.position()
             if self.positionIsFixed():
@@ -702,11 +733,18 @@ class Visible(object):
                 scriptFile.write('%s.setVisibleRotation(%s, %s)\n' % (displayRef, scriptRef, str(self.rotation())))
             if 'label' in params:
                 scriptFile.write('%s.setLabel(%s, \'%s\')\n' % (displayRef, scriptRef, params['label'].replace('\\', '\\\\').replace('\'', '\\\'')))
+            if 'labelColor' in params:
+                scriptFile.write('%s.setLabelColor(%s, %s)\n' % (displayRef, scriptRef, str(params['labelColor'])))
+            if 'labelPosition' in params:
+                scriptFile.write('%s.setLabelPosition(%s, %s)\n' % (displayRef, scriptRef, str(params['labelPosition'])))
             if 'shape' in params:
-                scriptFile.write('%s.setVisibleShape(%s, shapes[\'%s\'](' % (displayRef, scriptRef, self.shape().__class__.__name__))
-                for attributeName, attributeValue in self._shape.persistentAttributes().iteritems():
-                    scriptFile.write(attributeName + ' = ' + repr(attributeValue) + ', ')
-                scriptFile.write('))\n')
+                if params['shape'] == None:
+                    scriptFile.write('%s.setVisibleShape(%s, None)\n' % (displayRef, scriptRef))
+                else:
+                    scriptFile.write('%s.setVisibleShape(%s, shapes[\'%s\'](' % (displayRef, scriptRef, self.shape().__class__.__name__))
+                    for attributeName, attributeValue in self._shape.persistentAttributes().iteritems():
+                        scriptFile.write(attributeName + ' = ' + repr(attributeValue) + ', ')
+                    scriptFile.write('))\n')
             if 'color' in params:
                 scriptFile.write('%s.setVisibleColor(%s, %s)\n' % (displayRef, scriptRef, str(self.color())))
             if 'opacity' in params:
@@ -827,19 +865,20 @@ class Visible(object):
                 self._textDrawable.setBackdropType(osgText.Text.OUTLINE)
                 self._textGeode.addDrawable(self._textDrawable)
             
-            self._textDrawable.setColor(osg.Vec4(0, 0, 0, self._opacity * opacity))
-            self._textDrawable.setBackdropColor(osg.Vec4(1.0, 1.0, 1.0, self._opacity * opacity * 0.25))
+            self._textDrawable.setColor(osg.Vec4(self._labelColor[0], self._labelColor[1], self._labelColor[2], self._opacity * opacity))
+            backdropColor = 1.0 if self._labelColor[0] + self._labelColor[1] + self._labelColor[2] <= .75 * 3.0 else 0.0
+            self._textDrawable.setBackdropColor(osg.Vec4(backdropColor, backdropColor, backdropColor, self._opacity * opacity * 0.25))
             
             if self.display.viewDimensions == 3 or self.display.labelsFloatOnTop():
-                self._textDrawable.setPosition(osg.Vec3(0, 0, 0))
+                self._textDrawable.setPosition(osg.Vec3(*self._labelPosition))
                 self._textGeode.getOrCreateStateSet().setAttribute(osg.Depth(osg.Depth.ALWAYS))
             else:
                 if self.display.orthoViewPlane == 'xy':
-                    self._textDrawable.setPosition(osg.Vec3(0, 0, 1))
+                    self._textDrawable.setPosition(osg.Vec3(self._labelPosition[0], self._labelPosition[1], self._labelPosition[2] + 1.0))
                 elif self.display.orthoViewPlane == 'xz':
-                    self._textDrawable.setPosition(osg.Vec3(0, -1, 0))
+                    self._textDrawable.setPosition(osg.Vec3(self._labelPosition[0], self._labelPosition[1] - 1.0, self._labelPosition[2]))
                 else:
-                    self._textDrawable.setPosition(osg.Vec3(-1, 0, 0))
+                    self._textDrawable.setPosition(osg.Vec3(self._labelPosition[0] - 1.0, self._labelPosition[1], self._labelPosition[2]))
                 self._textGeode.getOrCreateStateSet().removeAttribute(osg.StateAttribute.DEPTH)
             self._textDrawable.setText(str(label))
     
@@ -853,6 +892,28 @@ class Visible(object):
     
     def label(self):
         return self._label
+    
+    
+    def setLabelColor(self, color):
+        if color != self._labelColor:
+            self._labelColor = color
+            self.updateLabel()
+            dispatcher.send(('set', 'labelColor'), self)
+    
+    
+    def label(self):
+        return self._labelColor
+    
+    
+    def setLabelPosition(self, position):
+        if position != self._labelPosition:
+            self._labelPosition = position
+            self.updateLabel()
+            dispatcher.send(('set', 'labelPosition'), self)
+    
+    
+    def labelPosition(self):
+        return self._labelPosition
     
     
     def setColor(self, color):
@@ -1276,7 +1337,7 @@ class Visible(object):
     
     
     def dependentVisibleChanged( self, signal, sender, event=None, value=None, **arguments):
-        if self.pathMidPoints is not None and len(self._dependencies) == 2:
+        if self.isPath():
             self.setPath(self.pathMidPoints)
     
     

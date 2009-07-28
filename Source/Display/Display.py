@@ -978,6 +978,28 @@ class Display(wx.glcanvas.GLCanvas):
             visible.setLabel(label)
     
     
+    def setLabelColor(self, object, color):
+        visibles = self.visiblesForObject(object)
+        visible = None
+        if len(visibles) == 1:
+            visible = visibles[0]
+        elif isinstance(object, Stimulus):
+            visible = visibles[0 if visibles[1].isPath() else 1]
+        if visible is not None:
+            visible.setLabelColor(color)
+    
+    
+    def setLabelPosition(self, object, position):
+        visibles = self.visiblesForObject(object)
+        visible = None
+        if len(visibles) == 1:
+            visible = visibles[0]
+        elif isinstance(object, Stimulus):
+            visible = visibles[0 if visibles[1].isPath() else 1]
+        if visible is not None:
+            visible.setLabelPosition(position)
+    
+    
     def setVisiblePosition(self, object, position = None, fixed = None):
         visibles = self.visiblesForObject(object)
         visible = None
