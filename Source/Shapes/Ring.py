@@ -1,6 +1,6 @@
 from Display.Shape import Shape, UnitShape
 import osg
-from math import cos, pi, sin, sqrt
+from math import atan2, cos, pi, sin, sqrt
 
 
 class Ring(UnitShape):
@@ -62,6 +62,27 @@ class Ring(UnitShape):
     
 
     def intersectionPoint(self, rayOrigin, rayDirection):
-        # TODO: <http://tog.acm.org/resources/GraphicsGems/gemsii/intersect/inttor.c>
-        pass
-    
+        # TODO: Do a real line/torus intersection: <http://tog.acm.org/resources/GraphicsGems/gemsii/intersect/inttor.c>
+        
+        # In the mean time use line/circle intersection code from <http://mathworld.wolfram.com/Circle-LineIntersection.html>
+        if abs(rayOrigin[2]) < 1e-12 and abs(rayDirection[2]) < 1e-12:
+            dr = sqrt(rayDirection[0] ** 2 + rayDirection[1] ** 2)
+            dr2 = dr ** 2
+            D = rayOrigin[0] * (rayOrigin[1] + rayDirection[1]) - (rayOrigin[0] + rayDirection[0]) * rayOrigin[1]
+            sgn_dy = -1.0 if rayDirection[1] < 0.0 else 1.0
+            bigPiece = sqrt(0.5 ** 2 * dr2 - D ** 2)
+            intersections = []
+            intersections += [((D * rayDirection[1] + sgn_dy * rayDirection[0] * bigPiece) / dr2, (-D * rayDirection[0] + abs(rayDirection[1]) * bigPiece) / dr2, 0.0)]
+            intersections += [((D * rayDirection[1] + sgn_dy * rayDirection[0] * bigPiece) / dr2, (-D * rayDirection[0] - abs(rayDirection[1]) * bigPiece) / dr2, 0.0)]
+            intersections += [((D * rayDirection[1] - sgn_dy * rayDirection[0] * bigPiece) / dr2, (-D * rayDirection[0] + abs(rayDirection[1]) * bigPiece) / dr2, 0.0)]
+            intersections += [((D * rayDirection[1] - sgn_dy * rayDirection[0] * bigPiece) / dr2, (-D * rayDirection[0] - abs(rayDirection[1]) * bigPiece) / dr2, 0.0)]
+            minDist = 1e1000
+            closestIntersection = None
+            for intersection in intersections:
+                distToOrigin = (intersection[0] - rayOrigin[0]) ** 2 + (intersection[1] - rayOrigin[1]) ** 2
+                if distToOrigin < minDist:
+                    closestIntersection = intersection
+                    minDist = distToOrigin
+            return closestIntersection
+        else:
+            return None

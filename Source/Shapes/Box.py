@@ -30,3 +30,32 @@ class Box(UnitShape):
     
     def interiorBounds(self):
         return ((-0.5, -0.5, -0.5), (0.5, 0.5, 0.5))
+    
+    
+    def intersectionPoint(self, rayOrigin, rayDirection):
+        tmin = []
+        tmax = []
+        for dim in range(0, 3):
+            if rayDirection[dim] > 0.0:
+                tmin += [(-0.5 - rayOrigin[dim]) / rayDirection[dim]]
+                tmax += [( 0.5 - rayOrigin[dim]) / rayDirection[dim]]
+            elif rayDirection[dim] < 0.0:
+                tmin += [( 0.5 - rayOrigin[dim]) / rayDirection[dim]]
+                tmax += [(-0.5 - rayOrigin[dim]) / rayDirection[dim]]
+            else:   # rayDirection[dim] == 0.0
+                tmin += [1e1000 if rayOrigin[dim] <= -0.5 else -1e1000]
+                tmax += [1e1000 if rayOrigin[dim] <=  0.5 else -1e1000]
+        if tmin[0] > tmax[1] or tmin[1] > tmax[0]:
+            return None
+        if tmin[1] > tmin[0]:
+            tmin[0] = tmin[1]
+        if tmax[1] < tmax[0]:
+            tmax[0] = tmax[1]
+        if tmin[0] > tmax[2] or tmin[2] > tmax[0]:
+            return None
+        if tmin[2] > tmin[0]:
+            tmin[0] = tmin[2]
+        if tmax[2] < tmax[0]:
+            tmax[0] = tmax[2]
+        return (rayOrigin[0] + rayDirection[0] * tmin[0], rayOrigin[1] + rayDirection[1] * tmin[0], rayOrigin[2] + rayDirection[2] * tmin[0])
+    

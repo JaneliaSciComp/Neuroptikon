@@ -49,3 +49,8 @@ class Cone(UnitShape):
     def interiorBounds(self):
         halfSize = sqrt(0.125) / 2.0
         return ((-halfSize, -0.5, -halfSize), (halfSize, 0.0, halfSize))
+    
+    
+    def intersectionPoint(self, rayOrigin, rayDirection):
+        # TODO
+        return None

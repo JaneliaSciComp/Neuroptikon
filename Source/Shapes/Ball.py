@@ -113,3 +113,8 @@ class Ball(UnitShape):
     def interiorBounds(self):
         halfSize = 0.5 / sqrt(3)
         return ((-halfSize, -halfSize, -halfSize), (halfSize, halfSize, halfSize))
+    
+    
+    def intersectionPoint(self, rayOrigin, rayDirection):
+        # TODO
+        return None

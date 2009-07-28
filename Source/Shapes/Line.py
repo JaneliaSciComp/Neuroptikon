@@ -52,3 +52,7 @@ class Line(PathShape):
     def setWeight(self, weight):
         self.geometry().getOrCreateStateSet().setAttributeAndModes(osg.LineWidth(weight), osg.StateAttribute.ON)
         self.geometry().dirtyDisplayList()
+    
+    
+    def intersectionPoint(self, rayOrigin, rayDirection):
+        return None

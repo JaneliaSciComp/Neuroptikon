@@ -55,3 +55,8 @@ class Cylinder(UnitShape):
     def interiorBounds(self):
         halfSize = 0.5 / sqrt(2)
         return ((-halfSize, -0.5, -halfSize), (halfSize, 0.5, halfSize))
+    
+    
+    def intersectionPoint(self, rayOrigin, rayDirection):
+        # TODO
+        return None

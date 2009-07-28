@@ -1566,6 +1566,44 @@ class Visible(object):
         path.insert(0, self.pathStart.worldPosition())
         path.append(self.pathEnd.worldPosition())
         
+        if self.pathStart._shape:
+            # Try to find the point where the path intersects the shape.
+            rayOrigin = path[1]
+            if len(path) > 2:
+                rayDirection = (path[1][0] - path[2][0], path[1][1] - path[2][1], path[1][2] - path[2][2])
+            else:
+                rayDirection = (path[0][0] - path[1][0], path[0][1] - path[1][1], path[0][2] - path[1][2])
+            if isinstance(self.pathStart._shape, UnitShape):
+                # Translate the ray into the shape's coordinate system.
+                size = self.pathStart.worldSize()
+                rayOrigin = ((rayOrigin[0] - path[0][0]) / size[0], (rayOrigin[1] - path[0][1]) / size[1], (rayOrigin[2] - path[0][2]) / size[2])
+                rayDirection = (rayDirection[0] / size[0], rayDirection[1] / size[1], rayDirection[2] / size[2])
+            intersectionPoint = self.pathStart._shape.intersectionPoint(rayOrigin, rayDirection)
+            if intersectionPoint:
+                if isinstance(self.pathStart._shape, UnitShape):
+                    # Translate back into world space coordinates.
+                    intersectionPoint = (intersectionPoint[0] * size[0] + path[0][0], intersectionPoint[1] * size[1] + path[0][1], intersectionPoint[2] * size[2] + path[0][2])
+                path[0:1] = [intersectionPoint]
+        
+        if self.pathEnd._shape:
+            # Try to find the point where the path intersects the shape.
+            rayOrigin = path[-2]
+            if len(path) > 2:
+                rayDirection = (path[-2][0] - path[-3][0], path[-2][1] - path[-3][1], path[-2][2] - path[-3][2])
+            else:
+                rayDirection = (path[-1][0] - path[-2][0], path[-1][1] - path[-2][1], path[-1][2] - path[-2][2])
+            if isinstance(self.pathEnd._shape, UnitShape):
+                # Translate the ray into the shape's coordinate system.
+                size = self.pathEnd.worldSize()
+                rayOrigin = ((rayOrigin[0] - path[-1][0]) / size[0], (rayOrigin[1] - path[-1][1]) / size[1], (rayOrigin[2] - path[-1][2]) / size[2])
+                rayDirection = (rayDirection[0] / size[0], rayDirection[1] / size[1], rayDirection[2] / size[2])
+            intersectionPoint = self.pathEnd._shape.intersectionPoint(rayOrigin, rayDirection)
+            if intersectionPoint:
+                if isinstance(self.pathEnd._shape, UnitShape):
+                    # Translate back into world space coordinates.
+                    intersectionPoint = (intersectionPoint[0] * size[0] + path[-1][0], intersectionPoint[1] * size[1] + path[-1][1], intersectionPoint[2] * size[2] + path[-1][2])
+                path[-1:] = [intersectionPoint]
+        
         if isinstance(self._shape, UnitShape):
             # Create a straight connection from start to end            # TODO: Will this object ever have a parent?  If so then we'll have to translate world to local coordinates here.            position, size, rotation = self.positionSizeRotation(path[0], path[-1])            self.setPosition(position)            self.setSize(size)            self.setRotation(rotation)
         else:            minBound = (1e1000, 1e1000, 1e1000)

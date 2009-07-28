@@ -84,3 +84,9 @@ class Capsule(UnitShape):
         else:
             halfSize = 0.5 / sqrt(2)
             return ((-halfSize, -0.5 + self.capiness / 2.0, -halfSize), (halfSize, 0.5 - self.capiness / 2.0, halfSize))
+    
+    
+    def intersectionPoint(self, rayOrigin, rayDirection):
+        # TODO
+        return None
+    

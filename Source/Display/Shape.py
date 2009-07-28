@@ -89,8 +89,8 @@ class Shape(object):
     
     
     def intersectionPoint(self, rayOrigin, rayDirection):
-# TODO:        raise NotImplementedError, gettext('Shape sub-classes must override the intersectionPoint method.')
-        pass
+        """ Returns the intersection point nearest to the ray origin or None if the ray does not intersect the shape. """
+        raise NotImplementedError, gettext('Shape sub-classes must override the intersectionPoint method.')
 
 
 class UnitShape(Shape):
