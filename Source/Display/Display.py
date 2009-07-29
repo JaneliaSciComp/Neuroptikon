@@ -107,6 +107,7 @@ class Display(wx.glcanvas.GLCanvas):
         light.setAmbient(osg.Vec4f(0.4, 0.4, 0.4, 1))
         light.setDiffuse(osg.Vec4f(0.5, 0.5, 0.5, 1))
         self.viewer3D.setLight(light)
+        self._first3DView = True
         
         config = wx.Config("Neuroptikon")
         clearColor = (config.ReadFloat("Color/Background/Red", 0.75), \
@@ -357,18 +358,23 @@ class Display(wx.glcanvas.GLCanvas):
         if dimensions != self.viewDimensions:
             self.viewDimensions = dimensions
             width, height = self.GetClientSize()
-#            self.deselectAll()
             if self.viewDimensions == 2:
                 # TODO: approximate the 3D settings?
+                width, height = self.GetClientSize()
                 self.graphicsWindow = self.viewer2D.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
                 self.viewer2D.setCameraManipulator(None)
                 self.resetView()
             elif self.viewDimensions == 3:
                 # TODO: approximate the 2D settings
 #                self.viewer3D.getCamera().setViewport(osg.Viewport(0, 0, width, height))
+                self.SetScrollbar(wx.HORIZONTAL, 0, width, width, True)
+                self.SetScrollbar(wx.VERTICAL, 0, height, height, True)
+                width, height = self.GetClientSize()
                 self.graphicsWindow = self.viewer3D.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
                 self.viewer3D.getCamera().setProjectionMatrixAsPerspective(30.0, float(width)/height, 1.0, 10000.0)
-                self.centerView()
+                if self._first3DView:
+                    self.centerView()
+                    self._first3DView = False
             self.Refresh()
             dispatcher.send(('set', 'viewDimensions'), self)
     
