@@ -76,6 +76,7 @@ for neuron in display.network.neurons():
     if neuron.hasFunction(NeuralFunction.MOTOR):
         green = 1.0
     display.setVisibleColor(neuron, (red, green, blue))
+    display.setLabelColor(neuron, (0.0 if red == 0.5 else red * 0.125, 0.0 if green == 0.5 else green * 0.125, 0.0 if blue == 0.5 else blue * 0.125))
     
     # Position the soma according to their linear distance between head and tail and their left/center/right position.
     somaX = float(somaPositions[neuron.name]) * 4.0 - 2.0
@@ -128,6 +129,7 @@ for muscle in display.network.muscles():
             muscleY += 0.025
     display.setVisiblePosition(muscle, (muscleX, muscleY, -1.0), fixed = True)
     display.setVisibleSize(muscle, (0.01, 0.02, .01))
+    display.setLabelColor(muscle, (0.9, 0.9, 0.9))
 
 for innervation in display.network.innervations():
     display.setVisibleWeight(innervation, 0.5 if innervation.getAttribute('Count').value < 5.0 else 2.0)

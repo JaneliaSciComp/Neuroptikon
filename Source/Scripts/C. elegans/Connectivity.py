@@ -19,6 +19,7 @@ for neuron in display.network.neurons():
     if neuron.hasFunction(NeuralFunction.MOTOR):
         green = 1.0
     display.setVisibleColor(neuron, (red, green, blue))
+    display.setLabelColor(neuron, (red * 0.125, green * 0.125, blue * 0.125))
     display.setVisiblePosition(neuron, fixed = True)
 
 for synapse in display.network.synapses():
