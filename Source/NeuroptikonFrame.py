@@ -396,15 +396,19 @@ class NeuroptikonFrame( wx.Frame ):
     def onSaveNetwork(self, event):
         network = self.display.network
         if network.savePath() is None:
-            dlg = wx.FileDialog(None, gettext('Save as:'), '', '', '*.xml', wx.SAVE)
+            dlg = wx.FileDialog(None, gettext('Save as:'), '', 'Network.xml', '*.xml', wx.SAVE | wx.FD_OVERWRITE_PROMPT)
             if dlg.ShowModal() == wx.ID_OK:
-                network.setSavePath(dlg.GetPath())
+                savePath = dlg.GetPath()
+                if not savePath.endswith('.xml'):
+                    savePath += '.xml'
+                network.setSavePath(savePath)
         
         if network.savePath() is not None:
             self.saveNetworkAndDisplaysAsXML(network.savePath())
     
     
     def onSaveNetworkAs(self, event):
+        network = self.display.network
         fileTypes = ['XML File', 'XML File (network only)', 'Python Script', 'Python Script (network only)', 'Python Script (display only)']
         fileExtensions = ['xml', 'xml', 'py', 'py', 'py']
         wildcard = ''
@@ -412,7 +416,11 @@ class NeuroptikonFrame( wx.Frame ):
             if wildcard != '':
                 wildcard += '|'
             wildcard += fileTypes[index] + '|' + fileExtensions[index]
-        fileDialog = wx.FileDialog(None, gettext('Save As:'), '', '', wildcard, wx.FD_SAVE)
+        fileDialog = wx.FileDialog(None, gettext('Save As:'), '', '', wildcard, wx.FD_SAVE | wx.FD_OVERWRITE_PROMPT)
+        if network.savePath() == None:
+            fileDialog.SetFilename('Network.xml')
+        else:
+            fileDialog.SetFilename(os.path.basename(network.savePath()))
         if fileDialog.ShowModal() == wx.ID_OK:
             filterIndex = fileDialog.GetFilterIndex()
             saveNetwork = (filterIndex != 4)
@@ -423,7 +431,7 @@ class NeuroptikonFrame( wx.Frame ):
                 savePath += '.' + extension
             try:
                 if extension == 'xml':
-                    self.display.network.setSavePath(savePath)
+                    network.setSavePath(savePath)
                     self.saveNetworkAndDisplaysAsXML(savePath, saveDisplays)
                 else:
                     self.saveNetworkAndDisplaysAsScript(savePath, saveNetwork, saveDisplays)
