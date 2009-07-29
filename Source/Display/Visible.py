@@ -1063,7 +1063,7 @@ class Visible(object):
     def setPositionIsFixed(self, flag):
         if self._positionIsFixed != flag:
             self._positionIsFixed = flag
-            dispatcher.send(('set', 'position is fixed'), self)
+            dispatcher.send(('set', 'positionIsFixed'), self)
     
     
     def size(self):
@@ -1088,7 +1088,7 @@ class Visible(object):
     def setSizeIsFixed(self, flag):
         if self._sizeIsFixed != flag:
             self._sizeIsFixed = flag
-            dispatcher.send(('set', 'size is fixed'), self)
+            dispatcher.send(('set', 'sizeIsFixed'), self)
     
     
     def sizeIsAbsolute(self):

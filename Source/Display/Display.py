@@ -597,7 +597,7 @@ class Display(wx.glcanvas.GLCanvas):
             self.graphicsWindow.resized(0, 0, w, h)
         
         self.resetView()
-            
+        
         event.Skip()
     
     
@@ -655,6 +655,11 @@ class Display(wx.glcanvas.GLCanvas):
     def visibleChanged(self, sender, signal):
         if signal[1] in ('position', 'size', 'rotation', 'path'):
             self._recomputeBounds = True
+        if signal[1] in ('positionIsFixed', 'sizeIsFixed') and any(self.selectedVisibles):
+            self.clearDragger()
+            visible = list(self.selectedVisibles)[0]
+            if not visible.positionIsFixed() or not visible.sizeIsFixed():
+                self.addDragger(visible)
         if not self._suppressRefresh:
             self.Refresh()
     
