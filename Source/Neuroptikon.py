@@ -108,6 +108,9 @@ if __name__ == "__main__":
             
             self._networks = []
             
+            if platform.system() == 'Darwin':
+                wx.MenuBar.MacSetCommonMenuBar(self.menuBar())
+
             self.preferences = Preferences()
             self.inspector = InspectorFrame()
             
@@ -192,6 +195,47 @@ if __name__ == "__main__":
             except:
                 image = None
             return image
+        
+        
+        def menuBar(self, frame = None):
+            menuBar = wx.MenuBar()
+            
+            fileMenu = wx.Menu()
+            self.Bind(wx.EVT_MENU, self.onNewNetwork, fileMenu.Append(wx.NewId(), gettext('New Network\tCtrl-N'), gettext('Open a new network window')))
+            self.Bind(wx.EVT_MENU, self.onOpenNetwork, fileMenu.Append(wx.NewId(), gettext('Open Network...\tCtrl-O'), gettext('Open a previously saved network')))
+            closeItem = fileMenu.Append(wx.NewId(), gettext('Close Network\tCtrl-W'), gettext('Close the current network window'))
+            if frame:
+                self.Bind(wx.EVT_MENU, frame.onCloseWindow, closeItem)
+            else:
+                closeItem.Enable(False)
+            saveItem = fileMenu.Append(wx.NewId(), gettext('Save Network...\tCtrl-S'), gettext('Save the current network'))
+            if frame:
+                self.Bind(wx.EVT_MENU, frame.onSaveNetwork, saveItem)
+            else:
+                saveItem.Enable(False)
+            saveAsItem = fileMenu.Append(wx.NewId(), gettext('Save As...\tCtrl-Shift-S'), gettext('Save to a new file'))
+            if frame:
+                self.Bind(wx.EVT_MENU, frame.onSaveNetworkAs, saveAsItem)
+            else:
+                saveAsItem.Enable(False)
+            fileMenu.AppendSeparator()
+            runScriptItem = fileMenu.Append(wx.NewId(), gettext('Run Script...\tCtrl-R'), gettext('Run a console script file'))
+            if frame:
+                self.Bind(wx.EVT_MENU, frame.onRunScript, runScriptItem)
+            else:
+                runScriptItem.Enable(False)
+            self.Bind(wx.EVT_MENU, self.onBrowseLibrary, fileMenu.Append(wx.NewId(), gettext('Browse the Library\tCtrl-Alt-L'), gettext('Open the Library window')))
+            self.Bind(wx.EVT_MENU, self.onOpenConsole, fileMenu.Append(wx.NewId(), gettext('Open the Console\tCtrl-Alt-O'), gettext('Open the Console window')))
+            self.Bind(wx.EVT_MENU, self.onOpenPreferences, fileMenu.Append(wx.ID_PREFERENCES, gettext('Settings'), gettext('Change Neuroptikon preferences')))
+            fileMenu.AppendSeparator()
+            self.Bind(wx.EVT_MENU, self.onQuit, fileMenu.Append(wx.ID_EXIT, gettext('E&xit\tCtrl-Q'), gettext('Exit the Neuroptikon application')))
+            menuBar.Append(fileMenu, gettext('&File'))
+            
+            helpMenu = wx.Menu()
+            self.Bind(wx.EVT_MENU, self.onAboutNeuroptikon, helpMenu.Append(wx.ID_ABOUT, gettext('About Neuroptikon'), gettext('Information about this program')))
+            menuBar.Append(helpMenu, gettext('&Help'))
+            
+            return menuBar
         
         
         def scriptLocals(self):
@@ -335,7 +379,7 @@ if __name__ == "__main__":
             dialog = wx.MessageDialog(None, gettext("Version %s") % (__version__.version), gettext("Neuroptikon"), wx.ICON_INFORMATION | wx.OK)
             dialog.ShowModal()
             dialog.Destroy()
-        
+    
     
     def run():
         app = Neuroptikon(None)

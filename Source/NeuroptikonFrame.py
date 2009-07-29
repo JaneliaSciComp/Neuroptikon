@@ -116,22 +116,7 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     def menuBar(self):
-        menuBar = wx.MenuBar()
-        
-        fileMenu = wx.Menu()
-        self.Bind(wx.EVT_MENU, wx.GetApp().onNewNetwork, fileMenu.Append(wx.NewId(), gettext('New Network\tCtrl-N'), gettext('Open a new network window')))
-        self.Bind(wx.EVT_MENU, wx.GetApp().onOpenNetwork, fileMenu.Append(wx.NewId(), gettext('Open Network...\tCtrl-O'), gettext('Open a previously saved network')))
-        self.Bind(wx.EVT_MENU, self.onCloseWindow, fileMenu.Append(wx.ID_CLOSE, gettext('Close Network\tCtrl-W'), gettext('Close the current network window')))
-        self.Bind(wx.EVT_MENU, self.onSaveNetwork, fileMenu.Append(wx.NewId(), gettext('Save Network...\tCtrl-S'), gettext('Save the current network')))
-        self.Bind(wx.EVT_MENU, self.onSaveNetworkAs, fileMenu.Append(wx.NewId(), gettext('Save As...\tCtrl-Shift-S'), gettext('Save to a new file')))
-        fileMenu.AppendSeparator()
-        self.Bind(wx.EVT_MENU, self.onRunScript, fileMenu.Append(wx.NewId(), gettext('Run Script...\tCtrl-R'), gettext('Run a console script file')))
-        self.Bind(wx.EVT_MENU, wx.GetApp().onBrowseLibrary, fileMenu.Append(wx.NewId(), gettext('Browse the Library\tCtrl-Alt-L'), gettext('Open the Library window')))
-        self.Bind(wx.EVT_MENU, wx.GetApp().onOpenConsole, fileMenu.Append(wx.NewId(), gettext('Open the Console\tCtrl-Alt-O'), gettext('Open the Console window')))
-        self.Bind(wx.EVT_MENU, wx.GetApp().onOpenPreferences, fileMenu.Append(wx.ID_PREFERENCES, gettext('Settings'), gettext('Change Neuroptikon preferences')))
-        fileMenu.AppendSeparator()
-        self.Bind(wx.EVT_MENU, wx.GetApp().onQuit, fileMenu.Append(wx.ID_EXIT, gettext('E&xit\tCtrl-Q'), gettext('Exit this simple sample')))
-        menuBar.Append(fileMenu, gettext('&File'))
+        menuBar = wx.GetApp().menuBar(self)
         
         editMenu = wx.Menu()
         self.Bind(wx.EVT_MENU, self.onUndo, editMenu.Append(wx.NewId(), gettext('Undo\tCtrl-Z'), gettext('Undo the last action')))
@@ -147,7 +132,7 @@ class NeuroptikonFrame( wx.Frame ):
         editMenu.AppendSeparator()
         self.pasteMenuItem = editMenu.Append(wx.NewId(), gettext('Find\tCtrl-F'), gettext('Find objects in the network'))
         self.Bind(wx.EVT_MENU, self.onFind, self.pasteMenuItem)
-        menuBar.Append(editMenu, gettext('&Edit'))
+        menuBar.Insert(menuBar.GetMenuCount() - 1, editMenu, gettext('&Edit'))
         
         viewMenu = wx.Menu()
         self.Bind(wx.EVT_MENU, wx.GetApp().onOpenInspector, viewMenu.Append(wx.NewId(), gettext('Open Inspector Window\tCtrl-I'), gettext('Open the inspector window')))
@@ -174,11 +159,7 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_MENU, self.display.onCenterView, viewMenu.Append(wx.NewId(), gettext('Center View'), gettext('Center the display on all objects')))
         viewMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, self.display.onSaveView, viewMenu.Append(wx.NewId(), gettext('Save View as...'), gettext('Save the current view to a file')))
-        menuBar.Append(viewMenu, gettext('&View'))
-        
-        helpMenu = wx.Menu()
-        self.Bind(wx.EVT_MENU, wx.GetApp().onAboutNeuroptikon, helpMenu.Append(wx.ID_ABOUT, gettext('About Neuroptikon'), gettext('Information about this program')))
-        menuBar.Append(helpMenu, gettext('&Help'))
+        menuBar.Insert(menuBar.GetMenuCount() - 1, viewMenu, gettext('&View'))
         
         return menuBar
     
