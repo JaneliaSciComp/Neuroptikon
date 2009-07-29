@@ -1410,6 +1410,8 @@ class Display(wx.glcanvas.GLCanvas):
                 visibleToHighlight.setGlowColor(self._primarySelectionColor)
             elif not self._useGhosts:
                 visibleToHighlight.setGlowColor(self._secondarySelectionColor)
+            else:
+                visibleToHighlight.setGlowColor(None)
         for visibleToAnimate in visiblesToAnimate:
             visibleToAnimate.animateFlow()
         
