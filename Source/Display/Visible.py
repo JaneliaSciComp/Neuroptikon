@@ -901,7 +901,7 @@ class Visible(object):
             dispatcher.send(('set', 'labelColor'), self)
     
     
-    def label(self):
+    def labelColor(self):
         return self._labelColor
     
     
@@ -1566,11 +1566,15 @@ class Visible(object):
     def setPath(self, midPoints, startVisible=None, endVisible=None):
         if startVisible is not None:
             self.addDependency(startVisible, 'position')
+            self.addDependency(startVisible, 'size')
+            self.addDependency(startVisible, 'shape')
             if startVisible != self.pathStart:
                 midPoints.reverse()
             startVisible.connectedPaths.append(self)
         if endVisible is not None:
             self.addDependency(endVisible, 'position')
+            self.addDependency(endVisible, 'size')
+            self.addDependency(endVisible, 'shape')
             endVisible.connectedPaths.append(self)
         
         self.pathMidPoints = midPoints
