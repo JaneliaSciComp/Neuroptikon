@@ -358,6 +358,9 @@ class Display(wx.glcanvas.GLCanvas):
         if dimensions != self.viewDimensions:
             self.viewDimensions = dimensions
             width, height = self.GetClientSize()
+            
+            self.clearDragger()
+            
             if self.viewDimensions == 2:
                 # TODO: approximate the 3D settings?
                 width, height = self.GetClientSize()
@@ -375,6 +378,10 @@ class Display(wx.glcanvas.GLCanvas):
                 if self._first3DView:
                     self.centerView()
                     self._first3DView = False
+            
+            if any(self.selectedVisibles):
+                self.addDragger(list(self.selectedVisibles)[0])
+            
             self.Refresh()
             dispatcher.send(('set', 'viewDimensions'), self)
     
