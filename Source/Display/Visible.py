@@ -483,6 +483,9 @@ class Visible(object):
         if self.client is not None:
             visibleElement.set('objectId', str(self.client.networkId))
         
+        # Add a comment to the XML to make it easier to figure out the client of the visible.
+        visibleElement.append(ElementTree.Comment(self.client.__class__.displayName() + ': ' + (self.client.name or self.client.abbreviation or gettext('(unnamed)'))))
+        
         # Add the geometry
         geometryElement = ElementTree.SubElement(visibleElement, 'Geometry')
         positionElement = ElementTree.SubElement(geometryElement, 'Position')
