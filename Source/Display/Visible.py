@@ -525,9 +525,9 @@ class Visible(object):
                 positionElement.set('y', str(self._labelPosition[1]))
                 positionElement.set('z', str(self._labelPosition[2]))
         if self._shape is not None:
-            # TODO: save the properties of the shape somehow, e.g. an isosurface shape
             shapeElement = ElementTree.SubElement(appearanceElement, 'Shape')
             shapeElement.set('class', self._shape.__class__.__name__)
+            # Save any custom attributes of the shape.
             for attributeName, attributeValue in self._shape.persistentAttributes().iteritems():
                 attribute = None
                 if isinstance(attributeValue, str):
@@ -545,7 +545,7 @@ class Visible(object):
         colorElement.set('r', str(self._color[0]))
         colorElement.set('g', str(self._color[1]))
         colorElement.set('b', str(self._color[2]))
-        ElementTree.SubElement(appearanceElement, 'Opacity').text = str(self._opacity)  # TODO: ghosting will confuse this
+        ElementTree.SubElement(appearanceElement, 'Opacity').text = str(self._opacity)
         ElementTree.SubElement(appearanceElement, 'Weight').text = str(self._weight)
         if self._staticTexture is not None:
             textureElement = ElementTree.SubElement(appearanceElement, 'Texture')
@@ -1583,7 +1583,6 @@ class Visible(object):
         self.pathMidPoints = midPoints
         
         path = list(midPoints)
-        # TODO: compute intersection of path with start and end visibles
         path.insert(0, self.pathStart.worldPosition())
         path.append(self.pathEnd.worldPosition())
         
