@@ -129,7 +129,7 @@ for muscle in display.network.muscles():
             muscleY += 0.025
     display.setVisiblePosition(muscle, (muscleX, muscleY, -1.0), fixed = True)
     display.setVisibleSize(muscle, (0.01, 0.02, .01))
-    display.setLabelColor(muscle, (0.9, 0.9, 0.9))
+    display.setVisibleColor(muscle, (1.0, 0.5, 0.5))
 
 for innervation in display.network.innervations():
     display.setVisibleWeight(innervation, 0.5 if innervation.getAttribute('Count').value < 5.0 else 2.0)
