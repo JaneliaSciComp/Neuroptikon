@@ -52,5 +52,5 @@ class Cone(UnitShape):
     
     
     def intersectionPoint(self, rayOrigin, rayDirection):
-        # TODO
+        # TODO: use the logic from <http://www.geometrictools.com/Documentation/IntersectionLineCone.pdf>
         return None
