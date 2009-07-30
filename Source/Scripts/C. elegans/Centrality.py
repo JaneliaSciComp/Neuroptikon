@@ -33,7 +33,27 @@ centralities = networkx.degree_centrality(graph)
 maxCentrality = max(centralities.itervalues())
 
 # Alter the visualization of each node based on its centrality.
+objectCentralities = {}
 for node, centrality in centralities.iteritems():
     object = network.objectWithId(node)
-    centrality /= maxCentrality
-    display.setVisibleColor(object, (centrality, centrality, centrality))
+    objectCentralities[object] = centrality / maxCentrality
+    diameter = 0.001 + objectCentralities[object] * 0.029
+    display.setVisibleSize(object, [diameter] * 3)
+
+for synapse in network.synapses():
+    centrality = objectCentralities[synapse.preSynapticNeurite.neuron()]
+    for neurite in synapse.postSynapticNeurites:
+        centrality += objectCentralities[neurite.neuron()]
+    centrality /= 1 + len(synapse.postSynapticNeurites)
+    display.setVisibleOpacity(synapse, centrality)
+
+for gapJunction in network.gapJunctions():
+    centrality = 0.0
+    for neurite in gapJunction.neurites:
+        centrality += objectCentralities[neurite.neuron()]
+    centrality /= 2.0
+    display.setVisibleOpacity(gapJunction, centrality)
+
+for innervation in network.innervations():
+    centrality = (objectCentralities[innervation.neurite.neuron()] + objectCentralities[innervation.muscle]) / 2.0
+    display.setVisibleOpacity(innervation, centrality)
