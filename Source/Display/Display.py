@@ -662,6 +662,8 @@ class Display(wx.glcanvas.GLCanvas):
                 self.addDragger(visible)
         if not self._suppressRefresh:
             self.Refresh()
+        if signal[1] not in ('glowColor'):
+            self.GetTopLevelParent().setModified(True)
     
     
     def addVisible(self, visible, parentVisible = None):
@@ -918,6 +920,7 @@ class Display(wx.glcanvas.GLCanvas):
                 # TODO: remove the visibles from the scene graph
         else:
             pass    # TODO: anything?
+        self.GetTopLevelParent().setModified(True)
     
     
     def neuronRegionChanged(self, signal, sender):

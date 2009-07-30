@@ -8,6 +8,9 @@ from Network.Network import Network
 from Search.Finder import Finder
 import Layouts
 
+if platform.system() == 'Darwin':
+    import ctypes    carbon = ctypes.CDLL('/System/Library/Carbon.framework/Carbon')
+
 
 class NeuroptikonFrame( wx.Frame ):
     def __init__(self, network = None, id = wx.ID_ANY):
@@ -60,6 +63,8 @@ class NeuroptikonFrame( wx.Frame ):
         
         self.Show(1)
         self.splitter.SetSashPosition(-100)
+        
+        self._modified = False
     
     
     def networkDidChangeSavePath(self, signal = None, sender = None):
@@ -270,9 +275,25 @@ class NeuroptikonFrame( wx.Frame ):
         menuItem.Enable(layoutClass.canLayoutDisplay(self.display))
     
     
-    def onCloseWindow(self, event):
-        self.Destroy()
-        wx.GetApp().displayWasClosed(self)
+    def onCloseWindow(self, event = None):
+        success = True
+        
+        if self._modified:
+            message = gettext('Your changes will be lost if you don\'t save them.')
+            caption = gettext('Do you want to save the changes you made to "%s"?') % (self.display.network.name())
+            dialog = wx.MessageDialog(self, message, caption, style = wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL)
+            result = dialog.ShowModal()
+            dialog.Destroy()
+            if result == wx.ID_YES:
+                success = self.onSaveNetwork()
+            elif result == wx.ID_CANCEL:
+                success = False
+        
+        if success:
+            self.Destroy()
+            wx.GetApp().displayWasClosed(self)
+        
+        return success
     
     
     def indentXMLElement(self, element, level=0):
@@ -292,30 +313,27 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     def saveNetworkAndDisplaysAsXML(self, savePath, saveDisplays = True):
-        try:
-            xmlRoot = ElementTree.Element('Neuroptikon')
-            network = self.display.network
-            
-            # Serialize the network
-            networkElement = network.toXMLElement(xmlRoot)
-            if networkElement is None:
-                raise ValueError, gettext('Could not save the network')
-            
-            if saveDisplays:
-                # Serialize the display(s)
-                for display in network.displays:
-                    frameElement = display.GetTopLevelParent().toXMLElement(xmlRoot)
-                    if frameElement is None:
-                        raise ValueError, gettext('Could not save one of the windows')
-            
-            self.indentXMLElement(xmlRoot)
-            xmlTree = ElementTree.ElementTree(xmlRoot)
-            xmlTree.write(savePath)
-            
-            # To test the contents of the output use:
-            # xmllint --noout --schema Source/Neuroptikon_v1.0.xsd Test.xml
-        except:
-            raise    # TODO: inform the user nicely
+        xmlRoot = ElementTree.Element('Neuroptikon')
+        network = self.display.network
+        
+        # Serialize the network
+        networkElement = network.toXMLElement(xmlRoot)
+        if networkElement is None:
+            raise ValueError, gettext('Could not save the network')
+        
+        if saveDisplays:
+            # Serialize the display(s)
+            for display in network.displays:
+                frameElement = display.GetTopLevelParent().toXMLElement(xmlRoot)
+                if frameElement is None:
+                    raise ValueError, gettext('Could not save one of the windows')
+        
+        self.indentXMLElement(xmlRoot)
+        xmlTree = ElementTree.ElementTree(xmlRoot)
+        xmlTree.write(savePath)
+        
+        # To test the contents of the output use:
+        # xmllint --noout --schema Source/Neuroptikon_v1.0.xsd Test.xml
     
     
     def saveNetworkAndDisplaysAsScript(self, savePath, saveNetwork = True, saveDisplays = True):
@@ -393,7 +411,9 @@ class NeuroptikonFrame( wx.Frame ):
             scriptFile.close()
     
     
-    def onSaveNetwork(self, event):
+    def onSaveNetwork(self, event = None):
+        success = False
+        
         network = self.display.network
         if network.savePath() is None:
             dlg = wx.FileDialog(None, gettext('Save as:'), '', 'Network.xml', '*.xml', wx.SAVE | wx.FD_OVERWRITE_PROMPT)
@@ -404,7 +424,17 @@ class NeuroptikonFrame( wx.Frame ):
                 network.setSavePath(savePath)
         
         if network.savePath() is not None:
-            self.saveNetworkAndDisplaysAsXML(network.savePath())
+            try:
+                self.saveNetworkAndDisplaysAsXML(network.savePath())
+                for display in network.displays:
+                    display.GetTopLevelParent().setModified(False)
+                success = True
+            except:
+                (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
+                dialog = wx.MessageDialog(self, exceptionValue.message, gettext('The file could not be saved.'), style = wx.ICON_ERROR | wx.OK)
+                dialog.ShowModal()
+        
+        return success
     
     
     def onSaveNetworkAs(self, event):
@@ -433,10 +463,30 @@ class NeuroptikonFrame( wx.Frame ):
                 if extension == 'xml':
                     network.setSavePath(savePath)
                     self.saveNetworkAndDisplaysAsXML(savePath, saveDisplays)
+                    for display in network.displays:
+                        display.GetTopLevelParent().setModified(False)
+                    # TODO: if only the network was saved and the diplay was changed then those changes could be lost...
                 else:
                     self.saveNetworkAndDisplaysAsScript(savePath, saveNetwork, saveDisplays)
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                 dialog = wx.MessageDialog(self, exceptionValue.message, gettext('The file could not be saved.'), style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
+    
+    
+    def setModified(self, modified):
+        if self._modified != modified:
+            self._modified = modified
+            if platform.system() == 'Darwin':
+                # Use ctypes to call into the Carbon API to set the window's modified state.  When modified is True this causes the close button to be drawn with a dot inside it.
+                # Use wx.CallAfter otherwise the dot won't show up until the window is resized, deactivated or the mouse hovers over the button.
+                wx.CallAfter(carbon.SetWindowModified, self.MacGetTopLevelWindowRef(), modified)
+            elif platform.system() == 'Windows':
+                title = self.GetTitle()
+                if modified and not title.endswith('*'):
+                    self.SetTitle(title + '*')                elif not modified and title.endswith('*'):
+                    self.SetTitle(title[:-1])    
+    
+    def isModified(self):
+        return self._modified
     

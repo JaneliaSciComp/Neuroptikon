@@ -183,9 +183,14 @@ if __name__ == "__main__":
         
         
         def onQuit(self, event):
+            continueQuit = True
             for frame in list(self._frames):
-                frame.Close()
-            if len(self._frames) == 0 and platform.system() != 'Windows':
+                if frame.isModified():
+                    frame.Raise()
+                if not frame.onCloseWindow():
+                    continueQuit = False
+                    break
+            if continueQuit and not any(self._frames) and platform.system() != 'Windows':
                 self.ExitMainLoop()
         
         
