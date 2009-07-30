@@ -116,5 +116,17 @@ class Ball(UnitShape):
     
     
     def intersectionPoint(self, rayOrigin, rayDirection):
-        # TODO
-        return None
+        # Logic from <http://local.wasp.uwa.edu.au/~pbourke/geometry/sphereline/>
+        a = rayDirection[0] ** 2 + rayDirection[1] ** 2 + rayDirection[2] ** 2
+        b = 2 * (rayDirection[0] * rayOrigin[0] + rayDirection[1] * rayOrigin[1] + rayDirection[2] * rayOrigin[2])
+        c = rayOrigin[0] ** 2 + rayOrigin[1] ** 2 + rayOrigin[2] ** 2 - 0.5 ** 2
+        core = b ** 2 - 4 * a * c
+        if core < 0.0:
+            return None
+        elif core == 0.0:
+            u = -b / (2 * a)
+        else:
+            u1 = (-b + sqrt(core)) / (2 * a)
+            u2 = (-b - sqrt(core)) / (2 * a)
+            u = min(u1, u2)
+        return (rayOrigin[0] + rayDirection[0] * u, rayOrigin[1] + rayDirection[1] * u, rayOrigin[2] + rayDirection[2] * u)
