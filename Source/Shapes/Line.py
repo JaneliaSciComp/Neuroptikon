@@ -20,6 +20,14 @@ class Line(PathShape):
     
     
     def setPoints(self, pathPoints):
+        threeDPathPoints = []
+        for pathPoint in pathPoints:
+            if len(pathPoint) == 2:
+                threeDPathPoints += [(pathPoint[0], pathPoint[1], 0.0)]
+            else:
+                threeDPathPoints += [pathPoint]
+        pathPoints = threeDPathPoints
+        
         if pathPoints != self._pathPoints:
             while self.geometry().getNumPrimitiveSets() > 0:
                 self.geometry().removePrimitiveSet(0)
@@ -32,11 +40,9 @@ class Line(PathShape):
             lastPoint = None
             pathLength = 0.0
             for pathPoint in self._pathPoints:
-                if len(pathPoint) == 2:
-                    pathPoint = (pathPoint[0], pathPoint[1], 0.0)
                 if lastPoint != None:
                     pathLength += sqrt((pathPoint[0] - lastPoint[0]) ** 2 + (pathPoint[1] - lastPoint[1]) ** 2 + (pathPoint[2] - lastPoint[2]) ** 2)
-                vertices.append((pathPoint[0], pathPoint[1], 0.0 if len(pathPoint) == 2 else pathPoint[2]))
+                vertices.append((pathPoint[0], pathPoint[1], pathPoint[2]))
                 textureCoords.append([pathLength] * 2)
                 lastPoint = pathPoint
             
