@@ -42,8 +42,8 @@ class Line(PathShape):
             for pathPoint in self._pathPoints:
                 if lastPoint != None:
                     pathLength += sqrt((pathPoint[0] - lastPoint[0]) ** 2 + (pathPoint[1] - lastPoint[1]) ** 2 + (pathPoint[2] - lastPoint[2]) ** 2)
-                vertices.append((pathPoint[0], pathPoint[1], pathPoint[2]))
-                textureCoords.append([pathLength] * 2)
+                vertices += [pathPoint]
+                textureCoords += [(pathLength, pathLength)]
                 lastPoint = pathPoint
             
             self.geometry().setVertexArray(Shape.vectorArrayFromList(vertices))
