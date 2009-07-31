@@ -94,19 +94,13 @@
 		</xs:complexContent>
 	</xs:complexType>
 	
-	<xs:complexType name="PathwayTerminus">
-		<xs:attribute name="regionId" type="xs:integer" use="required"/>
-		<xs:attribute name="sends" type="xs:boolean"/>
-		<xs:attribute name="receives" type="xs:boolean"/>
-	</xs:complexType>
-	
 	<xs:complexType name="Pathway">
 		<xs:complexContent>
 			<xs:extension base="Object">
-				<xs:sequence>
-					<xs:element name="PathwayTerminus" type="PathwayTerminus"/>
-					<xs:element name="PathwayTerminus" type="PathwayTerminus"/>
-				</xs:sequence>
+				<xs:attribute name="region1Id" type="xs:integer" use="required"/>
+				<xs:attribute name="region1Projects" type="xs:boolean"/>
+				<xs:attribute name="region2Id" type="xs:integer" use="required"/>
+				<xs:attribute name="region2Projects" type="xs:boolean"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>

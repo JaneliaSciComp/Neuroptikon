@@ -31,11 +31,17 @@ class Network:
         self._savePath = None
         self.attributes = []
         self._displaysAreSynchronized = True
+        
+        self._loadingFromXML = False
+        self._modified = False
     
     
     @classmethod
     def fromXMLElement(cls, xmlElement):
         network = cls()
+        
+        network._loadingFromXML = True
+        
         # Load the classes in such an order that any referenced objects are guaranteed to have already been created.
         for className in ['Region', 'Pathway', 'Neuron', 'Muscle', 'Arborization', 'Innervation', 'GapJunction', 'Synapse', 'Stimulus']:
             elementModule = getattr(sys.modules['Network'], className)
@@ -49,6 +55,8 @@ class Network:
             attribute = Attribute.fromXMLElement(network, element)
             if attribute is not None:
                 network.attributes.append(attribute)
+        
+        network._loadingFromXML = False
         
         return network
     
@@ -198,6 +206,12 @@ class Network:
         return self.objectsOfClass(Muscle)
     
     
+    def objectChanged(self, sender, signal):
+        if not self._loadingFromXML and not self._modified:
+            self._modified = True
+            dispatcher.send(('set', 'modified'), self)
+
+    
     def addObject(self, object):
         if object.networkId in self.idDict:
             raise ValueError, gettext('All objects in a network must have unique identifiers.')
@@ -221,10 +235,10 @@ class Network:
             self.graph.add_edge(neurites[0].neuron().networkId, neurites[1].neuron().networkId, object)
             self.graph.add_edge(neurites[1].neuron().networkId, neurites[0].neuron().networkId, object)
         elif isinstance(object, Pathway):
-            if object.terminus1.sendsOutput == None or object.terminus1.sendsOutput:
-                self.graph.add_edge(object.terminus1.region.networkId, object.terminus2.region.networkId, object)
-            if object.terminus2.sendsOutput == None or object.terminus2.sendsOutput:
-                self.graph.add_edge(object.terminus2.region.networkId, object.terminus1.region.networkId, object)
+            if object.region1Projects == None or object.region1Projects:
+                self.graph.add_edge(object.region1.networkId, object.region2.networkId, object)
+            if object.region2Projects == None or object.region2Projects:
+                self.graph.add_edge(object.region2.networkId, object.region1.networkId, object)
         elif isinstance(object, Innervation):
             self.graph.add_edge(object.neurite.neuron().networkId, object.muscle.networkId, object)
         elif isinstance(object, Stimulus):
@@ -232,6 +246,9 @@ class Network:
             self.graph.add_edge(object.networkId, object.target.networkId, object)
         elif isinstance(object, Region) or isinstance(object, Neuron) or isinstance(object, Muscle):
             self.graph.add_node(object.networkId)
+        
+        dispatcher.connect(self.objectChanged, dispatcher.Any, object)
+        
         dispatcher.send('addition', self, affectedObjects = [object])
     
     

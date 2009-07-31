@@ -9,7 +9,8 @@ from Search.Finder import Finder
 import Layouts
 
 if platform.system() == 'Darwin':
-    import ctypes    carbon = ctypes.CDLL('/System/Library/Carbon.framework/Carbon')
+    import ctypes
+    carbon = ctypes.CDLL('/System/Library/Carbon.framework/Carbon')
 
 
 class NeuroptikonFrame( wx.Frame ):
@@ -426,6 +427,7 @@ class NeuroptikonFrame( wx.Frame ):
         if network.savePath() is not None:
             try:
                 self.saveNetworkAndDisplaysAsXML(network.savePath())
+                self.display.network._modified = False
                 for display in network.displays:
                     display.GetTopLevelParent().setModified(False)
                 success = True
@@ -463,6 +465,7 @@ class NeuroptikonFrame( wx.Frame ):
                 if extension == 'xml':
                     network.setSavePath(savePath)
                     self.saveNetworkAndDisplaysAsXML(savePath, saveDisplays)
+                    self.display.network._modified = False
                     for display in network.displays:
                         display.GetTopLevelParent().setModified(False)
                     # TODO: if only the network was saved and the diplay was changed then those changes could be lost...
@@ -484,8 +487,10 @@ class NeuroptikonFrame( wx.Frame ):
             elif platform.system() == 'Windows':
                 title = self.GetTitle()
                 if modified and not title.endswith('*'):
-                    self.SetTitle(title + '*')                elif not modified and title.endswith('*'):
-                    self.SetTitle(title[:-1])    
+                    self.SetTitle(title + '*')
+                elif not modified and title.endswith('*'):
+                    self.SetTitle(title[:-1])
+    
     
     def isModified(self):
         return self._modified

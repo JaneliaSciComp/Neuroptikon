@@ -3,6 +3,7 @@ from wx.py import dispatcher
 import xml.etree.ElementTree as ElementTree
 
 
+# Legacy class used by versions prior to 0.9.4.  Preserved here to allow loading of older XML files.
 class PathwayTerminus(object):
     def __init__(self, pathway, region, sendsOutput=None, receivesInput=None):
         object.__init__(self)
@@ -36,38 +37,21 @@ class PathwayTerminus(object):
         return PathwayTerminus(network, region, sends, receives)
     
     
-    def toXMLElement(self, parentElement):
-        terminusElement = ElementTree.SubElement(parentElement, self.__class__.__name__, regionId = str(self.region.networkId))
-        if self.sendsOutput is not None:
-            terminusElement.set('sends', 'true' if self.sendsOutput else 'false')
-        if self.receivesInput is not None:
-            terminusElement.set('receives', 'true' if self.receivesInput else 'false')
-        return terminusElement
-    
-    
-    def __setattr__(self, name, value):
-        # Send out a message whenever one of this object's values changes.  This is needed, for example, to allow the GUI to update when an object is modified via the console or a script.
-        hasPreviousValue = hasattr(self, name)
-        if hasPreviousValue:
-            previousValue = getattr(self, name)
-        object.__setattr__(self, name, value)
-        if not hasPreviousValue or getattr(self, name) != previousValue:
-            dispatcher.send(('set', name), self)
-    
-    
 class Pathway(Object):
     
-    def __init__(self, region1, region2, sendsOutput = None, receivesInput = None, *args, **keywords):
+    def __init__(self, region1, region2, region1Projects = None, region2Projects = None, *args, **keywords):
         Object.__init__(self, region1.network, *args, **keywords)
         
         self.neurites = []
         
-        self.terminus1 = PathwayTerminus(self, region1, sendsOutput, receivesInput)
-        self.terminus2 = PathwayTerminus(self, region2, receivesInput, sendsOutput)
+        self.region1 = region1
+        self.region1Projects = region1Projects
+        self.region2 = region2
+        self.region2Projects = region2Projects
     
     
     def defaultName(self):
-        names = [str(self.terminus1.region.name), str(self.terminus2.region.name)]
+        names = [str(self.region1.name), str(self.region2.name)]
         names.sort()
         return names[0] + ' <-> ' + names[1]
     
@@ -77,23 +61,53 @@ class Pathway(Object):
         object = super(Pathway, cls).fromXMLElement(network, xmlElement)
         object.neurites = []
         terminusElements = xmlElement.findall('PathwayTerminus')
-        if len(terminusElements) != 2:
-            raise ValueError, gettext('A pathway must have two and only two termini.')
-        object.terminus1 = PathwayTerminus.fromXMLElement(network, terminusElements[0])
-        if object.terminus1 is None:
-            raise ValueError, gettext('Could not create pathway terminus')
-        object.terminus1.pathway = object
-        object.terminus2 = PathwayTerminus.fromXMLElement(network, terminusElements[1])
-        if object.terminus2 is None:
-            raise ValueError, gettext('Could not create pathway terminus')
-        object.terminus2.pathway = object
+        if len(terminusElements) == 0:
+            # Format since 0.9.4
+            regionId = xmlElement.get('region1Id')
+            object.region1 = network.objectWithId(regionId)
+            if object.region1 is None:
+                raise ValueError, gettext('Region with id "%s" does not exist') % (regionId)
+            sends = str(xmlElement.get('region1Projects')).lower()
+            if sends.lower() in ['true', 't', '1', 'yes']:
+                object.region1Projects = True
+            elif sends.lower() in ['false', 'f', '0', 'no']:
+                object.region1Projects = False
+            else:
+                object.region1Projects = None
+            regionId = xmlElement.get('region2Id')
+            object.region2 = network.objectWithId(regionId)
+            if object.region2 is None:
+                raise ValueError, gettext('Region with id "%s" does not exist') % (regionId)
+            sends = str(xmlElement.get('region2Projects')).lower()
+            if sends.lower() in ['true', 't', '1', 'yes']:
+                object.region2Projects = True
+            elif sends.lower() in ['false', 'f', '0', 'no']:
+                object.region2Projects = False
+            else:
+                object.region2Projects = None
+        else:
+            # Format prior to version 0.9.4
+            terminus1 = PathwayTerminus.fromXMLElement(network, terminusElements[0])
+            if terminus1 is None:
+                raise ValueError, gettext('Could not create connection to first region of pathway')
+            object.region1 = terminus1.region
+            object.region1Projects = terminus1.sendsOutput
+            terminus2 = PathwayTerminus.fromXMLElement(network, terminusElements[1])
+            if terminus2 is None:
+                raise ValueError, gettext('Could not create connection to second region of pathway')
+            object.region2 = terminus2.region
+            object.region2Projects = terminus2.sendsOutput
         return object
      
     
     def toXMLElement(self, parentElement):
         pathwayElement = Object.toXMLElement(self, parentElement)
-        self.terminus1.toXMLElement(pathwayElement)
-        self.terminus2.toXMLElement(pathwayElement)
+        pathwayElement.set('region1Id', str(self.region1.networkId))
+        if self.region1Projects != None:
+            pathwayElement.set('region1Projects', str(self.region1Projects).lower())
+        pathwayElement.set('region2Id', str(self.region2.networkId))
+        if self.region2Projects != None:
+            pathwayElement.set('region2Projects', str(self.region2Projects).lower())
         return pathwayElement
     
     
@@ -102,16 +116,16 @@ class Pathway(Object):
         
         
     def creationScriptCommand(self, scriptRefs):
-        return scriptRefs[self.terminus1.region.networkId] + '.addPathwayToRegion'
+        return scriptRefs[self.region1.networkId] + '.projectToRegion'
     
     
     def creationScriptParams(self, scriptRefs):
         args, keywords = Object.creationScriptParams(self, scriptRefs)
         args.insert(0, scriptRefs[self.terminus2.region.networkId])
-        if self.terminus1.sendsOutput is not None:
-            keywords['sendsOutput'] = str(self.terminus1.sendsOutput)
-        if self.terminus1.receivesInput is not None:
-            keywords['receivesInput'] = str(self.terminus1.receivesInput)
+        if self.region1Projects is not None:
+            keywords['sendsOutput'] = str(self.region1Projects)
+        if self.region2Projects is not None:
+            keywords['bidirectional'] = str(self.region2Projects)
         return (args, keywords)
    
     
@@ -121,18 +135,18 @@ class Pathway(Object):
     
     def inputs(self):
         inputs = Object.inputs(self)
-        if terminus1.receivesInput:
-            inputs.append(terminus1.region)
-        if terminus2.receivesInput:
-            inputs.append(terminus2.region)
+        if region1Projects == None or region1Projects:
+            inputs.append(region1)
+        if region2Projects == None or region2Projects:
+            inputs.append(region2)
         return inputs
     
     
     def outputs(self):
         outputs = Object.outputs(self)
-        if terminus1.sendsOutput:
-            inputs.append(terminus1.region)
-        if terminus2.sendsOutput:
-            inputs.append(terminus2.region)
+        if region1Projects == None or region1Projects:
+            inputs.append(region2)
+        if region2Projects == None or region2Projects:
+            inputs.append(region1)
         return outputs
     

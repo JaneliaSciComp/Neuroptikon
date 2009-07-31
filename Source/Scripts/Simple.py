@@ -4,7 +4,7 @@ lightStimulus = network.createStimulus(target = neuron1, modality = library.moda
 smellStimulus = network.createStimulus(target = neuron2, modality = library.modality('odor'))
 regionA = network.createRegion(name = 'Region A')
 regionB = network.createRegion(name = 'Region B')
-pathway = regionA.addPathwayToRegion(regionB)
+pathway = regionA.projectToRegion(regionB)
 
 neuron1.arborize(regionA, True, False)
 neuron1.arborize(regionB, True, False)

@@ -720,12 +720,12 @@ class Display(wx.glcanvas.GLCanvas):
         elif isinstance(object, Muscle):
             params['shape'] = shapes['Capsule']()
             params['size'] = (.1, .2, .02)
-            params['color'] = (0.5, 0, 0)
+            params['color'] = (0.75, 0.5, 0.5)
             try:
                 params['texture'] = wx.GetApp().library.texture('Stripes')
             except:
                 pass
-            params['textureScale'] = 10.0
+            params['textureScale'] = 20.0
             params['label'] = object.abbreviation or object.name
         elif isinstance(object, Arborization):
             params['shape'] = shapes['Line']()
@@ -771,10 +771,10 @@ class Display(wx.glcanvas.GLCanvas):
             childObjects.extend(object.subRegions)
             childObjects.extend(object.neurons)
         elif isinstance(object, Pathway):
-            pathStart = object.terminus1.region
-            pathEnd = object.terminus2.region
-            pathFlowsTo = object.terminus1.sendsOutput
-            pathFlowsFrom = object.terminus1.receivesInput
+            pathStart = object.region1
+            pathEnd = object.region2
+            pathFlowsTo = object.region1Projects
+            pathFlowsFrom = object.region2Projects
         elif isinstance(object, Neuron):
             parentObject = object.region
             #TODO: dispatcher.connect(self.neuronRegionChanged, ('set', 'region'), object)

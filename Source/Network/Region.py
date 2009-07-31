@@ -103,7 +103,14 @@ class Region(Object):
     
     
     def addPathwayToRegion(self, otherRegion, sendsOutput = None, receivesInput = None, name = None):
-        pathway = Pathway(self, otherRegion, name = name, sendsOutput = sendsOutput, receivesInput = receivesInput)
+        """ This method is deprecated, please use projectToRegion instead. """
+        pathway = self.projectToRegion(otherRegion, sendsOutput == True, bidirectional = receivesInput, name = name)
+        pathway.region1Projects = sendsOutput
+        return pathway
+    
+    
+    def projectToRegion(self, otherRegion, knownProjection = True, bidirectional = None, name = None):
+        pathway = Pathway(region1 = self, region2 = otherRegion, region1Projects = True if knownProjection else None, region2Projects = bidirectional, name = name)
         self.pathways.append(pathway)
         otherRegion.pathways.append(pathway)
         self.network.addObject(pathway)
