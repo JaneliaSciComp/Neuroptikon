@@ -1,2 +1,2 @@
-version = "0.9.3m"
-version_info = (0, 9, 3, 'm')
+version = "0.9.4"
+version_info = (0, 9, 4)
