@@ -175,8 +175,8 @@ class OrthogonalPathLayout(Layout):
         centerPositions = {}
         minPositions = {}
         maxPositions = {}
-        minBound = N.ones(display.viewDimensions) * 1e1000
-        maxBound = N.ones(display.viewDimensions) * -1e1000
+        minBound = N.ones(display.viewDimensions) * 1e300
+        maxBound = N.ones(display.viewDimensions) * -1e300
         edges = []
         ports = {}
         for visibles in display.visibles.itervalues():
@@ -291,8 +291,8 @@ class OrthogonalPathLayout(Layout):
                         delta1 = N.array(path[index]) - N.array(path[index - 1])
                         sameSlope = True
                         for dim in range(1, display.viewDimensions):
-                            slope0 = 1e1000 if delta0[0] == 0.0 else delta0[dim] / delta0[0]
-                            slope1 = 1e1000 if delta1[0] == 0.0 else delta1[dim] / delta1[0]
+                            slope0 = 1e300 if delta0[0] == 0.0 else delta0[dim] / delta0[0]
+                            slope1 = 1e300 if delta1[0] == 0.0 else delta1[dim] / delta1[0]
                             if abs(slope0 - slope1) > 0.00001:
                                 sameSlope = False
                                 break
@@ -323,8 +323,8 @@ class OrthogonalPathLayout(Layout):
                         delta0 = N.array(x.node) - N.array(prevNode)
                         delta1 = N.array(node_y) - N.array(x.node)
                         for dim in range(1, display.viewDimensions):
-                            slope0 = 1e1000 if delta0[0] == 0.0 else delta0[dim] / delta0[0]
-                            slope1 = 1e1000 if delta1[0] == 0.0 else delta1[dim] / delta1[0]
+                            slope0 = 1e300 if delta0[0] == 0.0 else delta0[dim] / delta0[0]
+                            slope1 = 1e300 if delta1[0] == 0.0 else delta1[dim] / delta1[0]
                             if slope0 != slope1:
                                 g_score += 20.0
                                 break

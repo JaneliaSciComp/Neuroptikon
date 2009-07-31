@@ -43,8 +43,8 @@ class Box(UnitShape):
                 tmin += [( 0.5 - rayOrigin[dim]) / rayDirection[dim]]
                 tmax += [(-0.5 - rayOrigin[dim]) / rayDirection[dim]]
             else:   # rayDirection[dim] == 0.0
-                tmin += [1e1000 if rayOrigin[dim] <= -0.5 else -1e1000]
-                tmax += [1e1000 if rayOrigin[dim] <=  0.5 else -1e1000]
+                tmin += [1e300 if rayOrigin[dim] <= -0.5 else -1e300]
+                tmax += [1e300 if rayOrigin[dim] <=  0.5 else -1e300]
         if tmin[0] > tmax[1] or tmin[1] > tmax[0]:
             return None
         if tmin[1] > tmin[0]:

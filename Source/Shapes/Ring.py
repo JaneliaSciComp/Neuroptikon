@@ -76,7 +76,7 @@ class Ring(UnitShape):
             intersections += [((D * rayDirection[1] + sgn_dy * rayDirection[0] * bigPiece) / dr2, (-D * rayDirection[0] - abs(rayDirection[1]) * bigPiece) / dr2, 0.0)]
             intersections += [((D * rayDirection[1] - sgn_dy * rayDirection[0] * bigPiece) / dr2, (-D * rayDirection[0] + abs(rayDirection[1]) * bigPiece) / dr2, 0.0)]
             intersections += [((D * rayDirection[1] - sgn_dy * rayDirection[0] * bigPiece) / dr2, (-D * rayDirection[0] - abs(rayDirection[1]) * bigPiece) / dr2, 0.0)]
-            minDist = 1e1000
+            minDist = 1e300
             closestIntersection = None
             for intersection in intersections:
                 distToOrigin = (intersection[0] - rayOrigin[0]) ** 2 + (intersection[1] - rayOrigin[1]) ** 2

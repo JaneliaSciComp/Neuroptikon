@@ -1625,9 +1625,15 @@ class Visible(object):
                 path[-1:] = [intersectionPoint]
         
         if isinstance(self._shape, UnitShape):
-            # Create a straight connection from start to end            # TODO: Will this object ever have a parent?  If so then we'll have to translate world to local coordinates here.            position, size, rotation = self.positionSizeRotation(path[0], path[-1])            self.setPosition(position)            self.setSize(size)            self.setRotation(rotation)
-        else:            minBound = (1e1000, 1e1000, 1e1000)
-            maxBound = (-1e1000, -1e1000, -1e1000)
+            # Create a straight connection from start to end
+            # TODO: Will this object ever have a parent?  If so then we'll have to translate world to local coordinates here.
+            position, size, rotation = self.positionSizeRotation(path[0], path[-1])
+            self.setPosition(position)
+            self.setSize(size)
+            self.setRotation(rotation)
+        else:
+            minBound = (1e300, 1e300, 1e300)
+            maxBound = (-1e300, -1e300, -1e300)
             for point in path:
                 minBound = (min(minBound[0], point[0]), min(minBound[1], point[1]), min(minBound[2], point[2]))
                 maxBound = (max(maxBound[0], point[0]), max(maxBound[1], point[1]), max(maxBound[2], point[2]))
