@@ -67,7 +67,7 @@ class InspectorFrame( wx.Frame ):
                 self._activeInspectors.append(inspector)
                 inspector.toolbarId = wx.NewId()
                 bitmapSize = 16 if platform.system() == 'Windows' else 32
-                toolbar.AddRadioLabelTool(inspector.toolbarId, inspector.__class__.name(), inspector.__class__.bitmap(bitmapSize), wx.NullBitmap, inspector.__class__.name() + ' ' + gettext('Inspector'))
+                toolbar.AddRadioLabelTool(inspector.toolbarId, inspector.__class__.name(), inspector.__class__.bitmap(bitmapSize), wx.NullBitmap, gettext('%s Inspector') % (inspector.__class__.name()))
                 self.Bind(wx.EVT_TOOL, self.onShowInspector, id = inspector.toolbarId)
                 bestSize = inspector.window().GetBestSize()
                 self._minWidth = max(self._minWidth, bestSize.GetWidth())
@@ -105,11 +105,12 @@ class InspectorFrame( wx.Frame ):
                 self._activeInspector.willBeShown()
                 self._activeInspector.inspectDisplay(self.display)
                 self.GetSizer().Show(self._activeInspector.window())
-                self.SetTitle(inspector.name() + ' ' + gettext('Inspector'))
+                self.SetTitle(gettext('%s Inspector') % (inspector.name()))
                 toolbarWidth = len(self._activeInspectors) * 32
                 self.SetMinSize(wx.Size(max(self._minWidth, toolbarWidth), self._minHeight + 40))
                 self._activeInspector.window().Layout()
-                self.Layout()
+            self.Layout()
+            self.SendSizeEvent()
     
     
     def onShowInspector(self, event):

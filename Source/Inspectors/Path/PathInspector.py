@@ -26,8 +26,7 @@ class PathInspector(Inspector):
             self._window = wx.Window(parentWindow, wx.ID_ANY)
             self._sizer = wx.BoxSizer(wx.VERTICAL)
             
-            self._flowToBoxSizer = wx.StaticBoxSizer(wx.StaticBox(self._window, wx.ID_ANY, gettext('Flow to')), wx.HORIZONTAL)
-            
+            self._flowToBoxSizer = wx.StaticBoxSizer(wx.StaticBox(self._window, wx.ID_ANY, gettext('Flow to')), wx.HORIZONTAL)            
             flowToGridSizer = wx.FlexGridSizer(3, 2, 8, 0)
             flowToGridSizer.SetFlexibleDirection(wx.HORIZONTAL)
             flowToGridSizer.AddGrowableCol(1, 1)
@@ -61,8 +60,7 @@ class PathInspector(Inspector):
             self._flowToBoxSizer.Add(flowToGridSizer, 1, wx.EXPAND)
             self._sizer.Add(self._flowToBoxSizer, 1, wx.EXPAND | wx.ALL, 5)
             
-            self._flowFromBoxSizer = wx.StaticBoxSizer(wx.StaticBox(self._window, wx.ID_ANY, gettext('Flow to')), wx.HORIZONTAL)
-            
+            self._flowFromBoxSizer = wx.StaticBoxSizer(wx.StaticBox(self._window, wx.ID_ANY, gettext('Flow to')), wx.HORIZONTAL)            
             flowFromGridSizer = wx.FlexGridSizer(3, 2, 8, 0)
             flowFromGridSizer.SetFlexibleDirection(wx.HORIZONTAL)
             flowFromGridSizer.AddGrowableCol(1, 1)
@@ -123,7 +121,7 @@ class PathInspector(Inspector):
             for path in self.paths:
                 for attributeName in ['flowTo', 'flowToColor', 'flowToSpread', 'flowFrom', 'flowFromColor', 'flowFromSpread']:
                     dispatcher.connect(self.refreshGUI, ('set', attributeName), visible)
-        self._flowToBoxSizer.Layout()
+        
         self.refreshGUI()
     
     
@@ -214,7 +212,7 @@ class PathInspector(Inspector):
                 else:
                     spread = self.paths[0].flowToSpread()
                 self._flowToSpreadSlider.SetLabel('')
-                self._flowFromSpreadSlider.SetValue(spread * 100.0)
+                self._flowToSpreadSlider.SetValue(spread * 100.0)
             else:
                 self._flowToSpreadSlider.SetLabel(gettext('Multiple values'))
                 self._flowToSpreadSlider.SetValue(50)
