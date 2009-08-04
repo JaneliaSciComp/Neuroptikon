@@ -719,7 +719,7 @@ class Display(wx.glcanvas.GLCanvas):
             params['color'] = neuralTissueColor
         elif isinstance(object, Muscle):
             params['shape'] = shapes['Capsule']()
-            params['size'] = (.1, .2, .02)
+            params['size'] = (.05, .1, .02)
             params['color'] = (0.75, 0.5, 0.5)
             try:
                 params['texture'] = wx.GetApp().library.texture('Stripes')
