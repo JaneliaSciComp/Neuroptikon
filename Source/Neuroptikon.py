@@ -322,6 +322,7 @@ if __name__ == "__main__":
                     if network is None:
                         raise ValueError, gettext('Could not load the network')
                     network.setSavePath(path)
+                    network.setModified(False)
                     self._networks.append(network)
                     
                     # Instantiate any displays

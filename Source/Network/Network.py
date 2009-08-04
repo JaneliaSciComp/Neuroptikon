@@ -210,6 +210,16 @@ class Network:
         if not self._loadingFromXML and not self._modified:
             self._modified = True
             dispatcher.send(('set', 'modified'), self)
+    
+    
+    def setModified(self, modified):
+        if self._modified != modified:
+            self._modified = modified
+            dispatcher.send(('set', 'modified'), self)
+    
+    
+    def isModified(self):
+        return self._modified
 
     
     def addObject(self, object):

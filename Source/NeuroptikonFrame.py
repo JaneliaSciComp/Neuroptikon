@@ -86,6 +86,7 @@ class NeuroptikonFrame( wx.Frame ):
         frame.display.setNetwork(network)
         frame.display.fromXMLElement(displayElement)
         frame.networkDidChangeSavePath()
+        frame.setModified(False)
         
         return frame
     
@@ -427,7 +428,7 @@ class NeuroptikonFrame( wx.Frame ):
         if network.savePath() is not None:
             try:
                 self.saveNetworkAndDisplaysAsXML(network.savePath())
-                self.display.network._modified = False
+                self.display.network.setModified(False)
                 for display in network.displays:
                     display.GetTopLevelParent().setModified(False)
                 success = True
@@ -465,7 +466,7 @@ class NeuroptikonFrame( wx.Frame ):
                 if extension == 'xml':
                     network.setSavePath(savePath)
                     self.saveNetworkAndDisplaysAsXML(savePath, saveDisplays)
-                    self.display.network._modified = False
+                    self.display.network.setModified(False)
                     for display in network.displays:
                         display.GetTopLevelParent().setModified(False)
                     # TODO: if only the network was saved and the diplay was changed then those changes could be lost...
