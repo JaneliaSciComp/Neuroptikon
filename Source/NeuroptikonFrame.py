@@ -26,6 +26,8 @@ class NeuroptikonFrame( wx.Frame ):
         
         self.splitter = wx.SplitterWindow(self, wx.ID_ANY, style = wx.SP_LIVE_UPDATE)
         
+        self._modified = False
+        
         self.display = Display.Display.Display(self.splitter)
         self.display.setNetwork(network)
         dispatcher.connect(self.networkDidChangeSavePath, ('set', 'savePath'), network)
@@ -64,8 +66,6 @@ class NeuroptikonFrame( wx.Frame ):
         
         self.Show(1)
         self.splitter.SetSashPosition(-100)
-        
-        self._modified = False
     
     
     def networkDidChangeSavePath(self, signal = None, sender = None):
@@ -292,6 +292,7 @@ class NeuroptikonFrame( wx.Frame ):
                 success = False
         
         if success:
+            self.display.network.removeDisplay(self.display)
             self.Destroy()
             wx.GetApp().displayWasClosed(self)
         
