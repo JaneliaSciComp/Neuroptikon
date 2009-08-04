@@ -1,8 +1,6 @@
 from Display.Layout import Layout
 from math import ceil, floor, sqrt
 import numpy as N
-import matplotlib.pyplot as pyplot
-import matplotlib.axes as Axes
 
 import pyheapq
 from heapset import HeapSet
@@ -95,11 +93,12 @@ class VisibleMap:
         return nodeOccupiers
     
     
-    def show(self):
-        layer1, layer2 = N.split(self._occupiedNodes, 2, axis = 2)
-        pyplot.matshow(N.transpose(layer1.squeeze()), origin = 'lower', fignum = 1)
-        pyplot.matshow(N.transpose(layer2.squeeze()), origin = 'lower', fignum = 2)
-        pyplot.show()
+#    def show(self):
+#        import matplotlib.pyplot as pyplot
+#        layer1, layer2 = N.split(self._occupiedNodes, 2, axis = 2)
+#        pyplot.matshow(N.transpose(layer1.squeeze()), origin = 'lower', fignum = 1)
+#        pyplot.matshow(N.transpose(layer2.squeeze()), origin = 'lower', fignum = 2)
+#        pyplot.show()
     
 
 def reconstruct_path(came_from, current_node):
