@@ -8,6 +8,10 @@ display.setDefaultFlowSpread(0.5)
 if not any(network.neurons()):
     execfile('Neurons.py')
 
+# Remove the muscles if they were added by another script.
+for muscle in network.muscles():
+    display.removeVisualization(muscle)
+
 # Set up the visualization
 
 for neuron in display.network.neurons():
@@ -27,8 +31,6 @@ for synapse in display.network.synapses():
 
 for gapJunction in display.network.gapJunctions():
     display.setVisibleColor(gapJunction, (0.0, 0.75, 0.0))
-#    display.setVisibleFlowTo(gapJunction, color = (0.0, 0.0, 0.0))
-#    display.setVisibleFlowFrom(gapJunction, color = (0.0, 0.0, 0.0))
 
 def weightByCount(edgeVisible):
     countAttr = edgeVisible.client.getAttribute('Count')
