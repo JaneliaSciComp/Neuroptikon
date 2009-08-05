@@ -687,6 +687,29 @@ class Display(wx.glcanvas.GLCanvas):
             return None
     
     
+    def removeVisible(self, visible):
+        stack = [visible]
+        while any(stack):
+            if any(stack[0].dependentVisibles):
+                visiblesToPushOnStack = stack[0].dependentVisibles
+                stack[0].dependentVisibles = []
+                for dependentVisible in visiblesToPushOnStack:
+                    if dependentVisible not in stack:
+                        stack.insert(0, dependentVisible)
+                del visiblesToPushOnStack
+            else:
+                visibleToRemove = stack.pop(0)
+                if visibleToRemove in self.selectedVisibles:
+                    self.selectVisibles([visibleToRemove], extend = True)
+                if visibleToRemove.parent:
+                    visibleToRemove.parent.removeChildVisible(visibleToRemove)
+                else:
+                    self.rootNode.removeChild(visibleToRemove.sgNode)
+                del self._visibleIds[visibleToRemove.displayId]
+                self.visibles[visibleToRemove.client.networkId].remove(visibleToRemove)
+        self.Refresh()
+    
+    
     def defaultVisualizationParams(self, object):
         # TODO: replace this whole block with display rules
         neuralTissueColor = (0.85, 0.75, 0.6)
@@ -877,6 +900,17 @@ class Display(wx.glcanvas.GLCanvas):
         _recomputeBounds = True
 
         return visible
+    
+    
+    def removeVisualization(self, object):
+        visibles = self.visiblesForObject(object)
+        visible = None
+        if len(visibles) == 1:
+            visible = visibles[0]
+        elif isinstance(object, Stimulus):
+            visible = visibles[0 if visibles[1].isPath() else 1]
+        if visible is not None:
+            self.removeVisible(visible)
     
     
     def arborizationChangedFlow(self, signal, sender):

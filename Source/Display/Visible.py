@@ -178,7 +178,6 @@ class Visible(object):
         
         # Appearance attributes
         self._weight = 1.0
-        self._dependencies = set()
         self._label = None
         self._labelNode = None
         self._labelPosition = (0.0, 0.0, 0.0)   # in local coordinates
@@ -186,6 +185,9 @@ class Visible(object):
         self._shape = None
         self._color = (0.5, 0.5, 0.5)
         self._opacity = 1.0
+        
+        self._dependencies = set()
+        self.dependentVisibles = []
         
         # Path attributes
         self.pathMidPoints = None
@@ -1410,8 +1412,18 @@ class Visible(object):
     
     
     def setFlowDirection(self, fromVisible, toVisible, flowTo=True, flowFrom=False):
+        if self.pathStart:
+            self.pathStart.dependentVisibles.remove(self)
         self.pathStart = fromVisible
+        if self.pathStart:
+            self.pathStart.dependentVisibles += [self]
+        
+        if self.pathEnd:
+            self.pathEnd.dependentVisibles.remove(self)
         self.pathEnd = toVisible
+        if self.pathEnd:
+            self.pathEnd.dependentVisibles += [self]
+        
         if flowTo != self.flowTo:
             self.flowTo = flowTo
             dispatcher.send(('set', 'flowTo'), self)
@@ -1693,5 +1705,9 @@ class Visible(object):
     
     def __del__(self):
         self.children = []
+        if self.pathStart:
+            self.pathStart.dependentVisibles.remove(self)
+        if self.pathEnd:
+            self.pathEnd.dependentVisibles.remove(self)
     
     
