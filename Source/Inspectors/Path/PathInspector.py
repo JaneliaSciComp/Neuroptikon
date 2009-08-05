@@ -26,7 +26,8 @@ class PathInspector(Inspector):
             self._window = wx.Window(parentWindow, wx.ID_ANY)
             self._sizer = wx.BoxSizer(wx.VERTICAL)
             
-            self._flowToBoxSizer = wx.StaticBoxSizer(wx.StaticBox(self._window, wx.ID_ANY, gettext('Flow to')), wx.HORIZONTAL)            
+            self._flowToBoxSizer = wx.StaticBoxSizer(wx.StaticBox(self._window, wx.ID_ANY, gettext('Flow to')), wx.HORIZONTAL)
+            
             flowToGridSizer = wx.FlexGridSizer(3, 2, 8, 0)
             flowToGridSizer.SetFlexibleDirection(wx.HORIZONTAL)
             flowToGridSizer.AddGrowableCol(1, 1)
@@ -52,7 +53,7 @@ class PathInspector(Inspector):
             flowToGridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Speed:')), 0)
             flowToGridSizer.Add(self._flowToSpeedSlider, 1, wx.EXPAND)
             
-            self._flowToSpreadSlider = wx.Slider(self._window, wx.ID_ANY, 20, 0, 100)
+            self._flowToSpreadSlider = wx.Slider(self._window, wx.ID_ANY, 25, 0, 100)
             self._flowToSpreadSlider.Bind(wx.EVT_SCROLL, self.onSetFlowToSpread, self._flowToSpreadSlider)
             flowToGridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Spread:')), 0)
             flowToGridSizer.Add(self._flowToSpreadSlider, 1, wx.EXPAND)
@@ -60,7 +61,8 @@ class PathInspector(Inspector):
             self._flowToBoxSizer.Add(flowToGridSizer, 1, wx.EXPAND)
             self._sizer.Add(self._flowToBoxSizer, 1, wx.EXPAND | wx.ALL, 5)
             
-            self._flowFromBoxSizer = wx.StaticBoxSizer(wx.StaticBox(self._window, wx.ID_ANY, gettext('Flow to')), wx.HORIZONTAL)            
+            self._flowFromBoxSizer = wx.StaticBoxSizer(wx.StaticBox(self._window, wx.ID_ANY, gettext('Flow to')), wx.HORIZONTAL)
+            
             flowFromGridSizer = wx.FlexGridSizer(3, 2, 8, 0)
             flowFromGridSizer.SetFlexibleDirection(wx.HORIZONTAL)
             flowFromGridSizer.AddGrowableCol(1, 1)
@@ -85,7 +87,7 @@ class PathInspector(Inspector):
             flowFromGridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Speed:')), 0)
             flowFromGridSizer.Add(self._flowFromSpeedSlider, 1, wx.EXPAND)
             
-            self._flowFromSpreadSlider = wx.Slider(self._window, wx.ID_ANY, 20, 0, 100)
+            self._flowFromSpreadSlider = wx.Slider(self._window, wx.ID_ANY, 25, 0, 100)
             self._flowFromSpreadSlider.Bind(wx.EVT_SCROLL, self.onSetFlowFromSpread, self._flowFromSpreadSlider)
             flowFromGridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Spread:')), 0)
             flowFromGridSizer.Add(self._flowFromSpreadSlider, 1, wx.EXPAND)
@@ -212,7 +214,7 @@ class PathInspector(Inspector):
                 else:
                     spread = self.paths[0].flowToSpread()
                 self._flowToSpreadSlider.SetLabel('')
-                self._flowToSpreadSlider.SetValue(spread * 100.0)
+                self._flowToSpreadSlider.SetValue(spread * 50.0)
             else:
                 self._flowToSpreadSlider.SetLabel(gettext('Multiple values'))
                 self._flowToSpreadSlider.SetValue(50)
@@ -264,7 +266,7 @@ class PathInspector(Inspector):
             if self.paths.haveEqualAttr('flowFromSpread'):
                 spread = self.paths[0].flowFromSpread()
                 self._flowFromSpreadSlider.SetLabel('')
-                self._flowFromSpreadSlider.SetValue(spread * 100.0)
+                self._flowFromSpreadSlider.SetValue(spread * 50.0)
             else:
                 self._flowFromSpreadSlider.SetLabel(gettext('Multiple values'))
                 self._flowFromSpreadSlider.SetValue(50)
@@ -311,7 +313,7 @@ class PathInspector(Inspector):
     
     
     def onSetFlowToSpread(self, event):
-        newSpread = self._flowToSpreadSlider.GetValue() / 100.0
+        newSpread = self._flowToSpreadSlider.GetValue() / 50.0
         if len(self.paths) == 0:
             self.display.setDefaultFlowSpread(newSpread)
         else:
@@ -353,7 +355,7 @@ class PathInspector(Inspector):
         
     
     def onSetFlowFromSpread(self, event):
-        newSpread = self._flowFromSpreadSlider.GetValue() / 100.0
+        newSpread = self._flowFromSpreadSlider.GetValue() / 50.0
         for path in self.paths:
             path.setFlowFromSpread(newSpread)
   
