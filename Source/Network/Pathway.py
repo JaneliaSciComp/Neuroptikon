@@ -121,10 +121,10 @@ class Pathway(Object):
     
     def creationScriptParams(self, scriptRefs):
         args, keywords = Object.creationScriptParams(self, scriptRefs)
-        args.insert(0, scriptRefs[self.terminus2.region.networkId])
-        if self.region1Projects is not None:
-            keywords['sendsOutput'] = str(self.region1Projects)
-        if self.region2Projects is not None:
+        args.insert(0, scriptRefs[self.region2.networkId])
+        if self.region1Projects != True:
+            keywords['knownProjection'] = str(self.region1Projects)
+        if self.region2Projects != None:
             keywords['bidirectional'] = str(self.region2Projects)
         return (args, keywords)
    
