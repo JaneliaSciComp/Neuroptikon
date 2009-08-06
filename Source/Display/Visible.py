@@ -931,6 +931,7 @@ class Visible(object):
             elif isinstance(self._shapeDrawable, osg.ShapeDrawable):
                 self._shapeDrawable.setColor(colorVec)
             self._color = color
+            self.updateOpacity()
             dispatcher.send(('set', 'color'), self)
     
     
