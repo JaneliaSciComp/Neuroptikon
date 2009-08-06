@@ -136,9 +136,9 @@ class PathwayInspector( ObjectInspector ):
     
     def onSelectRegion(self, event):
         if event.EventObject == self._selectRegion1Button:
-            self.selectObject(self.objects[0].terminus1.region)
+            self.selectObject(self.objects[0].region1)
         elif event.EventObject == self._selectRegion2Button:
-            self.selectObject(self.objects[0].terminus2.region)
+            self.selectObject(self.objects[0].region2)
         
     
     def onChooseProjects(self, event):
