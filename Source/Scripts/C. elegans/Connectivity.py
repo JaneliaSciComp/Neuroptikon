@@ -15,7 +15,7 @@ for muscle in network.muscles():
 # Set up the visualization
 
 for neuron in display.network.neurons():
-    red = green = blue = 0.0
+    red = green = blue = 0.5
     if neuron.hasFunction(NeuralFunction.SENSORY):
         red = 1.0
     if neuron.hasFunction(NeuralFunction.INTERNEURON):
