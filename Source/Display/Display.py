@@ -316,7 +316,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def toScriptFile(self, scriptFile, scriptRefs, displayRef):
-        scriptFile.write(displayRef + '.setBackgroundColor(' + str(self.backgroundColor) + ')\n')
+        scriptFile.write(displayRef + '.setBackgroundColor((' + ', '.join([str(component) for component in self.backgroundColor]) + '))\n')
         scriptFile.write(displayRef + '.setDefaultFlowColor(' + str(self.defaultFlowColor) + ')\n')
         scriptFile.write(displayRef + '.setDefaultFlowSpacing(' + str(self.defaultFlowSpacing) + ')\n')
         scriptFile.write(displayRef + '.setDefaultFlowSpeed(' + str(self.defaultFlowSpeed) + ')\n')
@@ -730,11 +730,6 @@ class Display(wx.glcanvas.GLCanvas):
             params['shape'] = shapes['Line']()
             params['weight'] = 5.0
             params['color'] = neuralTissueColor
-            try:
-                params['texture'] = wx.GetApp().library.texture('Stripes')
-            except:
-                pass
-            params['textureScale'] = 10.0
         elif isinstance(object, Neuron):
             params['shape'] = shapes['Ball']()
             params['size'] = (.01, .01, .01)
@@ -1075,10 +1070,11 @@ class Display(wx.glcanvas.GLCanvas):
             visibles[0].setRotation(rotation)
     
     
-    def setVisibleSize(self, object, size, fixed=True, absolute=False):
+    def setVisibleSize(self, object, size = None, fixed=True, absolute=False):
         visibles = self.visiblesForObject(object)
         if len(visibles) == 1:
-            visibles[0].setSize(size)
+            if size != None:
+                visibles[0].setSize(size)
             visibles[0].setSizeIsFixed(fixed)
             visibles[0].setSizeIsAbsolute(absolute)
     

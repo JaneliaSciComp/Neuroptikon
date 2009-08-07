@@ -490,22 +490,26 @@ class Visible(object):
         
         # Add the geometry
         geometryElement = ElementTree.SubElement(visibleElement, 'Geometry')
-        positionElement = ElementTree.SubElement(geometryElement, 'Position')
-        positionElement.set('x', str(self._position[0]))
-        positionElement.set('y', str(self._position[1]))
-        positionElement.set('z', str(self._position[2]))
-        positionElement.set('fixed', 'true' if self._positionIsFixed else 'false')
-        sizeElement = ElementTree.SubElement(geometryElement, 'Size')
-        sizeElement.set('x', str(self._size[0]))
-        sizeElement.set('y', str(self._size[1]))
-        sizeElement.set('z', str(self._size[2]))
-        sizeElement.set('fixed', 'true' if self.sizeIsFixed else 'false')
-        sizeElement.set('absolute', 'true' if self._sizeIsAbsolute else 'false')
-        rotationElement = ElementTree.SubElement(geometryElement, 'Rotation')
-        rotationElement.set('x', str(self._rotation[0]))
-        rotationElement.set('y', str(self._rotation[1]))
-        rotationElement.set('z', str(self._rotation[2]))
-        rotationElement.set('angle', str(self._rotation[3]))
+        if self.parent == None or self.parent.arrangedAxis == None:
+            positionElement = ElementTree.SubElement(geometryElement, 'Position')
+            positionElement.set('x', str(self._position[0]))
+            positionElement.set('y', str(self._position[1]))
+            positionElement.set('z', str(self._position[2]))
+            positionElement.set('fixed', 'true' if self._positionIsFixed else 'false')
+        if self.parent == None or self.parent.arrangedAxis == None or self._sizeIsAbsolute:
+            sizeElement = ElementTree.SubElement(geometryElement, 'Size')
+            if self.parent == None or self.parent.arrangedAxis == None:
+                sizeElement.set('x', str(self._size[0]))
+                sizeElement.set('y', str(self._size[1]))
+                sizeElement.set('z', str(self._size[2]))
+                sizeElement.set('fixed', 'true' if self.sizeIsFixed else 'false')
+            sizeElement.set('absolute', 'true' if self._sizeIsAbsolute else 'false')
+        if self.parent == None or self.parent.arrangedAxis == None:
+            rotationElement = ElementTree.SubElement(geometryElement, 'Rotation')
+            rotationElement.set('x', str(self._rotation[0]))
+            rotationElement.set('y', str(self._rotation[1]))
+            rotationElement.set('z', str(self._rotation[2]))
+            rotationElement.set('angle', str(self._rotation[3]))
         
         # Add the appearance
         appearanceElement = ElementTree.SubElement(visibleElement, 'Appearance')
@@ -646,13 +650,14 @@ class Visible(object):
             # Size, rotation and arrangement are never applied to stimuli.
             
             if not self.isPath():
-                params['size'] = self.size()
-                if not self.sizeIsFixed():
-                    params['sizeIsFixed'] = False
-                if self.parent is not None:
+                if self.parent == None or self.parent.arrangedAxis == None:
+                    params['size'] = self.size()
+                    if not self.sizeIsFixed():
+                        params['sizeIsFixed'] = False
+                    if self.rotation() != (0, 0, 1, 0):
+                        params['rotation'] = self.rotation()
+                if self.parent is not None and self.sizeIsAbsolute():
                     params['sizeIsAbsolute'] = self.sizeIsAbsolute()
-                if self.rotation() != (0, 0, 1, 0):
-                    params['rotation'] = self.rotation()
             
             if len(self.children) > 0:
                 if self.arrangedAxis is not None:
@@ -674,7 +679,7 @@ class Visible(object):
             params['labelColor'] = self._labelColor
         if self._labelPosition != (0.0, 0.0, 0.0):
             params['labelPosition'] = self._labelPosition
-        if not self.isPath():
+        if not self.isPath() and (self.parent == None or self.parent.arrangedAxis == None):
             params['position'] = self.position()
             if self.positionIsFixed():
                 params['positionIsFixed'] = True
@@ -710,7 +715,7 @@ class Visible(object):
         params['color'] = self.color()
         params['opacity'] = self.opacity()
         params['texture'] = self._staticTexture
-        
+
         # Strip out values that are the same as the default.
         for key in params.keys():
             if key in defaultParams and params[key] == defaultParams[key]:
@@ -723,25 +728,27 @@ class Visible(object):
                 scriptFile.write('object = ' + scriptRef + '\n')
                 scriptRef = 'object'
             if 'position' in params:
-                scriptFile.write('%s.setVisiblePosition(%s, %s' % (displayRef, scriptRef, str(params['position'])))
+                scriptFile.write('%s.setVisiblePosition(%s, (%s)' % (displayRef, scriptRef, ', '.join([str(dim) for dim in params['position']])))
                 if 'positionIsFixed' in params:
                     scriptFile.write(', fixed = ' + str(params['positionIsFixed']))
                 scriptFile.write(')\n')
             if 'size' in params or 'sizeIsFixed' in params or 'sizeIsAbsolute' in params:
-                scriptFile.write('%s.setVisibleSize(%s, %s' % (displayRef, scriptRef, str(self.size())))
+                scriptFile.write('%s.setVisibleSize(%s' % (displayRef, scriptRef))
+                if 'size' in params:
+                    scriptFile.write(', (' + ', '.join([str(dim) for dim in params['size']]) + ')')
                 if 'sizeIsFixed' in params:
                     scriptFile.write(', fixed = ' + str(self.sizeIsFixed()))
                 if 'sizeIsAbsolute' in params:
                     scriptFile.write(', absolute = ' + str(self.sizeIsAbsolute()))
                 scriptFile.write(')\n')
             if 'rotation' in params:
-                scriptFile.write('%s.setVisibleRotation(%s, %s)\n' % (displayRef, scriptRef, str(self.rotation())))
+                scriptFile.write('%s.setVisibleRotation(%s, (%s))\n' % (displayRef, scriptRef, ', '.join([str(dim) for dim in params['rotation']])))
             if 'label' in params:
                 scriptFile.write('%s.setLabel(%s, \'%s\')\n' % (displayRef, scriptRef, params['label'].replace('\\', '\\\\').replace('\'', '\\\'')))
             if 'labelColor' in params:
-                scriptFile.write('%s.setLabelColor(%s, %s)\n' % (displayRef, scriptRef, str(params['labelColor'])))
+                scriptFile.write('%s.setLabelColor(%s, (%s))\n' % (displayRef, scriptRef, ', '.join([str(component) for component in params['labelColor']])))
             if 'labelPosition' in params:
-                scriptFile.write('%s.setLabelPosition(%s, %s)\n' % (displayRef, scriptRef, str(params['labelPosition'])))
+                scriptFile.write('%s.setLabelPosition(%s, (%s))\n' % (displayRef, scriptRef, ', '.join([str(dim) for dim in params['labelPosition']])))
             if 'shape' in params:
                 if params['shape'] == None:
                     scriptFile.write('%s.setVisibleShape(%s, None)\n' % (displayRef, scriptRef))
@@ -751,7 +758,7 @@ class Visible(object):
                         scriptFile.write(attributeName + ' = ' + repr(attributeValue) + ', ')
                     scriptFile.write('))\n')
             if 'color' in params:
-                scriptFile.write('%s.setVisibleColor(%s, %s)\n' % (displayRef, scriptRef, str(self.color())))
+                scriptFile.write('%s.setVisibleColor(%s, (%s))\n' % (displayRef, scriptRef, ', '.join([str(component) for component in params['color']])))
             if 'opacity' in params:
                 scriptFile.write('%s.setVisibleOpacity(%s, %s)\n' % (displayRef, scriptRef, str(self.opacity())))
             if 'weight' in params:
@@ -772,7 +779,7 @@ class Visible(object):
             if 'flowToColor' in params or 'flowToSpacing' in params or 'flowToSpeed' in params or 'flowToSpread' in params:
                 scriptFile.write('%s.setVisibleFlowTo(%s, True' % (displayRef, scriptRef))
                 if 'flowToColor' in params:
-                    scriptFile.write(', flowToColor = ' + str(self.flowToColor))
+                    scriptFile.write(', flowToColor = (' + ', '.join([str(component) for component in params['flowToColor']]) + ')')
                 if 'flowToSpacing' in params:
                     scriptFile.write(', flowToSpacing = ' + str(self.flowToSpacing))
                 if 'flowToSpeed' in params:
@@ -783,7 +790,7 @@ class Visible(object):
             if 'flowFromColor' in params or 'flowFromSpacing' in params or 'flowFromSpeed' in params or 'flowFromSpread' in params:
                 scriptFile.write('%s.setVisibleFlowFrom(%s, True' % (displayRef, scriptRef))
                 if 'flowFromColor' in params:
-                    scriptFile.write(', flowFromColor = ' + str(self.flowFromColor))
+                    scriptFile.write(', flowFromColor = (' + ', '.join([str(component) for component in params['flowFromColor']]) + ')')
                 if 'flowFromSpacing' in params:
                     scriptFile.write(', flowFromSpacing = ' + str(self.flowFromSpacing))
                 if 'flowFromSpeed' in params:

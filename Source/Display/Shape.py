@@ -83,6 +83,10 @@ class Shape(object):
         return {}
     
     
+    def __eq__(self, otherObject):
+        return isinstance(otherObject, type(self)) and otherObject.persistentAttributes() == self.persistentAttributes() 
+    
+    
     def interiorBounds(self):
         """ The largest bounding box that can fit inside the shape in the form ((x_min, y_min, z_min), (x_max, y_max, z_max)) or None if the shape has no interior. """
         return None
