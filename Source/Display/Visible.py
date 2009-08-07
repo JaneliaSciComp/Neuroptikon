@@ -933,8 +933,8 @@ class Visible(object):
             colorVec = osg.Vec4(color[0], color[1], color[2], 1)
             self._material.setDiffuse(osg.Material.FRONT_AND_BACK, colorVec)
             self._material.setAmbient(osg.Material.FRONT_AND_BACK, colorVec)
-            if isinstance(self._shapeDrawable, Shape):
-                self._shapeDrawable.setColor(color)
+            if isinstance(self._shape, Shape):
+                self._shape.setColor(color)
             elif isinstance(self._shapeDrawable, osg.ShapeDrawable):
                 self._shapeDrawable.setColor(colorVec)
             self._color = color
