@@ -88,25 +88,16 @@ class Display(wx.glcanvas.GLCanvas):
         self.trackball = osgGA.TrackballManipulator()
         self._pickHandler = PickHandler(self)
         
-        self.viewer2D = osgViewer.Viewer()
-        self.viewer2D.setThreadingModel(self.viewer2D.SingleThreaded)
-        self.viewer2D.addEventHandler(osgViewer.StatsHandler())
-        self.viewer2D.setSceneData(self.rootNode)
-        self.viewer2D.addEventHandler(self._pickHandler)
-        light = self.viewer2D.getLight()
+        self.viewer = osgViewer.Viewer()
+        self.viewer.setThreadingModel(self.viewer.SingleThreaded)
+        self.viewer.addEventHandler(osgViewer.StatsHandler())
+        self.viewer.setSceneData(self.rootNode)
+#        self.viewer.setCameraManipulator(self.trackball)
+        self.viewer.addEventHandler(self._pickHandler)
+        light = self.viewer.getLight()
         light.setAmbient(osg.Vec4f(0.4, 0.4, 0.4, 1))
         light.setDiffuse(osg.Vec4f(0.5, 0.5, 0.5, 1))
-        
-        self.viewer3D = osgViewer.Viewer()
-        self.viewer3D.setThreadingModel(self.viewer3D.SingleThreaded)
-        self.viewer3D.addEventHandler(osgViewer.StatsHandler())
-        self.viewer3D.setSceneData(self.rootNode)
-        self.viewer3D.setCameraManipulator(self.trackball)
-        self.viewer3D.addEventHandler(self._pickHandler)
-        light = self.viewer3D.getLight()
-        light.setAmbient(osg.Vec4f(0.4, 0.4, 0.4, 1))
-        light.setDiffuse(osg.Vec4f(0.5, 0.5, 0.5, 1))
-        self.viewer3D.setLight(light)
+        self.viewer.setLight(light)
         self._first3DView = True
         
         config = wx.Config("Neuroptikon")
@@ -141,7 +132,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.hoverSelected = False  # set to True if the current selection was made by hovering
         
         width, height = self.GetClientSize()
-        self.graphicsWindow = self.viewer2D.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
+        self.graphicsWindow = self.viewer.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
         
         self.SetDropTarget(DisplayDropTarget(self))
     
@@ -361,23 +352,28 @@ class Display(wx.glcanvas.GLCanvas):
             
             self.clearDragger()
             
-            if self.viewDimensions == 2:
-                # TODO: approximate the 3D settings?
-                width, height = self.GetClientSize()
-                self.graphicsWindow = self.viewer2D.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
-                self.viewer2D.setCameraManipulator(None)
-                self.resetView()
-            elif self.viewDimensions == 3:
-                # TODO: approximate the 2D settings
-#                self.viewer3D.getCamera().setViewport(osg.Viewport(0, 0, width, height))
+            if self.viewDimensions == 3:
                 self.SetScrollbar(wx.HORIZONTAL, 0, width, width, True)
                 self.SetScrollbar(wx.VERTICAL, 0, height, height, True)
                 width, height = self.GetClientSize()
-                self.graphicsWindow = self.viewer3D.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
-                self.viewer3D.getCamera().setProjectionMatrixAsPerspective(30.0, float(width)/height, 1.0, 10000.0)
+                self.graphicsWindow = self.viewer.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
+            
+            if self.viewDimensions == 2:
+                self._previousTrackballMatrix = self.trackball.getMatrix()
+                self._previousTrackballCenter = self.trackball.getCenter()
+                self.viewer.setCameraManipulator(None)
+                self.resetView()
+            elif self.viewDimensions == 3:
+                self.viewer.getCamera().setProjectionMatrixAsPerspective(30.0, float(width)/height, 1.0, 10000.0)
+                self.viewer.setCameraManipulator(self.trackball)
                 if self._first3DView:
                     self.centerView()
                     self._first3DView = False
+                else:
+                    self.trackball.computeHomePosition()
+                    self.viewer.home()
+                    self.trackball.setByMatrix(self._previousTrackballMatrix)
+                    #self.trackball.setCenter(self._previousTrackballCenter)
             
             if any(self.selectedVisibles):
                 self.addDragger(list(self.selectedVisibles)[0])
@@ -414,12 +410,12 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def setUseStereo(self, useStereo):
-        settings = self.viewer3D.getDisplaySettings()
+        settings = self.viewer.getDisplaySettings()
         
         if useStereo:
             if settings is None:
                 settings = osg.DisplaySettings()
-                self.viewer3D.setDisplaySettings(settings)
+                self.viewer.setDisplaySettings(settings)
             settings.setStereo(True)
             settings.setStereoMode(osg.DisplaySettings.ANAGLYPHIC)
         elif settings is not None:
@@ -430,18 +426,18 @@ class Display(wx.glcanvas.GLCanvas):
         if self.viewDimensions == 2:
             width, height = self.GetClientSize()
             zoom = 2.0 ** (self.orthoZoom / 10.0)
-            self.viewer2D.getCamera().setProjectionMatrixAsOrtho2D(self.orthoCenter[0] - (width + 20) * self.zoomScale / 2.0 / zoom, 
-                                                                   self.orthoCenter[0] + (width + 20) * self.zoomScale / 2.0 / zoom, 
-                                                                   self.orthoCenter[1] - (height + 20) * self.zoomScale / 2.0 / zoom, 
-                                                                   self.orthoCenter[1] + (height + 20) * self.zoomScale / 2.0 / zoom)
+            self.viewer.getCamera().setProjectionMatrixAsOrtho2D(self.orthoCenter[0] - (width + 20) * self.zoomScale / 2.0 / zoom, 
+                                                                 self.orthoCenter[0] + (width + 20) * self.zoomScale / 2.0 / zoom, 
+                                                                 self.orthoCenter[1] - (height + 20) * self.zoomScale / 2.0 / zoom, 
+                                                                 self.orthoCenter[1] + (height + 20) * self.zoomScale / 2.0 / zoom)
             if self.orthoViewPlane == 'xy':
-                self.viewer2D.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(0.0, 0.0, self.visiblesMin[2] - 2.0)))
+                self.viewer.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(0.0, 0.0, self.visiblesMin[2] - 2.0)))
             elif self.orthoViewPlane == 'xz':
-                self.viewer2D.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(0.0, self.visiblesMax[1] + 2.0, 0.0)) * \
-                                                        osg.Matrixd.rotate(osg.Quat(pi / -2.0, osg.Vec3d(1, 0, 0))))
+                self.viewer.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(0.0, self.visiblesMax[1] + 2.0, 0.0)) * \
+                                                      osg.Matrixd.rotate(osg.Quat(pi / -2.0, osg.Vec3d(1, 0, 0))))
             elif self.orthoViewPlane == 'zy':
-                self.viewer2D.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(self.visiblesMax[0] + 2.0, 0.0, 0.0)) * \
-                                                        osg.Matrixd.rotate(osg.Quat(pi / 2.0, osg.Vec3d(0, 1, 0))))
+                self.viewer.getCamera().setViewMatrix(osg.Matrixd.translate(osg.Vec3d(self.visiblesMax[0] + 2.0, 0.0, 0.0)) * \
+                                                      osg.Matrixd.rotate(osg.Quat(pi / 2.0, osg.Vec3d(0, 1, 0))))
             self.SetScrollbar(wx.HORIZONTAL, (self.orthoCenter[0] - self.visiblesMin[0]) / self.visiblesSize[0] * width - width / zoom / 2.0, width / zoom, width, True)
             self.SetScrollbar(wx.VERTICAL, (self.visiblesMax[1] - self.orthoCenter[1]) / self.visiblesSize[1] * height - height / zoom / 2.0, height / zoom, height, True)
     
@@ -500,7 +496,7 @@ class Display(wx.glcanvas.GLCanvas):
         elif self.viewDimensions == 3:
             self.trackball.setNode(node)
             self.trackball.computeHomePosition()
-            self.viewer3D.home()
+            self.viewer.home()
             self.trackball.setRotation(osg.Quat(0, 0, 0, 1))
         
         self.Refresh()
@@ -532,8 +528,7 @@ class Display(wx.glcanvas.GLCanvas):
    
    
     def setBackgroundColor(self, color):
-        self.viewer2D.getCamera().setClearColor(osg.Vec4(*color))
-        self.viewer3D.getCamera().setClearColor(osg.Vec4(*color))
+        self.viewer.getCamera().setClearColor(osg.Vec4(*color))
         self.backgroundColor = color
     
     
@@ -606,10 +601,7 @@ class Display(wx.glcanvas.GLCanvas):
         
         if self.GetContext() != 0 and self.graphicsWindow.valid():
             self.SetCurrent()
-            if self.viewDimensions == 2:
-                self.viewer2D.frame()
-            else:
-                self.viewer3D.frame()
+            self.viewer.frame()
             self.SwapBuffers()
     
     
