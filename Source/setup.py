@@ -23,6 +23,7 @@ app_version = __version__.version
 setup_options = dict()
 
 resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
+resources += ['Display/FlowShader.vert', 'Display/FlowShader.frag']
 includes = ['wx', 'xlrd']
 excludes = ['Inspectors', 'Layouts', 'matplotlib', 'scipy', 'Shapes']
 
@@ -108,6 +109,7 @@ elif sys.platform == 'win32':
             dataFilesList.append((dataDir, dataFiles))
     
     resources.append('Scripts')	# TBD: or add them via the installer?
+    
     dataFilesList = []
     for resourceName in resources:
         if os.path.isdir(resourceName):
