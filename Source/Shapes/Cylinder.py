@@ -29,14 +29,14 @@ class Cylinder(UnitShape):
             sideNormals += [(x / 0.5, 0.0, z / 0.5)]
         vertices = [(0.0, 0.5, 0.0)] + topVertices
         vertexNormals = [(0.0, 1.0, 0.0)] * (steps + 1)
-        textureCoords = [(0.0, 0.0)] + [(0.1, 0.1)] * steps
+        textureCoords = [(1.0, 1.0)] + [(0.9, 0.9)] * steps
         for step in range(0, steps):
             vertices += [topVertices[step], bottomVertices[step]]
             vertexNormals += [sideNormals[step], sideNormals[step]]
-            textureCoords += [(0.1, 0.1), (0.9, 0.9)]
+            textureCoords += [(0.9, 0.9), (0.1, 0.1)]
         vertices += bottomVertices + [(0.0, -0.5, 0.0)]
         vertexNormals += [(0.0, -1.0, 0.0)] * (steps + 1)
-        textureCoords += [(0.9, 0.9)] * steps + [(1.0, 1.0)]
+        textureCoords += [(0.1, 0.1)] * steps + [(0.0, 0.0)]
         self.geometry().setVertexArray(Shape.vectorArrayFromList(vertices))
         
         faceSet = Shape.primitiveSetFromList(osg.PrimitiveSet.TRIANGLE_FAN, range(0, steps + 1) + [1, 0])
