@@ -109,6 +109,8 @@ class InspectorFrame( wx.Frame ):
                 toolbarWidth = len(self._activeInspectors) * 32
                 self.SetMinSize(wx.Size(max(self._minWidth, toolbarWidth), self._minHeight + 40))
                 self._activeInspector.window().Layout()
+                toolbar = self.GetToolBar()
+                toolbar.ToggleTool(self._activeInspector.toolbarId, True)
             self.Layout()
             self.SendSizeEvent()
     
