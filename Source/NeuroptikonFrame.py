@@ -281,8 +281,12 @@ class NeuroptikonFrame( wx.Frame ):
         success = True
         
         if self._modified:
-            message = gettext('Your changes will be lost if you don\'t save them.')
-            caption = gettext('Do you want to save the changes you made to "%s"?') % (self.display.network.name())
+            if platform.system() == 'Windows':
+                message = gettext('Your changes will be lost if you don\'t save them.') + '\n\n' + gettext('Do you want to save the changes you made to "%s"?') % (self.display.network.name())
+                caption = gettext('Neuroptikon')
+            else:
+                message = gettext('Your changes will be lost if you don\'t save them.')
+                caption = gettext('Do you want to save the changes you made to "%s"?') % (self.display.network.name())
             dialog = wx.MessageDialog(self, message, caption, style = wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL)
             result = dialog.ShowModal()
             dialog.Destroy()
