@@ -54,7 +54,7 @@ def dispatcher_connect(receiver, signal=dispatcher.Any, sender=dispatcher.Any, w
     receivers.append(receiver)
 dispatcher.connect = dispatcher_connect
 
-import sys
+import sys, os.path
 runningFromSource = not hasattr(sys, "frozen")
 
 from math import atan2, pi, sqrt
@@ -73,10 +73,13 @@ class Visible(object):
         (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
         print 'Could not load Arial font (' + exceptionValue.message + ')'
         labelFont = None
-
-    with open('Display/FlowShader.vert' if runningFromSource else 'FlowShader.vert') as f:
+    
+    shaderDir = wx.GetApp().rootDir
+    if runningFromSource:
+        shaderDir = os.path.join(shaderDir, 'Display')
+    with open(os.path.join(shaderDir, 'FlowShader.vert')) as f:
         flowVertexShader = f.read()
-    with open('Display/FlowShader.frag' if runningFromSource else 'FlowShader.frag') as f:
+    with open(os.path.join(shaderDir, 'FlowShader.frag')) as f:
         flowFragmentShader = f.read()
     flowProgram = osg.Program()
     flowProgram.addShader(osg.Shader(osg.Shader.VERTEX, flowVertexShader))
@@ -767,7 +770,10 @@ class Visible(object):
             # Recreate the glow shape if needed
             self.setGlowColor(glowColor)
             dispatcher.send(('set', 'shape'), self)
-            self.updateTransform()
+            if self.isPath():
+                self._updatePath()
+            else:
+                self.updateTransform()
     
     
     def displayChangedShowName(self, signal, sender):
@@ -1091,6 +1097,8 @@ class Visible(object):
             self._weight = weight
             if isinstance(self._shape, PathShape):
                 self._shape.setWeight(weight)
+            elif self.isPath():
+                self._updatePath()
             dispatcher.send(('set', 'weight'), self)
     
     
@@ -1287,7 +1295,7 @@ class Visible(object):
     
     def dependentVisibleChanged( self, signal, sender, event=None, value=None, **arguments):
         if self.isPath():
-            self.setPath(self.pathMidPoints)
+            self._updatePath()
     
     
     def positionSizeRotation(self, startPoint, endPoint):
@@ -1337,7 +1345,7 @@ class Visible(object):
                 textureMatrix.setMatrix(osg.Matrixd.scale(scale, scale, scale))
                 self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
             self._staticTextureScale = scale
-            self.updateFlowAnimation()
+            self._updateFlowAnimation()
             dispatcher.send(('set', 'textureScale'), self)
     
     
@@ -1360,7 +1368,7 @@ class Visible(object):
         if flowFrom != self.flowFrom:
             self.flowFrom = flowFrom
             dispatcher.send(('set', 'flowFrom'), self)
-        self.updateFlowAnimation()
+        self._updateFlowAnimation()
     
     
     def setFlowToColor(self, color):
@@ -1372,7 +1380,7 @@ class Visible(object):
                 self._stateSet.removeUniform('flowToColor')
             else:
                 self._stateSet.addUniform(osg.Uniform('flowToColor', osg.Vec4f(*self._flowToColor)))
-            self.updateFlowAnimation()
+            self._updateFlowAnimation()
             dispatcher.send(('set', 'flowToColor'), self)
     
     
@@ -1387,7 +1395,7 @@ class Visible(object):
                 self._stateSet.removeUniform('flowToSpacing')
             else:
                 self._stateSet.addUniform(osg.Uniform('flowToSpacing', self._flowToSpacing))
-            self.updateFlowAnimation()
+            self._updateFlowAnimation()
             dispatcher.send(('set', 'flowToSpacing'), self)
     
     
@@ -1402,7 +1410,7 @@ class Visible(object):
                 self._stateSet.removeUniform('flowToSpeed')
             else:
                 self._stateSet.addUniform(osg.Uniform('flowToSpeed', self._flowToSpeed))
-            self.updateFlowAnimation()
+            self._updateFlowAnimation()
             dispatcher.send(('set', 'flowToSpeed'), self)
     
     
@@ -1417,7 +1425,7 @@ class Visible(object):
                 self._stateSet.removeUniform('flowToSpread')
             else:
                 self._stateSet.addUniform(osg.Uniform('flowToSpread', self._flowToSpread))
-            self.updateFlowAnimation()
+            self._updateFlowAnimation()
             dispatcher.send(('set', 'flowToSpread'), self)
     
     
@@ -1434,7 +1442,7 @@ class Visible(object):
                 self._stateSet.removeUniform('flowFromColor')
             else:
                 self._stateSet.addUniform(osg.Uniform('flowFromColor', osg.Vec4f(*self._flowFromColor)))
-            self.updateFlowAnimation()
+            self._updateFlowAnimation()
             dispatcher.send(('set', 'flowFromColor'), self)
     
     
@@ -1449,7 +1457,7 @@ class Visible(object):
                 self._stateSet.removeUniform('flowFromSpacing')
             else:
                 self._stateSet.addUniform(osg.Uniform('flowFromSpacing', self._flowFromSpacing))
-            self.updateFlowAnimation()
+            self._updateFlowAnimation()
             dispatcher.send(('set', 'flowFromSpacing'), self)
     
     
@@ -1464,7 +1472,7 @@ class Visible(object):
                 self._stateSet.removeUniform('flowFromSpeed')
             else:
                 self._stateSet.addUniform(osg.Uniform('flowFromSpeed', self._flowFromSpeed))
-            self.updateFlowAnimation()
+            self._updateFlowAnimation()
             dispatcher.send(('set', 'flowFromSpeed'), self)
     
     
@@ -1479,7 +1487,7 @@ class Visible(object):
                 self._stateSet.removeUniform('flowFromSpread')
             else:
                 self._stateSet.addUniform(osg.Uniform('flowFromSpread', self._flowFromSpread))
-            self.updateFlowAnimation()
+            self._updateFlowAnimation()
             dispatcher.send(('set', 'flowFromSpread'), self)
     
     
@@ -1487,7 +1495,7 @@ class Visible(object):
         return self._flowFromSpread or self.display.defaultFlowSpread
     
     
-    def updateFlowAnimation(self):
+    def _updateFlowAnimation(self):
         if self._animateFlow and (self.flowTo or self.flowFrom):
             self._stateSet.addUniform(osg.Uniform('flowTo', True if self.flowTo else False))
             self._stateSet.addUniform(osg.Uniform('flowFrom', True if self.flowFrom else False))
@@ -1505,26 +1513,11 @@ class Visible(object):
     def animateFlow(self, animate=True):
         if self._animateFlow != animate:
             self._animateFlow = animate
-            self.updateFlowAnimation()
+            self._updateFlowAnimation()
         
         
-    def setPath(self, midPoints, startVisible=None, endVisible=None):
-        if startVisible is not None:
-            self.addDependency(startVisible, 'position')
-            self.addDependency(startVisible, 'size')
-            self.addDependency(startVisible, 'shape')
-            if startVisible != self.pathStart:
-                midPoints.reverse()
-            startVisible.connectedPaths.append(self)
-        if endVisible is not None:
-            self.addDependency(endVisible, 'position')
-            self.addDependency(endVisible, 'size')
-            self.addDependency(endVisible, 'shape')
-            endVisible.connectedPaths.append(self)
-        
-        self.pathMidPoints = midPoints
-        
-        path = list(midPoints)
+    def _updatePath(self):
+        path = list(self.pathMidPoints)
         path.insert(0, self.pathStart.worldPosition())
         path.append(self.pathEnd.worldPosition())
         
@@ -1589,7 +1582,26 @@ class Visible(object):
             
             self.updateTransform()
         
-        self.updateFlowAnimation()
+        self._updateFlowAnimation()
+        
+        
+    def setPath(self, midPoints, startVisible=None, endVisible=None):
+        if startVisible is not None:
+            self.addDependency(startVisible, 'position')
+            self.addDependency(startVisible, 'size')
+            self.addDependency(startVisible, 'shape')
+            if startVisible != self.pathStart:
+                midPoints.reverse()
+            startVisible.connectedPaths.append(self)
+        if endVisible is not None:
+            self.addDependency(endVisible, 'position')
+            self.addDependency(endVisible, 'size')
+            self.addDependency(endVisible, 'shape')
+            endVisible.connectedPaths.append(self)
+        
+        self.pathMidPoints = midPoints
+        
+        self._updatePath()
         
         dispatcher.send(('set', 'path'), self)
     
