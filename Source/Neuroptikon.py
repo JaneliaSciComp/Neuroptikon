@@ -44,6 +44,13 @@ else:
 
     sys.path.insert(0, commonLibPath)
     sys.path.insert(0, platformLibPath)
+    
+# TODO: figure out if it's worth building and packaging psyco
+#    try:
+#        import psyco
+#        psyco.full()
+#    except ImportError:
+#        print 'Psyco not installed, the program will just run slower'
 
 if platform.system() == 'Darwin':
     # Make sure fonts are found on Mac OS X
