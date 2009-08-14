@@ -19,12 +19,22 @@ class Preferences( wx.Frame ):
         colorBox.AddSpacer(8)
         colorBox.Add(self.colorPicker, 1, wx.EXPAND)
         
+        smoothLinesBox = wx.BoxSizer(wx.HORIZONTAL)
+        #smoothLinesBox.Add(wx.StaticText(self, -1, gettext('Smooth Lines:')), 0, wx.EXPAND)
+        self._smoothLinesCheckBox = wx.CheckBox(self, wx.ID_ANY, gettext('Smooth Lines'))
+        self.Bind(wx.EVT_CHECKBOX, self.onSetSmoothLines, self._smoothLinesCheckBox)
+        self._smoothLinesCheckBox.SetValue(config.ReadBool('Smooth Lines'))
+        smoothLinesBox.Add(self._smoothLinesCheckBox)
+        
         # Bundle them together
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.mainSizer.Add(colorBox, 0, wx.ALL, 5)
+        self.mainSizer.Add(smoothLinesBox, 0, wx.ALL, 5)
         self.SetSizer(self.mainSizer)
         
         self.Bind(wx.EVT_CLOSE, self.onClose)
+        
+        self.Fit()
     
     
     def onColorChanged(self, event):
@@ -34,6 +44,12 @@ class Preferences( wx.Frame ):
         config.WriteFloat('Color/Background/Green', color.Green() / 255.0)
         config.WriteFloat('Color/Background/Blue', color.Blue() / 255.0)
         config.WriteFloat('Color/Background/Alpha', color.Alpha() / 255.0)
+    
+    
+    def onSetSmoothLines(self, event):
+        newValue = self._smoothLinesCheckBox.GetValue()
+        config = wx.Config('Neuroptikon')
+        config.WriteBool('Smooth Lines', newValue)
         
     
     def onClose(self, event=None):

@@ -1,6 +1,7 @@
 from Display.Shape import PathShape, Shape
 import osg
 from math import sqrt
+import wx
 
 
 class Line(PathShape):
@@ -14,9 +15,10 @@ class Line(PathShape):
         self._pathPoints = []
         PathShape.__init__(self, *args, **keywordArgs)
         
-        self.geometry().getOrCreateStateSet().setMode(osg.GL_LINE_SMOOTH, osg.StateAttribute.ON)
-        self.geometry().getStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
-        self.geometry().getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+        if wx.Config('Neuroptikon').ReadBool('Smooth Lines'):
+            self.geometry().getOrCreateStateSet().setMode(osg.GL_LINE_SMOOTH, osg.StateAttribute.ON)
+            self.geometry().getStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
+            self.geometry().getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
     
     
     def setPoints(self, pathPoints):
