@@ -1,0 +1,19 @@
+Group {
+  num_children 2
+  Geode {
+    name "cull front faces"
+    StateSet {
+      CullFace {
+        mode FRONT
+      }
+    }
+  }
+  Geode {
+    name "cull back faces"
+    StateSet {
+      CullFace {
+        mode BACK
+      }
+    }
+  }
+}

@@ -1,6 +1,6 @@
 from __future__ import with_statement # This isn't required in Python 2.6
 
-import osg, osgFX, osgText
+import osg, osgDB, osgFX, osgText
 
 from Shape import Shape, UnitShape, PathShape
 
@@ -84,6 +84,9 @@ class Visible(object):
     flowProgram = osg.Program()
     flowProgram.addShader(osg.Shader(osg.Shader.VERTEX, flowVertexShader))
     flowProgram.addShader(osg.Shader(osg.Shader.FRAGMENT, flowFragmentShader))
+    del shaderDir
+    
+    osgDB.Registry.instance().getReaderWriterForExtension('osg')    # Make sure the osg plug-in can be found before the cwd gets changed for a script run.
     
     
     def __init__(self, display, client):
@@ -178,6 +181,20 @@ class Visible(object):
         
         self.updateOpacity()
         dispatcher.connect(self.displayChangedGhosting, ('set', 'useGhosts'), self.display)
+        
+        if not hasattr(Visible, 'cullFrontFacesAttr'):
+            # This is a bit of a hack.  osgswig does not expose the osg::CullFace class which is needed to get proper transparency.
+            # To get around this we load an osg file which contains nodes with both front and back cull face state attributes and extract them. 
+            if runningFromSource:
+                cullFacesPath = os.path.join(wx.GetApp().rootDir, 'Display', 'CullFaces.osg')
+            else:
+                cullFacesPath = os.path.join(wx.GetApp().rootDir, 'CullFaces.osg')
+            cullFacesNode = osgDB.readNodeFile(cullFacesPath)
+            cullFacesGroup = cullFacesNode.asGroup()
+            Visible.cullFrontFacesAttr = cullFacesGroup.getChild(0).getStateSet().getAttribute(osg.StateAttribute.CULLFACE)
+            Visible.cullBackFacesAttr = cullFacesGroup.getChild(1).getStateSet().getAttribute(osg.StateAttribute.CULLFACE)
+            # Make sure the node with our attributes doesn't get garbage collected.
+            cullFacesNode.ref()
     
     
     def __repr__(self):
@@ -904,17 +921,18 @@ class Visible(object):
             if opacity == 1.0:
                 if self._shapeGeode2:
                     self.sgNode.removeChild(self._shapeGeode2)
+                    self._shapeGeode2 = None
                 self._shapeGeode.getOrCreateStateSet().setRenderingHint(osg.StateSet.OPAQUE_BIN)
                 self._shapeGeode.getOrCreateStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
                 self._shapeGeode.getOrCreateStateSet().removeAttribute(osg.StateAttribute.CULLFACE)
             else:
-                if hasattr(osg, 'CullFace') and not self._shapeGeode2:
+                if self._shape != None and not self._shapeGeode2:
                     # Technique that may correctly render nested, transparent geometries, from http://www.mail-archive.com/osg-users@lists.openscenegraph.org/msg06863.html
                     self._shapeGeode2 = osg.Geode()
                     self._shapeGeode2.addDrawable(self._shape.geometry())
                     self._shapeGeode2.getOrCreateStateSet().setRenderBinDetails(9, 'DepthSortedBin')
-                    self._shapeGeode2.getOrCreateStateSet().setAttributeAndModes(osg.CullFace(osg.CullFace.FRONT), osg.StateAttribute.ON)
-                    self._shapeGeode.getOrCreateStateSet().setAttributeAndModes(osg.CullFace(osg.CullFace.BACK), osg.StateAttribute.ON)
+                    self._shapeGeode2.getOrCreateStateSet().setAttributeAndModes(Visible.cullFrontFacesAttr, osg.StateAttribute.ON)
+                    self._shapeGeode.getOrCreateStateSet().setAttributeAndModes(Visible.cullBackFacesAttr, osg.StateAttribute.ON)
                 self._shapeGeode.getOrCreateStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
                 self._shapeGeode.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
         

@@ -23,7 +23,7 @@ app_version = __version__.version
 setup_options = dict()
 
 resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
-resources += ['Display/FlowShader.vert', 'Display/FlowShader.frag']
+resources += ['Display/FlowShader.vert', 'Display/FlowShader.frag', 'Display/CullFaces.osg']
 includes = ['wx', 'xlrd']
 excludes = ['Inspectors', 'Layouts', 'matplotlib', 'scipy', 'Shapes']
 
@@ -53,14 +53,14 @@ if sys.platform == 'darwin':
     dist_dir = 'build/Neuroptikon ' + app_version
     py2app_options['dist_dir'] = dist_dir
     
+    excludes += ['aetools', 'StdSuites.AppleScript_Suite']
+    
     py2app_options['packages'] = includes
     py2app_options['excludes'] = excludes
     
-    resources.append('../Artwork/Neuroptikon.icns')
-    resources.append('lib/Darwin/fdp')
-    resources.append('lib/Darwin/graphviz')
-    resources.append('lib/Darwin/osgdb_freetype.so')
-    resources.append('lib/Darwin/osgdb_qt.so')
+    resources += ['../Artwork/Neuroptikon.icns']
+    resources += ['lib/Darwin/fdp', 'lib/Darwin/graphviz']
+    resources += ['lib/Darwin/osgdb_freetype.so', 'lib/Darwin/osgdb_osg.so', 'lib/Darwin/osgdb_qt.so']
     py2app_options['resources'] = ','.join(resources)
     
     py2app_options['argv_emulation'] = True
