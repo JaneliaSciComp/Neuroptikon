@@ -10,15 +10,18 @@ class Ring(UnitShape):
         return gettext('Ring')
     
     
-    def __init__(self, holeSize = 1.0 / 3.0, *args, **keywordArgs):
+    def __init__(self, holeSize = 1.0 / 3.0, startAngle = 0.0, endAngle = 2 * pi, *args, **keywordArgs):
         Shape.__init__(self, *args, **keywordArgs)
         
         # TODO: use VBO's so all instances share the same data?
         
         self.holeSize = holeSize
+        self.startAngle = startAngle
+        self.endAngle = endAngle
         
         steps = 32
-        angleIncrement = 2.0 * pi / steps
+        ringIncrement = (endAngle - startAngle) / steps
+        segmentIncrement = 2 * pi / steps
         
         # Duplicate vertices are created at the seams to avoid texture problems so steps + 1 segments and steps + 1 vertices per segment are created.
         
@@ -28,11 +31,14 @@ class Ring(UnitShape):
         vertices = []
         normals = []
         texCoords = []
+        xs = []
+        ys = []
+        zs = []
         for ringStep in range(0, steps + 1):
-            ringAngle = ringStep * angleIncrement
+            ringAngle = startAngle + ringStep * ringIncrement
             segmentCenter = (cos(ringAngle) * ringRadius, sin(ringAngle) * ringRadius, 0.0)
             for segmentStep in range(0, steps + 1):
-                segmentAngle = segmentStep * angleIncrement
+                segmentAngle = segmentStep * segmentIncrement
                 segmentMag = cos(segmentAngle) * segmentRadius
                 x, y, z, zNormal = (cos(ringAngle) * (ringRadius + segmentMag), sin(ringAngle) * (ringRadius + segmentMag), sin(segmentAngle) * 0.5, sin(segmentAngle) * segmentRadius)
                 vertices += [(x, y, z)]
@@ -40,8 +46,24 @@ class Ring(UnitShape):
                 normalMag = sqrt(normal[0] ** 2 + normal[1] ** 2 + normal[2] ** 2)
                 normals += [(normal[0] / normalMag, normal[1] / normalMag, normal[2] / normalMag)]
                 texCoords += [(float(ringStep) / steps, float(segmentStep) / steps)]
+                xs += [x]
+                ys += [y]
+                zs += [z]
         
-        self.geometry().setVertexArray(Shape.vectorArrayFromList(vertices))
+        minX, maxX = (min(xs), max(xs))
+        midX, sizeX = ((minX + maxX) / 2.0, maxX - minX)
+        minY, maxY = (min(ys), max(ys))
+        midY, sizeY = ((minY + maxY) / 2.0, maxY - minY)
+        minZ, maxZ = (min(zs), max(zs))
+        midZ = (minZ + maxZ) / 2.0
+        scale = 1.0 / max(sizeX, sizeY) # size in Z will always be 1.0
+        newVertices = []
+        for vertex in vertices:
+            newVertices += [((vertex[0] - midX) * scale, (vertex[1] - midY) * scale, (vertex[2] - midZ) * scale)]
+        self.geometry().setVertexArray(Shape.vectorArrayFromList(newVertices))
+        
+        self.ringCenter = (-midX, -midY, -midZ)
+        self.ringSize = 1.0 / scale
         
         self.geometry().setNormalArray(Shape.vectorArrayFromList(normals))
         self.geometry().setNormalBinding(osg.Geometry.BIND_PER_VERTEX)
@@ -58,14 +80,14 @@ class Ring(UnitShape):
     
     
     def persistentAttributes(self):
-        return {'holeSize': self.holeSize}
+        return {'holeSize': self.holeSize, 'startAngle': self.startAngle, 'endAngle': self.endAngle}
     
 
     def intersectionPoint(self, rayOrigin, rayDirection):
         # TODO: Do a real line/torus intersection: <http://tog.acm.org/resources/GraphicsGems/gemsii/intersect/inttor.c>
         
         # In the mean time use line/circle intersection code from <http://mathworld.wolfram.com/Circle-LineIntersection.html>
-        if abs(rayOrigin[2]) < 1e-12 and abs(rayDirection[2]) < 1e-12:
+        if self.startAngle == 0.0 and self.endAngle == 2 * pi and abs(rayOrigin[2]) < 1e-12 and abs(rayDirection[2]) < 1e-12:
             dr = sqrt(rayDirection[0] ** 2 + rayDirection[1] ** 2)
             dr2 = dr ** 2
             D = rayOrigin[0] * (rayOrigin[1] + rayDirection[1]) - (rayOrigin[0] + rayDirection[0]) * rayOrigin[1]
