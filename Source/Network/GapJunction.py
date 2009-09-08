@@ -3,23 +3,31 @@ import xml.etree.ElementTree as ElementTree
 
 class GapJunction(Object):
     
-    # TODO: gap junctions can be directional
+    # TODO: gap junctions can be directional?
     
     def __init__(self, network, neurite1, neurite2, *args, **keywords):
+        """
+        GapJunction objects represent a gap junction between two :class:`neurites <Network.Neurite.Neurite>` in a :class:`network <Network.Network.Network>`.
+        
+        Instances of this class are created by using the gapJunctionWith method of :meth:`Neuron <Network.Neuron.Neuron.gapJunctionWith>` and :meth:`Neurite <Network.Neurite.Neurite.gapJunctionWith>` objects.
+        
+        >>> neuron1.gapJunctionWith(neuron2)
+        """
+        
         Object.__init__(self, network, *args, **keywords)
-        self.neurites = set([neurite1, neurite2])
+        self._neurites = set([neurite1, neurite2])
     
     
     def defaultName(self):
-        neurite1, neurite2 = list(self.neurites)
+        neurite1, neurite2 = list(self._neurites)
         names = [str(neurite1.neuron().name), str(neurite2.neuron().name)]
         names.sort()
         return names[0] + ' <-> ' + names[1]
     
     
     @classmethod
-    def fromXMLElement(cls, network, xmlElement):
-        object = super(GapJunction, cls).fromXMLElement(network, xmlElement)
+    def _fromXMLElement(cls, network, xmlElement):
+        object = super(GapJunction, cls)._fromXMLElement(network, xmlElement)
         neurite1Id = xmlElement.get('neurite1Id')
         neurite1 = network.objectWithId(neurite1Id)
         neurite2Id = xmlElement.get('neurite2Id')
@@ -29,30 +37,30 @@ class GapJunction(Object):
         elif neurite2 is None:
             raise ValueError, gettext('Neurite with id "%s" does not exist') % (neurite2Id)
         else:
-            object.neurites = set([neurite1, neurite2])
+            object._neurites = set([neurite1, neurite2])
             neurite1._gapJunctions.append(object)
             neurite2._gapJunctions.append(object)
             return object
     
     
-    def toXMLElement(self, parentElement):
-        gapJunctionElement = Object.toXMLElement(self, parentElement)
-        neurites = list(self.neurites)
+    def _toXMLElement(self, parentElement):
+        gapJunctionElement = Object._toXMLElement(self, parentElement)
+        neurites = list(self._neurites)
         gapJunctionElement.set('neurite1Id', str(neurites[0].networkId))
         gapJunctionElement.set('neurite2Id', str(neurites[1].networkId))
         return gapJunctionElement
     
     
-    def creationScriptCommand(self, scriptRefs):
-        neurite1, neurite2 = list(self.neurites)
+    def _creationScriptCommand(self, scriptRefs):
+        neurite1, neurite2 = list(self._neurites)
         if neurite1.networkId not in scriptRefs:
             neurite1 = neurite1.root
         return scriptRefs[neurite1.networkId] + '.gapJunctionWith'
     
     
-    def creationScriptParams(self, scriptRefs):
-        args, keywords = Object.creationScriptParams(self, scriptRefs)
-        neurite1, neurite2 = list(self.neurites)
+    def _creationScriptParams(self, scriptRefs):
+        args, keywords = Object._creationScriptParams(self, scriptRefs)
+        neurite1, neurite2 = list(self._neurites)
         if neurite2.networkId not in scriptRefs:
             neurite2 = neurite2.root
         args.insert(0, scriptRefs[neurite2.networkId])
@@ -62,3 +70,24 @@ class GapJunction(Object):
     @classmethod
     def displayName(cls):
         return gettext('Gap Junction')
+    
+    
+    def neurites(self):
+        """
+        Return a tuple containing the two :class:`neurites <Network.Neurite.Neurite>` connected by this gap junction.
+        """
+        
+        return tuple(self._neurites)
+    
+    
+    def connections(self, recurse = True):
+        return Object.connections(self, recurse) + list(self._neurites)    
+    
+    
+    def inputs(self, recurse = True):
+        return Object.inputs(self, recurse) + list(self._neurites)    
+    
+    
+    def outputs(self, recurse = True):
+        return Object.outputs(self, recurse) + list(self._neurites)
+    

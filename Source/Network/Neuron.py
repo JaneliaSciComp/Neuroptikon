@@ -6,7 +6,6 @@ from wx.py import dispatcher
 
 
 class Neuron(Object):
-    # TODO: neurites method that returns all neurites
     
     
     class Polarity:
@@ -25,6 +24,14 @@ class Neuron(Object):
     
     
     def __init__(self, network, neuronClass = None, *args, **keywordArgs):
+        """
+        Neurons represent individual neural cells in the network.
+        
+        You create a neuron by messaging the network:
+        
+        >>> neuron1 = network.createNeuron(...)
+        """
+        
         # Upconvert old 'function' singleton param to list expected by new 'functions' param.
         if 'function' in keywordArgs:
             keywordArgs['functions'] = set([keywordArgs['function']])
@@ -74,8 +81,8 @@ class Neuron(Object):
     
     
     @classmethod
-    def fromXMLElement(cls, network, xmlElement):
-        object = super(Neuron, cls).fromXMLElement(network, xmlElement)
+    def _fromXMLElement(cls, network, xmlElement):
+        object = super(Neuron, cls)._fromXMLElement(network, xmlElement)
         classId = xmlElement.findtext('Class')
         if classId is None:
             classId = xmlElement.findtext('class')
@@ -111,7 +118,7 @@ class Neuron(Object):
             object.region.neurons.append(object)
         object._neurites = []
         for neuriteElement in xmlElement.findall('Neurite'):
-            neurite = Neurite.fromXMLElement(network, neuriteElement)
+            neurite = Neurite._fromXMLElement(network, neuriteElement)
             if neurite is None:
                 raise ValueError, gettext('Could not create neurite')
             neurite.root = object
@@ -120,8 +127,8 @@ class Neuron(Object):
         return object
     
     
-    def toXMLElement(self, parentElement):
-        neuronElement = Object.toXMLElement(self, parentElement)
+    def _toXMLElement(self, parentElement):
+        neuronElement = Object._toXMLElement(self, parentElement)
         if self.neuronClass is not None:
             ElementTree.SubElement(neuronElement, 'Class').text = self.neuronClass.identifier
         for neurotransmitter in self.neurotransmitters:
@@ -135,16 +142,16 @@ class Neuron(Object):
         if self.region is not None:
             ElementTree.SubElement(neuronElement, 'SomaRegionId').text = str(self.region.networkId)
         for neurite in self._neurites:
-            neurite.toXMLElement(neuronElement)
+            neurite._toXMLElement(neuronElement)
         return neuronElement
     
     
-    def needsScriptRef(self):
-        return len(self._neurites) > 0 or Object.needsScriptRef(self)
+    def _needsScriptRef(self):
+        return len(self._neurites) > 0 or Object._needsScriptRef(self)
     
     
-    def creationScriptParams(self, scriptRefs):
-        args, keywords = Object.creationScriptParams(self, scriptRefs)
+    def _creationScriptParams(self, scriptRefs):
+        args, keywords = Object._creationScriptParams(self, scriptRefs)
         if self.neuronClass is not None:
             keywords['neuronClass'] = 'library.neuronClass(\'' + self.neuronClass.identifier + '\')'
         if len(self.neurotransmitters) > 0:
@@ -155,121 +162,197 @@ class Neuron(Object):
         if self.activation is not None:
             keywords['activation'] = '\'' + self.activation + '\''  # TODO: this should be 'NeuralActivation.' + self.activation
         if len(self._functions) > 0:
-            keywords['functions'] = '[NeuralFunction.' + ', NeuralFunction.'.join(self._functions) + ']'
+            keywords['functions'] = '[Neuron.Function.' + ', Neuron.Function.'.join(self._functions) + ']'
         if self.polarity is not None:
-            keywords['polarity'] = 'NeuralPolarity.' +  self.polarity
+            keywords['polarity'] = 'Neuron.Polarity.' +  self.polarity
         if self.region is not None:
             keywords['region'] = scriptRefs[self.region.networkId]
         return (args, keywords)
     
     
-    def creationScriptChildren(self):
-        children = Object.creationScriptChildren(self)
+    def _creationScriptChildren(self):
+        children = Object._creationScriptChildren(self)
         children.extend(self._neurites)
         return children
    
     
     def createNeurite(self, *args, **keywords):
+        """
+        Create and return a :class:`neurite <Network.Neurite.Neurite>` object that projects from the soma of this neuron.
+        """
+        
         neurite = Neurite(self.network, self, *args, **keywords)
         self._neurites.append(neurite)
+        self.network.addObject(neurite)
         return neurite
     
     
-    def neurites(self, recurse = False):
+    def neurites(self, recurse = True):
+        """
+        Return a list of all :class:`neurite <Network.Neurite.Neurite>` projecting from this neuron.
+        
+        If recurse is True then all subsequently projecting neurites will be included with the neurites that project from the soma.
+        
+        If no neurites project from the soma of this neuron then an empty list will be returned.
+        """
+        
         neurites = list(self._neurites)
         if recurse:
             for neurite in self._neurites:
-                neurites.append(neurite.neurites(True))
+                neurites += neurite.neurites()
         return neurites
     
     
     def arborize(self, region, sendsOutput = True, receivesInput = True, *args, **keywordArgs):
-        """Convenience method for creating a neurite and having it arborize a region."""
+        """
+        Convenience method for creating a :class:`neurite <Network.Neurite.Neurite>` and having it :class:`arborize <Network.Neurite.Neurite.arborize>` a :class:`region <Network.Region.Region>`.
+        
+        Returns the arborization object that is created.
+        """
+        
         return self.createNeurite().arborize(region, sendsOutput, receivesInput, *args, **keywordArgs)
     
     
     def arborizations(self):
+        """
+        Return a list of all :class:`arborizations <Network.Arborization.Arborization>` extending from this neuron.
+        
+        If this neuron does not arborize any regions then an empty list will be returned.
+        """
+        
         arborizations = []
         for neurite in self._neurites:
-            if neurite.arborization is not None:
-                arborizations.append(neurite.arborization)
+            arborizations += neurite.arborizations()
         return arborizations
     
     
     def synapseOn(self, otherObject, *args, **keywordArgs):
-        """Convenience method that creates a neurite for each neuron and then creates a synapse between them."""
+        """
+        Convenience method that creates a :class:`neurite <Network.Neurite.Neurite>` for this neuron and then creates a :class:`synapse <Network.Synapse.Synapse>` with the other object.
+        
+        Returns the synapse object that is created.
+        """
+        
         neurite = self.createNeurite()
         return neurite.synapseOn(otherObject, activation = self.activation, *args, **keywordArgs)
     
     
-    def incomingSynapses(self):
-        incomingSynapses = []
+    def synapses(self, includePre = True, includePost = True):
+        """
+        Return a list of all :class:`synapses <Network.Synapse.Synapse>` in which the :class:`neurite's <Network.Neurite.Neurite>` of this neuron are pre- or post-synaptic.
+        
+        If includePre is False then synapses where this neuron is pre-synaptic will be excluded.  If includePost is False then synapses where this neuron is post-synaptic will be excluded.
+        
+        If this neuron does not form a synapse with any other neurons then an empty list will be returned.
+        """
+        
+        synapses = []
         for neurite in self._neurites:
-            incomingSynapses.extend(neurite.incomingSynapses())
-        return incomingSynapses
-    
-    
-    def outgoingSynapses(self):
-        outgoingSynapses = []
-        for neurite in self._neurites:
-            outgoingSynapses.extend(neurite.outgoingSynapses())
-        return outgoingSynapses
+            synapses += neurite.synapses(includePre = includePre, includePost = includePost)
+        return synapses
     
     
     def gapJunctionWith(self, otherObject, *args, **keywordArgs):
-        """Convenience method that creates a neurite for this neuron and then creates a gap junction with the other object."""
+        """
+        Convenience method that creates a :class:`neurite <Network.Neurite.Neurite>` for this neuron and then creates a :class:`gap junction <Network.GapJunction.GapJunction>` with the other object.
+        
+        Returns the gap junction object that is created.
+        """
+        
         neurite = self.createNeurite()
         return neurite.gapJunctionWith(otherObject, *args, **keywordArgs)
     
     
     def gapJunctions(self):
+        """
+        Return a list of all :class:`gap junctions <Network.GapJunction.GapJunction>` in which the :class:`neurite's <Network.Neurite.Neurite>` of this neuron are involved.
+        
+        If this neuron does not form a gap junction with any other neurons then an empty list will be returned.
+        """
+        
         junctions = []
         for neurite in self._neurites:
-            junctions.extend(neurite.gapJunctions())
+            junctions += neurite.gapJunctions()
         return junctions
         
         
     def innervate(self, muscle, *args, **keywordArgs):
-        """Convenience method that creates a neurite and has it innervate the muscle."""
+        """
+        Convenience method that creates a :class:`neurite <Network.Neurite.Neurite>` and has it innervate the :class:`muscle <Network.Muscle.Muscle>`.
+        
+        Returns the :class:`innervation <Network.Innervation.Innervation>` object that is created.
+        """
+        
         neurite = self.createNeurite()
         return neurite.innervate(muscle, *args, **keywordArgs)
     
     
     def innervations(self):
+        """
+        Return a list of all :class:`innervations <Network.Innervation.Innervation>` involving this neuron's :class:`neurite's <Network.Neurite.Neurite>`.
+        
+        If this neuron does not innervate any :class:`muscles <Network.Muscle.Muscle>` then an empty list will be returned.
+        """
+        
         innervations = []
         for neurite in self._neurites:
-            innervations.extend(neurite.innervations())
+            innervations += neurite.innervations()
         return innervations
 
 
-    def connections(self):
-        # TODO: untested
-        connections = set()
-        for neurite in self._neurites:
-            if neurite.arborization is not None:
-                connections.add(neurite.arborization.region)
-            for synapse in neurite.incomingSynapses():
-                connections.add(synapse.preSynapticNeurite.neuron)
-            for synapse in neurite.outgoingSynapses():
-                connections.add(synapse.postSynapticNeurites(0).neuron)
+    def connections(self, recurse = True):
+        """
+        Return a list of all objects that connect to this neuron and optionally any projecting :class:`neurites <Network.Neurite.Neurite>`.
+        
+        The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
+        """
+        
+        connections = Object.connections(self, recurse)
+        if recurse:
+            for neurite in self._neurites:
+                connections += neurite.connections()
         return connections
     
     
-    def inputs(self):
-        inputs = Object.inputs(self)
-        for neurite in self._neurites:
-            inputs.extend(neurite.inputs())
+    def inputs(self, recurse = True):
+        """
+        Return a list of all objects that send information into this neuron and optionally any projecting :class:`neurites <Network.Neurite.Neurite>`.
+        
+        The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
+        """
+        
+        inputs = Object.inputs(self, recurse)
+        if recurse:
+            for neurite in self._neurites:
+                inputs += neurite.inputs()
         return inputs
     
     
-    def outputs(self):
-        outputs = Object.outputs(self)
-        for neurite in self._neurites:
-            outputs.extend(neurite.outputs())
+    def outputs(self, recurse = True):
+        """
+        Return a list of all objects that receive information from this neuron and optionally any projecting :class:`neurites <Network.Neurite.Neurite>`.
+        
+        The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>` or :class:`synapses <Network.Synapse.Synapse>`.
+        """
+        
+        outputs = Object.outputs(self, recurse)
+        if recurse:
+            for neurite in self._neurites:
+                outputs += neurite.outputs()
         return outputs
     
     
     def setHasFunction(self, function, hasFunction):
+        """
+        Set whether or not this neuron has the indicated function.
+        
+        >>> neuron1.setHasFunction(Neuron.Function.SENSORY, True)
+        
+        The function argument should be one of the attributes of Neuron.Function.
+        
+        The hasFunction argument should indicate whether or not this neuron has the indicated function.
+        """
+        
         if hasFunction and function not in self._functions:
             self._functions.add(function)
             dispatcher.send(('set', 'functions'), self)
@@ -279,5 +362,15 @@ class Neuron(Object):
     
     
     def hasFunction(self, function):
+        """
+        Return whether or not this neuron has the indicated function.
+        
+        >>> # Show all sensory neurons in red.
+        >>> if neuron.hasFunction(Neuron.Function.SENSORY):
+        ...     display.setVisibleColor(neuron, (1.0, 0.0, 0.0))
+        
+        The function argument should be one of the attributes of Neuron.Function.
+        """
+        
         return function in self._functions
     

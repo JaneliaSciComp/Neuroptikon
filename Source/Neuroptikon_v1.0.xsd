@@ -320,6 +320,8 @@
 		<xs:sequence>
 			<xs:element name="Color" type="Color"/>
 		</xs:sequence>
+		<xs:attribute name="spacing" type="xs:float"/>
+		<xs:attribute name="speed" type="xs:float"/>
 		<xs:attribute name="spread" type="xs:float"/>
 	</xs:complexType>
 	

@@ -33,6 +33,8 @@ class NeuroptikonFrame( wx.Frame ):
         dispatcher.connect(self.networkDidChangeSavePath, ('set', 'savePath'), network)
         
         self._console = wx.py.shell.Shell(self.splitter, wx.ID_ANY, locals = self.scriptLocals(), introText=gettext('Welcome to Neuroptikon.'))
+        self._console.autoCompleteIncludeSingle = False
+        self._console.autoCompleteIncludeDouble = False
         
         self.splitter.SplitHorizontally(self.display, self._console)
         self.splitter.SetSashGravity(1.0)
@@ -48,6 +50,7 @@ class NeuroptikonFrame( wx.Frame ):
         dispatcher.connect(self.displayChangedMenuState, ('set', 'showRegionNames'), self.display)
         dispatcher.connect(self.displayChangedMenuState, ('set', 'showNeuronNames'), self.display)
         dispatcher.connect(self.displayChangedMenuState, ('set', 'useGhosts'), self.display)
+        dispatcher.connect(self.displayChangedMenuState, ('set', 'labelsFloatOnTop'), self.display)
         
         self.finder = None
         
@@ -64,6 +67,10 @@ class NeuroptikonFrame( wx.Frame ):
         dispatcher.connect(self.viewDimensionsDidChange, ('set', 'viewDimensions'), self.display)
         self.viewDimensionsDidChange()
         
+        if platform.system() == 'Darwin':
+            # Have new windows cascade so they don't sit right on top of each other.
+            carbon.RepositionWindow(self.MacGetTopLevelWindowRef(), 0, 4)   # 4 = kWindowCascadeOnMainScreen
+        
         self.Show(1)
         self.splitter.SetSashPosition(-100)
     
@@ -73,34 +80,34 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     @classmethod
-    def fromXMLElement(cls, xmlElement, network = None):
+    def _fromXMLElement(cls, xmlElement, network = None):
         frame = NeuroptikonFrame()
         
         # TODO: set frame position and size
         
-        # Populate the display (can't use the fromXMLElement pattern here because it doesn't seem possible to re-parent a wx.GLCanvas.
+        # Populate the display (can't use the _fromXMLElement pattern here because it doesn't seem possible to re-parent a wx.GLCanvas.
         displayElement = xmlElement.find('Display')
         if displayElement is None:
             raise ValueError, gettext('Display windows must contain a display')
         frame.display.autoVisualize = False
         frame.display.setNetwork(network)
-        frame.display.fromXMLElement(displayElement)
+        frame.display._fromXMLElement(displayElement)
         frame.networkDidChangeSavePath()
         frame.setModified(False)
         
         return frame
     
     
-    def toXMLElement(self, parentElement):
+    def _toXMLElement(self, parentElement):
         frameElement = ElementTree.SubElement(parentElement, 'DisplayWindow')
-        displayElement = self.display.toXMLElement(frameElement)
+        displayElement = self.display._toXMLElement(frameElement)
         if displayElement is None:
             raise ValueError, gettext('Could not save display')
         # TODO: save frame position and size
         return frameElement
     
     
-    def toScriptFile(self, scriptFile, networkScriptRefs):
+    def _toScriptFile(self, scriptFile, networkScriptRefs):
         scriptFile.write('\n' + gettext('# Create a display') + '\n\n')
 
         displayNum = self.display.network.displays.index(self.display)
@@ -110,7 +117,7 @@ class NeuroptikonFrame( wx.Frame ):
             displayRef = 'display' + str(displayNum)
             scriptFile.write(displayRef + ' = displayNetwork(network)\n')
         
-        self.display.toScriptFile(scriptFile, networkScriptRefs, displayRef)
+        self.display._toScriptFile(scriptFile, networkScriptRefs, displayRef)
     
     
     def loadBitmap(self, fileName):
@@ -324,14 +331,14 @@ class NeuroptikonFrame( wx.Frame ):
         network = self.display.network
         
         # Serialize the network
-        networkElement = network.toXMLElement(xmlRoot)
+        networkElement = network._toXMLElement(xmlRoot)
         if networkElement is None:
             raise ValueError, gettext('Could not save the network')
         
         if saveDisplays:
             # Serialize the display(s)
             for display in network.displays:
-                frameElement = display.GetTopLevelParent().toXMLElement(xmlRoot)
+                frameElement = display.GetTopLevelParent()._toXMLElement(xmlRoot)
                 if frameElement is None:
                     raise ValueError, gettext('Could not save one of the windows')
         
@@ -358,7 +365,7 @@ class NeuroptikonFrame( wx.Frame ):
             # Attempt to create script refs for all objects using the network.find* methods.
             objectNames = {}
             for object in network.objects:
-                if object.includeInScript():
+                if object._includeInScript():
                     objectName = object.name
                     defaultName = object.defaultName()
                     
@@ -404,12 +411,12 @@ class NeuroptikonFrame( wx.Frame ):
                         if not display.autoVisualize:
                             scriptFile.write(scriptRefs[display] + '.autoVisualize = False\n')
                     scriptFile.write('\n')
-                network.toScriptFile(scriptFile, scriptRefs)
+                network._toScriptFile(scriptFile, scriptRefs)
             
             if saveDisplays:
                 # Serialize the display(s)
                 for display in network.displays:
-                    display.GetTopLevelParent().toScriptFile(scriptFile, scriptRefs)
+                    display.GetTopLevelParent()._toScriptFile(scriptFile, scriptRefs)
             else:
                 scriptFile.write('\n# Reveal the default visualization\ndisplay.centerView()\n')
         except:

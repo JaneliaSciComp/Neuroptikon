@@ -181,7 +181,8 @@ class OrthogonalPathLayout(Layout):
         for visibles in display.visibles.itervalues():
             for visible in visibles:
                 if visible.isPath():
-                    edgeLength = ((N.array(visible.pathEnd.worldPosition()) - N.array(visible.pathStart.worldPosition())) ** 2).sum()
+                    (startPoint, endPoint) = visible.pathEndPoints()
+                    edgeLength = ((N.array(endPoint.worldPosition()) - N.array(startPoint.worldPosition())) ** 2).sum()
                     edges.append((edgeLength, visible))
                 else:
                     position = visible.worldPosition()
@@ -242,7 +243,8 @@ class OrthogonalPathLayout(Layout):
         edgeCount = 0
         for edgeLength, edge in edges:
             edgeCount += 1
-            print 'Routing path from ' + (edge.pathStart.client.abbreviation or '???') + ' to ' + (edge.pathEnd.client.abbreviation or '???') + ' (' + str(edgeCount) + ' of ' + str(len(edges)) + ')'
+            (pathStart, pathEnd) = edge.pathEndPoints()
+            print 'Routing path from ' + (pathStart.client.abbreviation or '???') + ' to ' + (pathEnd.client.abbreviation or '???') + ' (' + str(edgeCount) + ' of ' + str(len(edges)) + ')'
             
             # TODO: weight the search based on any previous path
             
@@ -255,15 +257,15 @@ class OrthogonalPathLayout(Layout):
             came_from = {}          # tracks the route to each visited node
             
             # Aim for the center of the end visible and allow the edge to travel to any unused goal port.
-            goal = tuple(N.ceil((N.array(centerPositions[edge.pathEnd]) - minBound) / self.nodeSpacing))
-            goalPorts = ports[edge.pathEnd]
+            goal = tuple(N.ceil((N.array(centerPositions[pathEnd]) - minBound) / self.nodeSpacing))
+            goalPorts = ports[pathEnd]
             for goalPort in goalPorts:
-                if edgeMap.nodeOccupiers(goalPort)[0] == edge.pathEnd:
+                if edgeMap.nodeOccupiers(goalPort)[0] == pathEnd:
                     edgeMap.setNodeOccupier(goalPort, None)
             
             # Seed the walk with all unused ports on the starting visible.
-            for startPort in ports[edge.pathStart]:
-                if edgeMap.nodeOccupiers(startPort)[0] == edge.pathStart:
+            for startPort in ports[pathStart]:
+                if edgeMap.nodeOccupiers(startPort)[0] == pathStart:
                     startItem = HeapItem(startPort, goal, edgeMap, edgeMap.dist_between(startPort, goal))
                     openHeap.append(startItem)
                     openDict[startPort] = startItem
@@ -299,7 +301,7 @@ class OrthogonalPathLayout(Layout):
                             del path[index]
 #                    if len(path) < originalLen:
 #                        print '\treduced path segment count by ' + str(originalLen - len(path))
-                    edge.setPath(path, edge.pathStart, edge.pathEnd)
+                    edge.setPathMidPoints(path)
                     edge.setWeight(0.3)
                     del edgeMap
                     break
@@ -336,25 +338,29 @@ class OrthogonalPathLayout(Layout):
                     if node_y in closedSet:
                         continue
                     
-                    oldy = openDict.get(node_y,None)
+                    oldy = openDict.get(node_y, None)
                     
                     y = HeapItem(node_y, goal, edgeMap, tentative_g_score)
                     
-                    openDict[node_y] = y
-                    came_from[node_y] = (x.node, hoppedNeighbors)
-                    edgeMap.setNodeOccupier(node_y, edge)
-                    for hoppedNeighbor in hoppedNeighbors:
-                        edgeMap.addNodeOccupier(hoppedNeighbor, edge)
+#                    openDict[node_y] = y
+#                    came_from[node_y] = (x.node, hoppedNeighbors)
+#                    edgeMap.setNodeOccupier(node_y, edge)
+#                    for hoppedNeighbor in hoppedNeighbors:
+#                        edgeMap.addNodeOccupier(hoppedNeighbor, edge)
                     
                     if oldy == None:
+                        openDict[node_y] = y
+                        came_from[node_y] = (x.node, hoppedNeighbors)
                         pyheapq.heappush(openHeap, y)
                     elif tentative_g_score < oldy.g_score:
+                        openDict[node_y] = y
+                        came_from[node_y] = (x.node, hoppedNeighbors)
                         pyheapq.updateheapvalue(openHeap, openHeap.index(oldy), y)
             
                 #edgeMap.show()
             
             if 'edgeMap' in dir():
-                print '\tCould not find route from ' + (edge.pathStart.client.abbreviation or '???') + ' to ' + (edge.pathEnd.client.abbreviation or '???')
+                print '\tCould not find route from ' + (pathStart.client.abbreviation or '???') + ' to ' + (pathEnd.client.abbreviation or '???')
         
         #map.show()
 

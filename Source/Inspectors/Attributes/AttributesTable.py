@@ -39,7 +39,7 @@ class AttributesTable(wx.grid.PyGridTableBase):
         if self.object is None:
             return 0
         else:
-            return len(self.object.attributes)
+            return len(self.object._attributes)
     
     
     def GetNumberCols(self):
@@ -61,29 +61,29 @@ class AttributesTable(wx.grid.PyGridTableBase):
     
     def CanGetValueAs(self, row, col, type):
         if col == 2:
-            attribute = self.object.attributes[row]
+            attribute = self.object._attributes[row]
             if type == wx.grid.GRID_VALUE_NUMBER:
-                return attribute.type == Attribute.INTEGER_TYPE
+                return attribute.type() == Attribute.INTEGER_TYPE
             elif type == wx.grid.GRID_VALUE_FLOAT:
-                return attribute.type == Attribute.DECIMAL_TYPE
+                return attribute.type() == Attribute.DECIMAL_TYPE
             elif type == wx.grid.GRID_VALUE_BOOL:
-                return attribute.type == Attribute.BOOLEAN_TYPE
+                return attribute.type() == Attribute.BOOLEAN_TYPE
             elif type == wx.grid.GRID_VALUE_DATETIME:
-                return attribute.type == Attribute.DATETIME_TYPE
+                return attribute.type() == Attribute.DATETIME_TYPE
         return False
     
     
     def GetValue(self, row, col):
-        attribute = self.object.attributes[row]
+        attribute = self.object._attributes[row]
         dispatcher.connect(self.attributeDidChange, ('set', 'type'), attribute)
         dispatcher.connect(self.attributeDidChange, ('set', 'name'), attribute)
         dispatcher.connect(self.attributeDidChange, ('set', 'value'), attribute)
         if col == 0:
-            return attribute.type
+            return attribute.type()
         elif col == 1:
-            return attribute.name
+            return attribute.name()
         else:
-            return attribute.value
+            return attribute.value()
     
     
     def attributeDidChange(self, signal, sender):
@@ -96,31 +96,31 @@ class AttributesTable(wx.grid.PyGridTableBase):
         elif col == 1:
             return Attribute.STRING_TYPE
         else:
-            attribute = self.object.attributes[row]
-            return attribute.type
+            attribute = self.object._attributes[row]
+            return attribute.type()
     
     
     def SetValue(self, row, col, value):
-        attribute = self.object.attributes[row]
+        attribute = self.object._attributes[row]
         if col == 0:
             attribute.setType(value)
         elif col == 1:
             attribute.setName(value)
         else:
             try:
-                if attribute.type == Attribute.BOOLEAN_TYPE:
+                if attribute.type() == Attribute.BOOLEAN_TYPE:
                     value = value == 1
-                elif attribute.type == Attribute.DATETIME_TYPE:
+                elif attribute.type() == Attribute.DATETIME_TYPE:
                     try:
                         value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
                     except:
                         raise ValueError, gettext('Date time values must be in YYYY-MM-DD HH:MM:SS format')
-                elif attribute.type == Attribute.DATE_TYPE:
+                elif attribute.type() == Attribute.DATE_TYPE:
                     try:
                         value = datetime.strptime(value, '%Y-%m-%d').date()
                     except:
                         raise ValueError, gettext('Date values must be in YYYY-MM-DD format')
-                elif attribute.type == Attribute.TIME_TYPE:
+                elif attribute.type() == Attribute.TIME_TYPE:
                     try:
                         value = datetime.strptime(value, '%H:%M:%S').time()
                     except:
@@ -134,28 +134,28 @@ class AttributesTable(wx.grid.PyGridTableBase):
     
     def CanSetValueAs(self, row, col, type):
         if col == 2:
-            attribute = self.object.attributes[row]
+            attribute = self.object._attributes[row]
             if type == wx.grid.GRID_VALUE_NUMBER:
-                return attribute.type == Attribute.INTEGER_TYPE
+                return attribute.type() == Attribute.INTEGER_TYPE
             elif type == wx.grid.GRID_VALUE_FLOAT:
-                return attribute.type == Attribute.DECIMAL_TYPE
+                return attribute.type() == Attribute.DECIMAL_TYPE
             elif type == wx.grid.GRID_VALUE_BOOL:
-                return attribute.type == Attribute.BOOLEAN_TYPE
+                return attribute.type() == Attribute.BOOLEAN_TYPE
             elif type == wx.grid.GRID_VALUE_DATETIME:
-                return attribute.type == Attribute.DATETIME_TYPE
+                return attribute.type() == Attribute.DATETIME_TYPE
         return False
     
     
     def AppendRows(self, numRows):
         for rowNum in range(0, numRows):
-            self.object.attributes.append(Attribute(self.object, gettext('Attribute'), Attribute.STRING_TYPE, ''))
+            self.object._attributes.append(Attribute(self.object, gettext('Attribute'), Attribute.STRING_TYPE, ''))
         self.getGrid().ProcessTableMessage(wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, numRows))
         self.ResetView()
         return True
         
     
     def DeleteRows(self, startRow, numRows):
-        del self.object.attributes[startRow:startRow + numRows]
+        del self.object._attributes[startRow:startRow + numRows]
         self.getGrid().ProcessTableMessage(wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, startRow, numRows))
         self.ResetView()
         return True

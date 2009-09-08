@@ -1,15 +1,24 @@
 from wx.py import dispatcher
 import xml.etree.ElementTree as ElementTree
 from datetime import datetime, date, time
+import copy
+
     
 class Attribute(object):
     
+    #: for type<'str'> values
     STRING_TYPE = 'string'
+    #: for type<'int'> values
     INTEGER_TYPE = 'integer'
+    #: for type<'float'> values
     DECIMAL_TYPE = 'double'
+    #: for type<'bool'> values
     BOOLEAN_TYPE = 'boolean'
+    #: for type<'datetime.datetime'> values
     DATETIME_TYPE = 'dateTime'
+    #: for type<'datetime.date'> values
     DATE_TYPE = 'date'
+    #: for type<'datetime.time'> values
     TIME_TYPE = 'time'
     TYPES = [STRING_TYPE, INTEGER_TYPE, DECIMAL_TYPE, BOOLEAN_TYPE, DATETIME_TYPE, DATE_TYPE, TIME_TYPE]
     NATIVE_TYPES = { STRING_TYPE: [str, unicode], INTEGER_TYPE: [int], DECIMAL_TYPE: [float], BOOLEAN_TYPE: [bool], DATETIME_TYPE: [datetime], DATE_TYPE: [date], TIME_TYPE: [time]}
@@ -36,7 +45,7 @@ class Attribute(object):
     
     
     @classmethod
-    def fromXMLElement(cls, object, xmlElement):
+    def _fromXMLElement(cls, object, xmlElement):
         name = xmlElement.findtext('Name')
         type = xmlElement.get('type')
         valueText = xmlElement.findtext('Value')
@@ -66,105 +75,149 @@ class Attribute(object):
     
     def __init__(self, object, name = None, type = None, value = None):
         self.object = object    # The object that this attribute describes.
-        self.name = name
-        self.type = type
-        self.value = value
+        self._name = name
+        self._type = type
+        self._value = value
     
     
-    def toXMLElement(self, parentElement):
-        element = ElementTree.SubElement(parentElement, 'Attribute', type = self.type)
-        ElementTree.SubElement(element, 'Name').text = self.name
-        if self.type == Attribute.DATETIME_TYPE:
-            valueText = self.value.strftime('%Y-%m-%d %H:%M:%S')
-        if self.type == Attribute.DATE_TYPE:
-            valueText = self.value.strftime('%Y-%m-%d')
-        elif self.type == Attribute.TIME_TYPE:
-            valueText = self.value.strftime('%H:%M:%S')
+    def _toXMLElement(self, parentElement):
+        element = ElementTree.SubElement(parentElement, 'Attribute', type = self._type)
+        ElementTree.SubElement(element, 'Name').text = self._name
+        if self._type == Attribute.DATETIME_TYPE:
+            valueText = self._value.strftime('%Y-%m-%d %H:%M:%S')
+        if self._type == Attribute.DATE_TYPE:
+            valueText = self._value.strftime('%Y-%m-%d')
+        elif self._type == Attribute.TIME_TYPE:
+            valueText = self._value.strftime('%H:%M:%S')
         else:
-            valueText = str(self.value)
+            valueText = str(self._value)
         ElementTree.SubElement(element, 'Value').text = valueText
         return element
     
     
-    def toScriptFile(self, scriptFile, scriptRefs):
+    def _toScriptFile(self, scriptFile, scriptRefs):
         from Network import Network
         if isinstance(self.object, Network):
             scriptFile.write('network')
         else:
             scriptFile.write(scriptRefs[self.object.networkId])
-        scriptFile.write('.addAttribute(\'' + self.name.replace('\\', '\\\\').replace('\'', '\\\'') + '\', Attribute.' + self.type.upper() + '_TYPE, ')
-        if self.type == Attribute.STRING_TYPE:
-            scriptFile.write('\'' + self.value.replace('\\', '\\\\').replace('\'', '\\\'') + '\'')
-        elif self.type in (Attribute.INTEGER_TYPE, Attribute.DECIMAL_TYPE, Attribute.BOOLEAN_TYPE):
-            scriptFile.write(str(self.value))
-        elif self.type == Attribute.DATETIME_TYPE:
-            scriptFile.write('datetime.strptime(\'' + self.value.strftime('%Y-%m-%d %H:%M:%S') + '\', \'%Y-%m-%d %H:%M:%S\')')
-        elif self.type == Attribute.DATE_TYPE:
-            scriptFile.write('datetime.strptime(\'' + self.value.strftime('%Y-%m-%d') + '\', \'%Y-%m-%d\').date()')
-        elif self.type == Attribute.TIME_TYPE:
-            scriptFile.write('datetime.strptime(\'' + self.value.strftime('%H:%M:%S') + '\', \'%H:%M:%S\').time()')
+        scriptFile.write('.addAttribute(\'' + self._name.replace('\\', '\\\\').replace('\'', '\\\'') + '\', Attribute.' + self._type.upper() + '_TYPE, ')
+        if self._type == Attribute.STRING_TYPE:
+            scriptFile.write('\'' + self._value.replace('\\', '\\\\').replace('\'', '\\\'') + '\'')
+        elif self._type in (Attribute.INTEGER_TYPE, Attribute.DECIMAL_TYPE, Attribute.BOOLEAN_TYPE):
+            scriptFile.write(str(self._value))
+        elif self._type == Attribute.DATETIME_TYPE:
+            scriptFile.write('datetime.strptime(\'' + self._value.strftime('%Y-%m-%d %H:%M:%S') + '\', \'%Y-%m-%d %H:%M:%S\')')
+        elif self._type == Attribute.DATE_TYPE:
+            scriptFile.write('datetime.strptime(\'' + self._value.strftime('%Y-%m-%d') + '\', \'%Y-%m-%d\').date()')
+        elif self._type == Attribute.TIME_TYPE:
+            scriptFile.write('datetime.strptime(\'' + self._value.strftime('%H:%M:%S') + '\', \'%H:%M:%S\').time()')
         scriptFile.write(')\n')
     
     
     def setName(self, name):
-        if name != self.name:
-            self.name = name
+        """
+        Set the name of the attribute.
+        """
+        
+        if name != self._name:
+            self._name = name
             dispatcher.send(('set', 'name'), self)
     
     
+    def name(self):
+        """
+        Return the name of the attribute.
+        
+        Altering the contents of the returned value will have no effect on the attribute.  You must call setName() to make any changes.
+        """
+        
+        return str(self._name)
+    
+    
     def setType(self, type):
+        """
+        Set the type of the attribute.
+        
+        An attempt will be made to convert the existing attribute value to the new type otherwise a default value will be used.
+        """
+        
         if type not in Attribute.TYPES:
             raise ValueError, gettext("'%s' is an unknown type") % (type)
         
-        if type != self.type:
-            self.type = type
-            originalValue = self.value
+        if type != self._type:
+            self._type = type
+            originalValue = self._value
             if type == Attribute.STRING_TYPE:
-                self.value = ''
+                self._value = ''
             elif type == Attribute.INTEGER_TYPE:
                 try:
-                    self.value = int(self.value)
+                    self._value = int(self._value)
                 except:
-                    self.value = 0
+                    self._value = 0
             elif type == Attribute.DECIMAL_TYPE:
                 try:
-                    self.value = float(self.value)
+                    self._value = float(self._value)
                 except:
-                    self.value = 0.0
+                    self._value = 0.0
             elif type == Attribute.BOOLEAN_TYPE:
-                self.value = True
+                self._value = True
             elif type == Attribute.DATETIME_TYPE:
                 if isinstance(self.value, date):
-                    self.value = datetime.combine(self.value, datetime.now().time().replace(microsecond = 0))
-                elif isinstance(self.value, time):
-                    self.value = datetime.combine(date.today(), self.value)
+                    self._value = datetime.combine(self._value, datetime.now().time().replace(microsecond = 0))
+                elif isinstance(self._value, time):
+                    self._value = datetime.combine(date.today(), self._value)
                 else:
-                    self.value = datetime.now().replace(microsecond = 0)
+                    self._value = datetime.now().replace(microsecond = 0)
             elif type == Attribute.DATE_TYPE:
                 if isinstance(self.value, datetime):
-                    self.value = self.value.date()
+                    self._value = self._value.date()
                 else:
-                    self.value = date.today()
+                    self._value = date.today()
             elif type == Attribute.TIME_TYPE:
                 if isinstance(self.value, datetime):
-                    self.value = self.value.time()
+                    self._value = self._value.time()
                 else:
-                    self.value = datetime.now().time().replace(microsecond = 0)
+                    self._value = datetime.now().time().replace(microsecond = 0)
             dispatcher.send(('set', 'type'), self)
-            if self.value != originalValue:
+            if self._value != originalValue:
                 dispatcher.send(('set', 'value'), self)
     
     
+    def type(self):
+        """
+        Return the type of the attribute.
+        """
+        
+        return str(self._type)
+    
+    
     def setValue(self, value):
-        if value.__class__ not in Attribute.NATIVE_TYPES[self.type]:
-            validTypes = Attribute.NATIVE_TYPES[self.type]
+        """
+        Set the value of the attribute.
+        
+        If the type of the given value does not match the attribute's type then an exception will be raised. 
+        """
+        
+        if value.__class__ not in Attribute.NATIVE_TYPES[self._type]:
+            validTypes = Attribute.NATIVE_TYPES[self._type]
             validTypesString = "'" + validTypes[0].__name__ + "'"
             if len(validTypes) > 1:
                 for validType in validTypes[1:-1]:
                     validTypesString = validTypesString + ", '" + validType.__name__ + "'"
                 validTypesString = validTypesString + ' ' + gettext('or') + " '" + validTypes[-1].__name__ + "'"
-            raise ValueError, gettext("Values of %s attributes must be of type %s") % (Attribute.displayNameForType(self.type).lower(), validTypesString)
+            raise ValueError, gettext("Values of %s attributes must be of type %s") % (Attribute.displayNameForType(self._type).lower(), validTypesString)
             
-        if value != self.value:
-            self.value = value
+        if value != self._value:
+            self._value = value
             dispatcher.send(('set', 'value'), self)
+    
+    
+    def value(self):
+        """
+        Return a copy of the attribute's value.
+        
+        Altering the contents of the returned value will have no effect on the attribute.  You must call setValue() to make any changes.
+        """
+        
+        return copy.copy(self._value)

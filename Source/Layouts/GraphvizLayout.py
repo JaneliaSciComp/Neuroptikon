@@ -99,10 +99,11 @@ class GraphvizLayout(Layout):
                         graph.add_node(pydot.Node(str(visible.displayId), **self.graphvizAttributes(visible)))
         for edgeVisible in edgeVisibles:
             graphVisibles[str(edgeVisible.displayId)] = edgeVisible
+            (pathStart, pathEnd) = edgeVisible.pathEndPoints()
             if pygraphviz is not None:
-                graph.add_edge(str(edgeVisible.pathStart.displayId), str(edgeVisible.pathEnd.displayId), str(edgeVisible.displayId))
+                graph.add_edge(str(pathStart.displayId), str(pathEnd.displayId), str(edgeVisible.displayId))
             else:
-                graph.add_edge(pydot.Edge(str(edgeVisible.pathStart.displayId), str(edgeVisible.pathEnd.displayId), tooltip = str(edgeVisible.displayId)))
+                graph.add_edge(pydot.Edge(str(pathStart.displayId), str(pathEnd.displayId), tooltip = str(edgeVisible.displayId)))
         
         if pygraphviz is not None:
             #print mainGraph.to_string()
@@ -136,20 +137,21 @@ class GraphvizLayout(Layout):
                             visible.setPosition(((float(x) - dx) * scale, (float(y) - dy) * scale, 0))
                 elif False:
                     # Set the path of an edge
+                    (pathStart, pathEnd) = visible.pathEndPoints()
                     if pygraphviz is not None:
-                        edge = pygraphviz.Edge(graph, str(visible.pathStart.displayId), str(visible.pathEnd.displayId))
+                        edge = pygraphviz.Edge(graph, str(pathStart.displayId), str(pathEnd.displayId))
                         if 'pos' in edge.attr:
                             pos = edge.attr['pos']
                     else:
                         pass    # TODO
                     if pos is not None:
-                        (startVisX, startVisY, startVisZ) = visible.pathStart.worldPosition()
-                        (endVisX, endVisY, endVisZ) = visible.pathEnd.worldPosition()
-                        startPos = self._graphvizNodePos(graph, str(visible.pathStart.displayId))
+                        (startVisX, startVisY, startVisZ) = pathStart.worldPosition()
+                        (endVisX, endVisY, endVisZ) = pathEnd.worldPosition()
+                        startPos = self._graphvizNodePos(graph, str(pathStart.displayId))
                         startDotX, startDotY = startPos.split(',')
                         startDotX = float(startDotX)
                         startDotY = float(startDotY)
-                        endPos = self._graphvizNodePos(graph, str(visible.pathEnd.displayId))
+                        endPos = self._graphvizNodePos(graph, str(pathEnd.displayId))
                         endDotX, endDotY = endPos.split(',')
                         endDotX = float(endDotX)
                         endDotY = float(endDotY)
@@ -163,7 +165,7 @@ class GraphvizLayout(Layout):
                             for pathElement in path[1:-1]:
                                 x, y = pathElement.split(',')
                                 path_3D.append(((float(x) - translateX) / scaleX, (float(y) - translateY) / scaleY, 0))
-                            visible.setPath(path_3D, visible.pathStart, visible.pathEnd)
+                            visible.setPathMidPoints(path_3D)
     
     
     def _graphvizNodePos(self, graph, nodeId):

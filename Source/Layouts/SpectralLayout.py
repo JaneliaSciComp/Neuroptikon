@@ -30,15 +30,16 @@ class SpectralLayout(Layout):
             # Build the adjacency matrix
             A = zeros((n, n))
             for edge in edges:
-                n1 = nodes.index(edge.pathStart.rootVisible())
-                n2 = nodes.index(edge.pathEnd.rootVisible())
+                (pathStart, pathEnd) = edge.pathEndPoints()
+                n1 = nodes.index(pathStart.rootVisible())
+                n2 = nodes.index(pathEnd.rootVisible())
                 if self.weightingFunction is None:
                     weight = 1.0
                 else:
                     weight = self.weightingFunction(edge)
-                if edge.flowTo is None or edge.flowTo:
+                if edge.flowTo() is None or edge.flowTo():
                     A[n1, n2] = A[n1, n2] + weight
-                if edge.flowFrom is None or edge.flowFrom:
+                if edge.flowFrom() is None or edge.flowFrom():
                     A[n2, n1] = A[n2, n1] + weight
             #print A.tolist()
             

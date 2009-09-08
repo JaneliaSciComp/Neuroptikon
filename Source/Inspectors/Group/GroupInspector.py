@@ -40,10 +40,9 @@ class GroupInspector(Inspector):
             bitmap.SetMaxSize(wx.Size(16, 16))
             bitmap.SetBitmap(wx.EmptyBitmap(16, 16))
             if visible.client is not None:
-                image = visible.client.image()
-                if image is not None and image.Ok():
-                    scaledImage = image.Rescale(16, 16)
-                    bitmap.SetBitmap(wx.BitmapFromImage(scaledImage))
+                image = visible.client.image() or wx.EmptyImage(16, 16)
+                scaledImage = image.Rescale(16, 16)
+                bitmap.SetBitmap(wx.BitmapFromImage(scaledImage))
             self.gridSizer.Add(bitmap)
             if visible.client is None:
                 clientName = gettext('Virtual object')  # TODO: need a better name for a visible that has no counterpart in the biological layer...
@@ -65,4 +64,4 @@ class GroupInspector(Inspector):
     def onSelectVisible(self, event):
         sizerItem = self.gridSizer.GetItem(event.GetEventObject())
         visible = sizerItem.GetUserData()
-        visible.display.selectVisibles([visible])
+        visible.display.selectObject(visible.client)

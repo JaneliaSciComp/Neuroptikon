@@ -15,6 +15,15 @@ ez_setup.use_setuptools()
 import os, sys
 from setuptools import setup
 
+def purge_dir(path):
+    if os.path.exists(path):
+        for root, dirs, files in os.walk(path, topdown=False):
+            for name in files:
+                os.remove(os.path.join(root, name))
+            for name in dirs:
+                os.rmdir(os.path.join(root, name))
+        os.rmdir(path)
+
 app_scripts = ['Neuroptikon.py']
 
 import __version__
@@ -22,7 +31,7 @@ app_version = __version__.version
 
 setup_options = dict()
 
-resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
+resources = ['Documentation/build/Documentation', 'Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
 resources += ['Display/FlowShader.vert', 'Display/FlowShader.frag', 'Display/CullFaces.osg']
 includes = ['wx', 'xlrd']
 excludes = ['Inspectors', 'Layouts', 'matplotlib', 'scipy', 'Shapes']
@@ -38,7 +47,7 @@ if sys.platform == 'darwin':
     # 4. sudo easy_install numpy
     # 5. Install wxPython from http://downloads.sourceforge.net/wxpython/wxPython2.8-osx-unicode-2.8.9.2-universal-py2.5.dmg
     # 6. export PYTHONPATH=/usr/local/lib/wxPython-unicode/lib/python2.5/site-packages:/Library/Python/2.5
-    # 7. python setup.py py2app
+    # 7. python setup.py --quiet py2app
     
     import wxversion
     wxversion.select('2.8')
@@ -51,6 +60,7 @@ if sys.platform == 'darwin':
     py2app_options = dict()
     
     dist_dir = 'build/Neuroptikon ' + app_version
+    purge_dir(dist_dir)
     py2app_options['dist_dir'] = dist_dir
     
     excludes += ['aetools', 'StdSuites.AppleScript_Suite']
@@ -77,7 +87,7 @@ elif sys.platform == 'win32':
     # - Install Enthought Python Distribution
     # - Install Inno Setup QuickStart Pack from http://jrsoftware.org/isdl.php
     # - move aside networkx(?) and pyxml site-packages
-    # - python setup.py py2exe
+    # - python setup.py --quiet py2exe
     
     import py2exe
     
@@ -89,6 +99,7 @@ elif sys.platform == 'win32':
     py2exe_options = dict()
     
     dist_dir = 'build/Neuroptikon ' + app_version
+    purge_dir(dist_dir)
     py2exe_options['dist_dir'] = dist_dir
     
     py2exe_options['packages'] = includes
@@ -125,6 +136,16 @@ elif sys.platform == 'win32':
     setup_options['options'] = dict(py2exe = py2exe_options)
 else:
         pass	# TODO: Linux setup
+
+# Purge and then rebuild the documentation with Sphinx
+purge_dir('Documentation/build')
+try:
+    from sphinx import main
+except:
+    print 'You must have sphinx installed and in the Python path to build the Neuroptikon package.  See <http://sphinx.pocoo.org/>.'
+result = main(['-q', '-b', 'html', 'Documentation/Source', 'Documentation/build/Documentation'])
+if result != 0:
+    sys.exit(result)
 
 setup(
     name = 'Neuroptikon', 

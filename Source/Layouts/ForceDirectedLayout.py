@@ -104,13 +104,14 @@ class ForceDirectedLayout(Layout):
             
             # Make the edges as short as possible
             for edge in edges:
-                delta = positions[edge.pathStart] - positions[edge.pathEnd]
+                (pathStart, pathEnd) = edge.pathEndPoints()
+                delta = positions[pathStart] - positions[pathEnd]
                 deltaMag = max(sqrt(N.dot(delta, delta)), 0.01)
                 force = delta * deltaMag ** 2 / (optimalNodeSep * deltaMag)
-                startRoot = edge.pathStart.rootVisible()
+                startRoot = pathStart.rootVisible()
                 if not startRoot.positionIsFixed():
                     displacements[startRoot] = displacements[startRoot] - force
-                endRoot = edge.pathEnd.rootVisible()
+                endRoot = pathEnd.rootVisible()
                 if not endRoot.positionIsFixed():
                     displacements[endRoot] = displacements[endRoot] + force
 

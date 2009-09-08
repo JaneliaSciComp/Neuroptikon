@@ -3,1119 +3,1119 @@
 
 neurons = {}
 
-neurons['IL2DL'] = network.createNeuron(name = 'IL2DL', functions = [NeuralFunction.SENSORY])
+neurons['IL2DL'] = network.createNeuron(name = 'IL2DL', functions = [Neuron.Function.SENSORY])
 neurons['IL2DL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['IL2DL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['IL2VL'] = network.createNeuron(name = 'IL2VL', functions = [NeuralFunction.SENSORY])
+neurons['IL2VL'] = network.createNeuron(name = 'IL2VL', functions = [Neuron.Function.SENSORY])
 neurons['IL2VL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['IL2VL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['IL2L'] = network.createNeuron(name = 'IL2L', functions = [NeuralFunction.SENSORY])
+neurons['IL2L'] = network.createNeuron(name = 'IL2L', functions = [Neuron.Function.SENSORY])
 neurons['IL2L'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['IL2L'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['URADL'] = network.createNeuron(name = 'URADL', functions = [NeuralFunction.SENSORY, NeuralFunction.MOTOR])
+neurons['URADL'] = network.createNeuron(name = 'URADL', functions = [Neuron.Function.SENSORY, Neuron.Function.MOTOR])
 neurons['URADL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['URADL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['IL1VL'] = network.createNeuron(name = 'IL1VL', functions = [NeuralFunction.SENSORY, NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['IL1VL'] = network.createNeuron(name = 'IL1VL', functions = [Neuron.Function.SENSORY, Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['IL1VL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['IL1VL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['IL2DR'] = network.createNeuron(name = 'IL2DR', functions = [NeuralFunction.SENSORY])
+neurons['IL2DR'] = network.createNeuron(name = 'IL2DR', functions = [Neuron.Function.SENSORY])
 neurons['IL2DR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['IL2DR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['IL1DL'] = network.createNeuron(name = 'IL1DL', functions = [NeuralFunction.SENSORY, NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['IL1DL'] = network.createNeuron(name = 'IL1DL', functions = [Neuron.Function.SENSORY, Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['IL1DL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['IL1DL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['OLLL'] = network.createNeuron(name = 'OLLL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['OLLL'] = network.createNeuron(name = 'OLLL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['OLLL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['OLLL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['IL1L'] = network.createNeuron(name = 'IL1L', functions = [NeuralFunction.SENSORY, NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['IL1L'] = network.createNeuron(name = 'IL1L', functions = [Neuron.Function.SENSORY, Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['IL1L'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['IL1L'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['URYDL'] = network.createNeuron(name = 'URYDL', functions = [NeuralFunction.SENSORY])
+neurons['URYDL'] = network.createNeuron(name = 'URYDL', functions = [Neuron.Function.SENSORY])
 neurons['URYDL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['URYDL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['OLQDL'] = network.createNeuron(name = 'OLQDL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['OLQDL'] = network.createNeuron(name = 'OLQDL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['OLQDL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['OLQDL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['URYDR'] = network.createNeuron(name = 'URYDR', functions = [NeuralFunction.SENSORY])
+neurons['URYDR'] = network.createNeuron(name = 'URYDR', functions = [Neuron.Function.SENSORY])
 neurons['URYDR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['URYDR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['IL2R'] = network.createNeuron(name = 'IL2R', functions = [NeuralFunction.SENSORY])
+neurons['IL2R'] = network.createNeuron(name = 'IL2R', functions = [Neuron.Function.SENSORY])
 neurons['IL2R'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['IL2R'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['URYVL'] = network.createNeuron(name = 'URYVL', functions = [NeuralFunction.SENSORY])
+neurons['URYVL'] = network.createNeuron(name = 'URYVL', functions = [Neuron.Function.SENSORY])
 neurons['URYVL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['URYVL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RIPL'] = network.createNeuron(name = 'RIPL', functions = [NeuralFunction.INTERNEURON])
+neurons['RIPL'] = network.createNeuron(name = 'RIPL', functions = [Neuron.Function.INTERNEURON])
 neurons['RIPL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['RIPL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['OLLR'] = network.createNeuron(name = 'OLLR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['OLLR'] = network.createNeuron(name = 'OLLR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['OLLR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['OLLR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['URBL'] = network.createNeuron(name = 'URBL', functions = [NeuralFunction.SENSORY])
+neurons['URBL'] = network.createNeuron(name = 'URBL', functions = [Neuron.Function.SENSORY])
 neurons['URBL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['URBL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['IL2VR'] = network.createNeuron(name = 'IL2VR', functions = [NeuralFunction.SENSORY])
+neurons['IL2VR'] = network.createNeuron(name = 'IL2VR', functions = [Neuron.Function.SENSORY])
 neurons['IL2VR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['IL2VR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['IL1DR'] = network.createNeuron(name = 'IL1DR', functions = [NeuralFunction.SENSORY, NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['IL1DR'] = network.createNeuron(name = 'IL1DR', functions = [Neuron.Function.SENSORY, Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['IL1DR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['IL1DR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['URADR'] = network.createNeuron(name = 'URADR', functions = [NeuralFunction.SENSORY, NeuralFunction.MOTOR])
+neurons['URADR'] = network.createNeuron(name = 'URADR', functions = [Neuron.Function.SENSORY, Neuron.Function.MOTOR])
 neurons['URADR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['URADR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['IL1R'] = network.createNeuron(name = 'IL1R', functions = [NeuralFunction.SENSORY, NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['IL1R'] = network.createNeuron(name = 'IL1R', functions = [Neuron.Function.SENSORY, Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['IL1R'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['IL1R'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['URAVL'] = network.createNeuron(name = 'URAVL', functions = [NeuralFunction.SENSORY, NeuralFunction.MOTOR])
+neurons['URAVL'] = network.createNeuron(name = 'URAVL', functions = [Neuron.Function.SENSORY, Neuron.Function.MOTOR])
 neurons['URAVL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['URAVL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['OLQVL'] = network.createNeuron(name = 'OLQVL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['OLQVL'] = network.createNeuron(name = 'OLQVL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['OLQVL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['OLQVL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RMED'] = network.createNeuron(name = 'RMED', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['RMED'] = network.createNeuron(name = 'RMED', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['RMED'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['RMED'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['URBR'] = network.createNeuron(name = 'URBR', functions = [NeuralFunction.SENSORY])
+neurons['URBR'] = network.createNeuron(name = 'URBR', functions = [Neuron.Function.SENSORY])
 neurons['URBR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['URBR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['OLQDR'] = network.createNeuron(name = 'OLQDR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['OLQDR'] = network.createNeuron(name = 'OLQDR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['OLQDR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['OLQDR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['URYVR'] = network.createNeuron(name = 'URYVR', functions = [NeuralFunction.SENSORY])
+neurons['URYVR'] = network.createNeuron(name = 'URYVR', functions = [Neuron.Function.SENSORY])
 neurons['URYVR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['URYVR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RIPR'] = network.createNeuron(name = 'RIPR', functions = [NeuralFunction.INTERNEURON])
+neurons['RIPR'] = network.createNeuron(name = 'RIPR', functions = [Neuron.Function.INTERNEURON])
 neurons['RIPR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['RIPR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RMEL'] = network.createNeuron(name = 'RMEL', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['RMEL'] = network.createNeuron(name = 'RMEL', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['RMEL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['RMEL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['BAGL'] = network.createNeuron(name = 'BAGL', functions = [NeuralFunction.SENSORY])
+neurons['BAGL'] = network.createNeuron(name = 'BAGL', functions = [Neuron.Function.SENSORY])
 neurons['BAGL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['BAGL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['CEPVL'] = network.createNeuron(name = 'CEPVL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
+neurons['CEPVL'] = network.createNeuron(name = 'CEPVL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
 neurons['CEPVL'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['CEPVL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['BAGR'] = network.createNeuron(name = 'BAGR', functions = [NeuralFunction.SENSORY])
+neurons['BAGR'] = network.createNeuron(name = 'BAGR', functions = [Neuron.Function.SENSORY])
 neurons['BAGR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['BAGR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['OLQVR'] = network.createNeuron(name = 'OLQVR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['OLQVR'] = network.createNeuron(name = 'OLQVR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['OLQVR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['OLQVR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['URAVR'] = network.createNeuron(name = 'URAVR', functions = [NeuralFunction.SENSORY, NeuralFunction.MOTOR])
+neurons['URAVR'] = network.createNeuron(name = 'URAVR', functions = [Neuron.Function.SENSORY, Neuron.Function.MOTOR])
 neurons['URAVR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['URAVR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RMER'] = network.createNeuron(name = 'RMER', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['RMER'] = network.createNeuron(name = 'RMER', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['RMER'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['RMER'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['IL1VR'] = network.createNeuron(name = 'IL1VR', functions = [NeuralFunction.SENSORY, NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['IL1VR'] = network.createNeuron(name = 'IL1VR', functions = [Neuron.Function.SENSORY, Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['IL1VR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['IL1VR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RID'] = network.createNeuron(name = 'RID', functions = [NeuralFunction.MOTOR])
+neurons['RID'] = network.createNeuron(name = 'RID', functions = [Neuron.Function.MOTOR])
 neurons['RID'].addAttribute('Class', Attribute.STRING_TYPE, 'B')
 neurons['RID'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['CEPVR'] = network.createNeuron(name = 'CEPVR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
+neurons['CEPVR'] = network.createNeuron(name = 'CEPVR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
 neurons['CEPVR'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['CEPVR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RMEV'] = network.createNeuron(name = 'RMEV', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['RMEV'] = network.createNeuron(name = 'RMEV', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['RMEV'].addAttribute('Class', Attribute.STRING_TYPE, 'A')
 neurons['RMEV'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['CEPDL'] = network.createNeuron(name = 'CEPDL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
+neurons['CEPDL'] = network.createNeuron(name = 'CEPDL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
 neurons['CEPDL'].addAttribute('Class', Attribute.STRING_TYPE, 'B')
 neurons['CEPDL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RMDVL'] = network.createNeuron(name = 'RMDVL', functions = [NeuralFunction.MOTOR])
+neurons['RMDVL'] = network.createNeuron(name = 'RMDVL', functions = [Neuron.Function.MOTOR])
 neurons['RMDVL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RMDVL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['SAAVL'] = network.createNeuron(name = 'SAAVL', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SAAVL'] = network.createNeuron(name = 'SAAVL', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SAAVL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['SAAVL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['SMDVL'] = network.createNeuron(name = 'SMDVL', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SMDVL'] = network.createNeuron(name = 'SMDVL', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SMDVL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['SMDVL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['URXL'] = network.createNeuron(name = 'URXL', functions = [NeuralFunction.INTERNEURON, NeuralFunction.SENSORY])
+neurons['URXL'] = network.createNeuron(name = 'URXL', functions = [Neuron.Function.INTERNEURON, Neuron.Function.SENSORY])
 neurons['URXL'].addAttribute('Class', Attribute.STRING_TYPE, 'B')
 neurons['URXL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['ALA'] = network.createNeuron(name = 'ALA', functions = [NeuralFunction.INTERNEURON])
+neurons['ALA'] = network.createNeuron(name = 'ALA', functions = [Neuron.Function.INTERNEURON])
 neurons['ALA'].addAttribute('Class', Attribute.STRING_TYPE, 'B')
 neurons['ALA'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['RMDVR'] = network.createNeuron(name = 'RMDVR', functions = [NeuralFunction.MOTOR])
+neurons['RMDVR'] = network.createNeuron(name = 'RMDVR', functions = [Neuron.Function.MOTOR])
 neurons['RMDVR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RMDVR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['CEPDR'] = network.createNeuron(name = 'CEPDR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
+neurons['CEPDR'] = network.createNeuron(name = 'CEPDR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
 neurons['CEPDR'].addAttribute('Class', Attribute.STRING_TYPE, 'B')
 neurons['CEPDR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AVAL'] = network.createNeuron(name = 'AVAL', functions = [NeuralFunction.INTERNEURON])
+neurons['AVAL'] = network.createNeuron(name = 'AVAL', functions = [Neuron.Function.INTERNEURON])
 neurons['AVAL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AVAL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RIAL'] = network.createNeuron(name = 'RIAL', functions = [NeuralFunction.INTERNEURON])
+neurons['RIAL'] = network.createNeuron(name = 'RIAL', functions = [Neuron.Function.INTERNEURON])
 neurons['RIAL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RIAL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['ASKL'] = network.createNeuron(name = 'ASKL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['ASKL'] = network.createNeuron(name = 'ASKL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['ASKL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ASKL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['SAAVR'] = network.createNeuron(name = 'SAAVR', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SAAVR'] = network.createNeuron(name = 'SAAVR', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SAAVR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['SAAVR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RMDL'] = network.createNeuron(name = 'RMDL', functions = [NeuralFunction.MOTOR])
+neurons['RMDL'] = network.createNeuron(name = 'RMDL', functions = [Neuron.Function.MOTOR])
 neurons['RMDL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RMDL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['URXR'] = network.createNeuron(name = 'URXR', functions = [NeuralFunction.INTERNEURON, NeuralFunction.SENSORY])
+neurons['URXR'] = network.createNeuron(name = 'URXR', functions = [Neuron.Function.INTERNEURON, Neuron.Function.SENSORY])
 neurons['URXR'].addAttribute('Class', Attribute.STRING_TYPE, 'B')
 neurons['URXR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['SMDVR'] = network.createNeuron(name = 'SMDVR', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SMDVR'] = network.createNeuron(name = 'SMDVR', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SMDVR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['SMDVR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AFDL'] = network.createNeuron(name = 'AFDL', functions = [NeuralFunction.SENSORY])
+neurons['AFDL'] = network.createNeuron(name = 'AFDL', functions = [Neuron.Function.SENSORY])
 neurons['AFDL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AFDL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['AVAR'] = network.createNeuron(name = 'AVAR', functions = [NeuralFunction.INTERNEURON])
+neurons['AVAR'] = network.createNeuron(name = 'AVAR', functions = [Neuron.Function.INTERNEURON])
 neurons['AVAR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AVAR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RIAR'] = network.createNeuron(name = 'RIAR', functions = [NeuralFunction.INTERNEURON])
+neurons['RIAR'] = network.createNeuron(name = 'RIAR', functions = [Neuron.Function.INTERNEURON])
 neurons['RIAR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RIAR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['ASKR'] = network.createNeuron(name = 'ASKR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['ASKR'] = network.createNeuron(name = 'ASKR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['ASKR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ASKR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AVEL'] = network.createNeuron(name = 'AVEL', functions = [NeuralFunction.INTERNEURON])
+neurons['AVEL'] = network.createNeuron(name = 'AVEL', functions = [Neuron.Function.INTERNEURON])
 neurons['AVEL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AVEL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['ADLL'] = network.createNeuron(name = 'ADLL', functions = [NeuralFunction.SENSORY])
+neurons['ADLL'] = network.createNeuron(name = 'ADLL', functions = [Neuron.Function.SENSORY])
 neurons['ADLL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ADLL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['ADFL'] = network.createNeuron(name = 'ADFL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('5-HT')])
+neurons['ADFL'] = network.createNeuron(name = 'ADFL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('5-HT')])
 neurons['ADFL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ADFL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RMDR'] = network.createNeuron(name = 'RMDR', functions = [NeuralFunction.MOTOR])
+neurons['RMDR'] = network.createNeuron(name = 'RMDR', functions = [Neuron.Function.MOTOR])
 neurons['RMDR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RMDR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AFDR'] = network.createNeuron(name = 'AFDR', functions = [NeuralFunction.SENSORY])
+neurons['AFDR'] = network.createNeuron(name = 'AFDR', functions = [Neuron.Function.SENSORY])
 neurons['AFDR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AFDR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['SIBDL'] = network.createNeuron(name = 'SIBDL', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SIBDL'] = network.createNeuron(name = 'SIBDL', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SIBDL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['SIBDL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RIH'] = network.createNeuron(name = 'RIH', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('5-HT')])
+neurons['RIH'] = network.createNeuron(name = 'RIH', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('5-HT')])
 neurons['RIH'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['RIH'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AWBL'] = network.createNeuron(name = 'AWBL', functions = [NeuralFunction.SENSORY])
+neurons['AWBL'] = network.createNeuron(name = 'AWBL', functions = [Neuron.Function.SENSORY])
 neurons['AWBL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AWBL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['AVER'] = network.createNeuron(name = 'AVER', functions = [NeuralFunction.INTERNEURON])
+neurons['AVER'] = network.createNeuron(name = 'AVER', functions = [Neuron.Function.INTERNEURON])
 neurons['AVER'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AVER'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RMDDL'] = network.createNeuron(name = 'RMDDL', functions = [NeuralFunction.MOTOR])
+neurons['RMDDL'] = network.createNeuron(name = 'RMDDL', functions = [Neuron.Function.MOTOR])
 neurons['RMDDL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['RMDDL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['AWCL'] = network.createNeuron(name = 'AWCL', functions = [NeuralFunction.SENSORY])
+neurons['AWCL'] = network.createNeuron(name = 'AWCL', functions = [Neuron.Function.SENSORY])
 neurons['AWCL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AWCL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['ADFR'] = network.createNeuron(name = 'ADFR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('5-HT')])
+neurons['ADFR'] = network.createNeuron(name = 'ADFR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('5-HT')])
 neurons['ADFR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ADFR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['ASGL'] = network.createNeuron(name = 'ASGL', functions = [NeuralFunction.SENSORY])
+neurons['ASGL'] = network.createNeuron(name = 'ASGL', functions = [Neuron.Function.SENSORY])
 neurons['ASGL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ASGL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['SAADL'] = network.createNeuron(name = 'SAADL', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SAADL'] = network.createNeuron(name = 'SAADL', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SAADL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SAADL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['ADLR'] = network.createNeuron(name = 'ADLR', functions = [NeuralFunction.SENSORY])
+neurons['ADLR'] = network.createNeuron(name = 'ADLR', functions = [Neuron.Function.SENSORY])
 neurons['ADLR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ADLR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AWAL'] = network.createNeuron(name = 'AWAL', functions = [NeuralFunction.SENSORY])
+neurons['AWAL'] = network.createNeuron(name = 'AWAL', functions = [Neuron.Function.SENSORY])
 neurons['AWAL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AWAL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['AWBR'] = network.createNeuron(name = 'AWBR', functions = [NeuralFunction.SENSORY])
+neurons['AWBR'] = network.createNeuron(name = 'AWBR', functions = [Neuron.Function.SENSORY])
 neurons['AWBR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AWBR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['ASIL'] = network.createNeuron(name = 'ASIL', functions = [NeuralFunction.SENSORY])
+neurons['ASIL'] = network.createNeuron(name = 'ASIL', functions = [Neuron.Function.SENSORY])
 neurons['ASIL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ASIL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['ASHL'] = network.createNeuron(name = 'ASHL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['ASHL'] = network.createNeuron(name = 'ASHL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['ASHL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ASHL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['SIBDR'] = network.createNeuron(name = 'SIBDR', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SIBDR'] = network.createNeuron(name = 'SIBDR', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SIBDR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['SIBDR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['ASGR'] = network.createNeuron(name = 'ASGR', functions = [NeuralFunction.SENSORY])
+neurons['ASGR'] = network.createNeuron(name = 'ASGR', functions = [Neuron.Function.SENSORY])
 neurons['ASGR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ASGR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AIBL'] = network.createNeuron(name = 'AIBL', functions = [NeuralFunction.INTERNEURON])
+neurons['AIBL'] = network.createNeuron(name = 'AIBL', functions = [Neuron.Function.INTERNEURON])
 neurons['AIBL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AIBL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['ASHR'] = network.createNeuron(name = 'ASHR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['ASHR'] = network.createNeuron(name = 'ASHR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['ASHR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ASHR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AWCR'] = network.createNeuron(name = 'AWCR', functions = [NeuralFunction.SENSORY])
+neurons['AWCR'] = network.createNeuron(name = 'AWCR', functions = [Neuron.Function.SENSORY])
 neurons['AWCR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AWCR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AWAR'] = network.createNeuron(name = 'AWAR', functions = [NeuralFunction.SENSORY])
+neurons['AWAR'] = network.createNeuron(name = 'AWAR', functions = [Neuron.Function.SENSORY])
 neurons['AWAR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AWAR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['SIBVL'] = network.createNeuron(name = 'SIBVL', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SIBVL'] = network.createNeuron(name = 'SIBVL', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SIBVL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SIBVL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RIVL'] = network.createNeuron(name = 'RIVL', functions = [NeuralFunction.INTERNEURON, NeuralFunction.MOTOR])
+neurons['RIVL'] = network.createNeuron(name = 'RIVL', functions = [Neuron.Function.INTERNEURON, Neuron.Function.MOTOR])
 neurons['RIVL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RIVL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['SMDDL'] = network.createNeuron(name = 'SMDDL', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SMDDL'] = network.createNeuron(name = 'SMDDL', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SMDDL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SMDDL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['SAADR'] = network.createNeuron(name = 'SAADR', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SAADR'] = network.createNeuron(name = 'SAADR', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SAADR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SAADR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RMHL'] = network.createNeuron(name = 'RMHL', functions = [NeuralFunction.MOTOR])
+neurons['RMHL'] = network.createNeuron(name = 'RMHL', functions = [Neuron.Function.MOTOR])
 neurons['RMHL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['RMHL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RMDDR'] = network.createNeuron(name = 'RMDDR', functions = [NeuralFunction.MOTOR])
+neurons['RMDDR'] = network.createNeuron(name = 'RMDDR', functions = [Neuron.Function.MOTOR])
 neurons['RMDDR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['RMDDR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['ASIR'] = network.createNeuron(name = 'ASIR', functions = [NeuralFunction.SENSORY])
+neurons['ASIR'] = network.createNeuron(name = 'ASIR', functions = [Neuron.Function.SENSORY])
 neurons['ASIR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ASIR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AVHL'] = network.createNeuron(name = 'AVHL', functions = [NeuralFunction.INTERNEURON])
+neurons['AVHL'] = network.createNeuron(name = 'AVHL', functions = [Neuron.Function.INTERNEURON])
 neurons['AVHL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AVHL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['AVHR'] = network.createNeuron(name = 'AVHR', functions = [NeuralFunction.INTERNEURON])
+neurons['AVHR'] = network.createNeuron(name = 'AVHR', functions = [Neuron.Function.INTERNEURON])
 neurons['AVHR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AVHR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RIVR'] = network.createNeuron(name = 'RIVR', functions = [NeuralFunction.INTERNEURON, NeuralFunction.MOTOR])
+neurons['RIVR'] = network.createNeuron(name = 'RIVR', functions = [Neuron.Function.INTERNEURON, Neuron.Function.MOTOR])
 neurons['RIVR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RIVR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AIBR'] = network.createNeuron(name = 'AIBR', functions = [NeuralFunction.INTERNEURON])
+neurons['AIBR'] = network.createNeuron(name = 'AIBR', functions = [Neuron.Function.INTERNEURON])
 neurons['AIBR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AIBR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RIBL'] = network.createNeuron(name = 'RIBL', functions = [NeuralFunction.INTERNEURON])
+neurons['RIBL'] = network.createNeuron(name = 'RIBL', functions = [Neuron.Function.INTERNEURON])
 neurons['RIBL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RIBL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RMFL'] = network.createNeuron(name = 'RMFL', functions = [NeuralFunction.MOTOR])
+neurons['RMFL'] = network.createNeuron(name = 'RMFL', functions = [Neuron.Function.MOTOR])
 neurons['RMFL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['RMFL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['AVBL'] = network.createNeuron(name = 'AVBL', functions = [NeuralFunction.INTERNEURON])
+neurons['AVBL'] = network.createNeuron(name = 'AVBL', functions = [Neuron.Function.INTERNEURON])
 neurons['AVBL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AVBL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['SIBVR'] = network.createNeuron(name = 'SIBVR', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SIBVR'] = network.createNeuron(name = 'SIBVR', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SIBVR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SIBVR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['ASEL'] = network.createNeuron(name = 'ASEL', functions = [NeuralFunction.SENSORY])
+neurons['ASEL'] = network.createNeuron(name = 'ASEL', functions = [Neuron.Function.SENSORY])
 neurons['ASEL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ASEL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['AVJR'] = network.createNeuron(name = 'AVJR', functions = [NeuralFunction.INTERNEURON])
+neurons['AVJR'] = network.createNeuron(name = 'AVJR', functions = [Neuron.Function.INTERNEURON])
 neurons['AVJR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AVJR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AUAL'] = network.createNeuron(name = 'AUAL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['AUAL'] = network.createNeuron(name = 'AUAL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['AUAL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AUAL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['SIADL'] = network.createNeuron(name = 'SIADL', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SIADL'] = network.createNeuron(name = 'SIADL', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SIADL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SIADL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RMHR'] = network.createNeuron(name = 'RMHR', functions = [NeuralFunction.MOTOR])
+neurons['RMHR'] = network.createNeuron(name = 'RMHR', functions = [Neuron.Function.MOTOR])
 neurons['RMHR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['RMHR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AVJL'] = network.createNeuron(name = 'AVJL', functions = [NeuralFunction.INTERNEURON])
+neurons['AVJL'] = network.createNeuron(name = 'AVJL', functions = [Neuron.Function.INTERNEURON])
 neurons['AVJL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AVJL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['ASER'] = network.createNeuron(name = 'ASER', functions = [NeuralFunction.SENSORY])
+neurons['ASER'] = network.createNeuron(name = 'ASER', functions = [Neuron.Function.SENSORY])
 neurons['ASER'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ASER'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AVBR'] = network.createNeuron(name = 'AVBR', functions = [NeuralFunction.INTERNEURON])
+neurons['AVBR'] = network.createNeuron(name = 'AVBR', functions = [Neuron.Function.INTERNEURON])
 neurons['AVBR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AVBR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RIBR'] = network.createNeuron(name = 'RIBR', functions = [NeuralFunction.INTERNEURON])
+neurons['RIBR'] = network.createNeuron(name = 'RIBR', functions = [Neuron.Function.INTERNEURON])
 neurons['RIBR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RIBR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RMFR'] = network.createNeuron(name = 'RMFR', functions = [NeuralFunction.MOTOR])
+neurons['RMFR'] = network.createNeuron(name = 'RMFR', functions = [Neuron.Function.MOTOR])
 neurons['RMFR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['RMFR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['SMDDR'] = network.createNeuron(name = 'SMDDR', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SMDDR'] = network.createNeuron(name = 'SMDDR', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SMDDR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SMDDR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AIAL'] = network.createNeuron(name = 'AIAL', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AIAL'] = network.createNeuron(name = 'AIAL', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AIAL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['AIAL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RIR'] = network.createNeuron(name = 'RIR', functions = [NeuralFunction.INTERNEURON])
+neurons['RIR'] = network.createNeuron(name = 'RIR', functions = [Neuron.Function.INTERNEURON])
 neurons['RIR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['RIR'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['SMBDL'] = network.createNeuron(name = 'SMBDL', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SMBDL'] = network.createNeuron(name = 'SMBDL', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SMBDL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SMBDL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RIML'] = network.createNeuron(name = 'RIML', functions = [NeuralFunction.MOTOR])
+neurons['RIML'] = network.createNeuron(name = 'RIML', functions = [Neuron.Function.MOTOR])
 neurons['RIML'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RIML'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['ASJL'] = network.createNeuron(name = 'ASJL', functions = [NeuralFunction.SENSORY])
+neurons['ASJL'] = network.createNeuron(name = 'ASJL', functions = [Neuron.Function.SENSORY])
 neurons['ASJL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ASJL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RIMR'] = network.createNeuron(name = 'RIMR', functions = [NeuralFunction.MOTOR])
+neurons['RIMR'] = network.createNeuron(name = 'RIMR', functions = [Neuron.Function.MOTOR])
 neurons['RIMR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RIMR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AUAR'] = network.createNeuron(name = 'AUAR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['AUAR'] = network.createNeuron(name = 'AUAR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['AUAR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AUAR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AVDR'] = network.createNeuron(name = 'AVDR', functions = [NeuralFunction.INTERNEURON])
+neurons['AVDR'] = network.createNeuron(name = 'AVDR', functions = [Neuron.Function.INTERNEURON])
 neurons['AVDR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AVDR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['SMBVR'] = network.createNeuron(name = 'SMBVR', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SMBVR'] = network.createNeuron(name = 'SMBVR', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SMBVR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SMBVR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AVDL'] = network.createNeuron(name = 'AVDL', functions = [NeuralFunction.INTERNEURON])
+neurons['AVDL'] = network.createNeuron(name = 'AVDL', functions = [Neuron.Function.INTERNEURON])
 neurons['AVDL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AVDL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['AINL'] = network.createNeuron(name = 'AINL', functions = [NeuralFunction.INTERNEURON])
+neurons['AINL'] = network.createNeuron(name = 'AINL', functions = [Neuron.Function.INTERNEURON])
 neurons['AINL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AINL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['SMBVL'] = network.createNeuron(name = 'SMBVL', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SMBVL'] = network.createNeuron(name = 'SMBVL', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SMBVL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SMBVL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['ASJR'] = network.createNeuron(name = 'ASJR', functions = [NeuralFunction.SENSORY])
+neurons['ASJR'] = network.createNeuron(name = 'ASJR', functions = [Neuron.Function.SENSORY])
 neurons['ASJR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['ASJR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AINR'] = network.createNeuron(name = 'AINR', functions = [NeuralFunction.INTERNEURON])
+neurons['AINR'] = network.createNeuron(name = 'AINR', functions = [Neuron.Function.INTERNEURON])
 neurons['AINR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AINR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['SIADR'] = network.createNeuron(name = 'SIADR', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SIADR'] = network.createNeuron(name = 'SIADR', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SIADR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SIADR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AVL'] = network.createNeuron(name = 'AVL', functions = [NeuralFunction.MOTOR, NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['AVL'] = network.createNeuron(name = 'AVL', functions = [Neuron.Function.MOTOR, Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['AVL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['AVL'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['RICL'] = network.createNeuron(name = 'RICL', functions = [NeuralFunction.INTERNEURON])
+neurons['RICL'] = network.createNeuron(name = 'RICL', functions = [Neuron.Function.INTERNEURON])
 neurons['RICL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RICL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['AIAR'] = network.createNeuron(name = 'AIAR', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AIAR'] = network.createNeuron(name = 'AIAR', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AIAR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['AIAR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['SMBDR'] = network.createNeuron(name = 'SMBDR', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SMBDR'] = network.createNeuron(name = 'SMBDR', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SMBDR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SMBDR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AIZR'] = network.createNeuron(name = 'AIZR', functions = [NeuralFunction.INTERNEURON])
+neurons['AIZR'] = network.createNeuron(name = 'AIZR', functions = [Neuron.Function.INTERNEURON])
 neurons['AIZR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AIZR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['SIAVL'] = network.createNeuron(name = 'SIAVL', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SIAVL'] = network.createNeuron(name = 'SIAVL', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SIAVL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SIAVL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['SIAVR'] = network.createNeuron(name = 'SIAVR', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SIAVR'] = network.createNeuron(name = 'SIAVR', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SIAVR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['SIAVR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RICR'] = network.createNeuron(name = 'RICR', functions = [NeuralFunction.INTERNEURON])
+neurons['RICR'] = network.createNeuron(name = 'RICR', functions = [Neuron.Function.INTERNEURON])
 neurons['RICR'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['RICR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AIZL'] = network.createNeuron(name = 'AIZL', functions = [NeuralFunction.INTERNEURON])
+neurons['AIZL'] = network.createNeuron(name = 'AIZL', functions = [Neuron.Function.INTERNEURON])
 neurons['AIZL'].addAttribute('Class', Attribute.STRING_TYPE, 'C')
 neurons['AIZL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['AIYR'] = network.createNeuron(name = 'AIYR', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AIYR'] = network.createNeuron(name = 'AIYR', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AIYR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['AIYR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AIMR'] = network.createNeuron(name = 'AIMR', functions = [NeuralFunction.INTERNEURON])
+neurons['AIMR'] = network.createNeuron(name = 'AIMR', functions = [Neuron.Function.INTERNEURON])
 neurons['AIMR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['AIMR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AIML'] = network.createNeuron(name = 'AIML', functions = [NeuralFunction.INTERNEURON])
+neurons['AIML'] = network.createNeuron(name = 'AIML', functions = [Neuron.Function.INTERNEURON])
 neurons['AIML'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['AIML'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RIS'] = network.createNeuron(name = 'RIS', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['RIS'] = network.createNeuron(name = 'RIS', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['RIS'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['RIS'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AIYL'] = network.createNeuron(name = 'AIYL', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AIYL'] = network.createNeuron(name = 'AIYL', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AIYL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['AIYL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['VB02'] = network.createNeuron(name = 'VB02', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VB02'] = network.createNeuron(name = 'VB02', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VB02'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['VB02'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AVKR'] = network.createNeuron(name = 'AVKR', functions = [NeuralFunction.INTERNEURON])
+neurons['AVKR'] = network.createNeuron(name = 'AVKR', functions = [Neuron.Function.INTERNEURON])
 neurons['AVKR'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['AVKR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AVKL'] = network.createNeuron(name = 'AVKL', functions = [NeuralFunction.INTERNEURON])
+neurons['AVKL'] = network.createNeuron(name = 'AVKL', functions = [Neuron.Function.INTERNEURON])
 neurons['AVKL'].addAttribute('Class', Attribute.STRING_TYPE, 'D')
 neurons['AVKL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['AVFR'] = network.createNeuron(name = 'AVFR', functions = [NeuralFunction.INTERNEURON])
+neurons['AVFR'] = network.createNeuron(name = 'AVFR', functions = [Neuron.Function.INTERNEURON])
 neurons['AVFR'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['AVFR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['SABVL'] = network.createNeuron(name = 'SABVL', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SABVL'] = network.createNeuron(name = 'SABVL', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SABVL'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['SABVL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['FLPL'] = network.createNeuron(name = 'FLPL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['FLPL'] = network.createNeuron(name = 'FLPL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['FLPL'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['FLPL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['FLPR'] = network.createNeuron(name = 'FLPR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['FLPR'] = network.createNeuron(name = 'FLPR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['FLPR'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['FLPR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['SABVR'] = network.createNeuron(name = 'SABVR', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SABVR'] = network.createNeuron(name = 'SABVR', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SABVR'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['SABVR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['AVFL'] = network.createNeuron(name = 'AVFL', functions = [NeuralFunction.INTERNEURON])
+neurons['AVFL'] = network.createNeuron(name = 'AVFL', functions = [Neuron.Function.INTERNEURON])
 neurons['AVFL'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['AVFL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['AQR'] = network.createNeuron(name = 'AQR', functions = [NeuralFunction.SENSORY])
+neurons['AQR'] = network.createNeuron(name = 'AQR', functions = [Neuron.Function.SENSORY])
 neurons['AQR'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['AQR'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['RIFR'] = network.createNeuron(name = 'RIFR', functions = [NeuralFunction.INTERNEURON])
+neurons['RIFR'] = network.createNeuron(name = 'RIFR', functions = [Neuron.Function.INTERNEURON])
 neurons['RIFR'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['RIFR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['ADEL'] = network.createNeuron(name = 'ADEL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
+neurons['ADEL'] = network.createNeuron(name = 'ADEL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
 neurons['ADEL'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['ADEL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['VB01'] = network.createNeuron(name = 'VB01', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VB01'] = network.createNeuron(name = 'VB01', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VB01'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['VB01'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['ADER'] = network.createNeuron(name = 'ADER', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
+neurons['ADER'] = network.createNeuron(name = 'ADER', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
 neurons['ADER'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['ADER'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['DB02'] = network.createNeuron(name = 'DB02', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DB02'] = network.createNeuron(name = 'DB02', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DB02'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['DB02'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['ADAR'] = network.createNeuron(name = 'ADAR', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['ADAR'] = network.createNeuron(name = 'ADAR', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['ADAR'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['ADAR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['ADAL'] = network.createNeuron(name = 'ADAL', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['ADAL'] = network.createNeuron(name = 'ADAL', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['ADAL'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['ADAL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RIGR'] = network.createNeuron(name = 'RIGR', functions = [NeuralFunction.INTERNEURON])
+neurons['RIGR'] = network.createNeuron(name = 'RIGR', functions = [Neuron.Function.INTERNEURON])
 neurons['RIGR'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['RIGR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RMGL'] = network.createNeuron(name = 'RMGL', functions = [NeuralFunction.MOTOR])
+neurons['RMGL'] = network.createNeuron(name = 'RMGL', functions = [Neuron.Function.MOTOR])
 neurons['RMGL'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['RMGL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['RMGR'] = network.createNeuron(name = 'RMGR', functions = [NeuralFunction.MOTOR])
+neurons['RMGR'] = network.createNeuron(name = 'RMGR', functions = [Neuron.Function.MOTOR])
 neurons['RMGR'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['RMGR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['RIFL'] = network.createNeuron(name = 'RIFL', functions = [NeuralFunction.INTERNEURON])
+neurons['RIFL'] = network.createNeuron(name = 'RIFL', functions = [Neuron.Function.INTERNEURON])
 neurons['RIFL'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['RIFL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['AVG'] = network.createNeuron(name = 'AVG', functions = [NeuralFunction.SENSORY])
+neurons['AVG'] = network.createNeuron(name = 'AVG', functions = [Neuron.Function.SENSORY])
 neurons['AVG'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['AVG'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VA01'] = network.createNeuron(name = 'VA01', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VA01'] = network.createNeuron(name = 'VA01', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VA01'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['VA01'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['SABD'] = network.createNeuron(name = 'SABD', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SABD'] = network.createNeuron(name = 'SABD', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SABD'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['SABD'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['RIGL'] = network.createNeuron(name = 'RIGL', functions = [NeuralFunction.INTERNEURON])
+neurons['RIGL'] = network.createNeuron(name = 'RIGL', functions = [Neuron.Function.INTERNEURON])
 neurons['RIGL'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['RIGL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['DD01'] = network.createNeuron(name = 'DD01', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['DD01'] = network.createNeuron(name = 'DD01', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['DD01'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['DD01'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DB01'] = network.createNeuron(name = 'DB01', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DB01'] = network.createNeuron(name = 'DB01', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DB01'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['DB01'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AS01'] = network.createNeuron(name = 'AS01', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AS01'] = network.createNeuron(name = 'AS01', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AS01'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['AS01'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VD01'] = network.createNeuron(name = 'VD01', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['VD01'] = network.createNeuron(name = 'VD01', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['VD01'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['VD01'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DA01'] = network.createNeuron(name = 'DA01', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DA01'] = network.createNeuron(name = 'DA01', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DA01'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['DA01'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VD02'] = network.createNeuron(name = 'VD02', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['VD02'] = network.createNeuron(name = 'VD02', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['VD02'].addAttribute('Class', Attribute.STRING_TYPE, 'E')
 neurons['VD02'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VA02'] = network.createNeuron(name = 'VA02', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VA02'] = network.createNeuron(name = 'VA02', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VA02'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VA02'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VB03'] = network.createNeuron(name = 'VB03', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VB03'] = network.createNeuron(name = 'VB03', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VB03'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VB03'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AS02'] = network.createNeuron(name = 'AS02', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AS02'] = network.createNeuron(name = 'AS02', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AS02'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['AS02'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DB03'] = network.createNeuron(name = 'DB03', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DB03'] = network.createNeuron(name = 'DB03', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DB03'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DB03'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DA02'] = network.createNeuron(name = 'DA02', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DA02'] = network.createNeuron(name = 'DA02', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DA02'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DA02'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VD03'] = network.createNeuron(name = 'VD03', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['VD03'] = network.createNeuron(name = 'VD03', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['VD03'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VD03'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['BDUR'] = network.createNeuron(name = 'BDUR', functions = [NeuralFunction.INTERNEURON])
+neurons['BDUR'] = network.createNeuron(name = 'BDUR', functions = [Neuron.Function.INTERNEURON])
 neurons['BDUR'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['BDUR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['BDUL'] = network.createNeuron(name = 'BDUL', functions = [NeuralFunction.INTERNEURON])
+neurons['BDUL'] = network.createNeuron(name = 'BDUL', functions = [Neuron.Function.INTERNEURON])
 neurons['BDUL'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['BDUL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['VA03'] = network.createNeuron(name = 'VA03', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VA03'] = network.createNeuron(name = 'VA03', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VA03'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VA03'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['SDQR'] = network.createNeuron(name = 'SDQR', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SDQR'] = network.createNeuron(name = 'SDQR', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SDQR'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['SDQR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['VB04'] = network.createNeuron(name = 'VB04', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VB04'] = network.createNeuron(name = 'VB04', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VB04'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VB04'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VC01'] = network.createNeuron(name = 'VC01', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VC01'] = network.createNeuron(name = 'VC01', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VC01'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VC01'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DD02'] = network.createNeuron(name = 'DD02', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['DD02'] = network.createNeuron(name = 'DD02', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['DD02'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DD02'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AS03'] = network.createNeuron(name = 'AS03', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AS03'] = network.createNeuron(name = 'AS03', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AS03'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['AS03'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VD04'] = network.createNeuron(name = 'VD04', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['VD04'] = network.createNeuron(name = 'VD04', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['VD04'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VD04'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DA03'] = network.createNeuron(name = 'DA03', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DA03'] = network.createNeuron(name = 'DA03', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DA03'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DA03'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VA04'] = network.createNeuron(name = 'VA04', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VA04'] = network.createNeuron(name = 'VA04', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VA04'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VA04'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VB05'] = network.createNeuron(name = 'VB05', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VB05'] = network.createNeuron(name = 'VB05', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VB05'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VB05'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VC02'] = network.createNeuron(name = 'VC02', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VC02'] = network.createNeuron(name = 'VC02', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VC02'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VC02'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DB04'] = network.createNeuron(name = 'DB04', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DB04'] = network.createNeuron(name = 'DB04', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DB04'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DB04'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AS04'] = network.createNeuron(name = 'AS04', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AS04'] = network.createNeuron(name = 'AS04', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AS04'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['AS04'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VD05'] = network.createNeuron(name = 'VD05', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['VD05'] = network.createNeuron(name = 'VD05', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['VD05'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VD05'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VA05'] = network.createNeuron(name = 'VA05', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VA05'] = network.createNeuron(name = 'VA05', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VA05'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VA05'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AVM'] = network.createNeuron(name = 'AVM', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['AVM'] = network.createNeuron(name = 'AVM', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['AVM'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['AVM'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VB06'] = network.createNeuron(name = 'VB06', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VB06'] = network.createNeuron(name = 'VB06', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VB06'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VB06'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DA04'] = network.createNeuron(name = 'DA04', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DA04'] = network.createNeuron(name = 'DA04', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DA04'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DA04'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DD03'] = network.createNeuron(name = 'DD03', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['DD03'] = network.createNeuron(name = 'DD03', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['DD03'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DD03'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['ALML'] = network.createNeuron(name = 'ALML', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['ALML'] = network.createNeuron(name = 'ALML', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['ALML'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['ALML'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['ALMR'] = network.createNeuron(name = 'ALMR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['ALMR'] = network.createNeuron(name = 'ALMR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['ALMR'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['ALMR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['VC03'] = network.createNeuron(name = 'VC03', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VC03'] = network.createNeuron(name = 'VC03', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VC03'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VC03'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AS05'] = network.createNeuron(name = 'AS05', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AS05'] = network.createNeuron(name = 'AS05', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AS05'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['AS05'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VD06'] = network.createNeuron(name = 'VD06', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['VD06'] = network.createNeuron(name = 'VD06', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['VD06'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VD06'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VA06'] = network.createNeuron(name = 'VA06', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VA06'] = network.createNeuron(name = 'VA06', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VA06'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VA06'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VB07'] = network.createNeuron(name = 'VB07', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VB07'] = network.createNeuron(name = 'VB07', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VB07'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VB07'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DB05'] = network.createNeuron(name = 'DB05', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DB05'] = network.createNeuron(name = 'DB05', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DB05'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DB05'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AS06'] = network.createNeuron(name = 'AS06', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AS06'] = network.createNeuron(name = 'AS06', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AS06'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['AS06'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VD07'] = network.createNeuron(name = 'VD07', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['VD07'] = network.createNeuron(name = 'VD07', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['VD07'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VD07'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VC04'] = network.createNeuron(name = 'VC04', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VC04'] = network.createNeuron(name = 'VC04', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VC04'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VC04'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DA05'] = network.createNeuron(name = 'DA05', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DA05'] = network.createNeuron(name = 'DA05', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DA05'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DA05'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VC05'] = network.createNeuron(name = 'VC05', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VC05'] = network.createNeuron(name = 'VC05', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VC05'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VC05'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['HSNR'] = network.createNeuron(name = 'HSNR', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('5-HT')])
+neurons['HSNR'] = network.createNeuron(name = 'HSNR', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('5-HT')])
 neurons['HSNR'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['HSNR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['HSNL'] = network.createNeuron(name = 'HSNL', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('5-HT')])
+neurons['HSNL'] = network.createNeuron(name = 'HSNL', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('5-HT')])
 neurons['HSNL'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['HSNL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['VA07'] = network.createNeuron(name = 'VA07', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VA07'] = network.createNeuron(name = 'VA07', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VA07'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VA07'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VB08'] = network.createNeuron(name = 'VB08', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VB08'] = network.createNeuron(name = 'VB08', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VB08'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VB08'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AS07'] = network.createNeuron(name = 'AS07', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AS07'] = network.createNeuron(name = 'AS07', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AS07'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['AS07'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DD04'] = network.createNeuron(name = 'DD04', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['DD04'] = network.createNeuron(name = 'DD04', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['DD04'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DD04'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VD08'] = network.createNeuron(name = 'VD08', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['VD08'] = network.createNeuron(name = 'VD08', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['VD08'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VD08'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VA08'] = network.createNeuron(name = 'VA08', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VA08'] = network.createNeuron(name = 'VA08', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VA08'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VA08'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VB09'] = network.createNeuron(name = 'VB09', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VB09'] = network.createNeuron(name = 'VB09', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VB09'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VB09'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DB06'] = network.createNeuron(name = 'DB06', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DB06'] = network.createNeuron(name = 'DB06', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DB06'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DB06'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AS08'] = network.createNeuron(name = 'AS08', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AS08'] = network.createNeuron(name = 'AS08', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AS08'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['AS08'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['PDEL'] = network.createNeuron(name = 'PDEL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
+neurons['PDEL'] = network.createNeuron(name = 'PDEL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
 neurons['PDEL'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['PDEL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['VD09'] = network.createNeuron(name = 'VD09', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['VD09'] = network.createNeuron(name = 'VD09', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['VD09'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VD09'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['PDER'] = network.createNeuron(name = 'PDER', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
+neurons['PDER'] = network.createNeuron(name = 'PDER', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('DA')])
 neurons['PDER'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['PDER'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['SDQL'] = network.createNeuron(name = 'SDQL', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['SDQL'] = network.createNeuron(name = 'SDQL', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['SDQL'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['SDQL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['DA06'] = network.createNeuron(name = 'DA06', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DA06'] = network.createNeuron(name = 'DA06', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DA06'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DA06'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['PVDL'] = network.createNeuron(name = 'PVDL', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['PVDL'] = network.createNeuron(name = 'PVDL', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['PVDL'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['PVDL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['PVDR'] = network.createNeuron(name = 'PVDR', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['PVDR'] = network.createNeuron(name = 'PVDR', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['PVDR'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['PVDR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['PVM'] = network.createNeuron(name = 'PVM', functions = [NeuralFunction.SENSORY])
+neurons['PVM'] = network.createNeuron(name = 'PVM', functions = [Neuron.Function.SENSORY])
 neurons['PVM'].addAttribute('Class', Attribute.STRING_TYPE, 'F')
 neurons['PVM'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VA09'] = network.createNeuron(name = 'VA09', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VA09'] = network.createNeuron(name = 'VA09', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VA09'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VA09'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VB10'] = network.createNeuron(name = 'VB10', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VB10'] = network.createNeuron(name = 'VB10', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VB10'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VB10'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AS09'] = network.createNeuron(name = 'AS09', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AS09'] = network.createNeuron(name = 'AS09', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AS09'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['AS09'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DD05'] = network.createNeuron(name = 'DD05', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['DD05'] = network.createNeuron(name = 'DD05', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['DD05'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DD05'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VD10'] = network.createNeuron(name = 'VD10', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['VD10'] = network.createNeuron(name = 'VD10', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['VD10'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VD10'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VA10'] = network.createNeuron(name = 'VA10', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VA10'] = network.createNeuron(name = 'VA10', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VA10'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VA10'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VB11'] = network.createNeuron(name = 'VB11', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VB11'] = network.createNeuron(name = 'VB11', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VB11'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VB11'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DB07'] = network.createNeuron(name = 'DB07', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DB07'] = network.createNeuron(name = 'DB07', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DB07'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DB07'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AS10'] = network.createNeuron(name = 'AS10', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AS10'] = network.createNeuron(name = 'AS10', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AS10'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['AS10'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DA07'] = network.createNeuron(name = 'DA07', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DA07'] = network.createNeuron(name = 'DA07', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DA07'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['DA07'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VD11'] = network.createNeuron(name = 'VD11', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['VD11'] = network.createNeuron(name = 'VD11', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['VD11'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VD11'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VA11'] = network.createNeuron(name = 'VA11', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VA11'] = network.createNeuron(name = 'VA11', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VA11'].addAttribute('Class', Attribute.STRING_TYPE, 'G')
 neurons['VA11'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['AS11'] = network.createNeuron(name = 'AS11', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['AS11'] = network.createNeuron(name = 'AS11', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['AS11'].addAttribute('Class', Attribute.STRING_TYPE, 'H')
 neurons['AS11'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VD12'] = network.createNeuron(name = 'VD12', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['VD12'] = network.createNeuron(name = 'VD12', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['VD12'].addAttribute('Class', Attribute.STRING_TYPE, 'H')
 neurons['VD12'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['PVPR'] = network.createNeuron(name = 'PVPR', functions = [NeuralFunction.INTERNEURON])
+neurons['PVPR'] = network.createNeuron(name = 'PVPR', functions = [Neuron.Function.INTERNEURON])
 neurons['PVPR'].addAttribute('Class', Attribute.STRING_TYPE, 'H')
 neurons['PVPR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['PVT'] = network.createNeuron(name = 'PVT', functions = [NeuralFunction.INTERNEURON])
+neurons['PVT'] = network.createNeuron(name = 'PVT', functions = [Neuron.Function.INTERNEURON])
 neurons['PVT'].addAttribute('Class', Attribute.STRING_TYPE, 'H')
 neurons['PVT'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VA12'] = network.createNeuron(name = 'VA12', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['VA12'] = network.createNeuron(name = 'VA12', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['VA12'].addAttribute('Class', Attribute.STRING_TYPE, 'H')
 neurons['VA12'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DD06'] = network.createNeuron(name = 'DD06', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['DD06'] = network.createNeuron(name = 'DD06', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['DD06'].addAttribute('Class', Attribute.STRING_TYPE, 'H')
 neurons['DD06'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['PVPL'] = network.createNeuron(name = 'PVPL', functions = [NeuralFunction.INTERNEURON])
+neurons['PVPL'] = network.createNeuron(name = 'PVPL', functions = [Neuron.Function.INTERNEURON])
 neurons['PVPL'].addAttribute('Class', Attribute.STRING_TYPE, 'H')
 neurons['PVPL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['DA08'] = network.createNeuron(name = 'DA08', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DA08'] = network.createNeuron(name = 'DA08', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DA08'].addAttribute('Class', Attribute.STRING_TYPE, 'H')
 neurons['DA08'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DA09'] = network.createNeuron(name = 'DA09', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['DA09'] = network.createNeuron(name = 'DA09', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['DA09'].addAttribute('Class', Attribute.STRING_TYPE, 'H')
 neurons['DA09'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['PDB'] = network.createNeuron(name = 'PDB', functions = [NeuralFunction.MOTOR])
+neurons['PDB'] = network.createNeuron(name = 'PDB', functions = [Neuron.Function.MOTOR])
 neurons['PDB'].addAttribute('Class', Attribute.STRING_TYPE, 'H')
 neurons['PDB'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['VD13'] = network.createNeuron(name = 'VD13', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['VD13'] = network.createNeuron(name = 'VD13', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['VD13'].addAttribute('Class', Attribute.STRING_TYPE, 'H')
 neurons['VD13'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['PDA'] = network.createNeuron(name = 'PDA', functions = [NeuralFunction.MOTOR])
+neurons['PDA'] = network.createNeuron(name = 'PDA', functions = [Neuron.Function.MOTOR])
 neurons['PDA'].addAttribute('Class', Attribute.STRING_TYPE, 'H')
 neurons['PDA'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DVB'] = network.createNeuron(name = 'DVB', functions = [NeuralFunction.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
+neurons['DVB'] = network.createNeuron(name = 'DVB', functions = [Neuron.Function.MOTOR], neurotransmitters = [library.neurotransmitter('GABA')])
 neurons['DVB'].addAttribute('Class', Attribute.STRING_TYPE, 'J')
 neurons['DVB'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DVA'] = network.createNeuron(name = 'DVA', functions = [NeuralFunction.INTERNEURON])
+neurons['DVA'] = network.createNeuron(name = 'DVA', functions = [Neuron.Function.INTERNEURON])
 neurons['DVA'].addAttribute('Class', Attribute.STRING_TYPE, 'J')
 neurons['DVA'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['DVC'] = network.createNeuron(name = 'DVC', functions = [NeuralFunction.INTERNEURON])
+neurons['DVC'] = network.createNeuron(name = 'DVC', functions = [Neuron.Function.INTERNEURON])
 neurons['DVC'].addAttribute('Class', Attribute.STRING_TYPE, 'J')
 neurons['DVC'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['PVQR'] = network.createNeuron(name = 'PVQR', functions = [NeuralFunction.INTERNEURON])
+neurons['PVQR'] = network.createNeuron(name = 'PVQR', functions = [Neuron.Function.INTERNEURON])
 neurons['PVQR'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PVQR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['PHAL'] = network.createNeuron(name = 'PHAL', functions = [NeuralFunction.SENSORY])
+neurons['PHAL'] = network.createNeuron(name = 'PHAL', functions = [Neuron.Function.SENSORY])
 neurons['PHAL'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PHAL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['PHAR'] = network.createNeuron(name = 'PHAR', functions = [NeuralFunction.SENSORY])
+neurons['PHAR'] = network.createNeuron(name = 'PHAR', functions = [Neuron.Function.SENSORY])
 neurons['PHAR'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PHAR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['PVQL'] = network.createNeuron(name = 'PVQL', functions = [NeuralFunction.INTERNEURON])
+neurons['PVQL'] = network.createNeuron(name = 'PVQL', functions = [Neuron.Function.INTERNEURON])
 neurons['PVQL'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PVQL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['PLNR'] = network.createNeuron(name = 'PLNR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['PLNR'] = network.createNeuron(name = 'PLNR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['PLNR'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PLNR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['LUAL'] = network.createNeuron(name = 'LUAL', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['LUAL'] = network.createNeuron(name = 'LUAL', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['LUAL'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['LUAL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['PVCL'] = network.createNeuron(name = 'PVCL', functions = [NeuralFunction.INTERNEURON])
+neurons['PVCL'] = network.createNeuron(name = 'PVCL', functions = [Neuron.Function.INTERNEURON])
 neurons['PVCL'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PVCL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['PHBR'] = network.createNeuron(name = 'PHBR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['PHBR'] = network.createNeuron(name = 'PHBR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['PHBR'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PHBR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['ALNL'] = network.createNeuron(name = 'ALNL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['ALNL'] = network.createNeuron(name = 'ALNL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['ALNL'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['ALNL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['PHBL'] = network.createNeuron(name = 'PHBL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['PHBL'] = network.createNeuron(name = 'PHBL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['PHBL'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PHBL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['LUAR'] = network.createNeuron(name = 'LUAR', functions = [NeuralFunction.INTERNEURON], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['LUAR'] = network.createNeuron(name = 'LUAR', functions = [Neuron.Function.INTERNEURON], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['LUAR'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['LUAR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['ALNR'] = network.createNeuron(name = 'ALNR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['ALNR'] = network.createNeuron(name = 'ALNR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['ALNR'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['ALNR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['PVCR'] = network.createNeuron(name = 'PVCR', functions = [NeuralFunction.INTERNEURON])
+neurons['PVCR'] = network.createNeuron(name = 'PVCR', functions = [Neuron.Function.INTERNEURON])
 neurons['PVCR'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PVCR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['PQR'] = network.createNeuron(name = 'PQR', functions = [NeuralFunction.SENSORY])
+neurons['PQR'] = network.createNeuron(name = 'PQR', functions = [Neuron.Function.SENSORY])
 neurons['PQR'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PQR'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['PVR'] = network.createNeuron(name = 'PVR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['PVR'] = network.createNeuron(name = 'PVR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['PVR'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PVR'].addAttribute('Side', Attribute.STRING_TYPE, 'U')
 
-neurons['PVWL'] = network.createNeuron(name = 'PVWL', functions = [NeuralFunction.INTERNEURON])
+neurons['PVWL'] = network.createNeuron(name = 'PVWL', functions = [Neuron.Function.INTERNEURON])
 neurons['PVWL'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PVWL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['PVWR'] = network.createNeuron(name = 'PVWR', functions = [NeuralFunction.INTERNEURON])
+neurons['PVWR'] = network.createNeuron(name = 'PVWR', functions = [Neuron.Function.INTERNEURON])
 neurons['PVWR'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PVWR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['PLNL'] = network.createNeuron(name = 'PLNL', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('ACh')])
+neurons['PLNL'] = network.createNeuron(name = 'PLNL', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('ACh')])
 neurons['PLNL'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PLNL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['PHCR'] = network.createNeuron(name = 'PHCR', functions = [NeuralFunction.SENSORY])
+neurons['PHCR'] = network.createNeuron(name = 'PHCR', functions = [Neuron.Function.SENSORY])
 neurons['PHCR'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PHCR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['PHCL'] = network.createNeuron(name = 'PHCL', functions = [NeuralFunction.SENSORY])
+neurons['PHCL'] = network.createNeuron(name = 'PHCL', functions = [Neuron.Function.SENSORY])
 neurons['PHCL'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PHCL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['PVNR'] = network.createNeuron(name = 'PVNR', functions = [NeuralFunction.INTERNEURON])
+neurons['PVNR'] = network.createNeuron(name = 'PVNR', functions = [Neuron.Function.INTERNEURON])
 neurons['PVNR'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PVNR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['PLMR'] = network.createNeuron(name = 'PLMR', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['PLMR'] = network.createNeuron(name = 'PLMR', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['PLMR'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PLMR'].addAttribute('Side', Attribute.STRING_TYPE, 'R')
 
-neurons['PVNL'] = network.createNeuron(name = 'PVNL', functions = [NeuralFunction.INTERNEURON])
+neurons['PVNL'] = network.createNeuron(name = 'PVNL', functions = [Neuron.Function.INTERNEURON])
 neurons['PVNL'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PVNL'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 
-neurons['PLML'] = network.createNeuron(name = 'PLML', functions = [NeuralFunction.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
+neurons['PLML'] = network.createNeuron(name = 'PLML', functions = [Neuron.Function.SENSORY], neurotransmitters = [library.neurotransmitter('GLU')])
 neurons['PLML'].addAttribute('Class', Attribute.STRING_TYPE, 'K')
 neurons['PLML'].addAttribute('Side', Attribute.STRING_TYPE, 'L')
 

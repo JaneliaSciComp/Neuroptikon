@@ -1,5 +1,3 @@
-'''Shapes package'''
-
 import os, sys
 import Display
 from Display.Shape import Shape

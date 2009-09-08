@@ -5,6 +5,14 @@ import xml.etree.ElementTree as ElementTree
 class Stimulus(Object):
     
     def __init__(self, network, target = None, modality = None, *args, **keywords):
+        """
+        Stimulus objects represent external stimulation of objects in the network.
+        
+        Stimulii are created by calling the :meth:`stimulate <Network.Object.Object.stimulate>` method on an object in the network.  The modality argument must be a :class:`modality <Library.Modality.Modality>` from the library or None to indicate unknown modality.
+        
+        >>> stimulus = neuron1.stimulate(modality = library.modality('light'))
+        """
+        
         if target is None:
             raise ValueError, gettext('A stimulus must have a target')
         
@@ -21,8 +29,8 @@ class Stimulus(Object):
     
     
     @classmethod
-    def fromXMLElement(cls, network, xmlElement):
-        object = super(Stimulus, cls).fromXMLElement(network, xmlElement)
+    def _fromXMLElement(cls, network, xmlElement):
+        object = super(Stimulus, cls)._fromXMLElement(network, xmlElement)
         targetId = xmlElement.get('targetId')
         object.target = network.objectWithId(targetId)
         if object.target is None:
@@ -35,36 +43,29 @@ class Stimulus(Object):
         return object
     
     
-    def toXMLElement(self, parentElement):
-        stimulusElement = Object.toXMLElement(self, parentElement)
+    def _toXMLElement(self, parentElement):
+        stimulusElement = Object._toXMLElement(self, parentElement)
         stimulusElement.set('targetId', str(self.target.networkId))
         stimulusElement.set('modality', self.modality.identifier)
         return stimulusElement
     
     
-    def creationScriptCommand(self, scriptRefs):
+    def _creationScriptCommand(self, scriptRefs):
         return scriptRefs[self.target.networkId] + '.stimulate'
     
     
-    def creationScriptParams(self, scriptRefs):
-        args, keywords = Object.creationScriptParams(self, scriptRefs)
+    def _creationScriptParams(self, scriptRefs):
+        args, keywords = Object._creationScriptParams(self, scriptRefs)
         if self.modality is not None:
             keywords['modality'] = 'library.modality(\'' + self.modality.identifier.replace('\\', '\\\\').replace('\'', '\\\'') + '\')'
         return (args, keywords)
     
     
-    def creationScript(self, scriptRefs):
-        script = 'network.createStimulus(target = ' + scriptRefs[self.target.networkId]
-        if self.modality is not None:
-            script += ', modality = library.modality(\'' + self.modality.identifier + '\')'
-        params = self.creationScriptParams(scriptRefs)
-        if len(params) > 0:
-            script += ', ' + ', '.join(params)
-        script += ')'
-        return script
+    def connections(self, recurse = True):
+        return [self.target]
     
     
-    def outputs(self):
+    def outputs(self, recurse = True):
         return [self.target]
     
     

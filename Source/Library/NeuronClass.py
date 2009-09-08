@@ -21,7 +21,7 @@ class NeuronClass(LibraryItem):
     @classmethod
     def bitmap(cls):
         image = Neuron.image()
-        if image is None or not image.IsOk():
+        if image == None:
             return None
         else:
             return wx.BitmapFromImage(image)

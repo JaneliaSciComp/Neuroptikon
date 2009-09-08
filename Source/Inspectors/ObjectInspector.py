@@ -30,7 +30,7 @@ class ObjectInspector(Inspector):
     @classmethod
     def bitmap(cls, size = 32):
         image = cls.objectClass().image()
-        if image is None or not image.IsOk():
+        if image == None:
             return Inspector.bitmap(cls)
         else:
             scaledImage = image.Rescale(size, size, wx.IMAGE_QUALITY_HIGH)
@@ -91,7 +91,7 @@ class ObjectInspector(Inspector):
         
         # Set the icon
         image = self.objects[0].__class__.image()
-        if image is None or not image.IsOk():
+        if image == None:
             pass
         else:
             scaledImage = image.Rescale(32, 32, wx.IMAGE_QUALITY_HIGH)

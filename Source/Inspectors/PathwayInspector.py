@@ -20,7 +20,7 @@ class PathwayInspector( ObjectInspector ):
             self._sizer = wx.BoxSizer(wx.VERTICAL)
             
             regionImage = Region.image()
-            if regionImage is not None and regionImage.IsOk():
+            if regionImage != None:
                 self._regionBitmap = wx.BitmapFromImage(regionImage.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH))
             else:
                 self._regionBitmap = None

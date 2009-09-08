@@ -21,7 +21,7 @@ class RegionInspector( ObjectInspector ):
             self._sizer.SetFlexibleDirection(wx.HORIZONTAL | wx.VERTICAL)
             
             regionImage = Region.image()
-            if regionImage is None or not regionImage.IsOk():
+            if regionImage == None:
                 self._regionBitmap = wx.EmptyBitmap(16, 16)
             else:
                 self._regionBitmap = wx.BitmapFromImage(regionImage.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH))

@@ -139,22 +139,21 @@ class PathInspector(Inspector):
         usingDefault = len(self.paths) == 0
         
         # The spacing and speed sliders are mapped logarithmically so very small and very large values can be used.
-        # The scale is set so that a reasonable spacing and speed are used when th slider is at the midpoint.
+        # The scale is set so that a reasonable spacing and speed are used when the slider is at the midpoint.
         # Unfortunately what is "reasonable" is dependent on the bounding box of the whole display which can change at any time.
         expBase = e ** (log(self.reasonableSpacingOrSpeed() + 1.0) / 500.0)
         
         if usingDefault:
             self._flowToBoxSizer.GetStaticBox().SetLabel(gettext('Default flow appearance'))
         else:
-            if self.paths.haveEqualAttr('pathEnd.client'):
-                flowToName = self.paths[0].pathEnd.client.name or gettext('<unnamed %s>') % ( self.paths[0].pathEnd.client.__class__.displayName())
+            if len(self.paths) == 1:
+                (startPoint, endPoint) = self.paths[0].pathEndPoints()
+                flowToName = gettext('ananymous object') if endPoint.client == None else endPoint.client.name or gettext('<unnamed %s>') % ( endPoint.client.__class__.displayName())
+                flowFromName = gettext('ananymous object') if startPoint.client == None else startPoint.client.name or gettext('<unnamed %s>') % ( startPoint.client.__class__.displayName())
             else:
                 flowToName = gettext('multiple objects')
-            self._flowToBoxSizer.GetStaticBox().SetLabel(gettext('Flow to %s') % (flowToName))
-            if self.paths.haveEqualAttr('pathStart.client'):
-                flowFromName = self.paths[0].pathStart.client.name or gettext('<unnamed %s>') % ( self.paths[0].pathStart.client.__class__.displayName())
-            else:
                 flowFromName = gettext('multiple objects')
+            self._flowToBoxSizer.GetStaticBox().SetLabel(gettext('Flow to %s') % (flowToName))
             self._flowFromBoxSizer.GetStaticBox().SetLabel(gettext('Flow to %s') % (flowFromName))
         
         if updatedAttribute is None or updatedAttribute == 'flowTo':
@@ -163,7 +162,7 @@ class PathInspector(Inspector):
                 self._flowToCheckBox.Disable()
             else:
                 if self.paths.haveEqualAttr('flowTo'):
-                    if self.paths[0].flowTo:
+                    if self.paths[0].flowTo():
                         self._flowToCheckBox.Set3StateValue(wx.CHK_CHECKED)
                     else:
                         self._flowToCheckBox.Set3StateValue(wx.CHK_UNCHECKED)
@@ -176,7 +175,7 @@ class PathInspector(Inspector):
                 if usingDefault:
                     red, green, blue, alpha = self.display.defaultFlowColor
                 else:
-                    red, green, blue, alpha = self.paths[0].flowToColor()
+                    red, green, blue, alpha = self.paths[0].flowToColor() or self.display.defaultFlowColor
                 self._flowToColorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, alpha * 255))
                 self._flowToColorPicker.SetLabel(gettext(''))
             else:
@@ -188,7 +187,7 @@ class PathInspector(Inspector):
                 if usingDefault:
                     spacing = self.display.defaultFlowSpacing
                 else:
-                    spacing = self.paths[0].flowToSpacing()
+                    spacing = self.paths[0].flowToSpacing() or self.display.defaultFlowSpacing
                 self._flowToSpacingSlider.SetLabel('')
                 self._flowToSpacingSlider.SetValue(log(spacing + 1.0, expBase))
             else:
@@ -200,7 +199,7 @@ class PathInspector(Inspector):
                 if usingDefault:
                     speed = self.display.defaultFlowSpeed
                 else:
-                    speed = self.paths[0].flowToSpeed()
+                    speed = self.paths[0].flowToSpeed() or self.display.defaultFlowSpeed
                 self._flowToSpeedSlider.SetLabel('')
                 self._flowToSpeedSlider.SetValue(log(speed + 1.0, expBase))
             else:
@@ -212,7 +211,7 @@ class PathInspector(Inspector):
                 if usingDefault:
                     spread = self.display.defaultFlowSpread
                 else:
-                    spread = self.paths[0].flowToSpread()
+                    spread = self.paths[0].flowToSpread() or self.display.defaultFlowSpread
                 self._flowToSpreadSlider.SetLabel('')
                 self._flowToSpreadSlider.SetValue(spread * 50.0)
             else:
@@ -221,7 +220,7 @@ class PathInspector(Inspector):
         
         if (updatedAttribute is None or updatedAttribute == 'flowFrom') and not usingDefault:
             if self.paths.haveEqualAttr('flowFrom'):
-                if self.paths[0].flowFrom:
+                if self.paths[0].flowFrom():
                     self._flowFromCheckBox.Set3StateValue(wx.CHK_CHECKED)
                 else:
                     self._flowFromCheckBox.Set3StateValue(wx.CHK_UNCHECKED)
@@ -230,8 +229,11 @@ class PathInspector(Inspector):
             self._flowFromCheckBox.Enable()
         
         if (updatedAttribute is None or updatedAttribute == 'flowFromColor') and not usingDefault:
-            if self.paths.haveEqualAttr('flowFromColor'):
-                red, green, blue, alpha = self.paths[0].flowFromColor()
+            if usingDefault or self.paths.haveEqualAttr('flowFromColor'):
+                if usingDefault:
+                    red, green, blue, alpha = self.display.defaultFlowColor
+                else:
+                    red, green, blue, alpha = self.paths[0].flowFromColor() or self.display.defaultFlowColor
                 self._flowFromColorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, alpha * 255))
                 self._flowFromColorPicker.SetLabel(gettext(''))
             else:
@@ -243,7 +245,7 @@ class PathInspector(Inspector):
                 if usingDefault:
                     spacing = self.display.defaultFlowSpacing
                 else:
-                    spacing = self.paths[0].flowFromSpacing()
+                    spacing = self.paths[0].flowFromSpacing() or self.display.defaultFlowSpacing
                 self._flowFromSpacingSlider.SetLabel('')
                 self._flowFromSpacingSlider.SetValue(log(spacing + 1.0, expBase))
             else:
@@ -255,7 +257,7 @@ class PathInspector(Inspector):
                 if usingDefault:
                     speed = self.display.defaultFlowSpeed
                 else:
-                    speed = self.paths[0].flowFromSpeed()
+                    speed = self.paths[0].flowFromSpeed() or self.display.defaultFlowSpeed
                 self._flowFromSpeedSlider.SetLabel('')
                 self._flowFromSpeedSlider.SetValue(log(speed + 1.0, expBase))
             else:
@@ -263,8 +265,11 @@ class PathInspector(Inspector):
                 self._flowFromSpeedSlider.SetValue(0)
         
         if (updatedAttribute is None or updatedAttribute == 'flowFromSpread') and not usingDefault:
-            if self.paths.haveEqualAttr('flowFromSpread'):
-                spread = self.paths[0].flowFromSpread()
+            if usingDefault or self.paths.haveEqualAttr('flowFromSpread'):
+                if usingDefault:
+                    spread = self.display.defaultFlowSpread
+                else:
+                    spread = self.paths[0].flowFromSpread() or self.display.defaultFlowSpread
                 self._flowFromSpreadSlider.SetLabel('')
                 self._flowFromSpreadSlider.SetValue(spread * 50.0)
             else:
@@ -277,7 +282,7 @@ class PathInspector(Inspector):
     def onSetAnimateFlowTo(self, event):
         newValue = self._flowToCheckBox.GetValue()
         for path in self.paths:
-            path.setFlowDirection(path.pathStart, path.pathEnd, newValue == wx.CHK_CHECKED, path.flowFrom)
+            path.setFlowTo(newValue == wx.CHK_CHECKED)
     
     
     def onSetFlowToColor(self, event):
@@ -324,7 +329,7 @@ class PathInspector(Inspector):
     def onSetAnimateFlowFrom(self, event):
         newValue = self._flowFromCheckBox.GetValue()
         for path in self.paths:
-            path.setFlowDirection(path.pathStart, path.pathEnd, path.flowTo, newValue == wx.CHK_CHECKED)
+            path.setFlowFrom(newValue == wx.CHK_CHECKED)
     
     
     def onSetFlowFromColor(self, event):

@@ -62,7 +62,11 @@ import random
 import xml.etree.ElementTree as ElementTree
 
 class Visible(object):
-    """Instances of this class map a network object (neurion, region, etc.) to a specific display.  They capture all of the attributes needed to render the object(s)."""
+    """
+    Instances of this class map a network object (neurion, region, etc.) to a specific display.  They capture all of the attributes needed to render the object.
+    
+    You should never create an instance of this class directly.  Instead use the value returned by calling :meth:`visualizeObject() <Display.Display.Display.visualizeObject>` on a display.
+    """
     
     try:
         if osgText.readFontFile("Arial Bold.ttf"):
@@ -74,24 +78,25 @@ class Visible(object):
         print 'Could not load Arial font (' + exceptionValue.message + ')'
         labelFont = None
     
-    shaderDir = wx.GetApp().rootDir
-    if runningFromSource:
-        shaderDir = os.path.join(shaderDir, 'Display')
-    with open(os.path.join(shaderDir, 'FlowShader.vert')) as f:
-        flowVertexShader = f.read()
-    with open(os.path.join(shaderDir, 'FlowShader.frag')) as f:
-        flowFragmentShader = f.read()
-    flowProgram = osg.Program()
-    flowProgram.addShader(osg.Shader(osg.Shader.VERTEX, flowVertexShader))
-    flowProgram.addShader(osg.Shader(osg.Shader.FRAGMENT, flowFragmentShader))
-    del shaderDir
+    if wx.GetApp():
+        shaderDir = wx.GetApp().rootDir
+        if runningFromSource:
+            shaderDir = os.path.join(shaderDir, 'Display')
+        with open(os.path.join(shaderDir, 'FlowShader.vert')) as f:
+            flowVertexShader = f.read()
+        with open(os.path.join(shaderDir, 'FlowShader.frag')) as f:
+            flowFragmentShader = f.read()
+        flowProgram = osg.Program()
+        flowProgram.addShader(osg.Shader(osg.Shader.VERTEX, flowVertexShader))
+        flowProgram.addShader(osg.Shader(osg.Shader.FRAGMENT, flowFragmentShader))
+        del shaderDir
     
     osgDB.Registry.instance().getReaderWriterForExtension('osg')    # Make sure the osg plug-in can be found before the cwd gets changed for a script run.
     
     
     def __init__(self, display, client):
         self.display = display
-        self.displayId = display.nextUniqueId() # a unique identifier within the display
+        self.displayId = display._generateUniqueId() # a unique identifier within the display
         self.client = client
         self._glowColor = None
         self._glowNode = None
@@ -118,19 +123,19 @@ class Visible(object):
         self.dependentVisibles = []
         
         # Path attributes
-        self.pathMidPoints = None
-        self.pathStart = None
-        self.pathEnd = None
+        self._pathMidPoints = []
+        self._pathStart = None
+        self._pathEnd = None
         self.connectedPaths = []
         
         # Flow attributes
         self._animateFlow = False
-        self.flowTo = False
+        self._flowTo = False
         self._flowToColor = None
         self._flowToSpacing = None
         self._flowToSpeed = None
         self._flowToSpread = None
-        self.flowFrom = False
+        self._flowFrom = False
         self._flowFromColor = None
         self._flowFromSpacing = None
         self._flowFromSpeed = None
@@ -140,7 +145,6 @@ class Visible(object):
         self._shapeGeode = osg.Geode()
         self._shapeGeode.setName(str(self.displayId))
         self._shapeGeode2 = None
-        self._shapeDrawable = None
         self._stateSet = self._shapeGeode.getOrCreateStateSet()
         self._stateSet.setAttributeAndModes(osg.BlendFunc(), osg.StateAttribute.ON)
         self._material = osg.Material()
@@ -170,17 +174,17 @@ class Visible(object):
         self.arrangedSpacing = 0.02
         self.arrangedWeight = 1.0
         
-        self.updateLabel()
+        self._updateLabel()
         if isinstance(self.client, Region):
-            dispatcher.connect(self.displayChangedShowName, ('set', 'showRegionNames'), self.display)
+            dispatcher.connect(self._displayChangedShowName, ('set', 'showRegionNames'), self.display)
         if isinstance(self.client, Neuron):
-            dispatcher.connect(self.displayChangedShowName, ('set', 'showNeuronNames'), self.display)
-        dispatcher.connect(self.displayChangedShowName, ('set', 'viewDimensions'), self.display)
-        dispatcher.connect(self.displayChangedShowName, ('set', 'orthoViewPlane'), self.display)
-        dispatcher.connect(self.displayChangedShowName, ('set', 'labelsFloatOnTop'), self.display)
+            dispatcher.connect(self._displayChangedShowName, ('set', 'showNeuronNames'), self.display)
+        dispatcher.connect(self._displayChangedShowName, ('set', 'viewDimensions'), self.display)
+        dispatcher.connect(self._displayChangedShowName, ('set', 'orthoViewPlane'), self.display)
+        dispatcher.connect(self._displayChangedShowName, ('set', 'labelsFloatOnTop'), self.display)
         
-        self.updateOpacity()
-        dispatcher.connect(self.displayChangedGhosting, ('set', 'useGhosts'), self.display)
+        self._updateOpacity()
+        dispatcher.connect(self._displayChangedGhosting, ('set', 'useGhosts'), self.display)
         
         if not hasattr(Visible, 'cullFrontFacesAttr'):
             # This is a bit of a hack.  osgswig does not expose the osg::CullFace class which is needed to get proper transparency.
@@ -205,7 +209,7 @@ class Visible(object):
     
     
     @classmethod
-    def fromXMLElement(cls, xmlElement, display):
+    def _fromXMLElement(cls, xmlElement, display):
         client = display.network.objectWithId(xmlElement.get('objectId'))
         visible = Visible(display, client)
         visible.displayId = int(xmlElement.get('id'))
@@ -289,9 +293,9 @@ class Visible(object):
             else:
                 # Get any attributes
                 for element in shapeElement.findall('Attribute'):
-                    attribute = Attribute.fromXMLElement(object, element)
+                    attribute = Attribute._fromXMLElement(object, element)
                     if attribute is not None:
-                        shapeAttrs[attribute.name] = attribute.value
+                        shapeAttrs[attribute.name()] = attribute.value()
             if shapeClassName == None:
                 visible.setShape(None)
             else:
@@ -348,30 +352,26 @@ class Visible(object):
         if pathElement is not None:
             pathStart = display.visibleWithId(int(pathElement.get('startVisibleId')))
             pathEnd = display.visibleWithId(int(pathElement.get('endVisibleId')))
-            flowTo = pathElement.get('flowTo')
-            if flowTo == 'true':
-                flowTo = True
-            elif flowTo == 'false':
-                flowTo = False
-            else:
-                flowTo = None
-            flowFrom = pathElement.get('flowFrom')
-            if flowFrom == 'true':
-                flowFrom = True
-            elif flowFrom == 'false':
-                flowFrom = False
-            else:
-                flowFrom = None
             if pathStart is None or pathEnd is None:
                 raise ValueError, gettext('Could not create path')
-            visible.setFlowDirection(pathStart, pathEnd, flowTo, flowFrom)
+            visible.setPathEndPoints(pathStart, pathEnd)
+            flowTo = pathElement.get('flowTo')
+            if flowTo == 'true':
+                visible.setFlowTo(True)
+            elif flowTo == 'false':
+                visible.setFlowTo(False)
+            flowFrom = pathElement.get('flowFrom')
+            if flowFrom == 'true':
+                visible.setFlowFrom(True)
+            elif flowFrom == 'false':
+                visible.setFlowFrom(False)
             midPoints = []
             for midPointElement in pathElement.findall('MidPoint'):
                 x = float(midPointElement.get('x'))
                 y = float(midPointElement.get('y'))
                 z = float(midPointElement.get('z'))
                 midPoints.append((x, y, z))
-            visible.setPath(midPoints, pathStart, pathEnd)
+            visible.setPathMidPoints(midPoints)
             flowToElement = pathElement.find('FlowToAppearance')
             if flowToElement is None:
                 flowToElement = pathElement.find('flowToAppearance')
@@ -413,7 +413,7 @@ class Visible(object):
         
         # Create any child visibles
         for visibleElement in xmlElement.findall('Visible'):
-            childVisible = Visible.fromXMLElement(visibleElement, display)
+            childVisible = Visible._fromXMLElement(visibleElement, display)
             if childVisible is None:
                 raise ValueError, gettext('Could not create visualized item')
             display.addVisible(childVisible, visible)
@@ -421,14 +421,15 @@ class Visible(object):
         return visible
     
     
-    def toXMLElement(self, parentElement):
+    def _toXMLElement(self, parentElement):
         visibleElement = ElementTree.SubElement(parentElement, 'Visible')
         visibleElement.set('id', str(self.displayId))
         if self.client is not None:
             visibleElement.set('objectId', str(self.client.networkId))
         
         # Add a comment to the XML to make it easier to figure out the client of the visible.
-        visibleElement.append(ElementTree.Comment(self.client.__class__.displayName() + ': ' + (self.client.name or self.client.abbreviation or gettext('(unnamed)'))))
+        if self.client:
+            visibleElement.append(ElementTree.Comment(self.client.__class__.displayName() + ': ' + (self.client.name or self.client.abbreviation or gettext('(unnamed)'))))
         
         # Add the geometry
         geometryElement = ElementTree.SubElement(visibleElement, 'Geometry')
@@ -487,7 +488,7 @@ class Visible(object):
                 elif isinstance(attributeValue, bool):
                     attribute = Attribute(self._shape, attributeName, Attribute.BOOLEAN_TYPE, attributeValue)
                 if attribute != None:
-                    attribute.toXMLElement(shapeElement)
+                    attribute._toXMLElement(shapeElement)
                 
         colorElement = ElementTree.SubElement(appearanceElement, 'Color')
         colorElement.set('r', str(self._color[0]))
@@ -509,12 +510,10 @@ class Visible(object):
         # Add any path
         if self.isPath():
             pathElement = ElementTree.SubElement(visibleElement, 'Path')
-            pathElement.set('startVisibleId', str(self.pathStart.displayId))
-            pathElement.set('endVisibleId', str(self.pathEnd.displayId))
-            if self.flowTo is not None:
-                pathElement.set('flowTo', 'true' if self.flowTo else 'false')
-            if self.flowFrom is not None:
-                pathElement.set('flowFrom', 'true' if self.flowFrom else 'false')
+            pathElement.set('startVisibleId', str(self._pathStart.displayId))
+            pathElement.set('endVisibleId', str(self._pathEnd.displayId))
+            pathElement.set('flowTo', 'true' if self._flowTo else 'false')
+            pathElement.set('flowFrom', 'true' if self._flowFrom else 'false')
             if self._flowToColor is not None or self._flowToSpread is not None:
                 flowToElement = ElementTree.SubElement(pathElement, 'FlowToAppearance')
                 if self._flowToColor is not None:
@@ -543,7 +542,7 @@ class Visible(object):
                     flowFromElement.set('speed', str(self._flowFromSpeed))
                 if self._flowFromSpread is not None:
                     flowFromElement.set('spread', str(self._flowFromSpread))
-            for midPoint in self.pathMidPoints:
+            for midPoint in self._pathMidPoints:
                 midPointElement = ElementTree.SubElement(pathElement, 'MidPoint')
                 midPointElement.set('x', str(midPoint[0]))
                 midPointElement.set('y', str(midPoint[1]))
@@ -551,14 +550,14 @@ class Visible(object):
         
         # Add any child visibles
         for childVisible in self.children:
-            childElement = childVisible.toXMLElement(visibleElement)
+            childElement = childVisible._toXMLElement(visibleElement)
             if childElement is None:
                 raise ValueError, gettext('Could not save visualized item')
         
         return visibleElement
     
     
-    def toScriptFile(self, scriptFile, scriptRefs, displayRef):
+    def _toScriptFile(self, scriptFile, scriptRefs, displayRef):
         # The stimulus visibles make this complicated because there are two visibles per stimulus object (a node and an path) and some attributes come from one visible and some from the other.
         # This is worked around by tweaking the value of self as the attributes are queried.  The attributes are grouped as follows to simplify the switching:
         # Attribute     Stimulus      Non-Stimulus
@@ -632,25 +631,28 @@ class Visible(object):
         
         if self.isPath():
             params['weight'] = self.weight()
-            if self.flowTo:
-                if self.flowToColor() != self.display.defaultFlowColor:
+            if self._flowTo:
+                if self.flowToColor() != None:
                     params['flowToColor'] = self.flowToColor()
-                if self.flowToSpacing() != self.display.defaultFlowSpacing:
+                if self.flowToSpacing() != None:
                     params['flowToSpacing'] = self.flowToSpacing()
-                if self.flowToSpeed() != self.display.defaultFlowSpeed:
+                if self.flowToSpeed() != None:
                     params['flowToSpeed'] = self.flowToSpeed()
-                if self.flowToSpread() != self.display.defaultFlowSpread:
+                if self.flowToSpread() != None:
                     params['flowToSpread'] = self.flowToSpread()
-            if self.flowFrom:
-                if self.flowFromColor() != self.display.defaultFlowColor:
+            if self._flowFrom:
+                if self.flowFromColor() != None:
                     params['flowFromColor'] = self.flowFromColor()
-                if self.flowFromSpacing() != self.display.defaultFlowSpacing:
+                if self.flowFromSpacing() != None:
                     params['flowFromSpacing'] = self.flowFromSpacing()
-                if self.flowFromSpeed() != self.display.defaultFlowSpeed:
+                if self.flowFromSpeed() != None:
                     params['flowFromSpeed'] = self.flowFromSpeed()
-                if self.flowFromSpread() != self.display.defaultFlowSpread:
+                if self.flowFromSpread() != None:
                     params['flowFromSpread'] = self.flowFromSpread()
-            params['midPoints'] = self.pathMidPoints
+            if not isinstance(self.client, Stimulus):
+                params['pathEndPoints'] = (self._pathStart.client, self._pathEnd.client)
+                if self._pathMidPoints != []:
+                    params['pathMidPoints'] = self._pathMidPoints
             
         
         params['shape'] = self.shape()
@@ -716,8 +718,12 @@ class Visible(object):
                 scriptFile.write('%s.setArrangedSpacing(%s, %s)\n' % (displayRef, scriptRef, str(self.arrangedSpacing)))
             if 'arrangedWeight' in params:
                 scriptFile.write('%s.setArrangedWeight(%s, %s)\n' % (displayRef, scriptRef, str(self.arrangedWeight)))
-            if 'midPoints' in params:
-                scriptFile.write('%s.setVisiblePath(%s, %s, %s, %s)\n' % (displayRef, scriptRef, str(self.pathMidPoints), scriptRefs[self.pathStart.client.networkId], scriptRefs[self.pathEnd.client.networkId]))
+            if 'pathEndPoints' in params:
+                startObject, endObject = params['pathEndPoints']
+                scriptFile.write('%s.setVisiblePath(%s, %s, %s' % (displayRef, scriptRef, scriptRefs[startObject.networkId], scriptRefs[endObject.networkId]))
+                if 'pathMidPoints' in params:
+                    scriptFile.write(', ' + str(params['pathMidPoints']))
+                scriptFile.write(')\n')
             if 'flowToColor' in params or 'flowToSpacing' in params or 'flowToSpeed' in params or 'flowToSpread' in params:
                 scriptFile.write('%s.setVisibleFlowTo(%s, True' % (displayRef, scriptRef))
                 if 'flowToColor' in params:
@@ -754,29 +760,38 @@ class Visible(object):
             scriptFile.write(')\n')
         
         for childVisible in self.children:
-            childVisible.toScriptFile(scriptFile, scriptRefs, displayRef)
+            childVisible._toScriptFile(scriptFile, scriptRefs, displayRef)
     
     
     def shape(self):
-        """Return the type of shape set for this visualized object, one of 'ball', 'box', 'capsule', 'cone', 'tube' or None"""
+        """
+        Return the shape of this visualized :class:`object <Network.Object.Object>`, a Shape sub-class instance or None.
+        """
         return self._shape
         
     
     def setShape(self, shape):
-        # The supplied shape must be a Shape instance or None.
+        """
+        Set the :class:`shape <Display.Shape.Shape>` of this visualized :class:`object <Network.Object.Object>`.
+        
+        >>> visible.setShape(shapes['Ball']())
+        >>> visible.setShape(shapes['Ring'](startAngle = 0.0, endAngle = pi))
+        
+        The shape must be an instance of one of the classes in shapes or None.
+        """
+        
         if not isinstance(shape, (Shape, type(None))):
-            raise ValueError, 'fix me!'
+            raise TypeError, 'The argument passed to setShape() must be a Shape instance or None'
         
         if self._shape != shape:
             glowColor = self._glowColor
             if self._glowNode is not None:
                 self.setGlowColor(None)
-            self._shape = shape
-            if self._shapeDrawable:
-                self._shapeGeode.removeDrawable(self._shapeDrawable)
             if self._shape:
-                self._shapeDrawable = self._shape.geometry()
-                self._shapeGeode.addDrawable(self._shapeDrawable)
+                self._shapeGeode.removeDrawable(self._shape.geometry())
+            self._shape = shape
+            if self._shape:
+                self._shapeGeode.addDrawable(self._shape.geometry())
                 if self._shape.interiorBounds() != None:
                     minBound, maxBound = self._shape.interiorBounds()
                     minBound = osg.Vec3(*minBound)
@@ -790,14 +805,14 @@ class Visible(object):
             if self.isPath():
                 self._updatePath()
             else:
-                self.updateTransform()
+                self._updateTransform()
     
     
-    def displayChangedShowName(self, signal, sender):
-        self.updateLabel()
+    def _displayChangedShowName(self, signal, sender):
+        self._updateLabel()
     
     
-    def updateLabel(self, opacity = 1.0):
+    def _updateLabel(self, opacity = 1.0):
         label = self._label
         if label is None and ((isinstance(self.client, Region) and self.display.showRegionNames()) or (isinstance(self.client, Neuron) and self.display.showNeuronNames())):
             label = self.client.abbreviation or self.client.name
@@ -841,65 +856,124 @@ class Visible(object):
     
     
     def setLabel(self, label):
+        """
+        Set the label that adorns this visualized :class:`object <Network.Object.Object>`.
+        
+        If the label is set to None then neurons and regions will be automatically labeled with their abbreviation or name (unless those options have been disabled).  To really have no label pass in '', an empty string.
+        """
         if label != self._label:
             self._label = label
-            self.updateLabel()
+            self._updateLabel()
             dispatcher.send(('set', 'label'), self)
     
     
     def label(self):
+        """
+        Return the label that has been set to adorn this visualized :class:`object <Network.Object.Object>`.
+        
+        If the object is a region or neuron automatically displaying its abbreviation or name then this method will return None, not what is being displayed.
+        """
         return self._label
     
     
     def setLabelColor(self, color):
+        """
+        Set the color of the label that adorns this visualized :class:`object <Network.Object.Object>`.
+         
+        The color argument should be a tuple or list of three values between 0.0 and 1.0 indicating the red, green and blue values of the color.  For example:
+        
+        * (0.0, 0.0, 0.0) -> black
+        * (1.0, 0.0, 0.0) -> red
+        * (0.0, 1.0, 0.0) -> green
+        * (0.0, 0.0, 1.0) -> blue
+        * (1.0, 1.0, 1.0) -> white
+        
+        Any alpha value should be set independently using :meth:`setOpacity <Display.Visible.Visible.setOpacity>`.
+        """
+        
         if color != self._labelColor:
             self._labelColor = color
-            self.updateLabel()
+            self._updateLabel()
             dispatcher.send(('set', 'labelColor'), self)
     
     
     def labelColor(self):
+        """
+        Return the color of the the label that adorns this visualized :class:`object <Network.Object.Object>`.
+        """
+        
         return self._labelColor
     
     
     def setLabelPosition(self, position):
+        """
+        Set the position of the label that adorns this visualized :class:`object <Network.Object.Object>`.
+        
+        The position argument should be a tuple or list indicating the position of the label.  The coordinates are local to the object with is usually a unit square centered at (0.0, 0.0).  For example:
+        (0.0, 0.0) -> label at center of object
+        (-0.5, -0.5) -> label at lower left corner of object
+        (0.0, 0.5) -> label centered at top of object
+        """
+        
         if position != self._labelPosition:
             self._labelPosition = position
-            self.updateLabel()
+            self._updateLabel()
             dispatcher.send(('set', 'labelPosition'), self)
     
     
     def labelPosition(self):
+        """
+        Return the position of the label that adorns this visualized :class:`object <Network.Object.Object>`.
+        """
+        
         return self._labelPosition
     
     
     def setColor(self, color):
+        """
+        Set the color of this visualized :class:`object <Network.Object.Object>`.
+         
+        The color argument should be a tuple or list of three values between 0.0 and 1.0 indicating the red, green and blue values of the color.  For example:
+        
+        * (0.0, 0.0, 0.0) -> black
+        * (1.0, 0.0, 0.0) -> red
+        * (0.0, 1.0, 0.0) -> green
+        * (0.0, 0.0, 1.0) -> blue
+        * (1.0, 1.0, 1.0) -> white
+        
+        Any alpha value should be set independently using :meth:`setOpacity <Display.Visible.Visible.setOpacity>`.
+        """
+        
+        if (not isinstance(color, (tuple, list)) or len(color) != 3 or 
+            not isinstance(color[0], (int, float)) or color[0] < 0.0 or color[0] > 1.0 or 
+            not isinstance(color[1], (int, float)) or color[1] < 0.0 or color[1] > 1.0 or 
+            not isinstance(color[2], (int, float)) or color[2] < 0.0 or color[2] > 1.0):
+            raise ValueError, 'The color argument should be a tuple or list of three integer or floating point values between 0.0 and 1.0, inclusively.'
+        
         if color != self._color:
             colorVec = osg.Vec4(color[0], color[1], color[2], 1)
             self._material.setDiffuse(osg.Material.FRONT_AND_BACK, colorVec)
             self._material.setAmbient(osg.Material.FRONT_AND_BACK, colorVec)
-            if isinstance(self._shape, Shape):
+            if self._shape != None:
                 self._shape.setColor(color)
-            elif isinstance(self._shapeDrawable, osg.ShapeDrawable):
-                self._shapeDrawable.setColor(colorVec)
             self._color = color
-            self.updateOpacity()
+            self._updateOpacity()
             dispatcher.send(('set', 'color'), self)
     
     
     def color(self):
+        """
+        Return the color of this visualized :class:`object <Network.Object.Object>`.
+        """
+        
         return self._color
     
     
-    def displayChangedSelection(self, sender, signal):
-        self.updateOpacity()
+    def _displayChangedGhosting(self, sender, signal):
+        self._updateOpacity()
     
     
-    def displayChangedGhosting(self, sender, signal):
-        self.updateOpacity()
-    
-    
-    def updateOpacity(self):
+    def _updateOpacity(self):
         if self.display.useGhosts() and any(self.display.selection()) and self not in self.display.highlightedVisibles and self not in self.display.animatedVisibles:
             opacity = 0.1
             for ancestor in self.ancestors():
@@ -916,7 +990,7 @@ class Visible(object):
         else:
             opacity = self._opacity
         
-        if self._shapeDrawable is not None:
+        if self._shape is not None:
             self._material.setAlpha(osg.Material.FRONT_AND_BACK, opacity)
             if opacity == 1.0:
                 if self._shapeGeode2:
@@ -926,21 +1000,27 @@ class Visible(object):
                 self._shapeGeode.getOrCreateStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
                 self._shapeGeode.getOrCreateStateSet().removeAttribute(osg.StateAttribute.CULLFACE)
             else:
-                if self._shape != None and not self._shapeGeode2:
+                if not self._shapeGeode2:
                     # Technique that may correctly render nested, transparent geometries, from http://www.mail-archive.com/osg-users@lists.openscenegraph.org/msg06863.html
                     self._shapeGeode2 = osg.Geode()
                     self._shapeGeode2.addDrawable(self._shape.geometry())
-                    self._shapeGeode2.getOrCreateStateSet().setRenderBinDetails(9, 'DepthSortedBin')
+                    #self._shapeGeode2.getOrCreateStateSet().setRenderBinDetails(9, 'DepthSortedBin')
                     self._shapeGeode2.getOrCreateStateSet().setAttributeAndModes(Visible.cullFrontFacesAttr, osg.StateAttribute.ON)
                     self._shapeGeode.getOrCreateStateSet().setAttributeAndModes(Visible.cullBackFacesAttr, osg.StateAttribute.ON)
                 self._shapeGeode.getOrCreateStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
                 self._shapeGeode.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
         
         if self._textDrawable is not None:
-            self.updateLabel(opacity)
+            self._updateLabel(opacity)
     
     
     def setOpacity(self, opacity):
+        """
+        Set the opacity of the visualized :class:`object's <Network.Object.Object>` shape and label.
+        
+        The opacity parameter should be a number from 0.0 (fully transparent) to 1.0 (fully opaque).
+        """
+        
         if opacity < 0.0:
             opacity = 0.0
         elif opacity > 1.0:
@@ -948,15 +1028,19 @@ class Visible(object):
         
         if opacity != self.opacity:
             self._opacity = opacity
-            self.updateOpacity()
+            self._updateOpacity()
             dispatcher.send(('set', 'opacity'), self)
     
     
     def opacity(self):
+        """
+        Return the opacity of the visualized :class:`object <Network.Object.Object>`.
+        """
+        
         return self._opacity
     
     
-    def updateTransform(self):
+    def _updateTransform(self):
         if isinstance(self._shape, (UnitShape, type(None))):
             # update the transform unless we're under an osgGA.Selection node, i.e. being dragged
             if len(self.sgNode.getParents()) == 0 or self.display.dragSelection is None or self.sgNode.getParent(0).__repr__() != self.display.dragSelection.asGroup().__repr__():
@@ -973,27 +1057,47 @@ class Visible(object):
     
     
     def position(self):
+        """
+        Return the position of this visualized :class:`object <Network.Object.Object>`.
+        """
+        
         return self._position
     
     
     def setPosition(self, position):
-        """ Set the position of this visible in unit space.  Positions should be between -0.5 and 0.5 for this visible to be rendered fully inside its parent."""
+        """
+        Set the position of this visualized :class:`object <Network.Object.Object>`.
+        
+        For objects without containers this value is in world-space coordinates.  For objects within containers the coordinate space is a unit cube centered at (0.0, 0.0, 0.0).  Values should be between -0.5 and 0.5 to be located within the container but values beyond that are allowed.
+        """
+        
         if position != self._position:
             self._position = position
-            self.updateTransform()
+            self._updateTransform()
             dispatcher.send(('set', 'position'), self)
     
     
     def offsetPosition(self, offset):
+        """
+        Offset the position of this visualized :class:`object <Network.Object.Object>` by the indicated amounts.
+        
+        The offset argument should be a tuple of three numbers indicating how much the position should be offset in each dimension.
+        """
+        
         if offset != (0, 0, 0):
             self._position = (self._position[0] + offset[0], self._position[1] + offset[1], self._position[2] + offset[2])
-            self.updateTransform()
+            self._updateTransform()
             dispatcher.send(('set', 'position'), self)
     
     
     def worldPosition(self):
+        """
+        Return the position of the visualized :class:`object <Network.Object.Object>` in world-space coordinates.
+        """
+        
         # TODO: if a parent is rotated does this screw up?
         # TODO: will OSG do this for us?
+        # TODO: merge this with position() and add a coordinate-space argument? 
         
         if self.parent is None:
             worldPosition = self._position
@@ -1013,73 +1117,113 @@ class Visible(object):
     
     
     def positionIsFixed(self):
+        """
+        Return whether the position of this visualized :class:`object <Network.Object.Object>` should be allowed to change.
+        """
         return self._positionIsFixed
     
     
-    def setPositionIsFixed(self, flag):
-        if self._positionIsFixed != flag:
-            self._positionIsFixed = flag
+    def setPositionIsFixed(self, isFixed):
+        """
+        Set whether the position of this visualized :class:`object <Network.Object.Object>` should be allowed to change.
+        
+        Calling :meth:`setPosition <Display.Visible.Visible.setPosition>` ignores this setting.
+        """
+        
+        if self._positionIsFixed != isFixed:
+            self._positionIsFixed = isFixed
             dispatcher.send(('set', 'positionIsFixed'), self)
     
     
     def size(self):
+        """
+        Return the size of this visualized :class:`object <Network.Object.Object>`.
+        """
+        
         # TODO: if isinstance(self._shape, UnitShape)...
         return self._size
     
     
     def setSize(self, size):
-        """ Set the size of this visible relative to its parent or in absolute space (depending on the current value of sizeIsAbsolute)."""
+        """
+        Set the size of this visualized :class:`object <Network.Object.Object>`.
+        
+        For objects without containers or those that are :meth:`absolutely sized <Display.Visible.Visible.setSizeIsAbsolute>` this value is in world-space coordinates.  For relatively sized objects within containers the coordinate space is a unit cube centered at (0.0, 0.0, 0.0).
+        """
+        
         if self._size != size:
             self._size = size
             # TODO: if not isinstance(self._shape, UnitShape): # then rebuild geometry with new size
-            self.updateTransform()
+            self._updateTransform()
             dispatcher.send(('set', 'size'), self)
             self._arrangeChildren()
     
     
     def sizeIsFixed(self):
+        """
+        Return whether the size of this visualized :class:`object <Network.Object.Object>` should be allowed to change.
+        """
         return self._sizeIsFixed
     
     
-    def setSizeIsFixed(self, flag):
-        if self._sizeIsFixed != flag:
-            self._sizeIsFixed = flag
+    def setSizeIsFixed(self, isFixed):
+        """
+        Set whether the size of this visualized :class:`object <Network.Object.Object>` should be allowed to change.
+        
+        Calling :meth:`setSize <Display.Visible.Visible.setSize>` ignores this setting.
+        """
+        
+        if self._sizeIsFixed != isFixed:
+            self._sizeIsFixed = isFixed
             dispatcher.send(('set', 'sizeIsFixed'), self)
     
     
     def sizeIsAbsolute(self):
+        """
+        Return whether the size set for this visualized :class:`object <Network.Object.Object>` should be in world-space coordinates or relative to the enclosing container.
+        """
+        
         return self._sizeIsAbsolute
     
     
     def setSizeIsAbsolute(self, sizeIsAbsolute = True):
+        """
+        Set whether the size set for this visualized :class:`object <Network.Object.Object>` should be in world-space coordinates or relative to the enclosing container.
+        """
+        
         if self._sizeIsAbsolute != sizeIsAbsolute:
             self._sizeIsAbsolute = sizeIsAbsolute
             
             # TODO: convert absolute to relative size or vice versa
             
-            self.updateTransform()
+            self._updateTransform()
             dispatcher.send(('set', 'sizeIsAbsolute'), self)
             self._arrangeChildren()
             
             for ancestor in self.ancestors():
                 if self._sizeIsAbsolute:
-                    dispatcher.connect(self.maintainAbsoluteSize, ('set', 'position'), ancestor)
-                    dispatcher.connect(self.maintainAbsoluteSize, ('set', 'size'), ancestor)
-                    dispatcher.connect(self.maintainAbsoluteSize, ('set', 'rotation'), ancestor)
+                    dispatcher.connect(self._maintainAbsoluteSize, ('set', 'position'), ancestor)
+                    dispatcher.connect(self._maintainAbsoluteSize, ('set', 'size'), ancestor)
+                    dispatcher.connect(self._maintainAbsoluteSize, ('set', 'rotation'), ancestor)
                 else:
-                    dispatcher.disconnect(self.maintainAbsoluteSize, ('set', 'position'), ancestor)
-                    dispatcher.disconnect(self.maintainAbsoluteSize, ('set', 'size'), ancestor)
-                    dispatcher.disconnect(self.maintainAbsoluteSize, ('set', 'rotation'), ancestor)
+                    dispatcher.disconnect(self._maintainAbsoluteSize, ('set', 'position'), ancestor)
+                    dispatcher.disconnect(self._maintainAbsoluteSize, ('set', 'size'), ancestor)
+                    dispatcher.disconnect(self._maintainAbsoluteSize, ('set', 'rotation'), ancestor)
     
     
-    def maintainAbsoluteSize( self, signal, sender, event=None, value=None, **arguments):
-        self.updateTransform()
+    def _maintainAbsoluteSize( self, signal, sender, event=None, value=None, **arguments):
+        self._updateTransform()
         self._arrangeChildren()
     
     
     def worldSize(self):
+        """
+        Return the size of the visualized :class:`object <Network.Object.Object>` in world-space coordinates.
+        """
+        
         # TODO: if a parent is rotated does this screw up?
         # TODO: will OSG do this for us?
+        # TODO: merge this with size() and add a coordinate-space argument? 
         
         if self.parent is None or self.sizeIsAbsolute():
             worldSize = self._size
@@ -1102,15 +1246,25 @@ class Visible(object):
     def setRotation(self, rotation):
         if self._rotation != rotation:
             self._rotation = rotation
-            self.updateTransform()
+            self._updateTransform()
             dispatcher.send(('set', 'rotation'), self)
     
     
     def weight(self):
+        """
+        Return the weight of the visualized :class:`object <Network.Object.Object>`.
+        """
+        
         return self._weight
     
     
     def setWeight(self, weight):
+        """
+        Set the weight of the visualized :class:`object <Network.Object.Object>`.
+        
+        The weight parameter should be a float value with 1.0 being a neutral weight.  Currently this only applies to visualized connections.
+        """
+        
         if self._weight != weight:
             self._weight = weight
             if isinstance(self._shape, PathShape):
@@ -1121,45 +1275,67 @@ class Visible(object):
     
     
     def addChildVisible(self, childVisible):
+        """
+        Make the indicated visible a child of this visualized :class:`object <Network.Object.Object>`.
+        
+        A child visible will be drawn inside of the parent visible.
+        """
+        
+        if not isinstance(childVisible, Visible):
+            raise TypeError, 'The argument passed to addChildVisible() must be a visible in the same display.'
+         
         if childVisible not in self.children:
+            if childVisible.parent:
+                childVisible.parent.removeChildVisible(childVisible)
             self.children.append(childVisible)
             childVisible.parent = self
             self.childGroup.addChild(childVisible.sgNode)
-            dispatcher.connect(self.childArrangedWeightChanged, ('set', 'arrangedWeight'), childVisible)
+            dispatcher.connect(self._childArrangedWeightChanged, ('set', 'arrangedWeight'), childVisible)
             if childVisible.sizeIsAbsolute():
                 for ancestor in childVisible.ancestors():
-                    dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'position'), ancestor)
-                    dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'size'), ancestor)
-                    dispatcher.connect(childVisible.maintainAbsoluteSize, ('set', 'rotation'), ancestor)
-            self.updateOpacity()
+                    dispatcher.connect(childVisible._maintainAbsoluteSize, ('set', 'position'), ancestor)
+                    dispatcher.connect(childVisible._maintainAbsoluteSize, ('set', 'size'), ancestor)
+                    dispatcher.connect(childVisible._maintainAbsoluteSize, ('set', 'rotation'), ancestor)
+            self._updateOpacity()
             if self.arrangedAxis is None:
-                childVisible.updateTransform()
+                childVisible._updateTransform()
             else:
                 self._arrangeChildren()
             dispatcher.send(('set', 'children'), self)
     
     
     def removeChildVisible(self, childVisible):
+        """
+        Remove the indicated visible from this container visible.
+        
+        After this call the indicated visible will have no parent.
+        """
+        
         if childVisible in self.children:
             if childVisible.sizeIsAbsolute():
                 for ancestor in childVisible.ancestors():
-                    dispatcher.disconnect(childVisible.maintainAbsoluteSize, ('set', 'position'), ancestor)
-                    dispatcher.disconnect(childVisible.maintainAbsoluteSize, ('set', 'size'), ancestor)
-                    dispatcher.disconnect(childVisible.maintainAbsoluteSize, ('set', 'rotation'), ancestor)
-            dispatcher.disconnect(self.childArrangedWeightChanged, ('set', 'arrangedWeight'), childVisible)
+                    dispatcher.disconnect(childVisible._maintainAbsoluteSize, ('set', 'position'), ancestor)
+                    dispatcher.disconnect(childVisible._maintainAbsoluteSize, ('set', 'size'), ancestor)
+                    dispatcher.disconnect(childVisible._maintainAbsoluteSize, ('set', 'rotation'), ancestor)
+            dispatcher.disconnect(self._childArrangedWeightChanged, ('set', 'arrangedWeight'), childVisible)
             self.childGroup.removeChild(childVisible.sgNode)
             childVisible.parent = None
             self.children.remove(childVisible)
             if not any(self.children):
-                self.updateOpacity()
+                self._updateOpacity()
             if self.arrangedAxis is None:
-                childVisible.updateTransform()
+                childVisible._updateTransform()
             else:
                 self._arrangeChildren()
             dispatcher.send(('set', 'children'), self)
     
     
     def rootVisible(self):
+        """ Return the outermost container of this visible.
+        
+        If this visible is not contained within any other visible then this visible itself will be returned.
+        """
+        
         if self.parent is None:
             return self
         else:
@@ -1167,6 +1343,12 @@ class Visible(object):
     
     
     def ancestors(self):
+        """
+        Return the containers of this visible in a list with the outermost container appearing last.
+        
+        If this visible is not contained within any others then an empty list will be returned.
+        """
+        
         ancestors = []
         if self.parent is not None:
             ancestors.append(self.parent)
@@ -1175,6 +1357,12 @@ class Visible(object):
     
     
     def allChildren(self):
+        """
+        Return all visibles contained by this visible.
+        
+        If this visible does not contain any others then an empty list will be returned.
+        """
+        
         children = []
         for child in self.children:
             children += [child]
@@ -1249,7 +1437,16 @@ class Visible(object):
     
     
     def setArrangedAxis(self, axis = 'largest', recurse = False):
-        """ Arrange the children of this visible along the specified axis. """
+        """
+        Automatically arrange the children of this visualized :class:`object <Network.Object.Object>` along the specified axis.
+        
+        The axis value should be one of 'largest', 'X', 'Y', 'Z' or None.  When 'largest' is indicated the children will be arranged along whichever axis is longest at any given time.  Resizing the parent object therefore can change which axis is used.
+        
+        If recurse is True then all descendants will have their axes set as well.
+        """
+        
+        if axis not in [None, 'largest', 'X', 'Y', 'Z']:
+            raise ValueError, 'The axis argument passed to setArrangedAxis() must be one of \'largest\', \'X\', \'Y\', \'Z\' or None.'
         
         if axis != self.arrangedAxis:
             self.arrangedAxis = axis
@@ -1266,10 +1463,19 @@ class Visible(object):
     
     
     def setArrangedSpacing(self, spacing = .02, recurse = False):
-        """ Arrange the children of this visible along the specified axis. """
+        """
+        Set the visible spacing between the children of the visualized :class:`object <Network.Object.Object>`.
+        
+        The spacing is measured as a fraction of the whole.  So a value of .02 uses 2% of the parent's size for the spacing between each object.
+         
+        If recurse is True then all descendants will have their spacing set as well.
+        """
+        
+        if not isinstance(spacing, (int, float)):
+            raise TypeError, 'The spacing argument passed to setArrangedSpacing() must be an integer or floating point value.'
         
         if spacing != self.arrangedSpacing:
-            self.arrangedSpacing = spacing
+            self.arrangedSpacing = float(spacing)
             self._arrangeChildren(False)
             dispatcher.send(('set', 'arrangedSpacing'), self)
             self.display.Update()
@@ -1280,6 +1486,17 @@ class Visible(object):
     
     
     def setArrangedWeight(self, weight = weight):
+        """
+        Set the amount of its parent's space the visualized :class:`object <Network.Object.Object>` should use compared to its siblings.
+        
+        Larger weight values will result in more of the parent's space being used.
+         
+        If recurse is True then all descendants will have their spacing set as well.
+        """
+        
+        if not isinstance(weight, (int, float)):
+            raise TypeError, 'The weight argument passed to setArrangedWeight() must be an integer or floating point value.'
+        
         if weight != self.arrangedWeight:
             self.arrangedWeight = weight
             self._arrangeChildren(False)
@@ -1287,36 +1504,25 @@ class Visible(object):
             self.display.Update()
     
     
-    def childArrangedWeightChanged(self, signal, sender, **arguments):
+    def _childArrangedWeightChanged(self, signal, sender, **arguments):
         self._arrangeChildren()
     
     
-#    def allChildrenAreArranged(self):
-#        if len(self.children) > 0:
-#            if self.arrangedAxis is None:
-#                return False
-#            else:
-#                for child in self.children:
-#                    if not child.allChildrenAreArranged():
-#                        return False
-#        return True
-    
-    
-    def addDependency(self, otherVisible, attribute):
+    def _addDependency(self, otherVisible, attribute):
         self._dependencies.add(otherVisible)
-        dispatcher.connect(self.dependentVisibleChanged, ('set', attribute), otherVisible)
+        dispatcher.connect(self._dependentVisibleChanged, ('set', attribute), otherVisible)
         ancestor = otherVisible.parent
         while ancestor is not None:
-            dispatcher.connect(self.dependentVisibleChanged, ('set', attribute), ancestor)
+            dispatcher.connect(self._dependentVisibleChanged, ('set', attribute), ancestor)
             ancestor = ancestor.parent
     
     
-    def dependentVisibleChanged( self, signal, sender, event=None, value=None, **arguments):
+    def _dependentVisibleChanged( self, signal, sender, event=None, value=None, **arguments):
         if self.isPath():
             self._updatePath()
     
     
-    def positionSizeRotation(self, startPoint, endPoint):
+    def _positionSizeRotation(self, startPoint, endPoint):
         if len(startPoint) == 2:
             startPoint = list(startPoint) + [0.0]
         if len(endPoint) == 2:
@@ -1336,11 +1542,22 @@ class Visible(object):
         return (position, dsize, rotation)
     
     
-    def isDraggable(self):
-        return (self.positionIsFixed() == False and self.pathStart is None)
+    def _isDraggable(self):
+        return (self.positionIsFixed() == False and self._pathStart is None)
     
     
     def setTexture(self, texture):
+        """
+        Set the texture used to paint the surface of the visualized :class:`object <Network.Object.Object>`.
+        
+        >>> display.setVisibleTexture(region1, library.texture('Stripes'))
+        
+        The texture parameter should be an object obtained from the :class:`library <Library.Library.Library>` or None.
+        """
+        
+        if not isinstance(texture, (Texture, type(None))):
+            raise TypeError, 'The texture argument passed to setTexture() must be a texture from the library.'
+        
         if self._staticTexture != texture:
             if texture is None:
                 self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXTURE)
@@ -1351,10 +1568,23 @@ class Visible(object):
     
     
     def texture(self):
+        """
+        Set the texture used to paint the surface of the visualized :class:`object <Network.Object.Object>`.
+        """
+        
         return self._staticTexture
     
         
     def setTextureScale(self, scale):
+        """
+        Set the scale of the texture used to paint the surface of the visualized :class:`object <Network.Object.Object>`.
+        
+        The scale parameter can be used to reduce or enlarge the texture relative to the visualized object.
+        """
+        
+        if not isinstance(scale, (float, int)):
+            raise TypeError, 'The scale argument passed to setTextureScale() must be a number.'
+        
         if self._staticTextureScale != scale:
             if scale == 1.0:
                 self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXMAT)
@@ -1367,30 +1597,58 @@ class Visible(object):
             dispatcher.send(('set', 'textureScale'), self)
     
     
-    def setFlowDirection(self, fromVisible, toVisible, flowTo=True, flowFrom=False):
-        if self.pathStart:
-            self.pathStart.dependentVisibles.remove(self)
-        self.pathStart = fromVisible
-        if self.pathStart:
-            self.pathStart.dependentVisibles += [self]
+    def textureScale(self):
+        """
+        Return the scale of the texture used to paint the surface of the visualized :class:`object <Network.Object.Object>`.
+        """
         
-        if self.pathEnd:
-            self.pathEnd.dependentVisibles.remove(self)
-        self.pathEnd = toVisible
-        if self.pathEnd:
-            self.pathEnd.dependentVisibles += [self]
+        return self._staticTextureScale
+    
+    
+    def setFlowTo(self, showFlow = True):
+        """
+        Set whether the flow of information from the start of the path towards the end should be shown.
+        """
         
-        if flowTo != self.flowTo:
-            self.flowTo = flowTo
+        # Convert to a bool.
+        showFlow = True if showFlow else False
+        
+        if showFlow != self._flowTo:
+            self._flowTo = (showFlow == True)
             dispatcher.send(('set', 'flowTo'), self)
-        if flowFrom != self.flowFrom:
-            self.flowFrom = flowFrom
-            dispatcher.send(('set', 'flowFrom'), self)
-        self._updateFlowAnimation()
+            self._updateFlowAnimation()
+    
+    
+    def flowTo(self):
+        """
+        Return whether the flow of information from the start of the path towards the end should be shown.
+        """
+        
+        return self._flowTo
     
     
     def setFlowToColor(self, color):
-        if len(color) == 3:
+        """
+        Set the color of the pulse used to show the flow of information from the start of the path towards the end. 
+        
+        The color argument should be None or a tuple or list of three values between 0.0 and 1.0 indicating the red, green and blue values of the color.  For example:
+        
+        * (0.0, 0.0, 0.0) -> black
+        * (1.0, 0.0, 0.0) -> red
+        * (0.0, 1.0, 0.0) -> green
+        * (0.0, 0.0, 1.0) -> blue
+        * (1.0, 1.0, 1.0) -> white
+        
+        If None is passed then the default flow color will be used.
+        """
+        
+        if not isinstance(color, (list, tuple, type(None))) or (color != None and len(color) != 3):
+            raise ValueError, 'The color passed to setFlowToColor() must be None or a tuple or list of three numbers.'
+        for colorComponent in color:
+            if not isinstance(colorComponent, (int, float)) or colorComponent < 0.0 or colorComponent > 1.0:
+                raise ValueError, 'The components of the color passed to setFlowToColor() must all be numbers between 0.0 and 1.0, inclusive.'
+        
+        if color != None and len(color) == 3:
             color = (color[0], color[1], color[2], 1.0)
         if color != self._flowToColor:
             self._flowToColor = color
@@ -1403,10 +1661,23 @@ class Visible(object):
     
     
     def flowToColor(self):
-        return self._flowToColor or self.display.defaultFlowColor
+        """
+        Return the color of the pulse used to show the flow of information from the start of the path towards the end. 
+        """
+        
+        return self._flowToColor
     
     
     def setFlowToSpacing(self, spacing):
+        """
+        Set the spacing between pulses used to show the flow of information from the start of the path towards the end. 
+        
+        The spacing argument should be a number value in world-space coordinates.
+        """
+        
+        if not isinstance(spacing, (int, float)):
+            raise TypeError, 'The spacing passed to setFlowToSpacing() must be a number.'
+        
         if spacing != self._flowToSpacing:
             self._flowToSpacing =float(spacing)
             if self._flowToSpacing is None:
@@ -1418,10 +1689,23 @@ class Visible(object):
     
     
     def flowToSpacing(self):
-        return self._flowToSpacing or self.display.defaultFlowSpacing
+        """
+        Return the spacing between pulses used to show the flow of information from the start of the path towards the end. 
+        """
+        
+        return self._flowToSpacing
     
     
     def setFlowToSpeed(self, speed):
+        """
+        Set the speed of the pulses used to show the flow of information from the start of the path towards the end.
+        
+        The speed argument should be a number value in world-space coordinates per second.
+        """
+        
+        if not isinstance(speed, (int, float)):
+            raise TypeError, 'The speed passed to setFlowToSpeed() must be a number.'
+        
         if speed != self._flowToSpeed:
             self._flowToSpeed = float(speed)
             if self._flowToSpeed is None:
@@ -1433,10 +1717,23 @@ class Visible(object):
     
     
     def flowToSpeed(self):
-        return self._flowToSpeed or self.display.defaultFlowSpeed
+        """
+        Return the speed of the pulses used to show the flow of information from the start of the path towards the end.
+        """
+        
+        return self._flowToSpeed
     
     
     def setFlowToSpread(self, spread):
+        """
+        Set the length of the pulse tails used to show the flow of information from the start of the path towards the end.
+        
+        The spread argument should be a number value from 0.0 (no tail) to 1.0 (tail extends all the way to the next pulse).
+        """
+        
+        if not isinstance(spread, (int, float)):
+            raise TypeError, 'The spread passed to setFlowToSpread() must be a number.'
+        
         if spread != self._flowToSpread:
             self._flowToSpread = float(spread)
             if self._flowToSpread is None:
@@ -1448,11 +1745,56 @@ class Visible(object):
     
     
     def flowToSpread(self):
-        return self._flowToSpread or self.display.defaultFlowSpread
+        """
+        Return the length of the pulse tails used to show the flow of information from the start of the path towards the end.
+        """
+        
+        return self._flowToSpread
+    
+    
+    def setFlowFrom(self, showFlow = True):
+        """
+        Set whether the flow of information from the end of the path towards the start should be shown.
+        """
+        # Convert to a bool.
+        showFlow = True if showFlow else False
+        
+        if showFlow != self._flowFrom:
+            self._flowFrom = showFlow
+            dispatcher.send(('set', 'flowFrom'), self)
+            self._updateFlowAnimation()
+    
+    
+    def flowFrom(self):
+        """
+        Return whether the flow of information from the end of the path towards the start should be shown.
+        """
+        
+        return self._flowFrom
     
     
     def setFlowFromColor(self, color):
-        if len(color) == 3:
+        """
+        Set the color of the pulse used to show the flow of information from the end of the path towards the start. 
+        
+        The color argument should be None or a tuple or list of three values between 0.0 and 1.0 indicating the red, green and blue values of the color.  For example:
+        
+        * (0.0, 0.0, 0.0) -> black
+        * (1.0, 0.0, 0.0) -> red
+        * (0.0, 1.0, 0.0) -> green
+        * (0.0, 0.0, 1.0) -> blue
+        * (1.0, 1.0, 1.0) -> white
+        
+        If None is passed then the default flow color will be used.
+        """
+        
+        if not isinstance(color, (list, tuple, type(None))) or (color != None and len(color) != 3):
+            raise ValueError, 'The color passed to setFlowFromColor() must be a tuple or list of three numbers.'
+        for colorComponent in color:
+            if not isinstance(colorComponent, (int, float)) or colorComponent < 0.0 or colorComponent > 1.0:
+                raise ValueError, 'The components of the color passed to setFlowFromColor() must all be numbers between 0.0 and 1.0, inclusive.'
+        
+        if color != None and len(color) == 3:
             color = (color[0], color[1], color[2], 1.0)
         if color != self._flowFromColor:
             self._flowFromColor = color
@@ -1465,10 +1807,23 @@ class Visible(object):
     
     
     def flowFromColor(self):
-        return self._flowFromColor or self.display.defaultFlowColor
+        """
+        Return the color of the pulse used to show the flow of information from the end of the path towards the start. 
+        """
+        
+        return self._flowFromColor
     
     
     def setFlowFromSpacing(self, spacing):
+        """
+        Set the spacing between pulses used to show the flow of information from the end of the path towards the start. 
+        
+        The spacing argument should be a number value in world-space coordinates.
+        """
+        
+        if not isinstance(spacing, (int, float)):
+            raise TypeError, 'The spacing passed to setFlowFromSpacing() must be a number.'
+        
         if spacing != self._flowFromSpacing:
             self._flowFromSpacing = float(spacing)
             if self._flowFromSpacing is None:
@@ -1480,10 +1835,23 @@ class Visible(object):
     
     
     def flowFromSpacing(self):
-        return self._flowFromSpacing or self.display.defaultFlowSpacing
+        """
+        Return the spacing between pulses used to show the flow of information from the end of the path towards the start. 
+        """
+        
+        return self._flowFromSpacing
     
     
     def setFlowFromSpeed(self, speed):
+        """
+        Set the speed of the pulses used to show the flow of information from the end of the path towards the start.
+        
+        The speed argument should be a number value in world-space coordinates per second.
+        """
+        
+        if not isinstance(speed, (int, float)):
+            raise TypeError, 'The speed passed to setFlowFromSpeed() must be a number.'
+        
         if speed != self._flowFromSpeed:
             self._flowFromSpeed = float(speed)
             if self._flowFromSpeed is None:
@@ -1495,10 +1863,23 @@ class Visible(object):
     
     
     def flowFromSpeed(self):
-        return self._flowFromSpeed or self.display.defaultFlowSpeed
+        """
+        Return the speed of the pulses used to show the flow of information from the end of the path towards the start.
+        """
+        
+        return self._flowFromSpeed
     
     
     def setFlowFromSpread(self, spread):
+        """
+        Set the length of the pulse tails used to show the flow of information from the end of the path towards the start.
+        
+        The spread argument should be a number value from 0.0 (no tail) to 1.0 (tail extends all the way to the next pulse).
+        """
+        
+        if not isinstance(spread, (int, float)):
+            raise TypeError, 'The spread passed to setFlowFromSpread() must be a number.'
+        
         if spread != self._flowFromSpread:
             self._flowFromSpread = float(spread)
             if self._flowFromSpread is None:
@@ -1510,15 +1891,19 @@ class Visible(object):
     
     
     def flowFromSpread(self):
-        return self._flowFromSpread or self.display.defaultFlowSpread
+        """
+        Return the length of the pulse tails used to show the flow of information from the end of the path towards the start.
+        """
+        
+        return self._flowFromSpread
     
     
     def _updateFlowAnimation(self):
-        if self._animateFlow and (self.flowTo or self.flowFrom):
-            self._stateSet.addUniform(osg.Uniform('flowTo', True if self.flowTo else False))
-            self._stateSet.addUniform(osg.Uniform('flowFrom', True if self.flowFrom else False))
+        if self._animateFlow and (self._flowTo or self._flowFrom):
+            self._stateSet.addUniform(osg.Uniform('flowTo', self._flowTo))
+            self._stateSet.addUniform(osg.Uniform('flowFrom', self._flowFrom))
             self._stateSet.addUniform(osg.Uniform('textureScale', (self._size[1] if isinstance(self._shape, UnitShape) else 1.0) / self._staticTextureScale))
-            self._stateSet.addUniform(osg.Uniform('hasTexture', True if self._staticTexture is not None else False))
+            self._stateSet.addUniform(osg.Uniform('hasTexture', self._staticTexture != None))
             self._stateSet.setAttributeAndModes(Visible.flowProgram, osg.StateAttribute.ON)
         elif self._stateSet.getAttribute(osg.StateAttribute.PROGRAM) is not None:
             self._stateSet.removeAttribute(osg.StateAttribute.PROGRAM)
@@ -1535,44 +1920,44 @@ class Visible(object):
         
         
     def _updatePath(self):
-        path = list(self.pathMidPoints)
-        path.insert(0, self.pathStart.worldPosition())
-        path.append(self.pathEnd.worldPosition())
+        path = list(self._pathMidPoints)
+        path.insert(0, self._pathStart.worldPosition())
+        path.append(self._pathEnd.worldPosition())
         
-        if self.pathStart._shape:
+        if self._pathStart._shape:
             # Try to find the point where the path intersects the shape.
             rayOrigin = path[1]
             if len(path) > 2:
                 rayDirection = (path[1][0] - path[2][0], path[1][1] - path[2][1], path[1][2] - path[2][2])
             else:
                 rayDirection = (path[0][0] - path[1][0], path[0][1] - path[1][1], path[0][2] - path[1][2])
-            if isinstance(self.pathStart._shape, UnitShape):
+            if isinstance(self._pathStart._shape, UnitShape):
                 # Translate the ray into the shape's coordinate system.
-                size = self.pathStart.worldSize()
+                size = self._pathStart.worldSize()
                 rayOrigin = ((rayOrigin[0] - path[0][0]) / size[0], (rayOrigin[1] - path[0][1]) / size[1], (rayOrigin[2] - path[0][2]) / size[2])
                 rayDirection = (rayDirection[0] / size[0], rayDirection[1] / size[1], rayDirection[2] / size[2])
-            intersectionPoint = self.pathStart._shape.intersectionPoint(rayOrigin, rayDirection)
+            intersectionPoint = self._pathStart._shape.intersectionPoint(rayOrigin, rayDirection)
             if intersectionPoint:
-                if isinstance(self.pathStart._shape, UnitShape):
+                if isinstance(self._pathStart._shape, UnitShape):
                     # Translate back into world space coordinates.
                     intersectionPoint = (intersectionPoint[0] * size[0] + path[0][0], intersectionPoint[1] * size[1] + path[0][1], intersectionPoint[2] * size[2] + path[0][2])
                 path[0:1] = [intersectionPoint]
         
-        if self.pathEnd._shape:
+        if self._pathEnd._shape:
             # Try to find the point where the path intersects the shape.
             rayOrigin = path[-2]
             if len(path) > 2:
                 rayDirection = (path[-2][0] - path[-3][0], path[-2][1] - path[-3][1], path[-2][2] - path[-3][2])
             else:
                 rayDirection = (path[-1][0] - path[-2][0], path[-1][1] - path[-2][1], path[-1][2] - path[-2][2])
-            if isinstance(self.pathEnd._shape, UnitShape):
+            if isinstance(self._pathEnd._shape, UnitShape):
                 # Translate the ray into the shape's coordinate system.
-                size = self.pathEnd.worldSize()
+                size = self._pathEnd.worldSize()
                 rayOrigin = ((rayOrigin[0] - path[-1][0]) / size[0], (rayOrigin[1] - path[-1][1]) / size[1], (rayOrigin[2] - path[-1][2]) / size[2])
                 rayDirection = (rayDirection[0] / size[0], rayDirection[1] / size[1], rayDirection[2] / size[2])
-            intersectionPoint = self.pathEnd._shape.intersectionPoint(rayOrigin, rayDirection)
+            intersectionPoint = self._pathEnd._shape.intersectionPoint(rayOrigin, rayDirection)
             if intersectionPoint:
-                if isinstance(self.pathEnd._shape, UnitShape):
+                if isinstance(self._pathEnd._shape, UnitShape):
                     # Translate back into world space coordinates.
                     intersectionPoint = (intersectionPoint[0] * size[0] + path[-1][0], intersectionPoint[1] * size[1] + path[-1][1], intersectionPoint[2] * size[2] + path[-1][2])
                 path[-1:] = [intersectionPoint]
@@ -1580,7 +1965,7 @@ class Visible(object):
         if isinstance(self._shape, UnitShape):
             # Create a straight connection from start to end
             # TODO: Will this object ever have a parent?  If so then we'll have to translate world to local coordinates here.
-            position, size, rotation = self.positionSizeRotation(path[0], path[-1])
+            position, size, rotation = self._positionSizeRotation(path[0], path[-1])
             self.setPosition(position)
             self.setSize(size)
             self.setRotation(rotation)
@@ -1598,34 +1983,108 @@ class Visible(object):
             if isinstance(self._shape, PathShape):
                 self._shape.setPoints(path)
             
-            self.updateTransform()
+            self._updateTransform()
         
         self._updateFlowAnimation()
         
         
-    def setPath(self, midPoints, startVisible=None, endVisible=None):
-        if startVisible is not None:
-            self.addDependency(startVisible, 'position')
-            self.addDependency(startVisible, 'size')
-            self.addDependency(startVisible, 'shape')
-            if startVisible != self.pathStart:
-                midPoints.reverse()
-            startVisible.connectedPaths.append(self)
-        if endVisible is not None:
-            self.addDependency(endVisible, 'position')
-            self.addDependency(endVisible, 'size')
-            self.addDependency(endVisible, 'shape')
-            endVisible.connectedPaths.append(self)
+    def setPathEndPoints(self, startVisible, endVisible):
+        """
+        Set the start and end points of this path.
         
-        self.pathMidPoints = midPoints
+        The startVisible and endVisible arguments should be other visibles in the same display as this visible.
+        """
         
-        self._updatePath()
+        if not isinstance(startVisible, (Visible, type(None))) or not isinstance(endVisible, (Visible, type(None))):
+            raise TypeError, 'The arguments passed to setPathEndPoints() must be Visible instances or None.'
+        if startVisible.display != self.display or startVisible == self or endVisible.display != self.display or endVisible == self:
+            raise ValueError, 'The arguments passed to setPathEndPoints() must be other visibles in the same display as this visible.'
         
-        dispatcher.send(('set', 'path'), self)
+        if startVisible != self._pathStart or endVisible != self._pathEnd:
+            if startVisible != self._pathStart:
+                if self._pathStart:
+                    self._pathStart.dependentVisibles.remove(self)
+                self._pathStart = startVisible
+                if self._pathStart:
+                    self._addDependency(startVisible, 'position')
+                    self._addDependency(startVisible, 'size')
+                    self._addDependency(startVisible, 'shape')
+                    startVisible.connectedPaths.append(self)
+                    self._pathStart.dependentVisibles += [self]
+            
+            if endVisible != self._pathEnd:
+                if self._pathEnd:
+                    self._pathEnd.dependentVisibles.remove(self)
+                self._pathEnd = endVisible
+                if self._pathEnd:
+                    self._addDependency(endVisible, 'position')
+                    self._addDependency(endVisible, 'size')
+                    self._addDependency(endVisible, 'shape')
+                    endVisible.connectedPaths.append(self)
+                    self._pathEnd.dependentVisibles += [self]
+            
+            self._updatePath()
+            
+            dispatcher.send(('set', 'path'), self)
+    
+    
+    def pathEndPoints(self):
+        """
+        Return the start and end points of this path.
+        """
+        
+        return (self._pathStart, self._pathEnd)
+    
+    
+    def _pathCounterpart(self, visible):
+        if self._pathStart == visible:
+            return self._pathEnd
+        elif self._pathEnd == visible:
+            return self._pathStart
+        else:
+            raise ValueError, 'The visible passed to _pathCounterpart is not connected to the path.'
+    
+    
+    def setPathMidPoints(self, midPoints):
+        """
+        Set any additional mid-points that should be used to render the path.
+        
+        The mid-points should be a list of world-space coordinates, e.g. [(0.1, 0.3), (0.1, 0.5), (0.2, 0.5)] or None.
+        """
+        
+        if midPoints == None:
+            midPoints = []
+        
+        if not isinstance(midPoints, (list, tuple)):
+            raise TypeError, 'The argument passed to setPathMidPoints() must be a list, a tuple or None.'
+        for midPoint in midPoints:
+            # TODO: figure out a way to skip this part if we're called from Display.setVisiblePath() since it already validated the mid-points.
+            if not isinstance(midPoint, (list, tuple)) or len(midPoint) not in (2, 3):
+                raise ValueError, 'The mid-points passed to setPathMidPoints() must be a list or tuple of two or three numbers.'
+            for midPointDim in midPoint:
+                if not isinstance(midPointDim, (int, float)):
+                    raise ValueError, 'Each list or tuple mid-point passed to setPathMidPoints() must contain only numbers.'
+        
+        if midPoints != self._pathMidPoints:
+            self._pathMidPoints = midPoints
+            self._updatePath()
+            dispatcher.send(('set', 'pathMidPoints'), self)
+    
+    
+    def pathMidPoints(self):
+        """
+        Return any additional mid-points that should be used to render the path.
+        """
+        
+        return self._pathMidPoints
     
     
     def isPath(self):
-        return self.pathStart is not None
+        """
+        Return whether this visible is a path.
+        """
+        
+        return self._pathStart is not None
     
     
     def setGlowColor(self, color):
@@ -1665,9 +2124,8 @@ class Visible(object):
     
     def __del__(self):
         self.children = []
-        if self.pathStart:
-            self.pathStart.dependentVisibles.remove(self)
-        if self.pathEnd:
-            self.pathEnd.dependentVisibles.remove(self)
-    
+        if self._pathStart:
+            self._pathStart.dependentVisibles.remove(self)
+        if self._pathEnd:
+            self._pathEnd.dependentVisibles.remove(self)
     

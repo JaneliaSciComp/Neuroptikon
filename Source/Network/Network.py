@@ -23,13 +23,17 @@ except:
 class Network:
     
     def __init__(self):
+        """
+        Networks are containers for all :class:`objects <Network.Object.Object>` that exist in a neural circuit. 
+        """
+        
         self.graph = XDiGraph(multiedges = True, )
         self.objects = []
         self.idDict = {}   # TODO: weak ref dict?
         self.displays = []
         self._nextUniqueId = -1
         self._savePath = None
-        self.attributes = []
+        self._attributes = []
         self._displaysAreSynchronized = True
         
         self._loadingFromXML = False
@@ -37,7 +41,7 @@ class Network:
     
     
     @classmethod
-    def fromXMLElement(cls, xmlElement):
+    def _fromXMLElement(cls, xmlElement):
         network = cls()
         
         network._loadingFromXML = True
@@ -47,38 +51,38 @@ class Network:
             elementModule = getattr(sys.modules['Network'], className)
             elementClass = getattr(elementModule, className)
             for element in xmlElement.findall(className):
-                object = elementClass.fromXMLElement(network, element)
+                object = elementClass._fromXMLElement(network, element)
                 if object is not None:
                     network.addObject(object)
         
         for element in xmlElement.findall('Attribute'):
-            attribute = Attribute.fromXMLElement(network, element)
+            attribute = Attribute._fromXMLElement(network, element)
             if attribute is not None:
-                network.attributes.append(attribute)
+                network._attributes.append(attribute)
         
         network._loadingFromXML = False
         
         return network
     
     
-    def toXMLElement(self, parentElement):
+    def _toXMLElement(self, parentElement):
         networkElement = ElementTree.SubElement(parentElement, 'Network')
         for object in self.objects:
             # Nested regions are handled by their parents and neurites are handled by their neurons.
             if not (isinstance(object, Region) and object.parentRegion is not None) and not isinstance(object, Neurite):
-                objectElement = object.toXMLElement(networkElement)
+                objectElement = object._toXMLElement(networkElement)
                 if objectElement is None:
                     pass    # TODO: are there any cases where this is NOT an error?
-        for attribute in self.attributes:
-            attribute.toXMLElement(networkElement)
+        for attribute in self._attributes:
+            attribute._toXMLElement(networkElement)
         return networkElement
     
     
-    def toScriptFile(self, scriptFile, scriptRefs):
-        if len(self.attributes) > 0:
+    def _toScriptFile(self, scriptFile, scriptRefs):
+        if len(self._attributes) > 0:
             scriptFile.write(gettext('# Create the network') + '\n\n')
-            for attribute in self.attributes:
-                attribute.toScriptFile(scriptFile, scriptRefs)
+            for attribute in self._attributes:
+                attribute._toScriptFile(scriptFile, scriptRefs)
         
         # Add each network object to the script in an order that guarantees dependent objects will already have been added.
         # Neurites will be added by their neurons, sub-regions by their root region.
@@ -87,8 +91,8 @@ class Network:
             if len(objects) > 0:
                 scriptFile.write('\n# ' + gettext('Create each %s') % (objectClass.displayName().lower()) + '\n\n')
                 for object in objects:
-                    if object.includeInScript(atTopLevel = True):
-                        object.toScriptFile(scriptFile, scriptRefs)
+                    if object._includeInScript(atTopLevel = True):
+                        object._toScriptFile(scriptFile, scriptRefs)
    
    
     def setSavePath(self, path):
@@ -107,12 +111,22 @@ class Network:
         else:
             return os.path.splitext(os.path.basename(self._savePath))[0]
     
-    def nextUniqueId(self):
+    def _generateUniqueId(self):
         self._nextUniqueId += 1
         return self._nextUniqueId
     
     
     def findObject(self, objectClass, name = None, default = False):
+        """
+        Return the first object of the given class with the given name.
+        
+        >>> neuron = network.findObject(Neuron, 'AVAL')
+        
+        Returns an :class:`Object <Network.Object.Object>` or None if there are no matching objects.
+        
+        If default is True then each object's :meth:`defaultName() <Network.Object.Object.defaultName>` will be queried instead of its name.
+        """
+        
         if name is not None:
             for object in self.objects:
                 if isinstance(object, objectClass) and ((not default and object.name == name) or (default and object.defaultName() == name)):
@@ -121,6 +135,21 @@ class Network:
     
     
     def createRegion(self, addSubTerms = False, *args, **keywordArgs):
+        """
+        Create a new region optionally associated with an ontology term.
+        
+        >>> region = network.createRegion(name = 'Glomerulus 2')
+        
+        To associate the region with an ontology term pass in a term from an ontology in the library:
+        
+        >>> flyBrainOnt = library.ontology('flybrain')
+        >>> ellipsoidBody = network.createRegion(ontologyTerm = flyBrainOnt.findTerm(name = 'Ellipsoid body'))
+        
+        If addSubTerms is true then sub-regions will be created for all sub-terms in the ontology.
+         
+        Returns the :class:`region <Network.Region.Region>` that is created.
+        """
+        
         region = Region(self, *args, **keywordArgs)
         self.addObject(region)
         
@@ -132,52 +161,156 @@ class Network:
     
     
     def findRegion(self, name = None):
+        """
+        Find the first region with the given name.
+        
+        >>> region = network.findRegion('Ellipsoid body')
+         
+        Returns a :class:`region <Network.Region.Region>` or None if there are no regions with the name.
+        """
+        
         return self.findObject(Region, name)
     
     
     def regions(self):
+        """
+        Return a list of all :class:`regions <Network.Region.Region>` in the network.
+        
+        >>> for region in network.regions():
+        ...     display.setVisibleColor(region, (1.0, 0.0, 0.0))
+        
+        An empty list will be returned if there are no regions in the network.
+        """
+         
         return self.objectsOfClass(Region)
     
     
     def pathways(self):
+        """
+        Return a list of all :class:`pathways <Network.Pathway.Pathway>` in the network.
+        
+        >>> for pathway in network.pathways():
+        ...     display.setVisibleColor(pathway, (1.0, 0.0, 0.0))
+        
+        An empty list will be returned if there are no pathways in the network.
+        """
+         
         return self.objectsOfClass(Pathway)
     
     
     def createNeuron(self, *args, **keywordArgs):
+        """
+        Create a new neuron.
+        
+        >>> neuron = network.createNeuron(name = 'AVAL')
+         
+        Returns the :class:`neuron <Network.Neuron.Neuron>` that is created.
+        """
+        
         neuron = Neuron(self, *args, **keywordArgs)
         self.addObject(neuron)
         return neuron
     
     
     def findNeuron(self, name = None):
+        """
+        Find the first neuron with the given name.
+        
+        >>> neuron = network.findNeuron('AVAL')
+         
+        Returns a :class:`neuron <Network.Neuron.Neuron>` or None if there are no neurons with the name.
+        """
+        
         return self.findObject(Neuron, name)
     
     
     def neurons(self):
+        """
+        Return a list of all :class:`neurons <Network.Neuron.Neuron>` in the network.
+        
+        >>> for neuron in network.neurons():
+        ...     neuron.setHasFunction(Neuron.Function.SENSORY, False)
+        
+        An empty list will be returned if there are no neurons in the network.
+        """
+         
         return self.objectsOfClass(Neuron)
     
     
     def neurites(self):
+        """
+        Return a list of all :class:`neurites <Network.Neurite.Neurite>` in the network.
+        
+        >>> for neurite in network.neurites():
+        ...     neurite.setPathway(None)
+        
+        An empty list will be returned if there are no neurites in the network.
+        """
+         
         return self.objectsOfClass(Neurite)
     
     
     def arborizations(self):
+        """
+        Return a list of all :class:`arborizations <Network.Arborization.Arborization>` in the network.
+        
+        >>> for arborization in network.arborizations():
+        ...     display.setVisibleShape(arborization, shapes['Cone']())
+        
+        An empty list will be returned if there are no arborizations in the network.
+        """
+         
         return self.objectsOfClass(Arborization)
     
     
     def gapJunctions(self):
+        """
+        Return a list of all :class:`gap junctions <Network.GapJunction.GapJunction>` in the network.
+        
+        >>> for gapJunction in network.gapJunctions():
+        ...     display.setVisibleColor(gapJunction, (0, 0, 0))
+        
+        An empty list will be returned if there are no gap junctions in the network.
+        """
+         
         return self.objectsOfClass(GapJunction)
     
     
     def innervations(self):
+        """
+        Return a list of all :class:`innervations <Network.Innervation.Innervation>` in the network.
+        
+        >>> for innervation in network.innervations():
+        ...     display.setVisibleWeight(innervation, 2.0)
+        
+        An empty list will be returned if there are no innervations in the network.
+        """
+         
         return self.objectsOfClass(Innervation)
     
     
     def synapses(self):
+        """
+        Return a list of all :class:`chemical synapses <Network.Synapse.Synapse>` in the network.
+        
+        >>> for synapse in network.synapses():
+        ...     synapse.activation = None
+        
+        An empty list will be returned if there are no chemical synapses in the network.
+        """
+         
         return self.objectsOfClass(Synapse)
     
     
     def createStimulus(self, *args, **keywordArgs):
+        """
+        Create a new stimulus.  DEPRECATED: Call :meth:`stimulate() <Network.Object.Object.stimulate>` on the desired target object instead.
+        
+        >>> stimulus = network.createStimulus(target = neuron1, modality = library.modality('light'))
+         
+        Returns the :class:`stimulus <Network.Stimulus.Stimulus>` that is created.
+        """
+        
         target = keywordArgs['target']
         del keywordArgs['target']
         
@@ -185,40 +318,91 @@ class Network:
     
     
     def findStimulus(self, name = None):
+        """
+        Find the first stimulus with the given name.
+        
+        >>> stimulus = network.findStimulus('Light')
+         
+        Returns a :class:`stimulus <Network.Stimulus.Stimulus>` or None if there are no stimuli with the name.
+        """
+        
         return self.findObject(Stimulus, name)
     
     
     def stimuli(self):
+        """
+        Return a list of all :class:`stimuli <Network.Stimulus.Stimulus>` in the network.
+        
+        >>> for stimulus in network.stimuli():
+        ...     if stimulus.modality == library.modality('light'):
+        ...         display.setVisibleColor(stimulus, (1, 1, 1))
+        
+        An empty list will be returned if there are no stimuli in the network.
+        """
+         
         return self.objectsOfClass(Stimulus)
     
     
     def createMuscle(self, *args, **keywordArgs):
+        """
+        Create a new muscle.
+        
+        >>> muscle = network.createMuscle(name = 'M1')
+         
+        Returns the :class:`muscle <Network.Muscle.Muscle>` that is created.
+        """
+        
         muscle = Muscle(self, *args, **keywordArgs)
         self.addObject(muscle)
         return muscle
     
     
     def findMuscle(self, name = None):
+        """
+        Find the first muscle with the given name.
+        
+        >>> muscle = network.findMuscle('M1')
+         
+        Returns a :class:`muscle <Network.Muscle.Muscle>` or None if there are no muscles with the name.
+        """
+        
         return self.findObject(Muscle, name)
     
     
     def muscles(self):
+        """
+        Return a list of all :class:`muscles <Network.Muscle.Muscle>` in the network.
+        
+        >>> for muscle in network.muscles():
+        ...     display.setVisibleOpacity(muscle, 0.5)
+        
+        An empty list will be returned if there are no muscles in the network.
+        """
+         
         return self.objectsOfClass(Muscle)
     
     
-    def objectChanged(self, sender, signal):
+    def _objectChanged(self, sender, signal):
         if not self._loadingFromXML and not self._modified:
             self._modified = True
             dispatcher.send(('set', 'modified'), self)
     
     
     def setModified(self, modified):
+        """
+        Set whether or not this network is dirty and needs to be saved.
+        """
+        
         if self._modified != modified:
             self._modified = modified
             dispatcher.send(('set', 'modified'), self)
     
     
     def isModified(self):
+        """
+        Return whether the network has been modified and needs to be saved.
+        """
+        
         return self._modified
 
     
@@ -232,6 +416,7 @@ class Network:
         if object.networkId > self._nextUniqueId:
             self._nextUniqueId = object.networkId
         
+        # Update the NetworkX graph representation of the network.
         if isinstance(object, Arborization):
             if object.sendsOutput == None or object.sendsOutput:
                 self.graph.add_edge(object.neurite.neuron().networkId, object.region.networkId, object)
@@ -241,9 +426,9 @@ class Network:
             for postSynapticNeurite in object.postSynapticNeurites:
                 self.graph.add_edge(object.preSynapticNeurite.neuron().networkId, postSynapticNeurite.neuron().networkId, object)
         elif isinstance(object, GapJunction):
-            neurites = list(object.neurites)
-            self.graph.add_edge(neurites[0].neuron().networkId, neurites[1].neuron().networkId, object)
-            self.graph.add_edge(neurites[1].neuron().networkId, neurites[0].neuron().networkId, object)
+            neurite1, neurite2 = object.neurites()
+            self.graph.add_edge(neurite1.neuron().networkId, neurite2.neuron().networkId, object)
+            self.graph.add_edge(neurite2.neuron().networkId, neurite1.neuron().networkId, object)
         elif isinstance(object, Pathway):
             if object.region1Projects == None or object.region1Projects:
                 self.graph.add_edge(object.region1.networkId, object.region2.networkId, object)
@@ -254,11 +439,15 @@ class Network:
         elif isinstance(object, Stimulus):
             self.graph.add_node(object.networkId)
             self.graph.add_edge(object.networkId, object.target.networkId, object)
+        elif isinstance(object, Neurite):
+            pass    # TODO: are neurites nodes or edges or either?
         elif isinstance(object, Region) or isinstance(object, Neuron) or isinstance(object, Muscle):
             self.graph.add_node(object.networkId)
         
-        dispatcher.connect(self.objectChanged, dispatcher.Any, object)
+        # Watch for any changes to the object so we can update our dirty state.
+        dispatcher.connect(self._objectChanged, dispatcher.Any, object)
         
+        # Let anyone who cares know that the network was changed.
         dispatcher.send('addition', self, affectedObjects = [object])
     
     
@@ -279,93 +468,79 @@ class Network:
     
     def addDisplay(self, display):
         self.displays.append(display)
-        dispatcher.connect(self.synchronizeDisplays, ('set', 'selection'), display)
+        dispatcher.connect(self._synchronizeDisplays, ('set', 'selection'), display)
     
     
     def removeDisplay(self, display):
         self.displays.remove(display)
-        dispatcher.disconnect(self.synchronizeDisplays, ('set', 'selection'), display)
+        dispatcher.disconnect(self._synchronizeDisplays, ('set', 'selection'), display)
     
     
-    def synchronizeDisplays(self, signal, sender):
+    def setSynchronizeDisplays(self, synchronize):
+        if synchronize != self._displaysAreSynchronized:
+            self._displaysAreSynchronized = synchronize
+            
+            if synchronize and any(self.displays):
+                self._synchronizeDisplays(None, self.displays[0])
+    
+    
+    def _synchronizeDisplays(self, signal, sender):
         if self._displaysAreSynchronized:
             selection = sender.selectedObjects()
             for display in self.displays:
                 if display != sender:
                     display.selectObjects(selection)
     
-
-    def to_pydot(self, graph_attr=None, node_attr=None, edge_attr=None):
-        # This is a custom version of networkx.drawing.nx_pydot.to_pydot() that works around a bug in pydot 1.0.2.
-        
-        if pydot is None:
-            return None
-        
-        if graph_attr is not None:
-            graph_attributes = graph_attr
-        else:
-            graph_attributes = {}
-
-        try:
-            node_a = self.graph.node_attr
-        except:
-            node_a = {}
-        if node_attr is not None:        
-            node_a.update(node_attr)
-
-        P = pydot.Dot(graph_type='graph', strict=False)
-
-        for n in self.graph.nodes_iter():
-            if n in node_a:
-                attr=node_a[n]
-            else:
-                attr={}
-            p=pydot.Node(str(n),**attr)
-            P.add_node(p)
-        
-        # This is the workaround for the pydot bug.  As long as every edge has some attribute then it works.
-        for (u, v, x) in self.graph.edges_iter():
-            attr = {'label': ''}
-            edge = pydot.Edge(str(u), str(v), **attr)
-            P.add_edge(edge)
-
-        try:
-            P.obj_dict['attributes'].update(graph_attributes['graph'])
-        except:
-            pass
-        try:
-            P.obj_dict['nodes']['node'][0]['attributes'].update(graph_attributes['node'])
-        except:
-            pass
-        try:
-            P.obj_dict['nodes']['edge'][0]['attributes'].update(graph_attributes['edge'])
-        except:
-            pass
-
-        return P
-    
     
     def addAttribute(self, name = None, type = None, value = None):
-        """addAttribute(name = None, type = None, value = None) -> Attribute instance
+        """
+        Add a user-defined attribute to this network.
         
-        The type parameter should be one of the Attribute.*_TYPE values.
+        >>> network.addAttribute('Preliminary', Attribute.BOOLEAN_TYPE, True)
         
-        >>> network.addAttribute('Complete', Attribute.BOOLEAN_VALUE, True)"""
+        The type parameter should be one of the :class:`Attribute.*_TYPE <Network.Attribute.Attribute>` values.
+        
+        Returns the attribute object that is created.
+        """
         
         if name is None or type is None or value is None:
             raise ValueError, gettext('The name, type and value parameters must be specified when adding an attribute.')
+        if not isinstance(name, str):
+            raise TypeError, 'The name parameter passed to addAttribute() must be a string.'
+        if type not in Attribute.TYPES:
+            raise TypeError, 'The type parameter passed to addAttribute() must be one of the Attribute.*_TYPE values.'
+        # TODO: validate value based on the type?
         
         attribute = Attribute(self, name, type, value)
-        self.attributes.append(attribute)
+        self._attributes.append(attribute)
         dispatcher.send(('set', 'attributes'), self)
         return attribute
     
     
     def getAttribute(self, name):
-        """getAttribute(name) -> Attribute instance
+        """
+        Return the first user-defined :class:`attribute <Network.Attribute.Attribute>` of this network with the given name or None if there is no matching attribute.
         
-        Return the first attribute of this object with the given name, or None if there is no matching attrbute."""
-        for attribute in self.attributes:
-            if attribute.name == name:
+        >>> creationDate = network.getAttribute('Creation Date').value()
+        """
+        
+        for attribute in self._attributes:
+            if attribute.name() == name:
                 return attribute
         return None
+    
+    
+    def getAttributes(self, name = None):
+        """
+        Return a list of all user-defined :class:`attributes <Network.Attribute.Attribute>` of this network or only those with the given name.
+        
+        >>> reviewers = [reviewer.value() for reviewer in network.getAttributes('Reviewed By')]
+        
+        If there are no attributes then an empty list will be returned.
+        """
+        
+        attributes = []
+        for attribute in self._attributes:
+            if name == None or attribute.name() == name:
+                attributes += [attribute]
+        return attributes

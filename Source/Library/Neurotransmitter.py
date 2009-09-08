@@ -17,7 +17,7 @@ class Neurotransmitter(LibraryItem):
     @classmethod
     def bitmap(cls):
         image = Synapse.image()
-        if image is None or not image.IsOk():
+        if image == None:
             return None
         else:
             return wx.BitmapFromImage(image)

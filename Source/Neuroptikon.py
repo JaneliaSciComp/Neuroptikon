@@ -1,10 +1,12 @@
 import os, platform, stat, sys
 
+# Turn off OSG warnings.
 if 'OSG_NOTIFY_LEVEL' not in os.environ:
     os.environ['OSG_NOTIFY_LEVEL'] = 'ALWAYS'
 
 runningFromSource = not hasattr(sys, "frozen")
 
+# Calculate the root directory and make sure sys.path and DYLD_LIBRARY_PATH/PATH are set up correctly.
 if not runningFromSource:
     rootDir = os.path.dirname(sys.executable)
     if platform.system() == 'Darwin':
@@ -44,7 +46,8 @@ else:
 
     sys.path.insert(0, commonLibPath)
     sys.path.insert(0, platformLibPath)
-    
+
+
 # TODO: figure out if it's worth building and packaging psyco
 #    try:
 #        import psyco
@@ -52,8 +55,9 @@ else:
 #    except ImportError:
 #        print 'Psyco not installed, the program will just run slower'
 
+
+# Make sure fonts are found on Mac OS X
 if platform.system() == 'Darwin':
-    # Make sure fonts are found on Mac OS X
     fontPaths = []
     try:
         from Carbon import File, Folder, Folders
@@ -70,9 +74,25 @@ if platform.system() == 'Darwin':
         fontPaths.extend([os.path.expanduser('~/Library/Fonts'), '/Library/Fonts', '/Network/Library/Fonts', '/System/Library/Fonts'])
     os.environ['OSG_FILE_PATH'] = ':'.join(fontPaths)
 
+
 # Set up for internationalization.
 import gettext as gettext_module, __builtin__
 __builtin__.gettext = gettext_module.translation('Neuroptikon', fallback = True).lgettext
+
+
+# Install a new version of inspect.getdoc() that converts any reST formatting to plain text.
+import inspect, re
+_orig_getdoc = inspect.getdoc
+def _getdoc(object):
+    docstring = _orig_getdoc(object)
+    if docstring:
+        # Convert any interpreted text to plain text.  <http://docutils.sourceforge.net/docs/ref/rst/restructuredtext.html#interpreted-text>
+        docstring = re.sub(r':[^:]+:`([^<]*) \<.*\>`', r'\1', docstring)
+        docstring = re.sub(r':[^:]+:`([^<]*)`', r'\1', docstring)
+
+    return docstring
+inspect.getdoc = _getdoc
+
 
 import wx
 import wx.py as py
@@ -90,16 +110,10 @@ from Library.Texture import Texture
 from Preferences import Preferences
 from Inspection.InspectorFrame import InspectorFrame
 import Display
-
-def debugException(type, value, tb):
-    import traceback; traceback.print_tb(tb)
-    print "Exception:", value
-    import pdb; pdb.pm()
+import Documentation
 
 
 if __name__ == "__main__":
-    #if __debug__:
-    #    sys.excepthook = debugException
     
     class Neuroptikon(wx.App):
         
@@ -244,6 +258,14 @@ if __name__ == "__main__":
             menuBar.Append(fileMenu, gettext('&File'))
             
             helpMenu = wx.Menu()
+            self._customizationDocSetId = wx.NewId()
+            self.Bind(wx.EVT_MENU, self.onShowDocumentation, helpMenu.Append(self._customizationDocSetId, gettext('Customizing Neuroptikon'), gettext('Show the documentation on customizing Neuroptikon')))
+            self._dataMgmtDocSetId = wx.NewId()
+            self.Bind(wx.EVT_MENU, self.onShowDocumentation, helpMenu.Append(self._dataMgmtDocSetId, gettext('Data Management'), gettext('Show the documentation on managing Neuroptikon data')))
+            self._scriptingDocSetId = wx.NewId()
+            self.Bind(wx.EVT_MENU, self.onShowDocumentation, helpMenu.Append(self._scriptingDocSetId, gettext('Scripting Interface'), gettext('Show the documentation on scripting Neuroptikon')))
+            self._uiDocSetId = wx.NewId()
+            self.Bind(wx.EVT_MENU, self.onShowDocumentation, helpMenu.Append(self._uiDocSetId, gettext('User Interface'), gettext('Show the documentation on interacting with Neuroptikon')))
             self.Bind(wx.EVT_MENU, self.onAboutNeuroptikon, helpMenu.Append(wx.ID_ABOUT, gettext('About Neuroptikon'), gettext('Information about this program')))
             menuBar.Append(helpMenu, gettext('&Help'))
             
@@ -264,8 +286,8 @@ if __name__ == "__main__":
                       'Neurotransmitter': Neurotransmitter, 
                       'Modality': Modality, 
                       'Ontology': Ontology, 
-                      'NeuralPolarity': Neuron.Polarity, 
-                      'NeuralFunction': Neuron.Function, 
+                      'NeuralPolarity': Neuron.Polarity,    # DEPRECATED: remove soon... 
+                      'NeuralFunction': Neuron.Function,    # DEPRECATED: remove soon...
                       'Attribute': Attribute, 
                       'layouts': layoutClasses, 
                       'shapes': shapeClasses}
@@ -320,12 +342,15 @@ if __name__ == "__main__":
             dlg = wx.FileDialog(None, gettext('Choose a saved network to open:'), '', '', '*.xml', wx.OPEN)
             if dlg.ShowModal() == wx.ID_OK:
                 path = dlg.GetPath()
+                
+                # TODO: raise an existing window if the network is already open
+                
                 try:
                     xmlTree = ElementTree.parse(path)
                     
                     # Instantiate the network
                     networkElement = xmlTree.find('Network')
-                    network = Network.fromXMLElement(networkElement)
+                    network = Network._fromXMLElement(networkElement)
                     if network is None:
                         raise ValueError, gettext('Could not load the network')
                     network.setSavePath(path)
@@ -334,7 +359,7 @@ if __name__ == "__main__":
                     
                     # Instantiate any displays
                     for frameElement in xmlTree.findall('DisplayWindow'):
-                        frame = NeuroptikonFrame.fromXMLElement(frameElement, network = network)
+                        frame = NeuroptikonFrame._fromXMLElement(frameElement, network = network)
                         if frame is None:
                             raise ValueError, gettext('Could not create one of the displays')
                         frame.Show(True)
@@ -386,6 +411,19 @@ if __name__ == "__main__":
         def onOpenWxinspector(self, event):
             self.ShowInspectionTool()
         
+        
+        def onShowDocumentation(self, event):
+            if event.GetId() == self._customizationDocSetId:
+                page = 'Customizing/index.html'
+            elif event.GetId() == self._dataMgmtDocSetId:
+                page = 'DataManagement.html'
+            elif event.GetId() == self._scriptingDocSetId:
+                page = 'Scripting/index.html'
+            elif event.GetId() == self._uiDocSetId:
+                page = 'UserInterface.html'
+            
+            Documentation.showPage(page)
+                
         
         def onAboutNeuroptikon(self, event):
             import __version__

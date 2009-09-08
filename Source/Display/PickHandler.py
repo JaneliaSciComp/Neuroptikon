@@ -33,7 +33,7 @@ class PickHandler(osgGA.GUIEventHandler):
                     self.pointerInfo.setMousePosition(eventAdaptor.getX(), eventAdaptor.getY())
                     eventWasHandled = self.dragger.handle(self.pointerInfo, eventAdaptor, actionAdaptor)
                     if eventWasHandled:
-                        self._display.visibleWasDragged()
+                        self._display._visibleWasDragged()
                         
             elif eventtype == eventAdaptor.RELEASE:
                 if self.dragger != None:
@@ -130,13 +130,13 @@ class PickHandler(osgGA.GUIEventHandler):
                         if (visible in self._display.highlightedVisibles or visible in self._display.animatedVisibles) and (deepestVisible is None or deepestVisible in visible.ancestors()):
                             deepestVisible = visible
                     if deepestVisible is not None:
-                        self._display.selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)
+                        self._display._selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)
                         return True
                 deepestVisible = None
                 for distance, visible in visibleHits:
                     if deepestVisible is None or deepestVisible in visible.ancestors():
                         deepestVisible = visible
-                self._display.selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)
+                self._display._selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)
             else:
-                self._display.deselectAll()
+                self._display._selectVisibles([])
         return True       

@@ -1,5 +1,3 @@
-'''Layouts package'''
-
 import os, sys
 import Display
 from Display.Layout import Layout

@@ -6,10 +6,18 @@ import xml.etree.ElementTree as ElementTree
 
 
 class Region(Object):
+    
     #TODO: sub region layout (layers, columns, etc)
-    #TODO: atlasIsosurface
     
     def __init__(self, network, parentRegion = None, ontologyTerm = None, *args, **keywords):
+        """
+        Regions represent a physical subset of a nervous system.  They can also be hierarchical with regions nested within other regions.  Regions can also be associated with an entry in one of the :class:`ontologies <Library.Ontology.Ontology>` in the library.
+        
+        You create a region by messaging a network:
+        
+        >>> region1 = network.createRegion(...)
+        """
+        
         if ontologyTerm is not None:
             if 'name' not in keywords:
                 keywords['name'] = ontologyTerm.name
@@ -25,16 +33,16 @@ class Region(Object):
         self.pathways = []
         self.neurons = []
         if parentRegion is not None:
-            parentRegion.addSubRegion(self)
+            parentRegion._addSubRegion(self)
     
     
     @classmethod
-    def fromXMLElement(cls, network, xmlElement):
-        object = super(Region, cls).fromXMLElement(network, xmlElement)
+    def _fromXMLElement(cls, network, xmlElement):
+        object = super(Region, cls)._fromXMLElement(network, xmlElement)
         object.parentRegion = None
         object.subRegions = []
         for regionElement in xmlElement.findall('Region'):
-            region = Region.fromXMLElement(network, regionElement)
+            region = Region._fromXMLElement(network, regionElement)
             if region is None:
                 raise ValueError, gettext('Could not create region')
             region.parentRegion = object
@@ -61,26 +69,26 @@ class Region(Object):
         return object
     
     
-    def toXMLElement(self, parentElement):
-        regionElement = Object.toXMLElement(self, parentElement)
+    def _toXMLElement(self, parentElement):
+        regionElement = Object._toXMLElement(self, parentElement)
         if self.ontologyTerm is not None:
             ElementTree.SubElement(regionElement, 'OntologyTerm', ontologyId = str(self.ontologyTerm.ontology.identifier), ontologyTermId = str(self.ontologyTerm.identifier))
         for subRegion in self.subRegions:
-            subRegion.toXMLElement(regionElement)
+            subRegion._toXMLElement(regionElement)
         return regionElement
     
     
-    def includeInScript(self, atTopLevel = False):
+    def _includeInScript(self, atTopLevel = False):
         # The root region will also add its sub-regions to the script
         return not atTopLevel or self.parentRegion is None
     
     
-    def needsScriptRef(self):
+    def _needsScriptRef(self):
         return True
     
     
-    def creationScriptParams(self, scriptRefs):
-        args, keywords = Object.creationScriptParams(self, scriptRefs)
+    def _creationScriptParams(self, scriptRefs):
+        args, keywords = Object._creationScriptParams(self, scriptRefs)
         if self.parentRegion is not None:
             keywords['parentRegion'] = '' + scriptRefs[self.parentRegion.networkId]
         if self.ontologyTerm is not None:
@@ -90,13 +98,13 @@ class Region(Object):
         return (args, keywords)
     
     
-    def creationScriptChildren(self):
-        children = Object.creationScriptChildren(self)
+    def _creationScriptChildren(self):
+        children = Object._creationScriptChildren(self)
         children.extend(self.subRegions)
         return children
     
     
-    def addSubRegion(self, subRegion):
+    def _addSubRegion(self, subRegion):
         self.subRegions.append(subRegion)
         subRegion.parentRegion = self
         dispatcher.send(('set', 'subRegions'), self)
@@ -110,6 +118,21 @@ class Region(Object):
     
     
     def projectToRegion(self, otherRegion, knownProjection = True, bidirectional = None, name = None):
+        """ Add a pathway connecting this region to the other region. 
+        
+        The knownProjection parameter indicates whether this region sends information to the other region.  It should be True, False or None (unknown). 
+        
+        The bidirectional parameter indicates whether the other region sends information back to this region.  It should be True, False or None (unknown). 
+        
+        Returns the pathway object that is created. """
+        
+        if not isinstance(otherRegion, Region) or otherRegion.network != self.network:
+            raise TypeError, 'The otherRegion argument passed to projectToRegion() must be a region from the same network.'
+        if knownProjection not in (True, False, None):
+            raise ValueError, 'The knownProjection argument passed to projectToRegion() must be True, False or None'
+        if bidirectional not in (True, False, None):
+            raise ValueError, 'The bidirectional argument passed to projectToRegion() must be True, False or None'
+        
         pathway = Pathway(region1 = self, region2 = otherRegion, region1Projects = True if knownProjection else None, region2Projects = bidirectional, name = name)
         self.pathways.append(pathway)
         otherRegion.pathways.append(pathway)
@@ -117,24 +140,38 @@ class Region(Object):
         return pathway
     
     
-    def inputs(self):
-        inputs = Object.inputs(self)
+    def connections(self, recurse = True):
+        connections = Object.connections(self, recurse) + self.pathways + self.arborizations
+        if recurse:
+            for subRegion in self.subRegions:
+                connections += subRegion.connections() 
+        return connections
+    
+    
+    def inputs(self, recurse = True):
+        inputs = Object.inputs(self, recurse)
         for pathway in self.pathways:
-            inputs.append(pathway)
+            if pathway.region1 == self and pathway.region2Projects or pathway.region2 == self and pathway.region1Projects:
+                inputs.append(pathway)
         for arborization in self.arborizations:
             if arborization.sendsOutput:
                 inputs.append(arborization)
-        # TODO: sub-regions
+        if recurse:
+            for subRegion in self.subRegions:
+                inputs += subRegion.inputs() 
         return inputs
     
     
-    def outputs(self):
-        outputs = Object.outputs(self)
+    def outputs(self, recurse = True):
+        outputs = Object.outputs(self, recurse)
         for pathway in self.pathways:
-            outputs.append(pathway)
+            if pathway.region1 == self and pathway.region1Projects or pathway.region2 == self and pathway.region2Projects:
+                outputs.append(pathway)
         for arborization in self.arborizations:
             if arborization.receivesInput:
                 outputs.append(arborization)
-        # TODO: sub-regions
+        if recurse:
+            for subRegion in self.subRegions:
+                outputs += subRegion.outputs() 
         return outputs
     

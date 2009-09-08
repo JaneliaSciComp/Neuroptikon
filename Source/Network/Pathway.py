@@ -15,7 +15,7 @@ class PathwayTerminus(object):
     
     
     @classmethod
-    def fromXMLElement(cls, network, xmlElement):
+    def _fromXMLElement(cls, network, xmlElement):
         regionId = xmlElement.get('regionId')
         region = network.objectWithId(regionId)
         if region is None:
@@ -40,9 +40,17 @@ class PathwayTerminus(object):
 class Pathway(Object):
     
     def __init__(self, region1, region2, region1Projects = None, region2Projects = None, *args, **keywords):
+        """
+        Pathways connect pairs of :class:`regions <Network.Region.Region>`.  They consist of bundles of :class:`neurites <Network.Neurite.Neurite>` which can be optionally specified.
+        
+        You create a pathway by :meth:`messaging <Network.Region.Region.projectToRegion>` one of the regions:
+        
+        >>> pathway_1_2 = region1.projectToRegion(region2)
+        """
+        
         Object.__init__(self, region1.network, *args, **keywords)
         
-        self.neurites = []
+        self._neurites = []
         
         self.region1 = region1
         self.region1Projects = region1Projects
@@ -57,9 +65,9 @@ class Pathway(Object):
     
     
     @classmethod
-    def fromXMLElement(cls, network, xmlElement):
-        object = super(Pathway, cls).fromXMLElement(network, xmlElement)
-        object.neurites = []
+    def _fromXMLElement(cls, network, xmlElement):
+        object = super(Pathway, cls)._fromXMLElement(network, xmlElement)
+        object._neurites = []
         terminusElements = xmlElement.findall('PathwayTerminus')
         if len(terminusElements) == 0:
             # Format since 0.9.4
@@ -87,12 +95,12 @@ class Pathway(Object):
                 object.region2Projects = None
         else:
             # Format prior to version 0.9.4
-            terminus1 = PathwayTerminus.fromXMLElement(network, terminusElements[0])
+            terminus1 = PathwayTerminus._fromXMLElement(network, terminusElements[0])
             if terminus1 is None:
                 raise ValueError, gettext('Could not create connection to first region of pathway')
             object.region1 = terminus1.region
             object.region1Projects = terminus1.sendsOutput
-            terminus2 = PathwayTerminus.fromXMLElement(network, terminusElements[1])
+            terminus2 = PathwayTerminus._fromXMLElement(network, terminusElements[1])
             if terminus2 is None:
                 raise ValueError, gettext('Could not create connection to second region of pathway')
             object.region2 = terminus2.region
@@ -100,8 +108,8 @@ class Pathway(Object):
         return object
      
     
-    def toXMLElement(self, parentElement):
-        pathwayElement = Object.toXMLElement(self, parentElement)
+    def _toXMLElement(self, parentElement):
+        pathwayElement = Object._toXMLElement(self, parentElement)
         pathwayElement.set('region1Id', str(self.region1.networkId))
         if self.region1Projects != None:
             pathwayElement.set('region1Projects', str(self.region1Projects).lower())
@@ -111,16 +119,16 @@ class Pathway(Object):
         return pathwayElement
     
     
-    def needsScriptRef(self):
-        return len(self.neurites) > 0 or Object.needsScriptRef(self)
+    def _needsScriptRef(self):
+        return any(self._neurites) or Object._needsScriptRef(self)
         
         
-    def creationScriptCommand(self, scriptRefs):
+    def _creationScriptCommand(self, scriptRefs):
         return scriptRefs[self.region1.networkId] + '.projectToRegion'
     
     
-    def creationScriptParams(self, scriptRefs):
-        args, keywords = Object.creationScriptParams(self, scriptRefs)
+    def _creationScriptParams(self, scriptRefs):
+        args, keywords = Object._creationScriptParams(self, scriptRefs)
         args.insert(0, scriptRefs[self.region2.networkId])
         if self.region1Projects != True:
             keywords['knownProjection'] = str(self.region1Projects)
@@ -130,23 +138,61 @@ class Pathway(Object):
    
     
     def addNeurite(self, neurite):
-        neurite.setPathway(self)
+        """
+        Add the given :class:`neurite <Network.Neurite.Neurite>` to this pathway.
+        """
+        
+        if neurite not in self._neurites:
+            self._neurites += [neurite]
+            neurite.setPathway(self)
+            dispatcher.send(('set', 'neurites'), self)
+     
+    
+    def removeNeurite(self, neurite):
+        """
+        Remove the given :class:`neurite <Network.Neurite.Neurite>` from this pathway.
+        """
+        
+        if neurite in self._neurites:
+            self._neurites.remove(neurite)
+            neurite.setPathway(None)
+            dispatcher.send(('set', 'neurites'), self)
     
     
-    def inputs(self):
-        inputs = Object.inputs(self)
-        if region1Projects == None or region1Projects:
-            inputs.append(region1)
-        if region2Projects == None or region2Projects:
-            inputs.append(region2)
+    def neurites(self):
+        """
+        Return a list of the :class:`neurites <Network.Neurite.Neurite>` in this pathway.
+        """
+        
+        return list(self._neurites)
+    
+    
+    
+    def regions(self):
+        """
+        Return a tuple containing the :class:`regions <Network.Region.Region>` connected by this pathway.
+        """
+        return (self.region1, self.region2)
+    
+    
+    def connections(self, recurse = True):
+        return Object.connections(self, recurse) + [self.region1, self.region2]
+    
+    
+    def inputs(self, recurse = True):
+        inputs = Object.inputs(self, recurse)
+        if self.region1Projects:
+            inputs += [self.region1]
+        if self.region2Projects:
+            inputs += [self.region2]
         return inputs
     
     
-    def outputs(self):
-        outputs = Object.outputs(self)
-        if region1Projects == None or region1Projects:
-            inputs.append(region2)
-        if region2Projects == None or region2Projects:
-            inputs.append(region1)
+    def outputs(self, recurse = True):
+        outputs = Object.outputs(self, recurse)
+        if self.region1Projects:
+            outputs += [self.region2]
+        if self.region2Projects:
+            outputs += [self.region1]
         return outputs
     
