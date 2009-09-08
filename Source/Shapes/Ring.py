@@ -80,7 +80,14 @@ class Ring(UnitShape):
     
     
     def persistentAttributes(self):
-        return {'holeSize': self.holeSize, 'startAngle': self.startAngle, 'endAngle': self.endAngle}
+        attributes = {}
+        if self.holeSize != 1.0 / 3.0:
+            attributes['holeSize'] = self.holeSize
+        if self.startAngle != 0.0:
+            attributes['startAngle'] = self.startAngle
+        if self.endAngle != 2 * pi:
+            attributes['endAngle'] = self.endAngle
+        return attributes
     
 
     def intersectionPoint(self, rayOrigin, rayDirection):
