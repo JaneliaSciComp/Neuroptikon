@@ -73,7 +73,7 @@ class Capsule(UnitShape):
     
     
     def persistentAttributes(self):
-        return {'capiness': self.capiness}
+        return {'capiness': self.capiness, 'interiorIncludesCaps': self.interiorIncludesCaps}
     
     
     def interiorBounds(self):
