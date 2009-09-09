@@ -38,6 +38,10 @@ excludes = ['Inspectors', 'Layouts', 'matplotlib', 'scipy', 'Shapes']
 
 sys.path += ['lib/CrossPlatform', 'lib/' + platform.system()]
 
+if sys.platform == 'darwin':
+    import wxversion
+    wxversion.select('2.8')
+
 # Purge and then rebuild the documentation with Sphinx
 purge_dir('Documentation/build')
 try:
@@ -58,9 +62,6 @@ if sys.platform == 'darwin':
     # 5. Install wxPython from http://downloads.sourceforge.net/wxpython/wxPython2.8-osx-unicode-2.8.9.2-universal-py2.5.dmg
     # 6. export PYTHONPATH=/usr/local/lib/wxPython-unicode/lib/python2.5/site-packages:/Library/Python/2.5
     # 7. python setup.py --quiet py2app
-    
-    import wxversion
-    wxversion.select('2.8')
     
     setup_options['setup_requires'] = ['py2app']
     setup_options['app'] = app_scripts
