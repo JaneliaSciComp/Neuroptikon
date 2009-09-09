@@ -157,6 +157,7 @@ class Visible(object):
         self._textGeode = osg.Geode()
         self._textGeode.setName(str(self.displayId))
         self._textGeode.getOrCreateStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+        self._textGeode.getOrCreateStateSet().setRenderBinDetails(51, 'RenderBin')
         self._textGeode.setDataVariance(osg.Object.DYNAMIC)
         self._textDrawable = None
         self.sgNode.addChild(self._textGeode)
@@ -992,23 +993,32 @@ class Visible(object):
         
         if self._shape is not None:
             self._material.setAlpha(osg.Material.FRONT_AND_BACK, opacity)
+            stateSet1 = self._shapeGeode.getOrCreateStateSet()
             if opacity == 1.0:
                 if self._shapeGeode2:
                     self.sgNode.removeChild(self._shapeGeode2)
                     self._shapeGeode2 = None
-                self._shapeGeode.getOrCreateStateSet().setRenderingHint(osg.StateSet.OPAQUE_BIN)
-                self._shapeGeode.getOrCreateStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
-                self._shapeGeode.getOrCreateStateSet().removeAttribute(osg.StateAttribute.CULLFACE)
+                stateSet1.setRenderingHint(osg.StateSet.OPAQUE_BIN)
+                stateSet1.setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
+                stateSet1.removeAttribute(osg.StateAttribute.CULLFACE)
             else:
                 if not self._shapeGeode2:
                     # Technique that may correctly render nested, transparent geometries, from http://www.mail-archive.com/osg-users@lists.openscenegraph.org/msg06863.html
                     self._shapeGeode2 = osg.Geode()
                     self._shapeGeode2.addDrawable(self._shape.geometry())
-                    #self._shapeGeode2.getOrCreateStateSet().setRenderBinDetails(9, 'DepthSortedBin')
-                    self._shapeGeode2.getOrCreateStateSet().setAttributeAndModes(Visible.cullFrontFacesAttr, osg.StateAttribute.ON)
-                    self._shapeGeode.getOrCreateStateSet().setAttributeAndModes(Visible.cullBackFacesAttr, osg.StateAttribute.ON)
-                self._shapeGeode.getOrCreateStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
-                self._shapeGeode.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+                    stateSet2 = self._shapeGeode2.getOrCreateStateSet()
+                    stateSet2.setAttributeAndModes(Visible.cullFrontFacesAttr, osg.StateAttribute.ON)
+                    stateSet1.setAttributeAndModes(Visible.cullBackFacesAttr, osg.StateAttribute.ON)
+                else:
+                    stateSet2 = self._shapeGeode2.getOrCreateStateSet()
+                stateSet1.setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+                stateSet2.setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+                # Place more deeply nested regions in lower render bins so they are rendered before the containing visible.
+                # Each nesting depth needs four render bins: two for the front and back face of the shape and one for the glow shape.
+                # This assumes a maximum nesting depth of 10.
+                sceneDepth = len(self.ancestors())
+                stateSet1.setRenderBinDetails(40 - sceneDepth * 3 - 1, 'DepthSortedBin')
+                stateSet2.setRenderBinDetails(40 - sceneDepth * 3 - 2, 'DepthSortedBin')
         
         if self._textDrawable is not None:
             self._updateLabel(opacity)
@@ -2090,6 +2100,7 @@ class Visible(object):
     def setGlowColor(self, color):
         if color != self._glowColor:
             if self._shape is not None:
+                # TODO: use a shader effect to produce the glow rather than additional geometry
                 w, h, d = self.size()
                 if color is None or w == 0.0 or h == 0.0 or d == 0.0 or isinstance(self._shape, PathShape):
                     if self._glowNode is not None:
@@ -2103,20 +2114,27 @@ class Visible(object):
                         glowGeode.setName(str(self.displayId))
                         glowGeode.addDrawable(self._shape.geometry())
                         self._glowNode.addChild(glowGeode)
-                        self._glowNode.getOrCreateStateSet().clear()
+                        stateSet1 = self._glowNode.getOrCreateStateSet()
+                        stateSet1.clear()
                         self._glowNodeMaterial = osg.Material()
-                        self._glowNode.getStateSet().setAttribute(self._glowNodeMaterial)
+                        stateSet1.setAttribute(self._glowNodeMaterial)
                         self.sgNode.addChild(self._glowNode)
+                    else:
+                        stateSet1 = self._glowNode.getOrCreateStateSet()
                     colorVec = osg.Vec4(color[0], color[1], color[2], color[3])
                     self._glowNodeMaterial.setDiffuse(osg.Material.FRONT_AND_BACK, colorVec)
                     self._glowNodeMaterial.setEmission(osg.Material.FRONT_AND_BACK, colorVec)
                     self._glowNodeMaterial.setAlpha(osg.Material.FRONT_AND_BACK, color[3])
                     if color[3] == 1:
-                        self._glowNode.getStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
-                        self._glowNode.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
+                        stateSet1.setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
+                        stateSet1.setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
                     else:
-                        self._glowNode.getStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
-                        self._glowNode.getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+                        stateSet1.setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+                        # Place more deeply nested regions in lower render bins so they are rendered before the containing visible.
+                        # Each nesting depth needs four render bins: two for the front and back face of the shape and one for the glow shape.
+                        # This assumes a maximum nesting depth of 10.
+                        sceneDepth = len(self.ancestors())
+                        stateSet1.setRenderBinDetails(40 - sceneDepth * 2, 'DepthSortedBin')
                 
             self._glowColor = color
             dispatcher.send(('set', 'glowColor'), self)
