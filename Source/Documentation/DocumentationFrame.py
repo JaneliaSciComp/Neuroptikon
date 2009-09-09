@@ -1,7 +1,16 @@
 import Documentation
-import wx, wx.webkit
+import wx
 import platform, urllib
 
+try:
+    import wx.webkit as webkit
+except:
+    webkit = None
+
+try:
+    import wx.lib.iewin_old as iewin
+except:
+    iewin = None
 
 def showPage(pageURL):
     if Documentation._sharedFrame == None:
@@ -13,14 +22,22 @@ def showPage(pageURL):
 class DocumentationFrame( wx.Frame ):
     
     def __init__(self, pageURL):
+        import wx
         wx.Frame.__init__(self, None, size = (800, 600), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
         
         self.Bind(wx.EVT_CLOSE, self.onClose)
         
         # Build the UI
-        self.htmlWindow = wx.webkit.WebKitCtrl(self)
+        if webkit:
+            try:
+                self.htmlViewer = wx.webkit.WebKitCtrl(self)
+            except:
+                self.htmlViewer = None
+        if (not webkit or self.htmlViewer == None) and iewin:
+            self.htmlViewer = iewin.IEHtmlWindow(self)
+            self.htmlViewer.LoadURL = self.htmlViewer.LoadUrl
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
-        self.mainSizer.Add(self.htmlWindow, 1, wx.EXPAND)
+        self.mainSizer.Add(self.htmlViewer, 1, wx.EXPAND)
         self.SetSizer(self.mainSizer)
         
         # Set up the toolbar
@@ -60,32 +77,32 @@ class DocumentationFrame( wx.Frame ):
         if pageURL != self.pageURL:
             self.pageURL = pageURL
             
-            self.htmlWindow.LoadURL(self.pageURL)
+            self.htmlViewer.LoadURL(self.pageURL)
             self.SetTitle('Neuroptikon Documentation')
-            #self.SetTitle('Neuroptikon: ' + self.htmlWindow.GetPageTitle())
+            #self.SetTitle('Neuroptikon: ' + self.htmlViewer.GetPageTitle())
         
         self.Show(True)
         self.Raise()
         
     
     def onGoBack(self, event):
-        self.htmlWindow.GoBack()
+        self.htmlViewer.GoBack()
     
     
     def onGoForward(self, event):
-        self.htmlWindow.GoForward()
+        self.htmlViewer.GoForward()
      
     
     def onGoHome(self, event):
-        self.htmlWindow.LoadURL(Documentation.baseURL() + 'index.html')
+        self.htmlViewer.LoadURL(Documentation.baseURL() + 'index.html')
         
     
     def onShowIndex(self, event):
-        self.htmlWindow.LoadURL(Documentation.baseURL() + 'genindex.html')
+        self.htmlViewer.LoadURL(Documentation.baseURL() + 'genindex.html')
  
     
     def onSearch(self, event):
-        self.htmlWindow.LoadURL(Documentation.baseURL() + 'search.html?q=' + self.searchControl.GetValue())
+        self.htmlViewer.LoadURL(Documentation.baseURL() + 'search.html?q=' + self.searchControl.GetValue())
     
     
     def onClose(self, event=None):
