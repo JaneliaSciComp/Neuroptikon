@@ -260,6 +260,7 @@ class Display(wx.glcanvas.GLCanvas):
         
         self._suppressRefresh = False
         
+        self._recomputeBounds = True
         self.centerView()
         self.Refresh()
     
