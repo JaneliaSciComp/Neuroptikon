@@ -12,7 +12,7 @@ Usage (Windows):
 import ez_setup
 ez_setup.use_setuptools()
 
-import os, sys
+import os, platform, sys
 from setuptools import setup
 
 def purge_dir(path):
@@ -31,12 +31,22 @@ app_version = __version__.version
 
 setup_options = dict()
 
-resources = ['Documentation/build/Documentation', 'Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
+resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
 resources += ['Display/FlowShader.vert', 'Display/FlowShader.frag', 'Display/CullFaces.osg']
 includes = ['wx', 'xlrd']
 excludes = ['Inspectors', 'Layouts', 'matplotlib', 'scipy', 'Shapes']
 
-sys.path.append('lib/CrossPlatform')
+sys.path += ['lib/CrossPlatform', 'lib/' + platform.system()]
+
+# Purge and then rebuild the documentation with Sphinx
+purge_dir('Documentation/build')
+try:
+    from sphinx import main
+except:
+    print 'You must have sphinx installed and in the Python path to build the Neuroptikon package.  See <http://sphinx.pocoo.org/>.'
+result = main(['-q', '-b', 'html', 'Documentation/Source', 'Documentation/build/Documentation'])
+if result != 0:
+    sys.exit(result)
 
 if sys.platform == 'darwin':
 
@@ -51,8 +61,6 @@ if sys.platform == 'darwin':
     
     import wxversion
     wxversion.select('2.8')
-    
-    sys.path.append('lib/Darwin')
     
     setup_options['setup_requires'] = ['py2app']
     setup_options['app'] = app_scripts
@@ -71,6 +79,7 @@ if sys.platform == 'darwin':
     resources += ['../Artwork/Neuroptikon.icns']
     resources += ['lib/Darwin/fdp', 'lib/Darwin/graphviz']
     resources += ['lib/Darwin/osgdb_freetype.so', 'lib/Darwin/osgdb_osg.so', 'lib/Darwin/osgdb_qt.so']
+    resources += ['Documentation/build/Documentation']
     py2app_options['resources'] = ','.join(resources)
     
     py2app_options['argv_emulation'] = True
@@ -90,8 +99,6 @@ elif sys.platform == 'win32':
     # - python setup.py --quiet py2exe
     
     import py2exe
-    
-    sys.path.append('lib/Windows')
     
     setup_options['setup_requires'] = ['py2exe']
     setup_options['windows'] = [{'script': app_scripts[0], 'icon_resources':  [(0, '../Artwork/Neuroptikon.ico')]}]
@@ -137,16 +144,6 @@ elif sys.platform == 'win32':
 else:
         pass	# TODO: Linux setup
 
-# Purge and then rebuild the documentation with Sphinx
-purge_dir('Documentation/build')
-try:
-    from sphinx import main
-except:
-    print 'You must have sphinx installed and in the Python path to build the Neuroptikon package.  See <http://sphinx.pocoo.org/>.'
-result = main(['-q', '-b', 'html', 'Documentation/Source', 'Documentation/build/Documentation'])
-if result != 0:
-    sys.exit(result)
-
 setup(
     name = 'Neuroptikon', 
     version = app_version, 
@@ -156,13 +153,14 @@ setup(
 )
 
 
+import shutil
 if sys.platform == 'darwin':
-    import shutil
     scriptsDir = os.path.join(dist_dir, 'Sample Scripts')
     if os.path.exists(scriptsDir):
         shutil.rmtree(scriptsDir)
     shutil.copytree('Scripts', scriptsDir)
-
+elif sys.platform == 'win32':
+    shutil.copytree(os.path.join('Documentation/build/Documentation'), os.path.join(dist_dir, 'Documentation'))
 
 # Strip out any .pyc or .pyo files.
 import os
