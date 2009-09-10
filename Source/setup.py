@@ -12,24 +12,15 @@ Usage (Windows):
 import ez_setup
 ez_setup.use_setuptools()
 
-import os, platform, sys
+import os, platform, shutil, sys
 from setuptools import setup
-
-def purge_dir(path):
-    if os.path.exists(path):
-        for root, dirs, files in os.walk(path, topdown=False):
-            for name in files:
-                os.remove(os.path.join(root, name))
-            for name in dirs:
-                os.rmdir(os.path.join(root, name))
-        os.rmdir(path)
-
-app_scripts = ['Neuroptikon.py']
 
 import __version__
 app_version = __version__.version
 
 setup_options = dict()
+
+app_scripts = ['Neuroptikon.py']
 
 resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
 resources += ['Display/FlowShader.vert', 'Display/FlowShader.frag', 'Display/CullFaces.osg']
@@ -43,7 +34,7 @@ if sys.platform == 'darwin':
     wxversion.select('2.8')
 
 # Purge and then rebuild the documentation with Sphinx
-purge_dir('Documentation/build')
+shutil.rmtree('Documentation/build')
 try:
     from sphinx import main
 except:
@@ -52,6 +43,8 @@ result = main(['-q', '-b', 'html', 'Documentation/Source', 'Documentation/build/
 if result != 0:
     sys.exit(result)
 
+
+# Assemble the platform-specific application settings. 
 if sys.platform == 'darwin':
 
     # Mac build notes:
@@ -69,7 +62,7 @@ if sys.platform == 'darwin':
     py2app_options = dict()
     
     dist_dir = 'build/Neuroptikon ' + app_version
-    purge_dir(dist_dir)
+    shutil.rmtree(dist_dir)
     py2app_options['dist_dir'] = dist_dir
     
     excludes += ['aetools', 'StdSuites.AppleScript_Suite']
@@ -107,7 +100,7 @@ elif sys.platform == 'win32':
     py2exe_options = dict()
     
     dist_dir = 'build/Neuroptikon ' + app_version
-    purge_dir(dist_dir)
+    shutil.rmtree(dist_dir)
     py2exe_options['dist_dir'] = dist_dir
     
     py2exe_options['packages'] = includes
@@ -145,6 +138,8 @@ elif sys.platform == 'win32':
 else:
         pass	# TODO: Linux setup
 
+
+# Create the application.
 setup(
     name = 'Neuroptikon', 
     version = app_version, 
@@ -154,7 +149,7 @@ setup(
 )
 
 
-import shutil
+# Manually copy over content not handled by the setup() call.
 if sys.platform == 'darwin':
     scriptsDir = os.path.join(dist_dir, 'Sample Scripts')
     if os.path.exists(scriptsDir):
@@ -162,6 +157,7 @@ if sys.platform == 'darwin':
     shutil.copytree('Scripts', scriptsDir)
 elif sys.platform == 'win32':
     shutil.copytree(os.path.join('Documentation/build/Documentation'), os.path.join(dist_dir, 'Documentation'))
+
 
 # Strip out any .pyc or .pyo files.
 import os
@@ -171,6 +167,7 @@ for root, dirs, files in os.walk(dist_dir, topdown=False):
                 os.remove(os.path.join(root, name))
 
 
+# Package up the application.
 from subprocess import call
 if sys.platform == 'darwin':
     # Create the disk image
