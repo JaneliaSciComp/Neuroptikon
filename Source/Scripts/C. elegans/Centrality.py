@@ -3,6 +3,9 @@ A script to demonstrate how to use the centrality algorithms built into NetworkX
 See <http://networkx.lanl.gov/reference/algorithms.centrality.html> for the full list of algorithms and their descriptions.
 """
 
+if not any(network.neurons()):
+    execfile('Connectivity.py')
+
 import networkx
 
 # Create a new graph with only a single edge between nodes weighted by the sum of the connection counts.
