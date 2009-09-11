@@ -462,4 +462,4 @@ neuron.arborize(regions['PB-R4'], False, True)
 neuron.arborize(regions['EB-post-in'], True, False)
 neuron.arborize(regions['LTR-R'], True, False)
 
-display.centerView()    #autoLayout()
+display.autoLayout()
