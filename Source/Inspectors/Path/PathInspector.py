@@ -149,8 +149,8 @@ class PathInspector(Inspector):
         else:
             if len(self.paths) == 1:
                 (startPoint, endPoint) = self.paths[0].pathEndPoints()
-                flowToName = gettext('ananymous object') if endPoint.client == None else endPoint.client.name or gettext('<unnamed %s>') % ( endPoint.client.__class__.displayName())
-                flowFromName = gettext('ananymous object') if startPoint.client == None else startPoint.client.name or gettext('<unnamed %s>') % ( startPoint.client.__class__.displayName())
+                flowToName = gettext('anonymous object') if endPoint.client == None else endPoint.client.name or gettext('<unnamed %s>') % ( endPoint.client.__class__.displayName())
+                flowFromName = gettext('anonymous object') if startPoint.client == None else startPoint.client.name or gettext('<unnamed %s>') % ( startPoint.client.__class__.displayName())
             else:
                 flowToName = gettext('multiple objects')
                 flowFromName = gettext('multiple objects')
