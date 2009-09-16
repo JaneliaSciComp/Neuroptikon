@@ -3,6 +3,8 @@
 class ObjectList(list):
     
     def haveEqualAttr(self, attributePath):
+        if not any(self):
+            return False
         if '.' in attributePath:
             (subObjectAttribute, attributeName) = attributePath.split('.')
             object = getattr(self[0], subObjectAttribute)
