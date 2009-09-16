@@ -8,58 +8,18 @@ from Network.Region import Region
 from Network.Neuron import Neuron
 from Network.Arborization import Arborization
 from Network.Stimulus import Stimulus
-
+from Network.Attribute import Attribute
 from Library.Texture import Texture
 
-from Network.Attribute import Attribute
-
 import wx
-from wx.py import dispatcher
-import weakref
+from pydispatch import dispatcher
+import os.path, random, sys
+from math import atan2, pi, sqrt
+import xml.etree.ElementTree as ElementTree
 
-# The standard wx.py.dispatcher is dog slow for a large connection pool.  The bottleneck shown by profiling is the attempt to avoid duplicate connections.  Since we never attempt duplicate connections this expensive check is not necessary.
-# Here we replace the normal connect method with a version that doesn't check for duplicate connections.
-def dispatcher_connect(receiver, signal=dispatcher.Any, sender=dispatcher.Any, weak=True):
-    if signal is None:
-        raise dispatcher.DispatcherError, 'signal cannot be None'
-    if weak:
-        receiver = dispatcher.safeRef(receiver)
-    senderkey = id(sender)
-    signals = {}
-    if dispatcher.connections.has_key(senderkey):
-        signals = dispatcher.connections[senderkey]
-    else:
-        dispatcher.connections[senderkey] = signals
-        # Keep track of senders for cleanup.
-        if sender not in (None, dispatcher.Any):
-            def remove(object, senderkey=senderkey):
-                dispatcher._removeSender(senderkey=senderkey)
-            # Skip objects that can not be weakly referenced, which means
-            # they won't be automatically cleaned up, but that's too bad.
-            try:
-                weakSender = weakref.ref(sender, remove)
-                dispatcher.senders[senderkey] = weakSender
-            except:
-                pass
-    receivers = []
-    if signals.has_key(signal):
-        receivers = signals[signal]
-    else:
-        signals[signal] = receivers
-# This is the disabled block.
-#    try:
-#        receivers.remove(receiver)
-#    except ValueError:
-#        pass
-    receivers.append(receiver)
-dispatcher.connect = dispatcher_connect
 
-import sys, os.path
 runningFromSource = not hasattr(sys, "frozen")
 
-from math import atan2, pi, sqrt
-import random
-import xml.etree.ElementTree as ElementTree
 
 class Visible(object):
     """
@@ -147,12 +107,6 @@ class Visible(object):
         self._shapeGeode2 = None
         self._stateSet = self._shapeGeode.getOrCreateStateSet()
         self._stateSet.setAttributeAndModes(osg.BlendFunc(), osg.StateAttribute.ON)
-        self._material = osg.Material()
-        self._material.setDiffuse(osg.Material.FRONT_AND_BACK, osg.Vec4(0.5, 0.5, 0.5, 1))
-        self._material.setAmbient(osg.Material.FRONT_AND_BACK, osg.Vec4(0.5, 0.5, 0.5, 1))
-        self._material.setSpecular(osg.Material.FRONT_AND_BACK, osg.Vec4(0.0, 0.0, 0.0, 0.0))
-        self._material.setShininess(osg.Material.FRONT_AND_BACK, 0.0)
-        self._stateSet.setAttribute(self._material)
         self.sgNode.addChild(self._shapeGeode)
         self._textGeode = osg.Geode()
         self._textGeode.setName(str(self.displayId))
@@ -785,24 +739,32 @@ class Visible(object):
             raise TypeError, 'The argument passed to setShape() must be a Shape instance or None'
         
         if self._shape != shape:
+            # Clean up any existing shape
             glowColor = self._glowColor
             if self._glowNode is not None:
                 self.setGlowColor(None)
             if self._shape:
                 self._shapeGeode.removeDrawable(self._shape.geometry())
+                
             self._shape = shape
+            
             if self._shape:
+                self._shape.setColor(list(self._color) + [self._opacity])
                 self._shapeGeode.addDrawable(self._shape.geometry())
                 if self._shape.interiorBounds() != None:
                     minBound, maxBound = self._shape.interiorBounds()
                     minBound = osg.Vec3(*minBound)
                     maxBound = osg.Vec3(*maxBound)
                     self.childGroup.setMatrix(osg.Matrixd.scale(maxBound - minBound) * osg.Matrixd.translate((minBound + maxBound) / 2.0))
+            
             for child in self.children:
                 dispatcher.send(('set', 'position'), child)
+            
             # Recreate the glow shape if needed
             self.setGlowColor(glowColor)
+            
             dispatcher.send(('set', 'shape'), self)
+            
             if self.isPath():
                 self._updatePath()
             else:
@@ -952,11 +914,8 @@ class Visible(object):
             raise ValueError, 'The color argument should be a tuple or list of three integer or floating point values between 0.0 and 1.0, inclusively.'
         
         if color != self._color:
-            colorVec = osg.Vec4(color[0], color[1], color[2], 1)
-            self._material.setDiffuse(osg.Material.FRONT_AND_BACK, colorVec)
-            self._material.setAmbient(osg.Material.FRONT_AND_BACK, colorVec)
-            if self._shape != None:
-                self._shape.setColor(color)
+            if self._shape:
+                self._shape.setColor(list(color) + [self._opacity])
             self._color = color
             self._updateOpacity()
             dispatcher.send(('set', 'color'), self)
@@ -975,24 +934,30 @@ class Visible(object):
     
     
     def _updateOpacity(self):
+        # Figure out what opacity to use based on the current selection, etc.
         if self.display.useGhosts() and any(self.display.selection()) and self not in self.display.highlightedVisibles and self not in self.display.animatedVisibles:
+            # This visible should be ghosted.
             opacity = 0.1
             for ancestor in self.ancestors():
                 if ancestor in self.display.selectedVisibles:
+                    # An ancestor of this visible is in the selection so only partly ghost it.
                     opacity = 0.5
                     break
             if opacity == 0.1:
                 for child in self.allChildren():
                     if child in self.display.selectedVisibles:
+                        # A descendent of this visible is in the selection so only partly ghost it.
                         opacity = 0.5
                         break
         elif any(self.children) and self._shape != None:
+            # Visible containing other visibles are always transparent.
             opacity = 0.5
         else:
+            # Otherwise use the user-specified opacity.
             opacity = self._opacity
         
         if self._shape is not None:
-            self._material.setAlpha(osg.Material.FRONT_AND_BACK, opacity)
+            self._shape.setColor(list(self._color) + [opacity])
             stateSet1 = self._shapeGeode.getOrCreateStateSet()
             if opacity == 1.0:
                 if self._shapeGeode2:
@@ -1652,8 +1617,8 @@ class Visible(object):
         If None is passed then the default flow color will be used.
         """
         
-        if not isinstance(color, (list, tuple, type(None))) or (color != None and len(color) != 3):
-            raise ValueError, 'The color passed to setFlowToColor() must be None or a tuple or list of three numbers.'
+        if not isinstance(color, (list, tuple, type(None))) or (color != None and len(color) not in [3, 4]):
+            raise ValueError, 'The color passed to setFlowToColor() must be None or a tuple or list of three or four numbers.'
         for colorComponent in color:
             if not isinstance(colorComponent, (int, float)) or colorComponent < 0.0 or colorComponent > 1.0:
                 raise ValueError, 'The components of the color passed to setFlowToColor() must all be numbers between 0.0 and 1.0, inclusive.'
@@ -1798,8 +1763,8 @@ class Visible(object):
         If None is passed then the default flow color will be used.
         """
         
-        if not isinstance(color, (list, tuple, type(None))) or (color != None and len(color) != 3):
-            raise ValueError, 'The color passed to setFlowFromColor() must be a tuple or list of three numbers.'
+        if not isinstance(color, (list, tuple, type(None))) or (color != None and len(color) not in [3, 4]):
+            raise ValueError, 'The color passed to setFlowFromColor() must be a tuple or list of three or four numbers.'
         for colorComponent in color:
             if not isinstance(colorComponent, (int, float)) or colorComponent < 0.0 or colorComponent > 1.0:
                 raise ValueError, 'The components of the color passed to setFlowFromColor() must all be numbers between 0.0 and 1.0, inclusive.'
@@ -2002,18 +1967,20 @@ class Visible(object):
         """
         Set the start and end points of this path.
         
-        The startVisible and endVisible arguments should be other visibles in the same display as this visible.
+        The startVisible and endVisible arguments should be other visibles in the same display as this visible or None.
         """
         
         if not isinstance(startVisible, (Visible, type(None))) or not isinstance(endVisible, (Visible, type(None))):
             raise TypeError, 'The arguments passed to setPathEndPoints() must be Visible instances or None.'
-        if startVisible.display != self.display or startVisible == self or endVisible.display != self.display or endVisible == self:
+        if (startVisible and (startVisible.display != self.display or startVisible == self)) or (endVisible and (endVisible.display != self.display or endVisible == self)):
             raise ValueError, 'The arguments passed to setPathEndPoints() must be other visibles in the same display as this visible.'
         
         if startVisible != self._pathStart or endVisible != self._pathEnd:
             if startVisible != self._pathStart:
                 if self._pathStart:
                     self._pathStart.dependentVisibles.remove(self)
+                    self._pathStart.connectedPaths.remove(self)
+                    self._dependencies.remove(self._pathStart)
                 self._pathStart = startVisible
                 if self._pathStart:
                     self._addDependency(startVisible, 'position')
@@ -2025,6 +1992,8 @@ class Visible(object):
             if endVisible != self._pathEnd:
                 if self._pathEnd:
                     self._pathEnd.dependentVisibles.remove(self)
+                    self._pathEnd.connectedPaths.remove(self)
+                    self._dependencies.remove(self._pathEnd)
                 self._pathEnd = endVisible
                 if self._pathEnd:
                     self._addDependency(endVisible, 'position')
@@ -2033,7 +2002,10 @@ class Visible(object):
                     endVisible.connectedPaths.append(self)
                     self._pathEnd.dependentVisibles += [self]
             
-            self._updatePath()
+            if self._pathStart and self._pathEnd:
+                self._updatePath()
+            else:
+                self._updateTransform()
             
             dispatcher.send(('set', 'path'), self)
     
@@ -2138,12 +2110,3 @@ class Visible(object):
                 
             self._glowColor = color
             dispatcher.send(('set', 'glowColor'), self)
-    
-    
-    def __del__(self):
-        self.children = []
-        if self._pathStart:
-            self._pathStart.dependentVisibles.remove(self)
-        if self._pathEnd:
-            self._pathEnd.dependentVisibles.remove(self)
-    

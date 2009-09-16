@@ -1,6 +1,6 @@
 import wx
 import osg
-from wx.py import dispatcher
+from pydispatch import dispatcher
 from Inspection.Inspector import Inspector
 from Network.ObjectList import ObjectList
 from Display.Visible import Visible
@@ -15,7 +15,7 @@ class AppearanceInspector(Inspector):
     
     @classmethod
     def canInspectDisplay(cls, display):
-        return len(display.selection()) > 0
+        return display and any(display.selection())
 
 
     def window(self, parentWindow=None):
@@ -78,6 +78,13 @@ class AppearanceInspector(Inspector):
             for attributeName in ['color', 'opacity', 'shape', 'texture', 'weight']:
                 dispatcher.connect(self.refreshGUI, ('set', attributeName), visible)
         self.refreshGUI()
+    
+    
+    def willBeClosed(self):
+        for visible in self.visibles:
+            for attributeName in ['color', 'opacity', 'shape', 'texture', 'weight']:
+                dispatcher.disconnect(self.refreshGUI, ('set', attributeName), visible)
+        self.visibles = []
     
     
     def refreshGUI(self, signal = ('set', None), **arguments):

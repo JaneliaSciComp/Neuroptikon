@@ -1,6 +1,6 @@
 import os, sys
 import wx, wx.grid
-from wx.py import dispatcher
+from pydispatch import dispatcher
 from Inspection.Inspector import Inspector
 from Network.ObjectList import ObjectList
 from Display.Visible import Visible
@@ -19,7 +19,7 @@ class AttributesInspector(Inspector):
     
     @classmethod
     def canInspectDisplay(cls, display):
-        return len(display.selection()) == 0 or (len(display.selection()) == 1 and display.selection()[0].client is not None)
+        return display and (not any(display.selection()) or (len(display.selection()) == 1 and display.selection()[0].client is not None))
     
     
     def loadBitmap(self, fileName):
@@ -188,3 +188,8 @@ class AttributesInspector(Inspector):
         # Make sure any active edit gets committed.
         if self.grid.IsCellEditControlEnabled():
             self.grid.DisableCellEditControl()
+        self.label.SetLabel(gettext('Attributes:'))
+        object = self.attributesTable.object
+        if object:
+            dispatcher.disconnect(self.attributesDidChange, ('set', 'attributes'), object)
+        self.attributesTable.setObject(None)

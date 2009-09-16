@@ -1,5 +1,5 @@
 import wx, wx.lib.colourselect
-from wx.py import dispatcher
+from pydispatch import dispatcher
 from Inspection.Inspector import Inspector
 from Network.ObjectList import ObjectList
 from Display.Visible import Visible
@@ -15,10 +15,11 @@ class PathInspector(Inspector):
     
     @classmethod
     def canInspectDisplay(cls, display):
-        for visible in display.selectedVisibles:
-            if visible.isPath():
-                return True
-        return len(display.selectedVisibles) == 0
+        if display:
+            for visible in display.selectedVisibles:
+                if visible.isPath():
+                    return True
+        return display and not any(display.selectedVisibles)
 
 
     def window(self, parentWindow=None):

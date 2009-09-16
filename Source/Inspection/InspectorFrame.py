@@ -1,6 +1,6 @@
 import wx
 import platform, sys
-from wx.py import dispatcher
+from pydispatch import dispatcher
 import Inspection
 import Inspector    # Not needed by the code but insures that the Inspector module gets packaged by setuptools.
 

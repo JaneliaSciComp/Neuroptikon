@@ -1,5 +1,5 @@
 import wx, wx.grid
-from wx.py import dispatcher
+from pydispatch import dispatcher
 import sys, weakref
 from Network.Attribute import Attribute
 

@@ -1,7 +1,7 @@
 from Object import *
 from Pathway import Pathway
 import wx
-from wx.py import dispatcher
+from pydispatch import dispatcher
 import xml.etree.ElementTree as ElementTree
 
 

@@ -1,6 +1,6 @@
 from LibraryItem import LibraryItem
 from LibraryFrame import LibraryFrame
-from wx.py import dispatcher
+from pydispatch import dispatcher
 
 class Library(object):
     

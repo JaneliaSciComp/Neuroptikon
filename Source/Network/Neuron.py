@@ -2,7 +2,7 @@ from Object import Object
 from Neurite import Neurite as Neurite
 import xml.etree.ElementTree as ElementTree
 import wx
-from wx.py import dispatcher
+from pydispatch import dispatcher
 
 
 class Neuron(Object):

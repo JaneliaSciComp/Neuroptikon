@@ -11,7 +11,7 @@ class GroupInspector(Inspector):
     
     @classmethod
     def canInspectDisplay(cls, display):
-        return len(display.selection()) > 1
+        return display and len(display.selection()) > 1
 
 
     def window(self, parentWindow=None):

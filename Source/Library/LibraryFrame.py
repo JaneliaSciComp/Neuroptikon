@@ -1,6 +1,6 @@
 import wx
 import sys
-from wx.py import dispatcher
+from pydispatch import dispatcher
 import Library
 
 

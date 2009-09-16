@@ -2,7 +2,7 @@ import wx
 from Inspection.Inspector import Inspector
 from Network.Object import Object
 from Network.ObjectList import ObjectList
-from wx.py import dispatcher
+from pydispatch import dispatcher
 
 
 class ObjectInspector(Inspector):
@@ -40,9 +40,10 @@ class ObjectInspector(Inspector):
     @classmethod
     def canInspectDisplay(cls, display):
         # This inspector can be used if there is at least one object of this type selected.
-        for visible in display.selection():
-            if visible.client.__class__ == cls.objectClass():
-                return True
+        if display:
+            for visible in display.selection():
+                if visible.client.__class__ == cls.objectClass():
+                    return True
         return False
     
 

@@ -1,5 +1,5 @@
 import wx
-from wx.py import dispatcher
+from pydispatch import dispatcher
 from Inspection.Inspector import Inspector
 from Network.ObjectList import ObjectList
 from Display.Visible import Visible
@@ -14,7 +14,7 @@ class GeometryInspector(Inspector):
     
     @classmethod
     def canInspectDisplay(cls, display):
-        return len(display.selection()) > 0
+        return display and any(display.selection())
 
 
     def window(self, parentWindow=None):

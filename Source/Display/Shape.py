@@ -66,7 +66,7 @@ class Shape(object):
     def __init__(self, *args, **keywordArgs):
         object.__init__(self, *args, **keywordArgs)
         self._geometry = osg.Geometry()
-        self.setColor((0.5, 0.5, 0.5))
+        self.setColor((0.5, 0.5, 0.5, 1.0))
     
     
     def geometry(self):
@@ -74,7 +74,10 @@ class Shape(object):
     
     
     def setColor(self, color):
-        self._geometry.setColorArray(Shape.vectorArrayFromList([(color[0], color[1], color[2], 1.0)]))
+        if not isinstance(color, (list, tuple)) or len(color) != 4:
+            raise ValueError, 'The color argument to setColor() must be a list or tuple of four float values.'
+        
+        self._geometry.setColorArray(Shape.vectorArrayFromList([color]))
         self._geometry.setColorBinding(osg.Geometry.BIND_OVERALL)
         self._geometry.dirtyDisplayList()
     

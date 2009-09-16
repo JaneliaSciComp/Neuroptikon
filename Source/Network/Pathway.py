@@ -1,5 +1,5 @@
 from Object import Object
-from wx.py import dispatcher
+from pydispatch import dispatcher
 import xml.etree.ElementTree as ElementTree
 
 

@@ -127,7 +127,7 @@ if __name__ == "__main__":
             self.library = Library()
             self._loadDefaultLibraryItems()
             
-            self._networks = []
+            self._networks = set([])
             
             if platform.system() == 'Darwin':
                 wx.MenuBar.MacSetCommonMenuBar(self.menuBar())
@@ -293,6 +293,22 @@ if __name__ == "__main__":
                       'shapes': shapeClasses}
             for objectClass in Object.__subclasses__():
                 locals[objectClass.__name__] = objectClass
+            if 'DEBUG' in os.environ:
+                locals['os'] = os
+                locals['sys'] = sys
+                locals['wx'] = wx
+                import osg
+                locals['osg'] = osg
+                import gc
+                locals['gc'] = gc
+                try:
+                    import objgraph
+                    locals['objgraph'] = objgraph
+                except:
+                    pass
+                from pydispatch import dispatcher
+                locals['dispatcher'] = dispatcher
+                
             return locals
         
         
@@ -332,7 +348,6 @@ if __name__ == "__main__":
         
         def createNetwork(self):
             network = Network()
-            self._networks.append(network)
             #TODO: implement doc/view framework
             return network
         
@@ -355,7 +370,7 @@ if __name__ == "__main__":
                         raise ValueError, gettext('Could not load the network')
                     network.setSavePath(path)
                     network.setModified(False)
-                    self._networks.append(network)
+                    self._networks.add(network)
                     
                     # Instantiate any displays
                     for frameElement in xmlTree.findall('DisplayWindow'):
@@ -374,10 +389,17 @@ if __name__ == "__main__":
         
         
         def networks(self):
-            return self._networks
+            return list(self._networks)
+        
+        
+        def releaseNetwork(self, network):
+            if not any(network.displays):
+                network.removeAllObjects()
+                self._networks.remove(network)
         
         
         def displayNetwork(self, network):
+            self._networks.add(network)
             from NeuroptikonFrame import NeuroptikonFrame
             frame = NeuroptikonFrame(network = network)
             frame.Show(True)
@@ -386,8 +408,8 @@ if __name__ == "__main__":
             return frame.display
         
         
-        def displayWasClosed(self, display):
-            self._frames.remove(display)
+        def displayWasClosed(self, displayFrame):
+            self._frames.remove(displayFrame)
             if len(self._frames) == 0 and platform.system() == 'Windows':
                 self.ExitMainLoop()
 

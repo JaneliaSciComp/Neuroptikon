@@ -1,5 +1,5 @@
 import wx, wx.glcanvas
-from wx.py import dispatcher
+from pydispatch import dispatcher
 import osg, osgDB, osgGA, osgManipulator, osgViewer
 from math import pi, fabs
 import os, platform, sys, cPickle
@@ -748,25 +748,41 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def removeVisible(self, visible):
-        stack = [visible]
-        while any(stack):
-            if any(stack[0].dependentVisibles):
-                visiblesToPushOnStack = stack[0].dependentVisibles
-                stack[0].dependentVisibles = []
-                for dependentVisible in visiblesToPushOnStack:
-                    if dependentVisible not in stack:
-                        stack.insert(0, dependentVisible)
-                del visiblesToPushOnStack
-            else:
-                visibleToRemove = stack.pop(0)
-                if visibleToRemove in self.selectedVisibles:
-                    self._selectVisibles([visibleToRemove], extend = True)
-                if visibleToRemove.parent:
-                    visibleToRemove.parent.removeChildVisible(visibleToRemove)
-                else:
-                    self.rootNode.removeChild(visibleToRemove.sgNode)
-                del self._visibleIds[visibleToRemove.displayId]
-                self.visibles[visibleToRemove.client.networkId].remove(visibleToRemove)
+        if visible.displayId not in self._visibleIds:
+            raise ValueError, 'The visible passed to removeVisible() is not part of the display.'
+        
+        # Remove any child visibles before removing this one.
+        for childVisible in list(visible.children):
+            self.removeVisible(childVisible)
+        
+        # Remove any dependent visibles before removing this one.  (like an arborization before its region) 
+        for dependentVisible in visible.dependentVisibles:
+            self.removeVisible(dependentVisible)
+        
+        # Remove the visible from the current selection if needed.
+        if visible in self.selectedVisibles:
+            self._selectVisibles([visible], extend = True)
+        
+        # Remove the visible's node from the scene graph.
+        if visible.parent:
+            visible.parent.removeChildVisible(visible)
+        self.rootNode.removeChild(visible.sgNode)
+        
+        # Remove any dependencies.
+        dispatcher.disconnect(self._visibleChanged, dispatcher.Any, visible)
+        if visible.isPath():
+            visible.setPathEndPoints(None, None)
+        
+        # Remove the visible from self._visibleIds and self.visibles.
+        del self._visibleIds[visible.displayId]
+        clientId = -1 if visible.client == None else visible.client.networkId
+        visibles = self.visibles[clientId]
+        visibles.remove(visible)
+        if not any(visibles):
+            del self.visibles[clientId]
+        
+        visible.display = None
+        
         self.Refresh()
     
     
@@ -996,6 +1012,10 @@ class Display(wx.glcanvas.GLCanvas):
     def setNetwork(self, network):
         if self.network != None:
             self.network.removeDisplay(self)
+            
+            while any(self.visibles):
+                self.removeVisible(self.visibles.values()[0][0])
+            
             # TODO: anything else?
         
         self.network = network

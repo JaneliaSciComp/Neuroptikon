@@ -1,5 +1,5 @@
 import wx
-from wx.py import dispatcher
+from pydispatch import dispatcher
 from Inspection.Inspector import Inspector
 from Network.ObjectList import ObjectList
 from Display.Visible import Visible
@@ -14,9 +14,10 @@ class ArrangementInspector(Inspector):
     
     @classmethod
     def canInspectDisplay(cls, display):
-        for visible in display.selectedVisibles:
-            if (len(visible.children) > 0 and visible.arrangedAxis is not None) or (visible.parent is not None and visible.parent.arrangedAxis is not None):
-                return True
+        if display:
+            for visible in display.selectedVisibles:
+                if (any(visible.children) and visible.arrangedAxis is not None) or (visible.parent is not None and visible.parent.arrangedAxis is not None):
+                    return True
         return False
 
 

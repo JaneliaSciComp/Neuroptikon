@@ -34,7 +34,7 @@ class Inspector( object ):
     
     @classmethod
     def canInspectDisplay(cls, display):
-        return True
+        return (display != None)
     
     
     def window(self, parentWindow=None):

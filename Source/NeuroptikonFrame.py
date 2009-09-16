@@ -1,5 +1,5 @@
 import wx
-from wx.py import dispatcher
+from pydispatch import dispatcher
 import os, platform, sys
 import xml.etree.ElementTree as ElementTree
 from xml.dom import minidom
@@ -200,25 +200,38 @@ class NeuroptikonFrame( wx.Frame ):
         locals = wx.GetApp().scriptLocals()
         locals['network'] = self.display.network
         locals['display'] = self.display
+        if 'DEBUG' in os.environ:
+            locals['profileScript'] = self._profileScript
         return locals
     
         
-    def onRunScript(self, event):
+    def runScript(self, scriptPath):
         # TODO: It would be nice to provide progress for long running scripts.  Would need some kind of callback for scripts to indicate how far along they were.
+        prevDir = os.getcwd()
+        os.chdir(os.path.dirname(scriptPath))
+        locals = self.scriptLocals()
+        try:
+            execfile(os.path.basename(scriptPath), locals)
+            self.Refresh(False)
+        finally:
+            os.chdir(prevDir)
+    
+        
+    def _profileScript(self, scriptPath):
+        import cProfile
+        cProfile.runctx('self.runScript(' + repr(scriptPath) + ')', {}, {'self': self}, filename = scriptPath + '.profile')
+    
+        
+    def onRunScript(self, event):
         dlg = wx.FileDialog(None, 'Choose a script to run', './Scripts', '', '*.py', wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
-            prevDir = os.getcwd()
-            os.chdir(os.path.dirname(dlg.GetPath()))
-            locals = self.scriptLocals()
             try:
-                execfile(dlg.GetPath(), locals)
+                self.runScript(dlg.GetPath())
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                 dialog = wx.MessageDialog(self, exceptionValue.message, gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
-            os.chdir(prevDir)
         dlg.Destroy()
-        self.Refresh(False)
         self.Show(True)
     
     
@@ -303,10 +316,18 @@ class NeuroptikonFrame( wx.Frame ):
                 success = False
         
         if success:
-            self.display.network.removeDisplay(self.display)
+            self.display.selectObjects([])
+            wx.GetApp().inspector.inspectDisplay(None)
+            network = self.display.network
+            dispatcher.disconnect(self.networkDidChangeSavePath, ('set', 'savePath'), network)
+            self.display.setNetwork(None)
+            self.display = None
             self.Destroy()
             wx.GetApp().displayWasClosed(self)
-        
+            
+            if not any(network.displays):
+                wx.GetApp().releaseNetwork(network)
+            
         return success
     
     

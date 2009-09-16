@@ -1,6 +1,6 @@
 from networkx import *
 import os.path, sys
-from wx.py import dispatcher
+from pydispatch import dispatcher
 import xml.etree.ElementTree as ElementTree
 from Region import Region
 from Pathway import Pathway
@@ -464,6 +464,14 @@ class Network:
             if isinstance(object, objectClass):
                 objects.append(object)
         return objects
+    
+    
+    def removeAllObjects(self):
+        for object in self.objects:
+            object.network = None
+        self.objects = []
+        self.idDict = {}
+        self.graph.clear()
     
     
     def addDisplay(self, display):
