@@ -756,7 +756,7 @@ class Display(wx.glcanvas.GLCanvas):
             self.removeVisible(childVisible)
         
         # Remove any dependent visibles before removing this one.  (like an arborization before its region) 
-        for dependentVisible in visible.dependentVisibles:
+        for dependentVisible in list(visible.dependentVisibles):
             self.removeVisible(dependentVisible)
         
         # Remove the visible from the current selection if needed.
