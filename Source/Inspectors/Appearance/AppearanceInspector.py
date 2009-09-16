@@ -84,7 +84,7 @@ class AppearanceInspector(Inspector):
         for visible in self.visibles:
             for attributeName in ['color', 'opacity', 'shape', 'texture', 'weight']:
                 dispatcher.disconnect(self.refreshGUI, ('set', attributeName), visible)
-        self.visibles = []
+        self.visibles = ObjectList()
     
     
     def refreshGUI(self, signal = ('set', None), **arguments):
