@@ -812,6 +812,9 @@ class Display(wx.glcanvas.GLCanvas):
             params['size'] = (.01, .01, .01)
             params['sizeIsAbsolute'] = True
             params['color'] = neuralTissueColor
+        elif isinstance(object, Neurite):
+            params['shape'] = shapes['Line']()
+            params['color'] = neuralTissueColor
         elif isinstance(object, Muscle):
             params['shape'] = shapes['Capsule']()
             params['size'] = (.05, .1, .02)
