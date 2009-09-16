@@ -91,6 +91,8 @@ class NeuroptikonFrame( wx.Frame ):
             raise ValueError, gettext('Display windows must contain a display')
         frame.display.autoVisualize = False
         frame.display.setNetwork(network)
+        if network:
+            dispatcher.connect(frame.networkDidChangeSavePath, ('set', 'savePath'), network)
         frame.display._fromXMLElement(displayElement)
         frame.networkDidChangeSavePath()
         frame.setModified(False)
