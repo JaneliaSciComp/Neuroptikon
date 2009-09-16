@@ -4,6 +4,7 @@ for i in range(count):
 	neurons[i] = network.createNeuron(name = str(i))
 for i in range(count):
 	for j in range(count):
-		neurons[i].synapseOn(neurons[j])
+		if i != j:
+			neurons[i].synapseOn(neurons[j])
 
 display.autoLayout()
