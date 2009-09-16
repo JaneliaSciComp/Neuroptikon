@@ -111,6 +111,8 @@ for gapJunction in display.network.gapJunctions():
     display.setVisibleWeight(gapJunction, 0.5 if gapJunction.getAttribute('Count').value() < 5 else 2.0)
 
 for muscle in display.network.muscles():
+    if not any(display.visiblesForObject(muscle)):
+        display.visualizeObject(muscle)
     muscleX = muscle.getAttribute('A-P Position').value() * 4.0 - 2.0
     if muscle.name in ['MANAL', 'MVULVA']:
         muscleX += 0.02 # Shift the muscles slightly so they don't obscure the neurons at the same postion.
@@ -131,6 +133,8 @@ for muscle in display.network.muscles():
     display.setVisibleSize(muscle, (0.01, 0.02, .01))
 
 for innervation in display.network.innervations():
+    if not any(display.visiblesForObject(innervation)):
+        display.visualizeObject(innervation)
     display.setVisibleWeight(innervation, 0.5 if innervation.getAttribute('Count').value() < 5.0 else 2.0)
 
 display.centerView()
