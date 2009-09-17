@@ -168,9 +168,9 @@ def connect(receiver, signal=Any, sender=Any, weak=True):
 	try:
 		current = sendersBack.get( receiverID )
 		if current is None:
-			sendersBack[ receiverID ] = current = []
+			sendersBack[ receiverID ] = current = set([])
 		if senderkey not in current:
-			current.append(senderkey)
+			current.add(senderkey)
 	except:
 		pass
 
@@ -282,22 +282,23 @@ def getAllReceivers( sender = Any, signal = Any ):
 	the given signal from sender, each receiver should
 	be produced only once by the resulting generator
 	"""
-	receivers = {}
-	for set in (
-		# Get receivers that receive *this* signal from *this* sender.
-		getReceivers( sender, signal ),
-		# Add receivers that receive *any* signal from *this* sender.
-		getReceivers( sender, Any ),
-		# Add receivers that receive *this* signal from *any* sender.
-		getReceivers( Any, signal ),
-		# Add receivers that receive *any* signal from *any* sender.
-		getReceivers( Any, Any ),
-	):
-		for receiver in set:
+	receiverSets = ()
+	anyConnections = connections.get(id(Any), {})
+	receiverSets += (anyConnections.get(Any, []),)
+	if signal != Any:
+		receiverSets += (anyConnections.get(signal, []),)
+	if sender != Any:
+		senderConnections = connections.get(id(sender), {})
+		receiverSets += (senderConnections.get(Any, []),)
+		if signal != Any:
+			receiverSets += (senderConnections.get(signal, []),)
+	yieldedReceivers = {}
+	for receivers in receiverSets:
+		for receiver in receivers:
 			if receiver: # filter out dead instance-method weakrefs
 				try:
-					if not receivers.has_key( receiver ):
-						receivers[receiver] = 1
+					if not yieldedReceivers.has_key( receiver ):
+						yieldedReceivers[receiver] = 1
 						yield receiver
 				except TypeError:
 					# dead weakrefs raise TypeError on hash...
@@ -490,13 +491,13 @@ def _removeOldBackRefs(senderkey, signal, receiver, receivers):
 def _killBackref( receiver, senderkey ):
 	"""Do the actual removal of back reference from receiver to senderkey"""
 	receiverkey = id(receiver)
-	set = sendersBack.get( receiverkey, () )
-	while senderkey in set:
+	senderKeys = sendersBack.get( receiverkey, set([]) )
+	while senderkey in senderKeys:
 		try:
-			set.remove( senderkey )
+			senderKeys.remove( senderkey )
 		except:
 			break
-	if not set:
+	if not senderKeys:
 		try:
 			del sendersBack[ receiverkey ]
 		except KeyError:
