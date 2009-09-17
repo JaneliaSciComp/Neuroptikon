@@ -220,8 +220,12 @@ class NeuroptikonFrame( wx.Frame ):
     
         
     def _profileScript(self, scriptPath):
-        import cProfile
-        cProfile.runctx('self.runScript(' + repr(scriptPath) + ')', {}, {'self': self}, filename = scriptPath + '.profile')
+        import cProfile, pstats
+        profilePath = scriptPath + '.profile'
+        print 'Saving profile to ' + profilePath + ' ...'
+        cProfile.runctx('self.runScript(' + repr(scriptPath) + ')', {}, {'self': self}, filename = profilePath)
+        p = pstats.Stats(profilePath)
+        p.strip_dirs().sort_stats('time').print_stats(30)
     
         
     def onRunScript(self, event):
