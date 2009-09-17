@@ -1,6 +1,6 @@
 import wx
 from pydispatch import dispatcher
-import os, platform, sys
+import datetime, os, platform, sys
 import xml.etree.ElementTree as ElementTree
 from xml.dom import minidom
 import Display, Display.Display
@@ -209,6 +209,8 @@ class NeuroptikonFrame( wx.Frame ):
         
     def runScript(self, scriptPath):
         # TODO: It would be nice to provide progress for long running scripts.  Would need some kind of callback for scripts to indicate how far along they were.
+        if 'DEBUG' in os.environ:
+            startTime = datetime.datetime.now()
         prevDir = os.getcwd()
         os.chdir(os.path.dirname(scriptPath))
         locals = self.scriptLocals()
@@ -217,6 +219,8 @@ class NeuroptikonFrame( wx.Frame ):
             self.Refresh(False)
         finally:
             os.chdir(prevDir)
+        if 'DEBUG' in os.environ:
+            print 'Ran ' + os.path.basename(scriptPath) + ' in ' + str(datetime.datetime.now() - startTime) + ' seconds.'
     
         
     def _profileScript(self, scriptPath):
