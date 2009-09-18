@@ -1004,6 +1004,8 @@ class Visible(object):
         if opacity != self.opacity:
             self._opacity = opacity
             self._updateOpacity()
+            for pathVisible in self.connectedPaths:
+                pathVisible._updatePath()
             dispatcher.send(('set', 'opacity'), self)
     
     
@@ -1899,7 +1901,7 @@ class Visible(object):
         path.insert(0, self._pathStart.worldPosition())
         path.append(self._pathEnd.worldPosition())
         
-        if self._pathStart._shape:
+        if self._pathStart._shape and self._pathStart._opacity > 0.0:
             # Try to find the point where the path intersects the shape.
             rayOrigin = path[1]
             if len(path) > 2:
@@ -1918,7 +1920,7 @@ class Visible(object):
                     intersectionPoint = (intersectionPoint[0] * size[0] + path[0][0], intersectionPoint[1] * size[1] + path[0][1], intersectionPoint[2] * size[2] + path[0][2])
                 path[0:1] = [intersectionPoint]
         
-        if self._pathEnd._shape:
+        if self._pathEnd._shape and self._pathEnd._opacity > 0.0:
             # Try to find the point where the path intersects the shape.
             rayOrigin = path[-2]
             if len(path) > 2:
@@ -1956,7 +1958,21 @@ class Visible(object):
             self._rotation = (0, 1, 0, 0)
             
             if isinstance(self._shape, PathShape):
+                # Remove any glow.
+                glowColor = self._glowColor
+                self.setGlowColor(None)
+                
+                # Remove the previous geometry.
+                self._shapeGeode.removeDrawable(self._shape.geometry())
+                
+                # Update the geometry.
                 self._shape.setPoints(path)
+                
+                # Add the new geometry.
+                self._shapeGeode.addDrawable(self._shape.geometry())
+                
+                # Restore any glow.
+                self.setGlowColor(glowColor)
             
             self._updateTransform()
         
