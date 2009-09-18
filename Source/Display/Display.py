@@ -117,7 +117,6 @@ class Display(wx.glcanvas.GLCanvas):
         
         self.Bind(wx.EVT_SIZE, self.onSize)
         self.Bind(wx.EVT_PAINT, self.onPaint)
-        self.Bind(wx.EVT_IDLE, self.onIdle)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
         self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
@@ -145,6 +144,9 @@ class Display(wx.glcanvas.GLCanvas):
         self.SetDropTarget(DisplayDropTarget(self))
     
         self._nextUniqueId = -1
+        
+        self._animationTimer = wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.onAnimate, self._animationTimer)
         self._suppressRefresh = False
         
         self.defaultFlowColor = (1.0, 1.0, 1.0, 1.0)
@@ -674,14 +676,12 @@ class Display(wx.glcanvas.GLCanvas):
             self.SetCurrent()
             self.viewer.frame()
             self.SwapBuffers()
+     
     
-    
-    def onIdle(self, event):
-        if len(self.animatedVisibles) > 0:
-            self.Refresh()
-            event.RequestMore()
+    def onAnimate(self, event):
+        self.Refresh()
         event.Skip()
-    
+   
     
     def _getConvertedKeyCode(self,evt):
         key = evt.GetKeyCode()
@@ -913,12 +913,12 @@ class Display(wx.glcanvas.GLCanvas):
         
         if 'color' in params:
             visible.setColor(params['color'])
+        if 'shape' in params:
+            visible.setShape(params['shape'])
         if 'opacity' in params:
             visible.setOpacity(params['opacity'])
             if isinstance(object, Stimulus):
                 nodeVisible.setOpacity(params['opacity'])
-        if 'shape' in params:
-            visible.setShape(params['shape'])
         if 'sizeIsAbsolute' in params:
             visible.setSizeIsAbsolute(params['sizeIsAbsolute'])
         if 'texture' in params:
@@ -1713,6 +1713,11 @@ class Display(wx.glcanvas.GLCanvas):
         else:
             # Add the visibles to the new selection.
             for visible in visibles:
+                if isinstance(visible.client, Neurite) and not self.objectIsSelected(visible.client.neuron()):
+                    visibles = self.visiblesForObject(visible.client.neuron())
+                    if any(visibles):
+                        # TODO: only the neuron's visible connected to the neurite visible? 
+                        visible = visibles[0]
                 newSelection.add(visible)
         
         self._selectedShortestPath = findShortestPath
@@ -1774,39 +1779,99 @@ class Display(wx.glcanvas.GLCanvas):
     
     def _onSelectionOrShowFlowChanged(self, signal, sender):
         # Update the highlighting, animation and ghosting based on the current selection.
-        # TODO: this should all be handled by display rules which will also keep ghosting from blowing away opacity settings
+        # TODO: this should all be handled by display rules
         
         self._suppressRefresh = True
         
+        def _highlightObject(object):
+            # Highlight/animate all visibles for this object.
+            for visible in self.visiblesForObject(object):
+                if visible.isPath():
+                    visiblesToAnimate.add(visible)
+                else:
+                    visiblesToHighlight.add(visible)
+            # If it's a neurite then highlight all the way back to the soma.
+            while isinstance(object, Neurite):
+                _highlightObject(object.root)
+                object = object.root 
+            
         visiblesToHighlight = set()
         visiblesToAnimate = set()
-        for visible in self.selectedVisibles:
-            visiblesToHighlight.add(visible)
-            if visible.isPath():
-                # Highlight the visibles at each end of the path.
-                if visible.flowTo() or visible.flowFrom():
-                    visiblesToAnimate.add(visible)
-                [visiblesToHighlight.add(endPoint) for endPoint in visible.pathEndPoints()] 
-            else:
+        singleSelection = (len(self.selectedVisibles) == 1)
+        selectedObjects = self.selectedObjects()
+        for selectedVisible in self.selectedVisibles:
+            if isinstance(selectedVisible.client, Object):
+                # Highlight/animate objects connected to this object based on biological connectivity.
+                object = selectedVisible.client
+                _highlightObject(object)
                 if self.selectConnectedVisibles and not self._selectedShortestPath:
-                    singleSelection = (len(self.selectedVisibles) == 1)
-                    
+                    for connection in object.connections():
+                        if isinstance(connection, Stimulus):
+                            _highlightObject(connection)
+                        if isinstance(object, Neuron) or isinstance(object, Neurite):
+                            connectionHighlighted = False
+                            objectNeurites = set()
+                            
+                            # Highlight the counterpart(s) of the connection.
+                            for counterpart in connection.connections():
+                                if isinstance(counterpart, Neurite):
+                                    rootCounterpart = counterpart.neuron()
+                                else:
+                                    rootCounterpart = counterpart
+                                if rootCounterpart == object or (isinstance(object, Neurite) and rootCounterpart == object.neuron()):
+                                    objectNeurites.add(counterpart)
+                                elif singleSelection or rootCounterpart in selectedObjects:
+                                    _highlightObject(connection)
+                                    _highlightObject(counterpart)
+                                    connectionHighlighted = True
+                            # Highlight the neurites of the neuron involved in the connection.
+                            if connectionHighlighted:
+                                for objectNeurite in objectNeurites:
+                                    _highlightObject(objectNeurite)
+                        elif isinstance(object, Region):
+                            if isinstance(connection, Pathway):
+                                otherRegion = (set(connection.regions()) - set([object])).pop()
+                                if singleSelection or otherRegion in selectedObjects:
+                                    _highlightObject(connection)
+                                    _highlightObject(otherRegion)
+                            elif isinstance(connection, Arborization):
+                                if singleSelection or connection.neurite in selectedObjects or connection.neurite.neuron() in selectedObjects:
+                                    _highlightObject(connection)
+                                    _highlightObject(connection.neurite)
+                                if singleSelection:
+                                    for arborization in connection.neurite.neuron().arborizations():
+                                        if (connection.sendsOutput and arborization.receivesInput) or (connection.receivesInput and arborization.sendsOutput):
+                                            _highlightObject(arborization)
+                                            _highlightObject(arborization.region)
+                        elif isinstance(object, Muscle):
+                            if singleSelection or connection.neurite in selectedObjects or connection.neurite.neuron() in selectedObjects:
+                                _highlightObject(connection)
+                                _highlightObject(connection.neurite)
+                        else:
+                            _highlightObject(connection)
+                    if singleSelection:
+                        if isinstance(object, Neuron):
+                            for neurite in object.neurites():
+                                _highlightObject(neurite)
+                        elif isinstance(object, Neurite):
+                            _highlightObject(object.root)
+            else:
+                # The selected visible has no biological counterpart so highlight/animate connected visibles purely based on connectivity in the visualization.
+                visiblesToHighlight.add(selectedVisible)
+                if selectedVisible.isPath() and (selectedVisible.flowTo() or selectedVisible.flowFrom()):
+                    visiblesToAnimate.add(selectedVisible)
+                if selectedVisible.isPath():
+                    # Highlight the visibles at each end of the path.
+                    if selectedVisible.flowTo() or selectedVisible.flowFrom():
+                        visiblesToAnimate.add(selectedVisible)
+                    [visiblesToHighlight.add(endPoint) for endPoint in selectedVisible.pathEndPoints()] 
+                elif self.selectConnectedVisibles and not self._selectedShortestPath:
                     # Animate paths connecting to this non-path visible and highlight the other end of the paths.
-                    for pathVisible in visible.connectedPaths:
-                        otherVis = pathVisible._pathCounterpart(visible)
+                    for pathVisible in selectedVisible.connectedPaths:
+                        otherVis = pathVisible._pathCounterpart(selectedVisible)
                         if singleSelection or otherVis in self.selectedVisibles:
                             visiblesToAnimate.add(pathVisible)
                             visiblesToHighlight.add(otherVis)
-                        
-                        # If a single region is selected then extend the highlight to include the arborized regions of any neuron that arborizes this region.
-                        if isinstance(visible.client, Region) and isinstance(otherVis.client, Neuron):
-                            for pathVisible2 in otherVis.connectedPaths:
-                                if pathVisible2 != pathVisible and isinstance(pathVisible2.client, Arborization):
-                                    region2Vis = pathVisible2._pathCounterpart(otherVis)
-                                    if region2Vis.client == pathVisible2.client.region and (singleSelection or region2Vis in self.selectedVisibles) and ((pathVisible.flowTo() and pathVisible2.flowFrom()) or (pathVisible.flowFrom() and pathVisible2.flowTo())):
-                                        visiblesToHighlight.add(otherVis)
-                                        visiblesToAnimate.add(pathVisible2)
-                                        visiblesToHighlight.add(region2Vis)
         
         if len(self.selectedVisibles) == 0 and self._showFlow:
             for visibles in self.visibles.itervalues():
@@ -1842,6 +1907,14 @@ class Display(wx.glcanvas.GLCanvas):
             for visibles in self.visibles.itervalues():
                 for visible in visibles:
                     visible._updateOpacity()
+        
+        if any(self.animatedVisibles):
+            # Start the animation timer and cap the frame rate at 60 fps.
+            if not self._animationTimer.IsRunning():
+                self._animationTimer.Start(1000.0 / 60.0)
+        elif self._animationTimer.IsRunning():
+            # Don't need to redraw automatically if nothing is animated. 
+            self._animationTimer.Stop()
         
         self._suppressRefresh = False
     
