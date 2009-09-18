@@ -220,7 +220,8 @@ class NeuroptikonFrame( wx.Frame ):
         finally:
             os.chdir(prevDir)
         if 'DEBUG' in os.environ:
-            print 'Ran ' + os.path.basename(scriptPath) + ' in ' + str(datetime.datetime.now() - startTime) + ' seconds.'
+            runTime = datetime.datetime.now() - startTime
+            print 'Ran ' + os.path.basename(scriptPath) + ' in ' + str(round(runTime.seconds + runTime.microseconds / 1000000.0, 2)) + ' seconds.'
     
         
     def _profileScript(self, scriptPath):
