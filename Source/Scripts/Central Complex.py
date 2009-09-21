@@ -463,3 +463,4 @@ neuron.arborize(regions['EB-post-in'], True, False)
 neuron.arborize(regions['LTR-R'], True, False)
 
 display.autoLayout()
+display.setLabelsFloatOnTop(True)
