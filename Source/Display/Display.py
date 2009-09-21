@@ -29,7 +29,7 @@ from Shapes.Capsule import Capsule
 from Shapes.Cone import Cone
 from Shapes.Line import Line
 from Shapes.Ball import Ball
-
+from Library.Texture import Texture
 
 
 class Display(wx.glcanvas.GLCanvas):
@@ -1866,7 +1866,8 @@ class Display(wx.glcanvas.GLCanvas):
                                     _highlightObject(objectNeurite)
                         elif isinstance(object, Region):
                             if isinstance(connection, Pathway):
-                                otherRegion = (set(connection.regions()) - set([object])).pop()
+                                connectedRegion = (set(connection.regions()) & set([object] + object.allSubRegions())).pop()
+                                otherRegion = (set(connection.regions()) - set([connectedRegion])).pop()
                                 if singleSelection or otherRegion in selectedObjects:
                                     _highlightObject(connection)
                                     _highlightObject(otherRegion)

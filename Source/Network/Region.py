@@ -175,3 +175,9 @@ class Region(Object):
                 outputs += subRegion.outputs() 
         return outputs
     
+    
+    def allSubRegions(self):
+        allSubRegions = list()
+        for subRegion in self.subRegions:
+            allSubRegions += [subRegion] + subRegion.allSubRegions()
+        return allSubRegions
