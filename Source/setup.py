@@ -34,7 +34,8 @@ if sys.platform == 'darwin':
     wxversion.select('2.8')
 
 # Purge and then rebuild the documentation with Sphinx
-shutil.rmtree('Documentation/build')
+if os.path.exists('Documentation/build'):
+    shutil.rmtree('Documentation/build')
 try:
     from sphinx import main
 except:
@@ -62,7 +63,8 @@ if sys.platform == 'darwin':
     py2app_options = dict()
     
     dist_dir = 'build/Neuroptikon ' + app_version
-    shutil.rmtree(dist_dir)
+    if os.path.exists(dist_dir):
+        shutil.rmtree(dist_dir)
     py2app_options['dist_dir'] = dist_dir
     
     excludes += ['aetools', 'StdSuites.AppleScript_Suite']
@@ -100,7 +102,8 @@ elif sys.platform == 'win32':
     py2exe_options = dict()
     
     dist_dir = 'build/Neuroptikon ' + app_version
-    shutil.rmtree(dist_dir)
+    if os.path.exists(dist_dir):
+        shutil.rmtree(dist_dir)
     py2exe_options['dist_dir'] = dist_dir
     
     py2exe_options['packages'] = includes
