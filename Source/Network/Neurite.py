@@ -15,10 +15,10 @@ class Neurite(Object):
         """
         Neurites represent projections from :class:`neurons <Network.Neuron.Neuron>` or other neurites.
         
-        You create a neurite by messaging a :meth:`neuron <Network.Neuron.Neuron.createNeurite>` or :meth:`neurite <Network.Neurite.Neurite.createNeurite>`:
+        You create a neurite by messaging a :meth:`neuron <Network.Neuron.Neuron.extendNeurite>` or :meth:`neurite <Network.Neurite.Neurite.extendNeurite>`:
         
-        >>> neurite1 = neuron.createNeurite(...)
-        >>> neurite2 = neurite1.createNeurite(...)
+        >>> neurite1 = neuron.extendNeurite(...)
+        >>> neurite2 = neurite1.extendNeurite(...)
         """
         
         Object.__init__(self, network, *args, **keywords)
@@ -92,7 +92,7 @@ class Neurite(Object):
     
     
     def _creationScriptCommand(self, scriptRefs):
-        return scriptRefs[self.root.networkId] + '.createNeurite'
+        return scriptRefs[self.root.networkId] + '.extendNeurite'
     
     
     def _creationScriptParams(self, scriptRefs):
@@ -121,7 +121,14 @@ class Neurite(Object):
     
     def createNeurite(self, *args, **keywords):
         """
-        Create and return a neurite object that projects from this neurite.
+        DEPRECATED: Please use :meth:`extendNeurite() <Network.Neurite.Neurite.extendNeurite>` instead.
+        """
+        return self.extendNeurite(*args, **keywords)
+    
+    
+    def extendNeurite(self, *args, **keywords):
+        """
+        Create and return a neurite object that extends from this neurite.
         """
         
         neurite = Neurite(self.network, self, *args, **keywords)
@@ -131,11 +138,11 @@ class Neurite(Object):
     
     def neurites(self, recurse = True):
         """
-        Return a list of all neurites projecting from this neurite.
+        Return a list of all neurites extending from this neurite.
         
-        If recurse is True then the list will include all subsequently projecting neurites.
+        If recurse is True then the list will include all subsequently extending neurites.
         
-        If no neurites project from this neurite then an empty list will be returned.
+        If no neurites extend from this neurite then an empty list will be returned.
         """
         
         neurites = []
@@ -172,7 +179,7 @@ class Neurite(Object):
         """
         Return a list of all :class:`arborizations <Network.Arborization.Arborization>` extending from this neurite.
         
-        If recurse is True then the list will include arborizations that extend from all subsequently projecting neurites.
+        If recurse is True then the list will include arborizations that extend from all subsequently extending neurites.
         
         If this neurite does not arborize any regions then an empty list will be returned.
         """
@@ -207,7 +214,7 @@ class Neurite(Object):
         otherNeurites = []
         for otherObject in otherObjects:
             if isinstance(otherObject, Neuron) and otherObject.network == self.network:
-                otherNeurites += [otherObject.createNeurite()]
+                otherNeurites += [otherObject.extendNeurite()]
             elif isinstance(otherObject, Neurite) and otherObject.network == self.network:
                 otherNeurites += [otherObject]
             else:
@@ -224,7 +231,7 @@ class Neurite(Object):
         """
         Return a list of all :class:`synapses <Network.Synapse.Synapse>` in which this neurite and optionally any sub-neurites are pre- or post-synaptic.
         
-        If recurse is True then the list will include synapses from all subsequently projecting neurites.  If includePre is False then synapses where this neurite is pre-synaptic will be excluded.  If includePost is False then synapses where this neurite is post-synaptic will be excluded.
+        If recurse is True then the list will include synapses from all subsequently extending neurites.  If includePre is False then synapses where this neurite is pre-synaptic will be excluded.  If includePost is False then synapses where this neurite is post-synaptic will be excluded.
         
         If this neurite does not form a synapse with any other neurite then an empty list will be returned.
         """
@@ -250,7 +257,7 @@ class Neurite(Object):
         
         from Neuron import Neuron
         if isinstance(otherObject, Neuron) and otherObject.network == self.network:
-            otherNeurite = otherObject.createNeurite()
+            otherNeurite = otherObject.extendNeurite()
         elif isinstance(otherObject, Neurite) and otherObject.network == self.network:
             otherNeurite = otherObject
         else:
@@ -266,7 +273,7 @@ class Neurite(Object):
         """
         Return a list of all `gap junctions <Network.GapJunction.GapJunction>` involving this neuron.
         
-        If recurse is True then the list will include gap junctions from all subsequently projecting neurites.
+        If recurse is True then the list will include gap junctions from all subsequently extending neurites.
         
         If this neurite does not form a gap junction with any other neurite then an empty list will be returned.
         """
@@ -324,7 +331,7 @@ class Neurite(Object):
         """
         Return a list of all :class:`innervations <Network.Innervation.Innervation>` involving this neurite.
         
-        If recurse is True then the list will include innervations from all subsequently projecting neurites.
+        If recurse is True then the list will include innervations from all subsequently extending neurites.
         
         If this neurite does not innervate any muscles then an empty list will be returned.
         """
@@ -338,7 +345,7 @@ class Neurite(Object):
 
     def connections(self, recurse = True):
         """
-        Return a list of all objects that connect to this neurite and optionally any projecting neurites.
+        Return a list of all objects that connect to this neurite and optionally any extending neurites.
         
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
@@ -353,7 +360,7 @@ class Neurite(Object):
     
     def inputs(self, recurse = True):
         """
-        Return a list of all objects that send information into this neurite and optionally any projecting neurites.
+        Return a list of all objects that send information into this neurite and optionally any extending neurites.
         
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
@@ -371,7 +378,7 @@ class Neurite(Object):
     
     def outputs(self, recurse = True):
         """
-        Return a list of all objects that receive information from this neurite and optionally any projecting neurites.
+        Return a list of all objects that receive information from this neurite and optionally any extending neurites.
         
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>` or :class:`synapses <Network.Synapse.Synapse>`.
         """

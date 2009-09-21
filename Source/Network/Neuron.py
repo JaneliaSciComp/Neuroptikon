@@ -174,11 +174,18 @@ class Neuron(Object):
         children = Object._creationScriptChildren(self)
         children.extend(self._neurites)
         return children
-   
+    
     
     def createNeurite(self, *args, **keywords):
         """
-        Create and return a :class:`neurite <Network.Neurite.Neurite>` object that projects from the soma of this neuron.
+        DEPRECATED: Please use :meth:`extendNeurite() <Network.Neuron.Neuron.extendNeurite>` instead.
+        """
+        return self.extendNeurite(*args, **keywords)
+   
+    
+    def extendNeurite(self, *args, **keywords):
+        """
+        Create and return a :class:`neurite <Network.Neurite.Neurite>` object that extends from the soma of this neuron.
         """
         
         neurite = Neurite(self.network, self, *args, **keywords)
@@ -189,11 +196,11 @@ class Neuron(Object):
     
     def neurites(self, recurse = True):
         """
-        Return a list of all :class:`neurite <Network.Neurite.Neurite>` projecting from this neuron.
+        Return a list of all :class:`neurite <Network.Neurite.Neurite>` extending from this neuron.
         
-        If recurse is True then all subsequently projecting neurites will be included with the neurites that project from the soma.
+        If recurse is True then all subsequently extending neurites will be included with the neurites that extend from the soma.
         
-        If no neurites project from the soma of this neuron then an empty list will be returned.
+        If no neurites extend from the soma of this neuron then an empty list will be returned.
         """
         
         neurites = list(self._neurites)
@@ -210,7 +217,7 @@ class Neuron(Object):
         Returns the arborization object that is created.
         """
         
-        return self.createNeurite().arborize(region, sendsOutput, receivesInput, *args, **keywordArgs)
+        return self.extendNeurite().arborize(region, sendsOutput, receivesInput, *args, **keywordArgs)
     
     
     def arborizations(self):
@@ -233,7 +240,7 @@ class Neuron(Object):
         Returns the synapse object that is created.
         """
         
-        neurite = self.createNeurite()
+        neurite = self.extendNeurite()
         return neurite.synapseOn(otherObject, activation = self.activation, *args, **keywordArgs)
     
     
@@ -259,7 +266,7 @@ class Neuron(Object):
         Returns the gap junction object that is created.
         """
         
-        neurite = self.createNeurite()
+        neurite = self.extendNeurite()
         return neurite.gapJunctionWith(otherObject, *args, **keywordArgs)
     
     
@@ -283,7 +290,7 @@ class Neuron(Object):
         Returns the :class:`innervation <Network.Innervation.Innervation>` object that is created.
         """
         
-        neurite = self.createNeurite()
+        neurite = self.extendNeurite()
         return neurite.innervate(muscle, *args, **keywordArgs)
     
     
@@ -302,7 +309,7 @@ class Neuron(Object):
 
     def connections(self, recurse = True):
         """
-        Return a list of all objects that connect to this neuron and optionally any projecting :class:`neurites <Network.Neurite.Neurite>`.
+        Return a list of all objects that connect to this neuron and optionally any extending :class:`neurites <Network.Neurite.Neurite>`.
         
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
@@ -316,7 +323,7 @@ class Neuron(Object):
     
     def inputs(self, recurse = True):
         """
-        Return a list of all objects that send information into this neuron and optionally any projecting :class:`neurites <Network.Neurite.Neurite>`.
+        Return a list of all objects that send information into this neuron and optionally any extending :class:`neurites <Network.Neurite.Neurite>`.
         
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
@@ -330,7 +337,7 @@ class Neuron(Object):
     
     def outputs(self, recurse = True):
         """
-        Return a list of all objects that receive information from this neuron and optionally any projecting :class:`neurites <Network.Neurite.Neurite>`.
+        Return a list of all objects that receive information from this neuron and optionally any extending :class:`neurites <Network.Neurite.Neurite>`.
         
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>` or :class:`synapses <Network.Synapse.Synapse>`.
         """

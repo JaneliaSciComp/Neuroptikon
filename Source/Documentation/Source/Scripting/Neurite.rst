@@ -10,14 +10,14 @@ Neurites
 
 Neurites represent cellular projections from the soma or other neurites of a :class:`neuron <Network.Neuron.Neuron>`.
 
-You create a neurite by messaging a :meth:`neuron <Network.Neuron.Neuron.createNeurite>` or :meth:`neurite <Network.Neurite.Neurite.createNeurite>`:
+You create a neurite by messaging a :meth:`neuron <Network.Neuron.Neuron.extendNeurite>` or :meth:`neurite <Network.Neurite.Neurite.extendNeurite>`:
 
->>> neurite1 = neuron.createNeurite(...)
->>> neurite2 = neurite1.createNeurite(...)
+>>> neurite1 = neuron.extendNeurite(...)
+>>> neurite2 = neurite1.extendNeurite(...)
 
 .. automethod:: Network.Neurite.Neurite.neuron
 
-.. automethod:: Network.Neurite.Neurite.createNeurite
+.. automethod:: Network.Neurite.Neurite.extendNeurite
 .. automethod:: Network.Neurite.Neurite.neurites
 
 .. automethod:: Network.Neurite.Neurite.arborize

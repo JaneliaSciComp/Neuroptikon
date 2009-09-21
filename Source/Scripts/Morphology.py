@@ -10,19 +10,19 @@ regionA = network.createRegion(name = 'A')
 regionB = network.createRegion(name = 'B')
 
 # Create the root of the process.
-neurite1 = neuron1.createNeurite()
+neurite1 = neuron1.extendNeurite()
 
 # The process first branches to arborize region A.
-neurite2 = neurite1.createNeurite()
+neurite2 = neurite1.extendNeurite()
 neurite2.arborize(regionA, sendsOutput = True)
-neurite3 = neurite1.createNeurite()
+neurite3 = neurite1.extendNeurite()
 
 # The process then branches again to arborize region B.
-neurite4 = neurite3.createNeurite()
+neurite4 = neurite3.extendNeurite()
 neurite4.arborize(regionB, sendsOutput = True)
 
 # The process branches a final time and synapses on the second neuron.
-neurite5 = neurite3.createNeurite()
+neurite5 = neurite3.extendNeurite()
 neurite5.synapseOn(neuron2)
 
 # By default the morphology of the process is not shown, the arborizations and synapse in the visualization will connect directly to the neuron's soma.

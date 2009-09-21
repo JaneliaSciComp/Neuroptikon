@@ -14,7 +14,7 @@ You create a neuron by messaging the network:
 
 >>> neuron1 = network.createNeuron(...)
 
-.. automethod:: Network.Neuron.Neuron.createNeurite
+.. automethod:: Network.Neuron.Neuron.extendNeurite
 .. automethod:: Network.Neuron.Neuron.neurites
 
 .. automethod:: Network.Neuron.Neuron.arborize
