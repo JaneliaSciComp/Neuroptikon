@@ -346,10 +346,16 @@ class Display(wx.glcanvas.GLCanvas):
                     visible._toScriptFile(scriptFile, scriptRefs, displayRef)
         
         objectRefs = []
+        visibleIds = []
         for visible in self.selectedVisibles:
-            objectRefs.append(scriptRefs[visible.client.networkId])
-        if len(objectRefs) > 0:
+            if visible.client:
+                objectRefs.append(scriptRefs[visible.client.networkId])
+            else:
+                visibleIds += [visible.displayId]
+        if any(objectRefs):
             scriptFile.write(displayRef + '.selectObjects([' + ', '.join(objectRefs) + '])\n')
+        for visibleId in visibleIds:
+            scriptFile.write(displayRef + '._selectVisibles([' + displayRef + '.visibleWithId(' + visibleId + ')], extend = True)')
         
         scriptFile.write('\n' + displayRef + '.centerView()\n')
     
@@ -951,6 +957,12 @@ class Display(wx.glcanvas.GLCanvas):
         if 'path' in params:
             params['pathMidPoints'] = params['path']
             del params['path']
+        if 'pathEndPoints' in params:
+            pathStart, pathEnd = params['pathEndPoints']
+        if 'flowTo' in params:
+            pathFlowsTo = params['flowTo']
+        if 'flowFrom' in params:
+            pathFlowsTo = params['flowFrom']
         
         parentVisibles = self.visiblesForObject(parentObject)
         self.addVisible(visible, parentVisibles[0] if len(parentVisibles) == 1 else None)
@@ -967,8 +979,15 @@ class Display(wx.glcanvas.GLCanvas):
             self.addVisible(edgeVisible)
         else:
             if pathStart is not None and pathEnd is not None:
-                pathStartVisibles = self.visiblesForObject(pathStart)
-                pathEndVisibles = self.visiblesForObject(pathEnd)
+                # The path start and end can either be objects or visibles.
+                if isinstance(pathStart, Object):
+                    pathStartVisibles = self.visiblesForObject(pathStart)
+                else:
+                    pathStartVisibles = [pathStart]
+                if isinstance(pathEnd, Object):
+                    pathEndVisibles = self.visiblesForObject(pathEnd)
+                else:
+                    pathEndVisibles = [pathEnd]
                 if len(pathStartVisibles) == 1 and len(pathEndVisibles) == 1:
                     visible.setPathEndPoints(pathStartVisibles[0], pathEndVisibles[0])
                     visible.setPathMidPoints(params.get('pathMidPoints', []))
@@ -1468,8 +1487,8 @@ class Display(wx.glcanvas.GLCanvas):
             midPoints = swap
         
         if (not isinstance(object, Object) or object.network != self.network or 
-            not isinstance(startObject, Object) or startObject.network != self.network or 
-            not isinstance(endObject, Object) or endObject.network != self.network):
+            not isinstance(startObject, (Object, Visible)) or (isinstance(startObject, Object) and startObject.network != self.network) or 
+            not isinstance(endObject, (Object, Visible)) or (isinstance(endObject, Object) and endObject.network != self.network)):
             raise ValueError, 'The object, startObject and endObject arguments passed to setVisiblePath() must be objects from the network being visualized by this display.'
         if midPoints != None:
             if not isinstance(midPoints, (list, tuple)):
@@ -1488,12 +1507,18 @@ class Display(wx.glcanvas.GLCanvas):
         elif isinstance(object, Stimulus):
             visible = visibles[0 if visibles[0].isPath() else 1]
         if visible is not None:
-            startVisibles = self.visiblesForObject(startObject)
-            if len(startVisibles) != 1:
-                raise ValueError, 'The starting object of the path is not visualized.'
-            endVisibles = self.visiblesForObject(endObject)
-            if len(endVisibles) != 1:
-                raise ValueError, 'The ending object of the path is not visualized.'
+            if isinstance(startObject, Object):
+                startVisibles = self.visiblesForObject(startObject)
+                if len(startVisibles) != 1:
+                    raise ValueError, 'The starting object of the path is not visualized.'
+            else:
+                startVisibles = [startObject]
+            if isinstance(endObject, Object):
+                endVisibles = self.visiblesForObject(endObject)
+                if len(endVisibles) != 1:
+                    raise ValueError, 'The ending object of the path is not visualized.'
+            else:
+                endVisibles = [endObject]
             visible.setPathEndPoints(startVisibles[0], endVisibles[0])
             if midPoints != None:
                 visible.setPathMidPoints(midPoints)

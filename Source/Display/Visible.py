@@ -4,8 +4,10 @@ import osg, osgDB, osgFX, osgText
 
 from Shape import Shape, UnitShape, PathShape
 
+from Network.Object import Object
 from Network.Region import Region
 from Network.Neuron import Neuron
+from Network.Neurite import Neurite
 from Network.Arborization import Arborization
 from Network.Stimulus import Stimulus
 from Network.Attribute import Attribute
@@ -587,6 +589,7 @@ class Visible(object):
         if self.isPath():
             params['weight'] = self.weight()
             if self._flowTo:
+                params['flowTo'] = True
                 if self.flowToColor() != None:
                     params['flowToColor'] = self.flowToColor()
                 if self.flowToSpacing() != None:
@@ -596,6 +599,7 @@ class Visible(object):
                 if self.flowToSpread() != None:
                     params['flowToSpread'] = self.flowToSpread()
             if self._flowFrom:
+                params['flowFrom'] = True
                 if self.flowFromColor() != None:
                     params['flowFromColor'] = self.flowFromColor()
                 if self.flowFromSpacing() != None:
@@ -605,7 +609,7 @@ class Visible(object):
                 if self.flowFromSpread() != None:
                     params['flowFromSpread'] = self.flowFromSpread()
             if not isinstance(self.client, Stimulus):
-                params['pathEndPoints'] = (self._pathStart.client, self._pathEnd.client)
+                params['pathEndPoints'] = (self._pathStart, self._pathEnd)
                 if self._pathMidPoints != []:
                     params['pathMidPoints'] = self._pathMidPoints
             
@@ -620,8 +624,11 @@ class Visible(object):
             if key in defaultParams and params[key] == defaultParams[key]:
                 del params[key]
         
-        scriptRef = scriptRefs[self.client.networkId]
-        if self.display.autoVisualize:
+        if self.client:
+            scriptRef = scriptRefs[self.client.networkId]
+        else:
+            scriptRef = 'visible' + str(self.displayId)
+        if self.client and not isinstance(self.client, Neurite) and self.display.autoVisualize:
             # Change the existing visualization of the object.
             if '(' in scriptRef and len(params) > 1:
                 scriptFile.write('object = ' + scriptRef + '\n')
@@ -675,7 +682,19 @@ class Visible(object):
                 scriptFile.write('%s.setArrangedWeight(%s, %s)\n' % (displayRef, scriptRef, str(self.arrangedWeight)))
             if 'pathEndPoints' in params:
                 startObject, endObject = params['pathEndPoints']
-                scriptFile.write('%s.setVisiblePath(%s, %s, %s' % (displayRef, scriptRef, scriptRefs[startObject.networkId], scriptRefs[endObject.networkId]))
+                if isinstance(startObject, Object):
+                    startRef = scriptRefs[startObject.networkId]
+                elif startObject.client:
+                    startRef = scriptRefs[startObject.client.networkId]
+                else:
+                    startRef = 'visible' + str(startObject.displayId)
+                if isinstance(endObject, Object):
+                    endRef = scriptRefs[endObject.networkId]
+                elif endObject.client:
+                    endRef = scriptRefs[endObject.client.networkId]
+                else:
+                    endRef = 'visible' + str(endObject.displayId)
+                scriptFile.write('%s.setVisiblePath(%s, %s, %s' % (displayRef, scriptRef, startRef, endRef))
                 if 'pathMidPoints' in params:
                     scriptFile.write(', ' + str(params['pathMidPoints']))
                 scriptFile.write(')\n')
@@ -703,9 +722,16 @@ class Visible(object):
                 scriptFile.write(')\n')
         else:
             # Manually visualize the object.
-            scriptFile.write('%s.visualizeObject(%s' % (displayRef, scriptRef))
+            if self.client:
+                scriptFile.write('%s.visualizeObject(%s' % (displayRef, scriptRef))
+            else:
+                scriptFile.write('%s = %s.visualizeObject(None' % (scriptRef, displayRef))
             for key, value in params.iteritems():
-                if isinstance(value, str):
+                if key == 'pathEndPoints':
+                    startRef = ('visible' + str(self._pathStart.displayId)) if not self._pathStart.client else scriptRefs[self._pathStart.client.networkId]
+                    endRef = ('visible' + str(self._pathEnd.displayId)) if not self._pathEnd.client else scriptRefs[self._pathEnd.client.networkId]
+                    valueText = '(' + startRef + ', ' + endRef + ')'
+                elif isinstance(value, str):
                     valueText = '\'' + value.replace('\\', '\\\\').replace('\'', '\\\'') + '\''
                 elif isinstance(value, Texture):
                     valueText = 'library.texture(\'%s\')' % (value.identifier.replace('\\', '\\\\').replace('\'', '\\\''))
@@ -713,6 +739,7 @@ class Visible(object):
                     valueText = str(value)
                 scriptFile.write(', %s = %s' % (key, valueText))
             scriptFile.write(')\n')
+                
         
         for childVisible in self.children:
             childVisible._toScriptFile(scriptFile, scriptRefs, displayRef)
