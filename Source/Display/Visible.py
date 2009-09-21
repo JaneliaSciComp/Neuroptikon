@@ -27,7 +27,7 @@ class Visible(object):
     """
     Instances of this class map a network object (neurion, region, etc.) to a specific display.  They capture all of the attributes needed to render the object.
     
-    You should never create an instance of this class directly.  Instead use the value returned by calling :meth:`visualizeObject() <Display.Display.Display.visualizeObject>` on a display.
+    You should never create an instance of this class directly.  Instead use the value returned by calling :meth:`visualizeObject() <Display.Display.Display.visualizeObject>` on a display.  If you want to have a purely visual object that does not represent any object in the biological network then pass None to visualizeObject().
     """
     
     try:

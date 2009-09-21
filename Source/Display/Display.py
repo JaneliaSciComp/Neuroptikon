@@ -710,6 +710,10 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def visiblesForObject(self, object):
+        """
+        Return the list of :class:`visible proxies <Display.Visible.Visible>` for the given object or an empty list if the object is not visualized.
+        """
+        
         return self.visibles[object.networkId] if object and object.networkId in self.visibles else []
     
     
@@ -865,6 +869,13 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def visualizeObject(self, object, **keywordArgs):
+        """
+        Create a visual representation of the :class:`object <Network.Object.Object>`.
+        
+        If you want to have a purely visual object that does not represent any object in the biological network then pass None.
+        
+        Returns the :class:`visible proxy <Display.Visible.Visible>` of the object.
+        """
         # TODO: replace this whole block with display rules
         
         visible = Visible(self, object)

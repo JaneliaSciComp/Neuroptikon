@@ -58,6 +58,8 @@ Use the following methods to change the settings for individual objects in the v
 .. automethod:: Display.Display.Display.setLabelColor
 .. automethod:: Display.Display.Display.setLabelPosition
 
+.. automethod:: Display.Display.Display.visiblesForObject
+
 .. _selection:
 
 Selection
@@ -102,7 +104,7 @@ The appearance of objects that are visually nested within each other can be cont
 
 .. _manual:
 
-Manually visulizing objects
+Manually visualizing objects
 ---------------------------
 
 By default any object added to the display's network is automatically visualized.  However you can set the display's autoVisualize attribute to False and then choose which parts of the network should be visualized.
