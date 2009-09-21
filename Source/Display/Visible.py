@@ -609,7 +609,7 @@ class Visible(object):
                 if self.flowFromSpread() != None:
                     params['flowFromSpread'] = self.flowFromSpread()
             if not isinstance(self.client, Stimulus):
-                params['pathEndPoints'] = (self._pathStart, self._pathEnd)
+                params['pathEndPoints'] = (self._pathStart.client or self._pathStart, self._pathEnd.client or self._pathEnd)
                 if self._pathMidPoints != []:
                     params['pathMidPoints'] = self._pathMidPoints
             

@@ -77,7 +77,7 @@ class Neurite(Object):
     
     
     def _needsScriptRef(self):
-        return self._pathway is not None or len(self.connections()) > 1 or Object._needsScriptRef(self)
+        return self._pathway is not None or isinstance(self.root, Neurite) or len(self.connections()) > 1 or any(self._neurites) or Object._needsScriptRef(self)
     
     
     def _createScriptRef(self, scriptRefs):
