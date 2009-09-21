@@ -1,6 +1,8 @@
 '''
 Visualize any neurites that are not dedicated to a single connection, e.g. those created by the convenience methods like Neuron.synapseOn() or Neurite.arborize().
 
+If nothing is selected then all neurites in the network will be visualized.  If there is a selection then only the neurites connected to the arborizations and synapses in the selection will be visualized.
+
 This functionality will eventually be folded into Neuroptikon. 
 '''
 
