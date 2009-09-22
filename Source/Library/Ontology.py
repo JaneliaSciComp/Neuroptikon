@@ -42,7 +42,11 @@ class Ontology(LibraryItem, dict):
     def __init__(self, identifier = None, *args, **keywordArgs):
         LibraryItem.__init__(self, identifier, *args, **keywordArgs)
         self.rootTerms = []
+        self.name = identifier
     
+    
+    def __repr__(self):
+        return 'Ontology \'%s\' (%d roots)' % (self.name, len(self.rootTerms))
     
     def importOBO(self, filePath):
         unresolvedRefs = []
