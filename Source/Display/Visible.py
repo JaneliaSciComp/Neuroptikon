@@ -796,6 +796,8 @@ class Visible(object):
                 self._updatePath()
             else:
                 self._updateTransform()
+            
+            self._updateOpacity()
     
     
     def _displayChangedShowName(self, signal, sender):
