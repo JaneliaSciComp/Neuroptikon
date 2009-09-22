@@ -332,14 +332,15 @@ class Display(wx.glcanvas.GLCanvas):
         scriptFile.write(displayRef + '.setShowFlow(' + str(self._showFlow) + ')\n')
         scriptFile.write(displayRef + '.setUseGhosts(' + str(self._useGhosts) + ')\n')
         scriptFile.write(displayRef + '.setUseMouseOverSelecting(' + str(self._useMouseOverSelecting) + ')\n')
+        scriptFile.write(displayRef + '.setLabelsFloatOnTop(' + str(self._labelsFloatOnTop) + ')\n')
         scriptFile.write('\n')
         
-        # First visualize all of the nodes
+        # First visualize all of the nodes.
         for visibles in self.visibles.itervalues():
             for visible in visibles:
                 if not visible.isPath() and visible.parent is None and not isinstance(visible.client, Stimulus):
                     visible._toScriptFile(scriptFile, scriptRefs, displayRef)
-        # Next visualize all of the connections between the nodes
+        # Next visualize all of the connections between the nodes.
         for visibles in self.visibles.itervalues():
             for visible in visibles:
                 if visible.isPath():
