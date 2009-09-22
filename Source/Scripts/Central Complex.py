@@ -10,11 +10,11 @@ display.setLabelPosition(protocerebralBridge, (0.0, 0.5, 0.0))
 leftProtocerebralBridge = network.createRegion(name = 'Left protocerebral bridge', parentRegion = protocerebralBridge)
 display.setLabel(leftProtocerebralBridge, '')
 for i in range(8, 0, -1):
-    regions['PB-L' + str(i)] = network.createRegion(ontologyTerm = flyBrainOnt.findTerm(abbreviation= 'pcb' + str(i)), abbreviation = str(i), parentRegion = leftProtocerebralBridge)
+    regions['PB-L' + str(i)] = network.createRegion(name = 'PCB L' + str(i), ontologyTerm = flyBrainOnt.findTerm(abbreviation= 'pcb' + str(i)), abbreviation = str(i), parentRegion = leftProtocerebralBridge)
 rightProtocerebralBridge = network.createRegion(name = 'Right protocerebral bridge', parentRegion = protocerebralBridge)
 display.setLabel(rightProtocerebralBridge, '')
 for i in range(1, 9):
-    regions['PB-R' + str(i)] = network.createRegion(ontologyTerm = flyBrainOnt.findTerm(abbreviation = 'pcb' + str(i)), abbreviation = str(i), parentRegion = rightProtocerebralBridge)
+    regions['PB-R' + str(i)] = network.createRegion(name = 'PCB R' + str(i), ontologyTerm = flyBrainOnt.findTerm(abbreviation = 'pcb' + str(i)), abbreviation = str(i), parentRegion = rightProtocerebralBridge)
 display.setArrangedSpacing(protocerebralBridge, .005, recurse = True)
 
 regions['DLPC-L'] = network.createRegion(name = 'DLPC-L', abbreviation = 'DLPC')
