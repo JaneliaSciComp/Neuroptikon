@@ -438,12 +438,12 @@ class Visible(object):
                 attribute = None
                 if isinstance(attributeValue, str):
                     attribute = Attribute(self._shape, attributeName, Attribute.STRING_TYPE, attributeValue)
+                elif isinstance(attributeValue, bool):  # bool is a sub-class of int so must be tested before it 
+                    attribute = Attribute(self._shape, attributeName, Attribute.BOOLEAN_TYPE, attributeValue)
                 elif isinstance(attributeValue, int):
                     attribute = Attribute(self._shape, attributeName, Attribute.INTEGER_TYPE, attributeValue)
                 elif isinstance(attributeValue, float):
                     attribute = Attribute(self._shape, attributeName, Attribute.DECIMAL_TYPE, attributeValue)
-                elif isinstance(attributeValue, bool):
-                    attribute = Attribute(self._shape, attributeName, Attribute.BOOLEAN_TYPE, attributeValue)
                 if attribute != None:
                     attribute._toXMLElement(shapeElement)
                 
