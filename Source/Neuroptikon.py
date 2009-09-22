@@ -383,7 +383,7 @@ if __name__ == "__main__":
                     
                     # Create a default display if none were specified in the file.
                     if len(network.displays) == 0:
-                        self.displayNetwork(network)
+                        self.displayNetwork(network).centerView()
                 except:
                     raise
         
