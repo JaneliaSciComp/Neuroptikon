@@ -1,11 +1,8 @@
 """
 py2app/py2exe build script for Neuroptikon
 
-Usage (Mac OS X):
-    python setup.py --quiet py2app
-
-Usage (Windows):
-    python setup.py --quiet py2exe
+Usage:
+    python setup.py [--quiet]
 """
 
 # Make sure setuptools is installed.
@@ -57,6 +54,7 @@ if sys.platform == 'darwin':
     # 6. export PYTHONPATH=/usr/local/lib/wxPython-unicode/lib/python2.5/site-packages:/Library/Python/2.5
     # 7. python setup.py --quiet py2app
     
+    sys.argv += ['py2app']
     setup_options['setup_requires'] = ['py2app']
     setup_options['app'] = app_scripts
     
@@ -96,6 +94,7 @@ elif sys.platform == 'win32':
     
     import py2exe
     
+    sys.argv += ['py2exe']
     setup_options['setup_requires'] = ['py2exe']
     setup_options['windows'] = [{'script': app_scripts[0], 'icon_resources':  [(0, '../Artwork/Neuroptikon.ico')]}]
     
