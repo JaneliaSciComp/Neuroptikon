@@ -1,14 +1,15 @@
 """ This script demonstrates creating a simple visualization without anything in the biological layer. """
 
+# Create some nodes
 nodes = {}
 for i in range(10):
     nodes[i] = display.visualizeObject(None)
 
-for i in range(1):
-    for j in range(2):
+# Create a bunch of edges
+for i in range(10):
+    for j in range(10):
         if i != j:
-            edge = display.visualizeObject(None, shape = shapes['Line']())
-            edge.setPathEndPoints(nodes[i], nodes[j])
-            edge.setFlowTo(True)
+            display.visualizeObject(None, shape = shapes['Line'](), pathEndPoints = (nodes[i], nodes[j]), flowTo = True)
 
-display.performLayout(layouts['ForceDirectedLayout'])
+# Try to lay them out nicely.
+display.performLayout()
