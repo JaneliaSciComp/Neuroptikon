@@ -75,6 +75,7 @@ class Pathway(Object):
             object.region1 = network.objectWithId(regionId)
             if object.region1 is None:
                 raise ValueError, gettext('Region with id "%s" does not exist') % (regionId)
+            object.region1.pathways += [object]
             sends = str(xmlElement.get('region1Projects')).lower()
             if sends.lower() in ['true', 't', '1', 'yes']:
                 object.region1Projects = True
@@ -86,6 +87,7 @@ class Pathway(Object):
             object.region2 = network.objectWithId(regionId)
             if object.region2 is None:
                 raise ValueError, gettext('Region with id "%s" does not exist') % (regionId)
+            object.region2.pathways += [object]
             sends = str(xmlElement.get('region2Projects')).lower()
             if sends.lower() in ['true', 't', '1', 'yes']:
                 object.region2Projects = True
