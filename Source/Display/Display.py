@@ -1868,10 +1868,12 @@ class Display(wx.glcanvas.GLCanvas):
                         elif isinstance(object, Region):
                             if isinstance(connection, Pathway):
                                 connectedRegion = (set(connection.regions()) & set([object] + object.allSubRegions())).pop()
-                                otherRegion = (set(connection.regions()) - set([connectedRegion])).pop()
-                                if singleSelection or otherRegion in selectedObjects:
-                                    _highlightObject(connection)
-                                    _highlightObject(otherRegion)
+                                nonSelf = set(connection.regions()) - set([connectedRegion])
+                                if any(nonSelf):
+                                    otherRegion = nonSelf.pop()
+                                    if singleSelection or otherRegion in selectedObjects:
+                                        _highlightObject(connection)
+                                        _highlightObject(otherRegion)
                             elif isinstance(connection, Arborization):
                                 if singleSelection or connection.neurite in selectedObjects or connection.neurite.neuron() in selectedObjects:
                                     _highlightObject(connection)

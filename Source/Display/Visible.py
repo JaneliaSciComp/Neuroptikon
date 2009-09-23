@@ -82,7 +82,7 @@ class Visible(object):
         self._opacity = 1.0
         
         self._dependencies = set()
-        self.dependentVisibles = []
+        self.dependentVisibles = set()
         
         # Path attributes
         self._pathMidPoints = []
@@ -2023,29 +2023,29 @@ class Visible(object):
         if startVisible != self._pathStart or endVisible != self._pathEnd:
             if startVisible != self._pathStart:
                 if self._pathStart:
-                    self._pathStart.dependentVisibles.remove(self)
+                    self._pathStart.dependentVisibles.discard(self)
                     self._pathStart.connectedPaths.remove(self)
-                    self._dependencies.remove(self._pathStart)
+                    self._dependencies.discard(self._pathStart)
                 self._pathStart = startVisible
                 if self._pathStart:
                     self._addDependency(startVisible, 'position')
                     self._addDependency(startVisible, 'size')
                     self._addDependency(startVisible, 'shape')
                     startVisible.connectedPaths.append(self)
-                    self._pathStart.dependentVisibles += [self]
+                    self._pathStart.dependentVisibles.add(self)
             
             if endVisible != self._pathEnd:
                 if self._pathEnd:
-                    self._pathEnd.dependentVisibles.remove(self)
+                    self._pathEnd.dependentVisibles.discard(self)
                     self._pathEnd.connectedPaths.remove(self)
-                    self._dependencies.remove(self._pathEnd)
+                    self._dependencies.discard(self._pathEnd)
                 self._pathEnd = endVisible
                 if self._pathEnd:
                     self._addDependency(endVisible, 'position')
                     self._addDependency(endVisible, 'size')
                     self._addDependency(endVisible, 'shape')
                     endVisible.connectedPaths.append(self)
-                    self._pathEnd.dependentVisibles += [self]
+                    self._pathEnd.dependentVisibles.add(self)
             
             if self._pathStart and self._pathEnd:
                 self._updatePath()
