@@ -135,4 +135,6 @@ class ForceDirectedLayout(Layout):
                 else:
                     position = (position[0], position[1], position[2])
                 node.setPosition(position)
+        for edge in edges:
+            edge.setPathMidPoints([])
     
