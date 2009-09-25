@@ -32,4 +32,4 @@ neuron5.arborize(regionB, False, True)
 muscleY = network.createMuscle(name = 'Muscle Y')
 neuron5.innervate(muscleY)
 
-display.performLayout(layouts['ForceDirectedLayout'])
+display.performLayout()
