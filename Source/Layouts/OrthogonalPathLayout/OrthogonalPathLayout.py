@@ -5,6 +5,7 @@ import numpy as N
 import pyheapq
 from heapset import HeapSet
 from copy import copy
+import os
 
 
 class NotImplemented(Exception):
@@ -16,8 +17,21 @@ class VisibleMap:
     def __init__(self, display, nodeDims):
         self.display = display
         self._occupiedNodes = N.ones(list(nodeDims) + [2], N.int_) * -1
+        self._distances = {}
         self.allowDiagonalNeighbors = False
         self.maxHops = 20
+        
+        if self.allowDiagonalNeighbors:
+            # TODO: better hop selection when this is enabled
+            if self.display.viewDimensions == 2:
+                self.offsets = [N.array((x, y)) for x in range(-1, 2) for y in range(-1, 2) if x != 0 or y != 0]
+            elif self.display.viewDimensions == 3:
+                self.offsets = [N.array((x, y, z)) for x in range(-1, 2) for y in range(-1, 2) for z in range(-1, 2) if x != 0 or y != 0 or z != 0]
+        else:
+            if self.display.viewDimensions == 2:
+                self.offsets = [N.array((x, y)) for x, y in [(-1, 0), (1, 0), (0, -1), (0, 1)]]
+            elif self.display.viewDimensions == 3:
+                self.offsets = [N.array((x, y, z)) for x, y in [(-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)]]
     
     
     def copy(self):
@@ -32,20 +46,9 @@ class VisibleMap:
     
     def neighbor_nodes(self, node):
         node = N.array(node)
-        if self.allowDiagonalNeighbors:
-            # TODO: better hop selection when this is enabled
-            if self.display.viewDimensions == 2:
-                offsets = [N.array((x, y)) for x in range(-1, 2) for y in range(-1, 2) if x != 0 or y != 0]
-            elif self.display.viewDimensions == 3:
-                offsets = [N.array((x, y, z)) for x in range(-1, 2) for y in range(-1, 2) for z in range(-1, 2) if x != 0 or y != 0 or z != 0]
-        else:
-            if self.display.viewDimensions == 2:
-                offsets = [N.array((x, y)) for x, y in [(-1, 0), (1, 0), (0, -1), (0, 1)]]
-            elif self.display.viewDimensions == 3:
-                offsets = [N.array((x, y, z)) for x, y in [(-1, 0, 0), (1, 0, 0), (0, -1, 0), (0, 1, 0), (0, 0, -1), (0, 0, 1)]]
         
         # TODO: only allow orthogonal hops?
-        for offset in offsets:
+        for offset in self.offsets:
             try:
                 neighbor = node.copy()
                 hoppedNeighbors = []
@@ -69,9 +72,16 @@ class VisibleMap:
     
     
     def dist_between(self, start, goal):
-        assert len(start) == len(goal)
-        l = len(goal)
-        return ( sum([(start[i] - goal[i]) ** 2 for i in range(l)]) ) ** 0.5
+        dims = len(goal)
+        assert len(start) == dims
+        key = [abs(goal[dim] - start[dim]) for dim in range(dims)]
+        key = tuple(sorted(key))
+        if key in self._distances:
+            distance = self._distances[key]
+        else:
+            distance = sum([dim ** 2 for dim in key]) ** 0.5
+            self._distances[key] = distance
+        return distance
     
     
     def setNodeOccupier(self, node, visible):
@@ -161,12 +171,14 @@ class OrthogonalPathLayout(Layout):
         return display.viewDimensions == 2
     
     
-    def __init__(self, nodeSpacing = 0.005, objectPadding = 0.0, *args, **keywordArgs):
+    def __init__(self, nodeSpacing = None, objectPadding = 0.0, crossingPenalty = 5.0, turningPenalty = 100.0, *args, **keywordArgs):
         Layout.__init__(self, *args, **keywordArgs)
         
         # TODO: determine these values automatically based on visible spacing and connection counts
         self.nodeSpacing = nodeSpacing
         self.objectPadding = objectPadding
+        self.crossingPenalty = crossingPenalty
+        self.turningPenalty = turningPenalty
     
     
     def layoutDisplay(self, display):
@@ -174,26 +186,39 @@ class OrthogonalPathLayout(Layout):
         centerPositions = {}
         minPositions = {}
         maxPositions = {}
-        minBound = N.ones(display.viewDimensions) * 1e300
-        maxBound = N.ones(display.viewDimensions) * -1e300
+        viewDimensions = display.viewDimensions
+        minBound = N.ones(viewDimensions) * 1e300
+        maxBound = N.ones(viewDimensions) * -1e300
         edges = []
         ports = {}
+        minPortSpacing = 1e300
         for visibles in display.visibles.itervalues():
             for visible in visibles:
                 if visible.isPath():
-                    (startPoint, endPoint) = visible.pathEndPoints()
-                    edgeLength = ((N.array(endPoint.worldPosition()) - N.array(startPoint.worldPosition())) ** 2).sum()
-                    edges.append((edgeLength, visible))
+                    if not visible.pathIsFixed():
+                        (startPoint, endPoint) = visible.pathEndPoints()
+                        edgeLength = ((N.array(endPoint.worldPosition()) - N.array(startPoint.worldPosition())) ** 2).sum()
+                        edges.append((edgeLength, visible))
                 else:
                     position = visible.worldPosition()
-                    if display.viewDimensions == 2:
+                    if viewDimensions == 2:
                         position = N.array((position[0], position[1]))
                     else:
                         position = N.array(position)
                     centerPositions[visible] = position
                     
                     size = visible.worldSize()
-                    if display.viewDimensions == 2:
+                    if self.nodeSpacing == None:
+                        minPorts = len(visible.connectedPaths)
+                        if minPorts > 0:
+                            if viewDimensions == 2:
+                                portSpace = 2.0 * size[0] + 2.0 * size[1]
+                            else:
+                                portSpace = size[0] * size[1] + size[0]* size[2] + size[1] * size[2]
+                            portSpacing = portSpace / minPorts / 2.0
+                            if portSpacing < minPortSpacing:
+                                minPortSpacing = portSpacing
+                    if viewDimensions == 2:
                         if visible.shape() == 'capsule':
                             size = (size[0] / 2.0, size[1])
                         size = N.array((size[0] / 2.0 + self.objectPadding, size[1] / 2.0 + self.objectPadding))
@@ -203,24 +228,29 @@ class OrthogonalPathLayout(Layout):
                         size = N.array((size[0] / 2.0 + self.objectPadding, size[1] / 2.0 + self.objectPadding, size[2] / 2.0 + self.objectPadding))
                     minPositions[visible] = position - size
                     maxPositions[visible] = position + size
-                    for dim in range(display.viewDimensions):
+                    for dim in range(viewDimensions):
                         minBound[dim] = min(minPositions[visible][dim], minBound[dim])
                         maxBound[dim] = max(maxPositions[visible][dim], maxBound[dim])
                     ports[visible] = []
         
+        if self.nodeSpacing != None:
+            nodeSpacing = self.nodeSpacing
+        else:
+            nodeSpacing = minPortSpacing 
+        
         # Determine the bounds of all nodes and the mapping scale.
-        minBound -= self.nodeSpacing * len(edges) / 2 + (minBound % self.nodeSpacing)
-        maxBound += self.nodeSpacing * len(edges) / 2 + self.nodeSpacing - (maxBound % self.nodeSpacing)
-        mapSize = (maxBound - minBound) / self.nodeSpacing
+        minBound -= nodeSpacing * len(edges) / 2 + (minBound % nodeSpacing)
+        maxBound += nodeSpacing * len(edges) / 2 + nodeSpacing - (maxBound % nodeSpacing)
+        mapSize = (maxBound - minBound) / nodeSpacing
         
         # Build the node map
         map = VisibleMap(display, mapSize)
         for visible in minPositions.iterkeys():
-            minMap = N.ceil((minPositions[visible] - minBound) / self.nodeSpacing)
-            maxMap = N.ceil((maxPositions[visible] - minBound) / self.nodeSpacing)
+            minMap = N.ceil((minPositions[visible] - minBound) / nodeSpacing)
+            maxMap = N.ceil((maxPositions[visible] - minBound) / nodeSpacing)
             for x in range(int(minMap[0]) - 1, int(maxMap[0]) + 1):
                 for y in range(int(minMap[1]) - 1, int(maxMap[1]) + 1):
-                    if display.viewDimensions == 2:
+                    if viewDimensions == 2:
                         xOut = x < minMap[0] or x == maxMap[0]
                         yOut = y < minMap[1] or y == maxMap[1]
                         if xOut != yOut:
@@ -244,7 +274,8 @@ class OrthogonalPathLayout(Layout):
         for edgeLength, edge in edges:
             edgeCount += 1
             (pathStart, pathEnd) = edge.pathEndPoints()
-            print 'Routing path from ' + (pathStart.client.abbreviation or '???') + ' to ' + (pathEnd.client.abbreviation or '???') + ' (' + str(edgeCount) + ' of ' + str(len(edges)) + ')'
+            if 'DEBUG' in os.environ:
+                print 'Routing path from ' + (pathStart.client.abbreviation or '???') + ' to ' + (pathEnd.client.abbreviation or '???') + ' (' + str(edgeCount) + ' of ' + str(len(edges)) + ')'
             
             # TODO: weight the search based on any previous path
             
@@ -257,7 +288,7 @@ class OrthogonalPathLayout(Layout):
             came_from = {}          # tracks the route to each visited node
             
             # Aim for the center of the end visible and allow the edge to travel to any unused goal port.
-            goal = tuple(N.ceil((N.array(centerPositions[pathEnd]) - minBound) / self.nodeSpacing))
+            goal = tuple(N.ceil(((centerPositions[pathEnd]) - minBound) / nodeSpacing))
             goalPorts = ports[pathEnd]
             for goalPort in goalPorts:
                 if edgeMap.nodeOccupiers(goalPort)[0] == pathEnd:
@@ -283,7 +314,7 @@ class OrthogonalPathLayout(Layout):
                         for hoppedNeighbor in hoppedNeighbors:
                             map.addNodeOccupier(hoppedNeighbor, edge)
                         prevNode = node
-                        pathPoint = tuple(N.array(node) * self.nodeSpacing + minBound)
+                        pathPoint = tuple(N.array(node) * nodeSpacing + minBound)
                         path += [(pathPoint[0], pathPoint[1], 0.0 if len(pathPoint) == 2 else pathPoint[2])]
                     # Combine consectutive path segments with the same slope.
                     originalLen = len(path)
@@ -291,7 +322,7 @@ class OrthogonalPathLayout(Layout):
                         delta0 = N.array(path[index + 1]) - N.array(path[index])
                         delta1 = N.array(path[index]) - N.array(path[index - 1])
                         sameSlope = True
-                        for dim in range(1, display.viewDimensions):
+                        for dim in range(1, viewDimensions):
                             slope0 = 1e300 if delta0[0] == 0.0 else delta0[dim] / delta0[0]
                             slope1 = 1e300 if delta1[0] == 0.0 else delta1[dim] / delta1[0]
                             if abs(slope0 - slope1) > 0.00001:
@@ -311,24 +342,33 @@ class OrthogonalPathLayout(Layout):
                 
                 neighbornodes =  []
                 for node_y, hoppedNeighbors in edgeMap.neighbor_nodes(x.node):
+                    # This block of code gets executed at least hundreds of thousands of times so it needs to be seriously tight.
+                    
                     # Start with the distance between the nodes.
                     g_score = x.g_score + edgeMap.dist_between(x.node, node_y)
-                    # Penalize moving away from the goal.
-                    if g_score > x.g_score:
-                        g_score += 2.0
+                    
                     # Penalize crossing over other edges.
-                    g_score += len(hoppedNeighbors) * 50.0
+                    g_score += len(hoppedNeighbors) * self.crossingPenalty
+                    
                     # Penalize turning.
                     if x.node in came_from:
                         prevNode, prevHoppedNeighbors = came_from[x.node]
-                        delta0 = N.array(x.node) - N.array(prevNode)
-                        delta1 = N.array(node_y) - N.array(x.node)
-                        for dim in range(1, display.viewDimensions):
-                            slope0 = 1e300 if delta0[0] == 0.0 else delta0[dim] / delta0[0]
-                            slope1 = 1e300 if delta1[0] == 0.0 else delta1[dim] / delta1[0]
-                            if slope0 != slope1:
-                                g_score += 20.0
-                                break
+                        
+                        delta0 = x.node[0] - prevNode[0]
+                        delta1 = node_y[0] - x.node[0]
+                        if (delta0 < 0) != (delta1 < 0) or (delta0 > 0) != (delta1 > 0):
+                            g_score += self.turningPenalty
+                        else:
+                            delta0 = x.node[1] - prevNode[1]
+                            delta1 = node_y[1] - x.node[1]
+                            if (delta0 < 0) != (delta1 < 0) or (delta0 > 0) != (delta1 > 0):
+                                g_score += self.turningPenalty
+                            elif viewDimensions == 3:
+                                delta0 = x.node[2] - prevNode[2]
+                                delta1 = node_y[2] - x.node[2]
+                                if (delta0 < 0) != (delta1 < 0) or (delta0 > 0) != (delta1 > 0):
+                                    g_score += self.turningPenalty
+                    
                     neighbornodes.append((g_score, node_y, hoppedNeighbors))
                 #better sort here than update the heap ..
                 neighbornodes.sort()
