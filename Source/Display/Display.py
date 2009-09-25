@@ -512,6 +512,20 @@ class Display(wx.glcanvas.GLCanvas):
                         self.visiblesMin[2] = z - d / 2.0
                     if z + d / 2.0 > self.visiblesMax[2]:
                         self.visiblesMax[2] = z + d / 2.0
+                    if visible.isPath():
+                        for x, y, z in visible.pathMidPoints():
+                            if x < self.visiblesMin[0]:
+                                self.visiblesMin[0] = x
+                            if x > self.visiblesMax[0]:
+                                self.visiblesMax[0] = x
+                            if y < self.visiblesMin[1]:
+                                self.visiblesMin[1] = y
+                            if y > self.visiblesMax[1]:
+                                self.visiblesMax[1] = y
+                            if z < self.visiblesMin[2]:
+                                self.visiblesMin[2] = z
+                            if z > self.visiblesMax[2]:
+                                self.visiblesMax[2] = z
             self.visiblesCenter = ((self.visiblesMin[0] + self.visiblesMax[0]) / 2.0, (self.visiblesMin[1] + self.visiblesMax[1]) / 2.0, (self.visiblesMin[2] + self.visiblesMax[2]) / 2.0)
             self.visiblesSize = (self.visiblesMax[0] - self.visiblesMin[0], self.visiblesMax[1] - self.visiblesMin[1], self.visiblesMax[2] - self.visiblesMin[2])
             self._recomputeBounds = False
@@ -724,7 +738,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def _visibleChanged(self, sender, signal):
-        if signal[1] in ('position', 'size', 'rotation', 'path'):
+        if signal[1] in ('position', 'size', 'rotation', 'path', 'pathMidPoints'):
             self._recomputeBounds = True
         if signal[1] in ('positionIsFixed', 'sizeIsFixed') and any(self.selectedVisibles):
             self._clearDragger()
@@ -858,6 +872,7 @@ class Display(wx.glcanvas.GLCanvas):
             params['color'] = (0.5, 0.5, 0.5)
             params['label'] = object.abbreviation or object.name
             params['weight'] = 5.0
+            params['pathIsFixed'] = True
         else:
             params['shape'] = shapes['Box']()
             params['size'] = (0.01, 0.01, 0.01)
@@ -983,6 +998,7 @@ class Display(wx.glcanvas.GLCanvas):
             targetVisibles = self.visiblesForObject(object.target)
             if len(targetVisibles) == 1:
                 edgeVisible.setPathEndPoints(nodeVisible, targetVisibles[0])
+                edgeVisible.setPathIsFixed(True)
                 edgeVisible.setFlowTo(True)
                 if self._showFlow:
                     edgeVisible.animateFlow()
@@ -1003,6 +1019,7 @@ class Display(wx.glcanvas.GLCanvas):
                 if len(pathStartVisibles) == 1 and len(pathEndVisibles) == 1:
                     visible.setPathEndPoints(pathStartVisibles[0], pathEndVisibles[0])
                     visible.setPathMidPoints(params.get('pathMidPoints', []))
+                    visible.setPathIsFixed(params.get('pathIsFixed', None))
                     visible.setFlowTo(pathFlowsTo)
                     visible.setFlowFrom(pathFlowsFrom)
                     if self._showFlow:
@@ -1482,7 +1499,7 @@ class Display(wx.glcanvas.GLCanvas):
             visible.setWeight(weight)
     
     
-    def setVisiblePath(self, object, startObject, endObject, midPoints = None):
+    def setVisiblePath(self, object, startObject, endObject, midPoints = None, fixed = None):
         """
         Set the start and end points of a connecting :class:`object <Network.Object.Object>` and any additional mid-points.
         
@@ -1511,6 +1528,9 @@ class Display(wx.glcanvas.GLCanvas):
                 for midPointDim in midPoint:
                     if not isinstance(midPointDim, (int, float)):
                         raise ValueError, 'Each list or tuple mid-point passed to setVisiblePath() must contain only numbers.'
+        if fixed != None:
+            if not isinstance(fixed, bool):
+                raise TypeError, 'The fixed argument passed to setVisiblePath() must be True, False or None'
         
         visibles = self.visiblesForObject(object)
         visible = None
@@ -1534,6 +1554,8 @@ class Display(wx.glcanvas.GLCanvas):
             visible.setPathEndPoints(startVisibles[0], endVisibles[0])
             if midPoints != None:
                 visible.setPathMidPoints(midPoints)
+            if fixed != None:
+                visible.setPathIsFixed(fixed)
     
     
     def setVisibleFlowTo(self, object, show = True, color = None, spacing = None, speed = None, spread = None):

@@ -88,6 +88,7 @@ class Visible(object):
         self._pathMidPoints = []
         self._pathStart = None
         self._pathEnd = None
+        self._pathIsFixed = False
         self.connectedPaths = []
         
         # Flow attributes
@@ -173,6 +174,9 @@ class Visible(object):
         visible._shapeGeode.setName(str(visible.displayId))
         visible._textGeode.setName(str(visible.displayId))
         
+        trueStrings = ['true', 't', 'T', 'yes', 'y', 'Y']
+        falseStrings = ['false', 'f', 'F', 'no', 'n', 'N']
+        
         # Set any geometry
         geometryElement = xmlElement.find('Geometry')
         if geometryElement is None:
@@ -186,7 +190,7 @@ class Visible(object):
                 y = float(positionElement.get('y'))
                 z = float(positionElement.get('z'))
                 visible.setPosition((x, y, z))
-                if positionElement.get('fixed') == 'true':
+                if positionElement.get('fixed') in trueStrings:
                     visible.setPositionIsFixed(True)
             sizeElement = geometryElement.find('Size')
             if sizeElement is None:
@@ -198,7 +202,7 @@ class Visible(object):
                 visible.setSize((width, height, depth))
                 if sizeElement.get('fixed') == 'false':
                     visible.setSizeIsFixed(False)
-                if sizeElement.get('absolute') == 'true':
+                if sizeElement.get('absolute') in trueStrings:
                     visible.setSizeIsAbsolute(True)
             rotationElement = geometryElement.find('Rotation')
             if rotationElement is None:
@@ -312,15 +316,17 @@ class Visible(object):
             if pathStart is None or pathEnd is None:
                 raise ValueError, gettext('Could not create path')
             visible.setPathEndPoints(pathStart, pathEnd)
+            if pathElement.get('fixed') in trueStrings:
+                visible.setPathIsFixed(True)
             flowTo = pathElement.get('flowTo')
-            if flowTo == 'true':
+            if flowTo in trueStrings:
                 visible.setFlowTo(True)
-            elif flowTo == 'false':
+            elif flowTo in falseStrings:
                 visible.setFlowTo(False)
             flowFrom = pathElement.get('flowFrom')
-            if flowFrom == 'true':
+            if flowFrom in trueStrings:
                 visible.setFlowFrom(True)
-            elif flowFrom == 'false':
+            elif flowFrom == falseStrings:
                 visible.setFlowFrom(False)
             midPoints = []
             for midPointElement in pathElement.findall('MidPoint'):
@@ -469,6 +475,7 @@ class Visible(object):
             pathElement = ElementTree.SubElement(visibleElement, 'Path')
             pathElement.set('startVisibleId', str(self._pathStart.displayId))
             pathElement.set('endVisibleId', str(self._pathEnd.displayId))
+            pathElement.set('fixed', 'true' if self._pathIsFixed else 'false')
             pathElement.set('flowTo', 'true' if self._flowTo else 'false')
             pathElement.set('flowFrom', 'true' if self._flowFrom else 'false')
             if self._flowToColor is not None or self._flowToSpread is not None:
@@ -588,6 +595,7 @@ class Visible(object):
         
         if self.isPath():
             params['weight'] = self.weight()
+            params['pathIsFixed'] = self.pathIsFixed()
             if self._flowTo:
                 params['flowTo'] = True
                 if self.flowToColor() != None:
@@ -696,7 +704,9 @@ class Visible(object):
                     endRef = 'visible' + str(endObject.displayId)
                 scriptFile.write('%s.setVisiblePath(%s, %s, %s' % (displayRef, scriptRef, startRef, endRef))
                 if 'pathMidPoints' in params:
-                    scriptFile.write(', ' + str(params['pathMidPoints']))
+                    scriptFile.write(', midPoints = ' + str(params['pathMidPoints']))
+                if 'pathIsFixed' in params:
+                    scriptFile.write(', fixed = ' + str(params['pathIsFixed']))
                 scriptFile.write(')\n')
             if 'flowToColor' in params or 'flowToSpacing' in params or 'flowToSpeed' in params or 'flowToSpread' in params:
                 scriptFile.write('%s.setVisibleFlowTo(%s, True' % (displayRef, scriptRef))
@@ -1932,6 +1942,7 @@ class Visible(object):
         
         if self._pathStart._shape and self._pathStart._opacity > 0.0:
             # Try to find the point where the path intersects the shape.
+            # TODO: use OSG's line segment intersector?  Then shapes don't have to write intersectionPoint() methods.
             rayOrigin = path[1]
             if len(path) > 2:
                 rayDirection = (path[1][0] - path[2][0], path[1][1] - path[2][1], path[1][2] - path[2][2])
@@ -1951,6 +1962,7 @@ class Visible(object):
         
         if self._pathEnd._shape and self._pathEnd._opacity > 0.0:
             # Try to find the point where the path intersects the shape.
+            # TODO: use OSG's line segment intersector?  Then shapes don't have to write intersectionPoint() methods.
             rayOrigin = path[-2]
             if len(path) > 2:
                 rayDirection = (path[-2][0] - path[-3][0], path[-2][1] - path[-3][1], path[-2][2] - path[-3][2])
@@ -2112,6 +2124,17 @@ class Visible(object):
         """
         
         return self._pathStart is not None
+    
+    
+    def setPathIsFixed(self, isFixed):
+        if self._pathIsFixed != isFixed:
+            self._pathIsFixed = isFixed
+            
+            dispatcher.send(('set', 'pathIsFixed'), self)
+    
+    
+    def pathIsFixed(self):
+        return self._pathIsFixed
     
     
     def setGlowColor(self, color):
