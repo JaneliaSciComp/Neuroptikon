@@ -56,15 +56,19 @@ class VisibleMap:
                 for hopCount in range(0, self.maxHops + 1):
                     neighbor += offset
                     if min(neighbor) < 0:
+                        # Don't go outside of the grid.
                         break
                     neighborVisibles = self.nodeOccupiers(tuple(neighbor))
                     if not any(neighborVisibles):
+                        # Nobody there, it's a valid neighbor.
                         yield (tuple(neighbor), hoppedNeighbors)
                         break
                     hoppedNeighbors.append(tuple(neighbor))
                     if not neighborVisibles[0].isPath():
+                        # Don't hop into a node's space.
                         break
                     if any(set(neighborVisibles).intersection(set(lastNeighbors))):
+                        # Don't hop along a parallel path.
                         break
                     lastNeighbors = neighborVisibles
             except IndexError:
@@ -171,7 +175,7 @@ class OrthogonalPathLayout(Layout):
         return display.viewDimensions == 2
     
     
-    def __init__(self, nodeSpacing = None, objectPadding = 0.0, crossingPenalty = 5.0, turningPenalty = 100.0, allowDiagonalPaths = True, *args, **keywordArgs):
+    def __init__(self, nodeSpacing = None, objectPadding = 0.0, crossingPenalty = 5.0, turningPenalty = 5.0, allowDiagonalPaths = True, *args, **keywordArgs):
         Layout.__init__(self, *args, **keywordArgs)
         
         # TODO: determine these values automatically based on visible spacing and connection counts
