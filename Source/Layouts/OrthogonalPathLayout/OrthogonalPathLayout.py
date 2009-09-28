@@ -14,11 +14,11 @@ class NotImplemented(Exception):
 
 class VisibleMap:
     
-    def __init__(self, display, nodeDims):
+    def __init__(self, display, nodeDims, allowDiagonalNeighbors):
         self.display = display
         self._occupiedNodes = N.ones(list(nodeDims) + [2], N.int_) * -1
         self._distances = {}
-        self.allowDiagonalNeighbors = False
+        self.allowDiagonalNeighbors = allowDiagonalNeighbors
         self.maxHops = 20
         
         if self.allowDiagonalNeighbors:
@@ -35,7 +35,7 @@ class VisibleMap:
     
     
     def copy(self):
-        newMap = VisibleMap(self.display, self._occupiedNodes.shape)
+        newMap = VisibleMap(self.display, self._occupiedNodes.shape, self.allowDiagonalNeighbors)
         newMap._occupiedNodes = self._occupiedNodes.copy()
         return newMap
     
@@ -171,7 +171,7 @@ class OrthogonalPathLayout(Layout):
         return display.viewDimensions == 2
     
     
-    def __init__(self, nodeSpacing = None, objectPadding = 0.0, crossingPenalty = 5.0, turningPenalty = 100.0, *args, **keywordArgs):
+    def __init__(self, nodeSpacing = None, objectPadding = 0.0, crossingPenalty = 5.0, turningPenalty = 100.0, allowDiagonalPaths = True, *args, **keywordArgs):
         Layout.__init__(self, *args, **keywordArgs)
         
         # TODO: determine these values automatically based on visible spacing and connection counts
@@ -179,10 +179,14 @@ class OrthogonalPathLayout(Layout):
         self.objectPadding = objectPadding
         self.crossingPenalty = crossingPenalty
         self.turningPenalty = turningPenalty
+        self.allowDiagonalPaths = allowDiagonalPaths
     
     
     def layoutDisplay(self, display):
         # Calculate the bounds of every non-path visible.
+        
+        # TODO: warn the user if the layout is going to take a while?  Or provide progress with cancel?
+        
         centerPositions = {}
         minPositions = {}
         maxPositions = {}
@@ -244,7 +248,7 @@ class OrthogonalPathLayout(Layout):
         mapSize = (maxBound - minBound) / nodeSpacing
         
         # Build the node map
-        map = VisibleMap(display, mapSize)
+        map = VisibleMap(display, mapSize, self.allowDiagonalPaths)
         for visible in minPositions.iterkeys():
             minMap = N.ceil((minPositions[visible] - minBound) / nodeSpacing)
             maxMap = N.ceil((maxPositions[visible] - minBound) / nodeSpacing)
@@ -280,6 +284,7 @@ class OrthogonalPathLayout(Layout):
             # TODO: weight the search based on any previous path
             
             # Make a copy of the map to hold our tentative routing.  Once the actual route is determined this map will be discarded and the main map will be updated.
+            # TODO: is this really necessary?
             edgeMap = map.copy()
             
             openHeap = HeapSet()    # priority queue of potential steps in the route
@@ -333,7 +338,6 @@ class OrthogonalPathLayout(Layout):
 #                    if len(path) < originalLen:
 #                        print '\treduced path segment count by ' + str(originalLen - len(path))
                     edge.setPathMidPoints(path)
-                    edge.setWeight(0.3)
                     del edgeMap
                     break
                 
