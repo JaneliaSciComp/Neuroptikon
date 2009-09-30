@@ -1,17 +1,17 @@
 from Display.Layout import Layout
 import os, stat, sys
-import wx
+import Neuroptikon
+
 
 # Make sure all the graphviz pieces can be found and used.
-platformLibPath = wx.GetApp().platformLibPath
 try:
-    fdpPath = platformLibPath + os.sep + 'fdp'
+    fdpPath = Neuroptikon.platformLibPath + os.sep + 'fdp'
     if os.access(fdpPath, os.F_OK):
         # Make sure graphviz's binaries can find the graphviz plug-ins.
-        os.environ['GVBINDIR'] = platformLibPath + os.sep + 'graphviz'
+        os.environ['GVBINDIR'] = Neuroptikon.platformLibPath + os.sep + 'graphviz'
 
         # Make sure our custom build of graphviz's binaries can be found.
-        os.environ['PATH'] = platformLibPath + os.pathsep + os.environ['PATH']
+        os.environ['PATH'] = Neuroptikon.platformLibPath + os.pathsep + os.environ['PATH']
 
         # Make sure fdp is executable.
         if os.stat(fdpPath).st_mode & stat.S_IXUSR == 0:

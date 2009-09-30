@@ -1,6 +1,5 @@
 from Object import Object
 from pydispatch import dispatcher
-import xml.etree.ElementTree as ElementTree
 
 
 # Legacy class used by versions prior to 0.9.4.  Preserved here to allow loading of older XML files.
@@ -66,48 +65,48 @@ class Pathway(Object):
     
     @classmethod
     def _fromXMLElement(cls, network, xmlElement):
-        object = super(Pathway, cls)._fromXMLElement(network, xmlElement)
-        object._neurites = []
+        pathway = super(Pathway, cls)._fromXMLElement(network, xmlElement)
+        pathway._neurites = []
         terminusElements = xmlElement.findall('PathwayTerminus')
         if len(terminusElements) == 0:
             # Format since 0.9.4
             regionId = xmlElement.get('region1Id')
-            object.region1 = network.objectWithId(regionId)
-            if object.region1 is None:
+            pathway.region1 = network.objectWithId(regionId)
+            if pathway.region1 is None:
                 raise ValueError, gettext('Region with id "%s" does not exist') % (regionId)
-            object.region1.pathways += [object]
+            pathway.region1.pathways += [pathway]
             sends = str(xmlElement.get('region1Projects')).lower()
             if sends.lower() in ['true', 't', '1', 'yes']:
-                object.region1Projects = True
+                pathway.region1Projects = True
             elif sends.lower() in ['false', 'f', '0', 'no']:
-                object.region1Projects = False
+                pathway.region1Projects = False
             else:
-                object.region1Projects = None
+                pathway.region1Projects = None
             regionId = xmlElement.get('region2Id')
-            object.region2 = network.objectWithId(regionId)
-            if object.region2 is None:
+            pathway.region2 = network.objectWithId(regionId)
+            if pathway.region2 is None:
                 raise ValueError, gettext('Region with id "%s" does not exist') % (regionId)
-            object.region2.pathways += [object]
+            pathway.region2.pathways += [pathway]
             sends = str(xmlElement.get('region2Projects')).lower()
             if sends.lower() in ['true', 't', '1', 'yes']:
-                object.region2Projects = True
+                pathway.region2Projects = True
             elif sends.lower() in ['false', 'f', '0', 'no']:
-                object.region2Projects = False
+                pathway.region2Projects = False
             else:
-                object.region2Projects = None
+                pathway.region2Projects = None
         else:
             # Format prior to version 0.9.4
             terminus1 = PathwayTerminus._fromXMLElement(network, terminusElements[0])
             if terminus1 is None:
                 raise ValueError, gettext('Could not create connection to first region of pathway')
-            object.region1 = terminus1.region
-            object.region1Projects = terminus1.sendsOutput
+            pathway.region1 = terminus1.region
+            pathway.region1Projects = terminus1.sendsOutput
             terminus2 = PathwayTerminus._fromXMLElement(network, terminusElements[1])
             if terminus2 is None:
                 raise ValueError, gettext('Could not create connection to second region of pathway')
-            object.region2 = terminus2.region
-            object.region2Projects = terminus2.sendsOutput
-        return object
+            pathway.region2 = terminus2.region
+            pathway.region2Projects = terminus2.sendsOutput
+        return pathway
      
     
     def _toXMLElement(self, parentElement):

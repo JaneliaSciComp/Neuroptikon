@@ -1,7 +1,7 @@
 import os, sys
 import wx
 import osg
-from ctypes import *
+from ctypes import c_float, c_uint, pointer
 
 
 class Shape(object):
@@ -42,7 +42,7 @@ class Shape(object):
             vectorArray = osg.Vec4Array(len(vectorList))
         else:
             raise ValueError, gettext('Vector arrays can only be created with vectors of 2, 3 or 4 dimensions.')
-        arrayPointer = pointer(c_float.from_address(int(vectorArray.getDataPointer())))
+        arrayPointer = pointer(c_float.from_address(int(vectorArray.getDataPointer()))) # pylint: disable-msg=E1101
         vectorSize = vectorArray.getDataSize()
         offset = 0
         for vector in vectorList:
@@ -55,7 +55,7 @@ class Shape(object):
     @classmethod
     def primitiveSetFromList(cls, primitiveType, vertexIndexList):
         primitiveSet = osg.DrawElementsUInt(primitiveType, len(vertexIndexList))
-        arrayPointer = pointer(c_uint.from_address(int(primitiveSet.getDataPointer())))
+        arrayPointer = pointer(c_uint.from_address(int(primitiveSet.getDataPointer()))) # pylint: disable-msg=E1101
         offset = 0
         for vertex in vertexIndexList:
             arrayPointer[offset] = vertex
@@ -104,13 +104,25 @@ class UnitShape(Shape):
     """ 
     Shape objects should fill a unit cube.  They will be sized, positioned and rotated by the containing Visible object.
     """
-    pass
+    
+    @classmethod
+    def name(cls):
+        raise NotImplementedError, gettext('UnitShape sub-classes must override the name method.')
+    
+    
+    def intersectionPoint(self, rayOrigin, rayDirection):
+        """ Returns the intersection point nearest to the ray origin or None if the ray does not intersect the shape. """
+        raise NotImplementedError, gettext('Unithape sub-classes must override the intersectionPoint method.')
 
 
 class PathShape(Shape):
     
+    @classmethod
+    def name(cls):
+        raise NotImplementedError, gettext('UnitShape sub-classes must override the name method.')
     
-    def __init__(self, pathPoints = [], *args, **keywordArgs):
+    def __init__(self, pathPoints = None, *args, **keywordArgs):
+        pathPoints = pathPoints or []
         Shape.__init__(self, *args, **keywordArgs)
         self.setPoints(pathPoints)
     
@@ -121,3 +133,8 @@ class PathShape(Shape):
     
     def setWeight(self, weight):
         raise NotImplementedError, gettext('PathShape sub-classes must override the setWeight method.')
+    
+    
+    def intersectionPoint(self, rayOrigin, rayDirection):
+        """ Returns the intersection point nearest to the ray origin or None if the ray does not intersect the shape. """
+        raise NotImplementedError, gettext('Unithape sub-classes must override the intersectionPoint method.')

@@ -5,16 +5,16 @@ __version__ = "1.0.0"
 import wx
 import os.path, sys, urllib
 
-_sharedFrame = None
+import Neuroptikon
 
-runningFromSource = not hasattr(sys, "frozen")
+_sharedFrame = None
 
 
 def baseURL():
-    if runningFromSource:
-        basePath = os.path.join(wx.GetApp().rootDir, 'Documentation', 'build', 'Documentation')
+    if Neuroptikon.runningFromSource:
+        basePath = os.path.join(Neuroptikon.rootDir, 'Documentation', 'build', 'Documentation')
     else:
-        basePath = os.path.join(wx.GetApp().rootDir, 'Documentation')
+        basePath = os.path.join(Neuroptikon.rootDir, 'Documentation')
     
     return 'file:' + urllib.pathname2url(basePath) + '/'
 

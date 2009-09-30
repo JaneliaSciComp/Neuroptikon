@@ -35,8 +35,9 @@ if os.path.exists('Documentation/build'):
     shutil.rmtree('Documentation/build')
 try:
     from sphinx import main
-except:
+except ImportError:
     print 'You must have sphinx installed and in the Python path to build the Neuroptikon package.  See <http://sphinx.pocoo.org/>.'
+    sys.exit(1)
 result = main(['-q', '-b', 'html', 'Documentation/Source', 'Documentation/build/Documentation'])
 if result != 0:
     sys.exit(result)
@@ -92,7 +93,11 @@ elif sys.platform == 'win32':
     # - move aside networkx(?) and pyxml site-packages
     # - python setup.py --quiet py2exe
     
-    import py2exe
+    try:
+        import py2exe   # pylint: disable-msg=F0401,W0611
+    except ImportError:
+        print 'You must have py2exe installed and in the Python path to build the Neuroptikon package.'
+        sys.exit(1)
     
     sys.argv += ['py2exe']
     setup_options['setup_requires'] = ['py2exe']
@@ -138,7 +143,7 @@ elif sys.platform == 'win32':
     
     setup_options['options'] = dict(py2exe = py2exe_options)
 else:
-        pass	# TODO: Linux setup
+    pass	# TODO: Linux setup
 
 
 # Create the application.
@@ -162,11 +167,10 @@ elif sys.platform == 'win32':
 
 
 # Strip out any .pyc or .pyo files.
-import os
 for root, dirs, files in os.walk(dist_dir, topdown=False):
     for name in files:
         if os.path.splitext(name)[1] in ['.pyc', '.pyo']:
-                os.remove(os.path.join(root, name))
+            os.remove(os.path.join(root, name))
 
 
 # Package up the application.

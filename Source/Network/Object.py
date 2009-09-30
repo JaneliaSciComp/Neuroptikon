@@ -1,9 +1,8 @@
-import wx
-import os, sys
 from pydispatch import dispatcher
 import xml.etree.ElementTree as ElementTree
 from networkx import shortest_path
 from Attribute import Attribute
+import Neuroptikon
 
     
 class Object(object):
@@ -28,31 +27,31 @@ class Object(object):
     
     @classmethod
     def _fromXMLElement(cls, network, xmlElement):
-        object = super(Object, cls).__new__(cls)
-        object.network = network
-        object.networkId = int(xmlElement.get('id'))
+        networkObject = super(Object, cls).__new__(cls)
+        networkObject.network = network
+        networkObject.networkId = int(xmlElement.get('id'))
         
-        object.name = xmlElement.findtext('Name')
-        if object.name is None:
-            object.name = xmlElement.findtext('name')
-        object.abbreviation = xmlElement.findtext('Abbreviation')
-        if object.abbreviation is None:
-            object.abbreviation = xmlElement.findtext('abbreviation')
-        object.description = xmlElement.findtext('Description')
-        if object.description is None:
-            object.description = xmlElement.findtext('description')
+        networkObject.name = xmlElement.findtext('Name')
+        if networkObject.name is None:
+            networkObject.name = xmlElement.findtext('name')
+        networkObject.abbreviation = xmlElement.findtext('Abbreviation')
+        if networkObject.abbreviation is None:
+            networkObject.abbreviation = xmlElement.findtext('abbreviation')
+        networkObject.description = xmlElement.findtext('Description')
+        if networkObject.description is None:
+            networkObject.description = xmlElement.findtext('description')
         
-        object._attributes = []
+        networkObject._attributes = []
         for element in xmlElement.findall('Attribute'):
-            attribute = Attribute._fromXMLElement(object, element)
+            attribute = Attribute._fromXMLElement(networkObject, element)
             if attribute is not None:
-                object._attributes.append(attribute)
+                networkObject._attributes.append(attribute)
         
-        object.stimuli = []
+        networkObject.stimuli = []
         
         # TODO: handle links
         # TODO: handle notes
-        return object
+        return networkObject
     
     
     def _toXMLElement(self, parentElement):
@@ -67,7 +66,7 @@ class Object(object):
         return objectElement
     
     
-    def _includeInScript(self, atTopLevel = False):
+    def _includeInScript(self, atTopLevel = False): # pylint: disable-msg=W0613
         return True
     
     
@@ -95,11 +94,11 @@ class Object(object):
         return scriptRefs[self.networkId]
     
     
-    def _creationScriptCommand(self, scriptRefs):
+    def _creationScriptCommand(self, scriptRefs):   # pylint: disable-msg=W0613
         return 'network.create' + self.__class__.__name__
     
     
-    def _creationScriptParams(self, scriptRefs):
+    def _creationScriptParams(self, scriptRefs):    # pylint: disable-msg=W0613
         args = []
         keywords = {}
         if self.name is not None:
@@ -126,8 +125,6 @@ class Object(object):
                 args.append(keyword + ' = ' + value)
             scriptFile.write(', '.join(args) + ')\n')
             
-            prevPos = scriptFile.tell()
-            
             for child in self._creationScriptChildren():
                 child._toScriptFile(scriptFile, scriptRefs)
     
@@ -149,7 +146,7 @@ class Object(object):
         If no image is available then None will be returned.
         """
         
-        image = wx.GetApp().loadImage(cls.__name__ + ".png")
+        image = Neuroptikon.loadImage(cls.__name__ + ".png")
         if image != None and not image.IsOk():
             image = None
         return image
@@ -182,7 +179,7 @@ class Object(object):
         return None
     
     
-    def connections(self, recurse = True):
+    def connections(self, recurse = True):  # pylint: disable-msg=W0613
         """
         Return a list of the objects that connect to this object.
         """
@@ -190,7 +187,7 @@ class Object(object):
         return list(self.stimuli)
     
     
-    def inputs(self, recurse = True):
+    def inputs(self, recurse = True):  # pylint: disable-msg=W0613
         """
         Return a list of objects that send information into this object.
         """
@@ -198,7 +195,7 @@ class Object(object):
         return list(self.stimuli)
     
     
-    def outputs(self, recurse = True):
+    def outputs(self, recurse = True):  # pylint: disable-msg=W0613
         """ Return a list of objects that receive information from this object.
         """
         
@@ -323,7 +320,7 @@ class Object(object):
 
     def _printConnections(self):
         print self.name or self.defaultName() or '<anonymous %s>' % self.__class__.displayName()
-        print '\tConnections: ' + ', '.join([connection.name or connection.defaultName() or '<anonymous %s>' % lower(connection.__class__.displayName()) for connection in self.connections()])
-        print '\tInputs: ' + ', '.join([input.name or input.defaultName() or '<anonymous %s>' % lower(input.__class__.displayName()) for input in self.inputs()])
-        print '\tOutputs: ' + ', '.join([output.name or output.defaultName() or '<anonymous %s>' % lower(output.__class__.displayName()) for output in self.outputs()])
+        print '\tConnections: ' + ', '.join([connection.name or connection.defaultName() or '<anonymous %s>' % connection.__class__.displayName().lower() for connection in self.connections()])
+        print '\tInputs: ' + ', '.join([input.name or input.defaultName() or '<anonymous %s>' % input.__class__.displayName().lower() for input in self.inputs()])  # pylint: disable-msg=W0622
+        print '\tOutputs: ' + ', '.join([output.name or output.defaultName() or '<anonymous %s>' % output.__class__.displayName().lower() for output in self.outputs()])
         

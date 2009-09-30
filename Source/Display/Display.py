@@ -1,18 +1,18 @@
-import wx, wx.glcanvas
+import wx.glcanvas
 from pydispatch import dispatcher
 import osg, osgDB, osgGA, osgManipulator, osgViewer
-from math import pi, fabs
-import os, platform, sys, cPickle
+from math import pi
+import platform, sys, cPickle
 import xml.etree.ElementTree as ElementTree
 
 from PickHandler import PickHandler
 from DraggerCullCallback import DraggerCullCallback
 from Network.Object import Object
-from Network.Network import Network
+import Neuroptikon
 from Network.Region import Region
-from Network.Pathway import Pathway
+from Network.Pathway import Pathway # pylint: disable-msg=E0611,F0401
 from Network.Neuron import Neuron
-from Network.Neurite import Neurite
+from Network.Neurite import Neurite # pylint: disable-msg=E0611,F0401
 from Network.Arborization import Arborization
 from Network.Synapse import Synapse
 from Network.GapJunction import GapJunction
@@ -21,20 +21,14 @@ from Network.Muscle import Muscle
 from Network.Innervation import Innervation
 from Network.ObjectList import ObjectList
 from Visible import Visible
-from DisplayRule import DisplayRule
-import Layout, Shape    # Not needed by the code but insures that the Layout and Shape modules gets packaged by setuptools.
+from Layout import Layout
 from Shape import Shape
-from Shapes.Box import Box
-from Shapes.Capsule import Capsule
-from Shapes.Cone import Cone
-from Shapes.Line import Line
-from Shapes.Ball import Ball
 from Library.Texture import Texture
 
 
 class Display(wx.glcanvas.GLCanvas):
     
-    def __init__(self, parent, network = None, id = wx.ID_ANY):
+    def __init__(self, parent, network = None, wxId = wx.ID_ANY):
         """
         Displays allow the visualization of networks.
         
@@ -48,8 +42,8 @@ class Display(wx.glcanvas.GLCanvas):
         style = wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE | wx.HSCROLL | wx.VSCROLL
         if not hasattr(wx.glcanvas, "WX_GL_SAMPLE_BUFFERS"):
             wx.glcanvas.WX_GL_SAMPLE_BUFFERS = wx.glcanvas.WX_GL_MIN_ACCUM_ALPHA + 1
-        attribList = [wx.glcanvas.WX_GL_RGBA, wx.glcanvas.WX_GL_DOUBLEBUFFER, wx.glcanvas.WX_GL_SAMPLE_BUFFERS, 1, wx.glcanvas.WX_GL_DEPTH_SIZE, 16, 0, 0]
-        wx.glcanvas.GLCanvas.__init__(self, parent, id, wx.DefaultPosition, wx.DefaultSize, style, "", attribList)
+        attribList = [wx.glcanvas.WX_GL_RGBA, wx.glcanvas.WX_GL_DOUBLEBUFFER, wx.glcanvas.WX_GL_DEPTH_SIZE, 16, 0, 0]
+        wx.glcanvas.GLCanvas.__init__(self, parent, wxId, wx.DefaultPosition, wx.DefaultSize, style, "", attribList)
 
         self.network = network
         if self.network is not None:
@@ -92,9 +86,11 @@ class Display(wx.glcanvas.GLCanvas):
         else:
             self.scrollWheelScale = 1
         
-        osg.DisplaySettings.instance().setNumMultiSamples(4);
+        osg.DisplaySettings.instance().setNumMultiSamples(4)
         
         self.trackball = osgGA.TrackballManipulator()
+        self._previousTrackballMatrix = None
+        self._previousTrackballCenter = None
         self._pickHandler = PickHandler(self)
         
         self.viewer = osgViewer.Viewer()
@@ -108,6 +104,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.viewer.setLight(light)
         self._first3DView = True
         
+        self.backgroundColor = None
         config = wx.Config("Neuroptikon")
         clearColor = (config.ReadFloat("Color/Background/Red", 0.75), \
                       config.ReadFloat("Color/Background/Green", 0.75), \
@@ -129,9 +126,13 @@ class Display(wx.glcanvas.GLCanvas):
         self.simpleDragger = None
         self.compositeDragger = None
         self.activeDragger = None
+        self.commandMgr = None
+        self.draggerScale = 1.0
+        self.draggerOffset = (0.0, 0.0, 0.0)
         
         self.selectionShouldExtend = False
         self.findShortestPath = False
+        self._selectedShortestPath = False
         
         self._useMouseOverSelecting = False
         self.hoverSelect = True
@@ -240,7 +241,7 @@ class Display(wx.glcanvas.GLCanvas):
         if xmlElement.get('showRegionNames') is not None:
             self.setShowRegionNames(xmlElement.get('showRegionNames') in trueValues)
         if xmlElement.get('showNeuronNames') is not None:
-                self.setShowNeuronNames(xmlElement.get('showNeuronNames') in trueValues)
+            self.setShowNeuronNames(xmlElement.get('showNeuronNames') in trueValues)
         if xmlElement.get('showFlow') is not None:
             self.setShowFlow(xmlElement.get('showFlow') in trueValues)
         if xmlElement.get('useGhosting') is not None:
@@ -411,11 +412,11 @@ class Display(wx.glcanvas.GLCanvas):
             dispatcher.send(('set', 'viewDimensions'), self)
     
     
-    def onViewIn2D(self, event):
+    def onViewIn2D(self, event_):
         self.setViewDimensions(2)
     
     
-    def onViewIn3D(self, event):
+    def onViewIn3D(self, event_):
         self.setViewDimensions(3)
     
     
@@ -539,17 +540,17 @@ class Display(wx.glcanvas.GLCanvas):
             self.zoomScale = yZoom
     
     
-    def centerView(self, object = None):
+    def centerView(self, networkObject = None):
         """
         Change the view so that all objects are visible or zoom onto the indicated object.
         
         By default the view will be centered so that all objects are visible.  If a :class:`network object <Network.Object.Object>` is provided then the view will be centered on that object's visualization.  An exception is raised if the object is not visualized.
         """
         
-        if object is None:
+        if networkObject is None:
             node = self.rootNode
         else:
-            visibles = self.visiblesForObject(object)
+            visibles = self.visiblesForObject(networkObject)
             if any(visibles):
                 node = visibles[0].sgNode
             else:
@@ -573,7 +574,7 @@ class Display(wx.glcanvas.GLCanvas):
         #osgDB.writeNodeFile(self.rootNode, "test.osg");
     
         
-    def onCenterView(self, event):
+    def onCenterView(self, event_):
         self.centerView()
     
     
@@ -616,8 +617,9 @@ class Display(wx.glcanvas.GLCanvas):
             if not isinstance(colorComponent, (int, float)) or colorComponent < 0.0 or colorComponent > 1.0:
                 raise ValueError, 'The components of the color passed to setBackgroundColor() must all be numbers between 0.0 and 1.0, inclusive.'
         
-        self.viewer.getCamera().setClearColor(osg.Vec4(*color))
-        self.backgroundColor = color
+        if color != self.backgroundColor:
+            self.viewer.getCamera().setClearColor(osg.Vec4f(color[0], color[1], color[2], color[3]))
+            self.backgroundColor = color
     
     
     def setUseMouseOverSelecting(self, useIt):
@@ -690,7 +692,7 @@ class Display(wx.glcanvas.GLCanvas):
         event.Skip()
     
     
-    def onPaint(self, event):
+    def onPaint(self, event_):
         wx.PaintDC(self)
         
         if self.GetContext() != 0 and self.graphicsWindow.valid():
@@ -704,10 +706,10 @@ class Display(wx.glcanvas.GLCanvas):
         event.Skip()
    
     
-    def _getConvertedKeyCode(self,evt):
-        key = evt.GetKeyCode()
-        if key >=ord('A') and key <= ord('Z'):
-            if not evt.ShiftDown():
+    def _getConvertedKeyCode(self, event):
+        key = event.GetKeyCode()
+        if key >= ord('A') and key <= ord('Z'):
+            if not event.ShiftDown():
                 key += 32
         return key
     
@@ -724,20 +726,20 @@ class Display(wx.glcanvas.GLCanvas):
         event.Skip()
     
     
-    def visiblesForObject(self, object):
+    def visiblesForObject(self, networkObject):
         """
         Return the list of :class:`visible proxies <Display.Visible.Visible>` for the given object or an empty list if the object is not visualized.
         """
         
-        return self.visibles[object.networkId] if object and object.networkId in self.visibles else []
+        return self.visibles[networkObject.networkId] if networkObject and networkObject.networkId in self.visibles else []
     
     
-    def Refresh(self, *args, **keywordArgs):
+    def Refresh(self, *args, **keywordArgs):    # pylint: disable-msg=W0221
         if not self._suppressRefresh:
             wx.glcanvas.GLCanvas.Refresh(self, *args, **keywordArgs)
     
     
-    def _visibleChanged(self, sender, signal):
+    def _visibleChanged(self, signal):
         if signal[1] in ('position', 'size', 'rotation', 'path', 'pathMidPoints'):
             self._recomputeBounds = True
         if signal[1] in ('positionIsFixed', 'sizeIsFixed') and any(self.selectedVisibles):
@@ -811,7 +813,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.Refresh()
     
     
-    def defaultVisualizationParams(self, object):
+    def defaultVisualizationParams(self, networkObject):
         # TODO: replace this whole block with display rules
         neuralTissueColor = (0.85, 0.75, 0.6)
         params = {}
@@ -821,56 +823,56 @@ class Display(wx.glcanvas.GLCanvas):
         params['label'] = None
         params['texture'] = None
         
-        shapes = wx.GetApp().scriptLocals()['shapes']
+        shapes = Neuroptikon.scriptLocals()['shapes']
         
-        if isinstance(object, Region):
+        if isinstance(networkObject, Region):
             params['shape'] = shapes['Box']()
             params['size'] = (0.1, 0.1, 0.01)
             params['color'] = neuralTissueColor
-        elif isinstance(object, Pathway):
+        elif isinstance(networkObject, Pathway):
             params['shape'] = shapes['Line']()
             params['weight'] = 5.0
             params['color'] = neuralTissueColor
-            params['pathEndPoints'] = (object.region1, object.region2)
-        elif isinstance(object, Neuron):
+            params['pathEndPoints'] = (networkObject.region1, networkObject.region2)
+        elif isinstance(networkObject, Neuron):
             params['shape'] = shapes['Ball']()
             params['size'] = (.01, .01, .01)
             params['sizeIsAbsolute'] = True
             params['color'] = neuralTissueColor
-        elif isinstance(object, Neurite):
+        elif isinstance(networkObject, Neurite):
             params['shape'] = shapes['Line']()
             params['color'] = neuralTissueColor
-        elif isinstance(object, Muscle):
+        elif isinstance(networkObject, Muscle):
             params['shape'] = shapes['Capsule']()
             params['size'] = (.05, .1, .02)
             params['color'] = (0.75, 0.5, 0.5)
             try:
-                params['texture'] = wx.GetApp().library.texture('Stripes')
+                params['texture'] = Neuroptikon.library.texture('Stripes')
             except:
                 pass
             params['textureScale'] = 20.0
-            params['label'] = object.abbreviation or object.name
-        elif isinstance(object, Arborization):
+            params['label'] = networkObject.abbreviation or networkObject.name
+        elif isinstance(networkObject, Arborization):
             params['shape'] = shapes['Line']()
             params['color'] = neuralTissueColor
-            params['pathEndPoints'] = (object.neurite.neuron(), object.region)
-        elif isinstance(object, Synapse):
+            params['pathEndPoints'] = (networkObject.neurite.neuron(), networkObject.region)
+        elif isinstance(networkObject, Synapse):
             params['shape'] = shapes['Line']()
             params['color'] = neuralTissueColor
-            params['pathEndPoints'] = (object.preSynapticNeurite.neuron(), object.postSynapticNeurites[0].neuron())
-        elif isinstance(object, GapJunction):
+            params['pathEndPoints'] = (networkObject.preSynapticNeurite.neuron(), networkObject.postSynapticNeurites[0].neuron())
+        elif isinstance(networkObject, GapJunction):
             params['shape'] = shapes['Line']()
             params['color'] = (.65, 0.75, 0.4)
-            params['pathEndPoints'] = tuple([neurite.neuron() for neurite in object.neurites()])
-        elif isinstance(object, Innervation):
+            params['pathEndPoints'] = tuple([neurite.neuron() for neurite in networkObject.neurites()])
+        elif isinstance(networkObject, Innervation):
             params['shape'] = shapes['Line']()
             params['color'] = (0.55, 0.35, 0.25)
-            params['pathEndPoints'] = (object.neurite.neuron(), object.muscle)
-        elif isinstance(object, Stimulus):
+            params['pathEndPoints'] = (networkObject.neurite.neuron(), networkObject.muscle)
+        elif isinstance(networkObject, Stimulus):
             params['shape'] = shapes['Cone']()
             params['size'] = (.02, .02, .02) # so the label is in front (hacky...)
             params['color'] = (0.5, 0.5, 0.5)
-            params['label'] = object.abbreviation or object.name
+            params['label'] = networkObject.abbreviation or networkObject.name
             params['weight'] = 5.0
             params['pathIsFixed'] = True
         else:
@@ -878,13 +880,13 @@ class Display(wx.glcanvas.GLCanvas):
             params['size'] = (0.01, 0.01, 0.01)
         
 #        if display and 'pathEndPoints' in params:
-#            visibles = [display.visiblesForObject(object)[0] for object in params['pathEndPoints']]
+#            visibles = [display.visiblesForObject(networkObject)[0] for networkObject in params['pathEndPoints']]
 #            params['pathEndPoints'] = tuple(visibles)
         
         return params
     
     
-    def visualizeObject(self, object, **keywordArgs):
+    def visualizeObject(self, networkObject, **keywordArgs):
         """
         Create a visual representation of the :class:`object <Network.Object.Object>`.
         
@@ -894,10 +896,10 @@ class Display(wx.glcanvas.GLCanvas):
         """
         # TODO: replace this whole block with display rules
         
-        visible = Visible(self, object)
+        visible = Visible(self, networkObject)
         
         # Start with the default params for this object and override with any supplied params.
-        params = self.defaultVisualizationParams(object)
+        params = self.defaultVisualizationParams(networkObject)
         for key, value in keywordArgs.iteritems():
             params[key] = value
             
@@ -908,41 +910,41 @@ class Display(wx.glcanvas.GLCanvas):
         pathFlowsTo = False
         pathFlowsFrom = False
         
-        if isinstance(object, Region):
-            parentObject = object.parentRegion
-            childObjects.extend(object.subRegions)
-            childObjects.extend(object.neurons)
-        elif isinstance(object, Pathway):
-            pathStart = object.region1
-            pathEnd = object.region2
-            pathFlowsTo = object.region1Projects
-            pathFlowsFrom = object.region2Projects
-        elif isinstance(object, Neuron):
-            parentObject = object.region
-            #TODO: dispatcher.connect(self._neuronRegionChanged, ('set', 'region'), object)
-        elif isinstance(object, Arborization):
-            pathStart = object.neurite.neuron()
-            pathEnd = object.region
-            pathFlowsTo = object.sendsOutput
-            pathFlowsFrom = object.receivesInput
-            dispatcher.connect(self._arborizationChangedFlow, ('set', 'sendsOutput'), object)
-            dispatcher.connect(self._arborizationChangedFlow, ('set', 'receivesInput'), object)
-        elif isinstance(object, Synapse):
-            pathStart = object.preSynapticNeurite.neuron()
-            if len(object.postSynapticNeurites) > 0:
-                pathEnd = object.postSynapticNeurites[0].neuron()
+        if isinstance(networkObject, Region):
+            parentObject = networkObject.parentRegion
+            childObjects.extend(networkObject.subRegions)
+            childObjects.extend(networkObject.neurons)
+        elif isinstance(networkObject, Pathway):
+            pathStart = networkObject.region1
+            pathEnd = networkObject.region2
+            pathFlowsTo = networkObject.region1Projects
+            pathFlowsFrom = networkObject.region2Projects
+        elif isinstance(networkObject, Neuron):
+            parentObject = networkObject.region
+            #TODO: dispatcher.connect(self._neuronRegionChanged, ('set', 'region'), networkObject)
+        elif isinstance(networkObject, Arborization):
+            pathStart = networkObject.neurite.neuron()
+            pathEnd = networkObject.region
+            pathFlowsTo = networkObject.sendsOutput
+            pathFlowsFrom = networkObject.receivesInput
+            dispatcher.connect(self._arborizationChangedFlow, ('set', 'sendsOutput'), networkObject)
+            dispatcher.connect(self._arborizationChangedFlow, ('set', 'receivesInput'), networkObject)
+        elif isinstance(networkObject, Synapse):
+            pathStart = networkObject.preSynapticNeurite.neuron()
+            if len(networkObject.postSynapticNeurites) > 0:
+                pathEnd = networkObject.postSynapticNeurites[0].neuron()
                 pathFlowsTo = True
-        elif isinstance(object, GapJunction):
-            pathStart, pathEnd = [neurite.neuron() for neurite in object.neurites()]
+        elif isinstance(networkObject, GapJunction):
+            pathStart, pathEnd = [neurite.neuron() for neurite in networkObject.neurites()]
             pathFlowsTo = True
             pathFlowsFrom = True
-        elif isinstance(object, Innervation):
-            pathStart = object.neurite.neuron()
-            pathEnd = object.muscle
+        elif isinstance(networkObject, Innervation):
+            pathStart = networkObject.neurite.neuron()
+            pathEnd = networkObject.muscle
             pathFlowsTo = True
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             edgeVisible = visible
-            nodeVisible = Visible(self, object)
+            nodeVisible = Visible(self, networkObject)
         
         if 'color' in params:
             visible.setColor(params['color'])
@@ -950,7 +952,7 @@ class Display(wx.glcanvas.GLCanvas):
             visible.setShape(params['shape'])
         if 'opacity' in params:
             visible.setOpacity(params['opacity'])
-            if isinstance(object, Stimulus):
+            if isinstance(networkObject, Stimulus):
                 nodeVisible.setOpacity(params['opacity'])
         if 'sizeIsAbsolute' in params:
             visible.setSizeIsAbsolute(params['sizeIsAbsolute'])
@@ -962,7 +964,7 @@ class Display(wx.glcanvas.GLCanvas):
             visible.setWeight(params['weight'])
         
         # Label and position are applied to the node visible of a stimulus.
-        if isinstance(object, Stimulus):
+        if isinstance(networkObject, Stimulus):
             visible = nodeVisible
         
         if 'size' in params:
@@ -994,8 +996,8 @@ class Display(wx.glcanvas.GLCanvas):
         parentVisibles = self.visiblesForObject(parentObject)
         self.addVisible(visible, parentVisibles[0] if len(parentVisibles) == 1 else None)
         
-        if isinstance(object, Stimulus):
-            targetVisibles = self.visiblesForObject(object.target)
+        if isinstance(networkObject, Stimulus):
+            targetVisibles = self.visiblesForObject(networkObject.target)
             if len(targetVisibles) == 1:
                 edgeVisible.setPathEndPoints(nodeVisible, targetVisibles[0])
                 edgeVisible.setPathIsFixed(True)
@@ -1038,22 +1040,22 @@ class Display(wx.glcanvas.GLCanvas):
         return visible
     
     
-    def removeObject(self, object):
+    def removeObject(self, networkObject):
         """
         Remove the indicated :class:`network object <Network.Object.Object>` from the visualization.
         """
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             visible = visibles[0 if visibles[1].isPath() else 1]
         if visible is not None:
             self.removeVisible(visible)
     
     
-    def _arborizationChangedFlow(self, signal, sender):
+    def _arborizationChangedFlow(self, sender):
         arborizationVis = self.visiblesForObject(sender)
         if len(arborizationVis) == 1:
             arborizationVis[0].setFlowTo(sender.sendsOutput)
@@ -1075,40 +1077,36 @@ class Display(wx.glcanvas.GLCanvas):
             self.network.addDisplay(self)
             
             if self.autoVisualize:
-                for object in network.objects:
-                    if not isinstance(object, Neurite):
-                        self.visualizeObject(object)
+                for networkObject in network.objects:
+                    if not isinstance(networkObject, Neurite):
+                        self.visualizeObject(networkObject)
             
-            try:
-                dispatcher.connect(receiver=self._networkChanged, signal=dispatcher.Any, sender=self.network)
-            except DispatcherTypeError:
-                raise    #TODO
+            dispatcher.connect(receiver=self._networkChanged, signal=dispatcher.Any, sender=self.network)
     
     
     def _networkChanged(self, affectedObjects=None, **arguments):
         signal = arguments['signal']
         if signal == 'addition' and self.autoVisualize:
-            for object in affectedObjects:
-                if not isinstance(object, Neurite):
-                    self.visualizeObject(object)
+            for addedObject in affectedObjects:
+                if not isinstance(addedObject, Neurite):
+                    self.visualizeObject(addedObject)
             self.Refresh()
         elif signal == 'deletion':
             # TODO: untested
-            for object in affectedObjects:
-                visibles = self.visiblesForObject(object)
-                # TODO: remove the visibles from the scene graph
+            for removedObject in affectedObjects:
+                self.removeObject(removedObject)
         else:
             pass    # TODO: anything?
         self.GetTopLevelParent().setModified(True)
     
     
-    def _neuronRegionChanged(self, signal, sender):
+    def _neuronRegionChanged(self, sender):
         # TODO: untested method
-        visible = self.visibleForObject(sender)
+        visible = self.visiblesForObject(sender)
         if visible.parent is not None:
             visible.parent.removeChildVisible(visible)
-        if neuron.region is not None:
-            newParent = self.visibleForObject(neuron.region)
+        if sender.region is not None:
+            newParent = self.visiblesForObject(sender.region)
             if newParent is not None:
                 newParent.addChildVisible(visible)
     
@@ -1207,29 +1205,29 @@ class Display(wx.glcanvas.GLCanvas):
         return self._useGhosts
     
     
-    def setLabel(self, object, label):
+    def setLabel(self, networkObject, label):
         """
         Set the label that adorns the visualization of the indicated :class:`network object <Network.Object.Object>`.
         
         The label argument should be a string value or None to indicate that the object's abbreviation or name should be used.  To have no label pass an empty string.
         """
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise ValueError, 'The object argument passed to setLabel() must be an object from the network being visualized by this display.'
         if not isinstance(label, (str, type(None))):
             raise TypeError, 'The label argument passed to setLabel() must be a string or None.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             visible = visibles[0 if visibles[1].isPath() else 1]
         if visible is not None:
             visible.setLabel(label)
     
     
-    def setLabelColor(self, object, color):
+    def setLabelColor(self, networkObject, color):
         """
         Set the color of the label of the indicated :class:`network object <Network.Object.Object>`.
          
@@ -1244,7 +1242,7 @@ class Display(wx.glcanvas.GLCanvas):
         Any alpha value should be set independently using :meth:`setVisibleOpacity <Display.Display.Display.setVisibleOpacity>`.
         """
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise ValueError, 'The object argument passed to setLabelColor() must be an object from the network being visualized by this display .'
         if (not isinstance(color, (tuple, list)) or len(color) != 3 or 
             not isinstance(color[0], (int, float)) or color[0] < 0.0 or color[0] > 1.0 or 
@@ -1252,17 +1250,17 @@ class Display(wx.glcanvas.GLCanvas):
             not isinstance(color[2], (int, float)) or color[2] < 0.0 or color[2] > 1.0):
             raise ValueError, 'The color argument passed to setLabelColor() should be a tuple or list of three integer or floating point values between 0.0 and 1.0, inclusively.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             visible = visibles[0 if visibles[1].isPath() else 1]
         if visible is not None:
             visible.setLabelColor(color)
     
     
-    def setLabelPosition(self, object, position):
+    def setLabelPosition(self, networkObject, position):
         """
         Set the position of the label that adorns the visualization of the indicated :class:`network object <Network.Object.Object>`.
         
@@ -1272,7 +1270,7 @@ class Display(wx.glcanvas.GLCanvas):
         (0.0, 0.5) -> label centered at top of object
         """
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise ValueError, 'The object argument passed to setLabelPosition() must be an object from the network being visualized by this display .'
         if not isinstance(position, (tuple, list)):
             raise TypeError, 'The position argument passed to setLabelPosition() must be a tuple or list of numbers.'
@@ -1280,17 +1278,17 @@ class Display(wx.glcanvas.GLCanvas):
             if not isinstance(dim, (int, float)):
                 raise TypeError, 'The components of the position argument passed to setLabelPosition() must be numbers.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             visible = visibles[0 if visibles[1].isPath() else 1]
         if visible is not None:
             visible.setLabelPosition(position)
     
     
-    def setVisiblePosition(self, object, position = None, fixed = None):
+    def setVisiblePosition(self, networkObject, position = None, fixed = None):
         """
         Set the position of the :class:`network object <Network.Object.Object>` within the display or within its visual container.
         
@@ -1299,7 +1297,7 @@ class Display(wx.glcanvas.GLCanvas):
         The fixed parameter indicates whether the user should be given GUI controls to manipulate the position of the object.
         """  
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise ValueError, 'The object argument passed to setVisiblePosition() must be an object from the network being visualized by this display .'
         if position != None:
             if not isinstance(position, (tuple, list)):
@@ -1308,11 +1306,11 @@ class Display(wx.glcanvas.GLCanvas):
                 if not isinstance(dim, (int, float)):
                     raise TypeError, 'The components of the position argument passed to setVisiblePosition() must be numbers.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             visible = visibles[0 if visibles[1].isPath() else 1]
         if visible is not None:
             if position is not None:
@@ -1321,13 +1319,13 @@ class Display(wx.glcanvas.GLCanvas):
                 visible.setPositionIsFixed(fixed)
     
     
-    def setVisibleRotation(self, object, rotation):
-        visibles = self.visiblesForObject(object)
+    def setVisibleRotation(self, networkObject, rotation):
+        visibles = self.visiblesForObject(networkObject)
         if len(visibles) == 1:
             visibles[0].setRotation(rotation)
     
     
-    def setVisibleSize(self, object, size = None, fixed=True, absolute=False):
+    def setVisibleSize(self, networkObject, size = None, fixed=True, absolute=False):
         """
         Set the size of the :class:`network object <Network.Object.Object>` within the display or within its visual container.
         
@@ -1338,7 +1336,7 @@ class Display(wx.glcanvas.GLCanvas):
         The absolute parameter indicates whether the size should be considered relative to the entire display (True) or relative to the visual container (False).
         """  
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise ValueError, 'The object argument passed to setVisibleSize() must be an object from the network being visualized by this display .'
         if not isinstance(size, (tuple, list)):
             raise TypeError, 'The size argument passed to setVisibleSize() must be a tuple or list of numbers.'
@@ -1346,7 +1344,7 @@ class Display(wx.glcanvas.GLCanvas):
             if not isinstance(dim, (int, float)):
                 raise TypeError, 'The components of the size argument passed to setVisibleSize() must be numbers.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         if len(visibles) == 1:
             if size != None:
                 visibles[0].setSize(size)
@@ -1354,7 +1352,7 @@ class Display(wx.glcanvas.GLCanvas):
             visibles[0].setSizeIsAbsolute(absolute)
     
     
-    def setVisibleColor(self, object, color):
+    def setVisibleColor(self, networkObject, color):
         """
         Set the color of the indicated :class:`network object <Network.Object.Object>`.
          
@@ -1369,7 +1367,7 @@ class Display(wx.glcanvas.GLCanvas):
         Any alpha value should be set independently using :meth:`setVisibleOpacity <Display.Display.Display.setVisibleOpacity>`.
         """
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise TypeError, 'The object argument passed to setVisibleColor() must be an object from the network being visualized by this display.'
         if (not isinstance(color, (tuple, list)) or len(color) != 3 or 
             not isinstance(color[0], (int, float)) or color[0] < 0.0 or color[0] > 1.0 or 
@@ -1377,17 +1375,17 @@ class Display(wx.glcanvas.GLCanvas):
             not isinstance(color[2], (int, float)) or color[2] < 0.0 or color[2] > 1.0):
             raise ValueError, 'The color argument should be a tuple or list of three integer or floating point values between 0.0 and 1.0, inclusively.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             visible = visibles[0 if visibles[0].isPath() else 1]
         if visible is not None:
             visible.setColor(color)
     
     
-    def setVisibleTexture(self, object, texture, scale = 1.0):
+    def setVisibleTexture(self, networkObject, texture, scale = 1.0):
         """
         Set the texture used to paint the surface of the visualized :class:`network object <Network.Object.Object>`.
         
@@ -1398,25 +1396,25 @@ class Display(wx.glcanvas.GLCanvas):
         The scale parameter can be used to reduce or enlarge the texture relative to the visualized object.
         """
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise TypeError, 'The object argument passed to setVisibleTexture() must be an object from the network being visualized by this display.'
         if not isinstance(texture, (Texture, type(None))):
             raise TypeError, 'The texture argument passed to setVisibleTexture() must be a texture from the library or None.'
         if not isinstance(scale, (float, int)):
             raise TypeError, 'The scale argument passed to setVisibleTexture() must be a number.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             visible = visibles[0 if visibles[0].isPath() else 1]
         if visible is not None:
             visible.setTexture(texture)
             visible.setTextureScale(scale)
     
     
-    def setVisibleShape(self, object, shape):
+    def setVisibleShape(self, networkObject, shape):
         """
         Set the shape of the :class:`network object's <Network.Object.Object>` visualization.
         
@@ -1426,14 +1424,14 @@ class Display(wx.glcanvas.GLCanvas):
         The shape parameter should be an instance of one of the classes in the shapes dictionary or None.
         """
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise TypeError, 'The object argument passed to setVisibleShape() must be an object from the network being visualized by this display.'
         if not isinstance(shape, (Shape, type(None), str)):
             raise TypeError, 'The shape parameter must be an instance of one of the classes in the shapes dictionary or None.'
         
         # Code to support pre-0.9.4 scripts.
         if isinstance(shape, str):
-            shapes = wx.GetApp().scriptLocals()['shapes']
+            shapes = Neuroptikon.scriptLocals()['shapes']
             if shape == 'ball':
                 shape = shapes['Ball']()
             elif shape == 'box':
@@ -1445,61 +1443,61 @@ class Display(wx.glcanvas.GLCanvas):
             elif shape == 'tube':
                 shape = shapes['Line']()
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             visible = visibles[0 if visibles[0].isPath() else 1]
         if visible is not None:
             visible.setShape(shape)
     
     
-    def setVisibleOpacity(self, object, opacity):
+    def setVisibleOpacity(self, networkObject, opacity):
         """
         Set the opacity of the :class:`network object's <Network.Object.Object>` visualization.
         
         The opacity parameter should be a number from 0.0 (fully transparent) to 1.0 (fully opaque).
         """
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise TypeError, 'The object argument passed to setVisibleOpacity() must be an object from the network being visualized by this display.'
         if not isinstance(opacity, (int, float)) or opacity < 0.0 or opacity > 1.0:
             raise ValueError, 'The opacity argument passed to setVisibleOpacity() must be an number between 0.0 and 1.0, inclusive.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             visible = visibles[0 if visibles[0].isPath() else 1]
         if visible is not None:
             visible.setOpacity(opacity)
     
     
-    def setVisibleWeight(self, object, weight):
+    def setVisibleWeight(self, networkObject, weight):
         """
         Set the weight of the :class:`network object's <Network.Object.Object>` visualization.
         
         The weight parameter should be a float value with 1.0 being a neutral weight.  Currently this only applies to visualized connections.
         """
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise TypeError, 'The object argument passed to setVisibleWeight() must be an object from the network being visualized by this display.'
         if not isinstance(weight, (int, float)):
             raise TypeError, 'The weight argument passed to setVisibleWeight() must be an number.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             visible = visibles[0 if visibles[0].isPath() else 1]
         if visible is not None:
             visible.setWeight(weight)
     
     
-    def setVisiblePath(self, object, startObject, endObject, midPoints = None, fixed = None):
+    def setVisiblePath(self, networkObject, startObject, endObject, midPoints = None, fixed = None):
         """
         Set the start and end points of a connecting :class:`object <Network.Object.Object>` and any additional mid-points.
         
@@ -1515,7 +1513,7 @@ class Display(wx.glcanvas.GLCanvas):
             endObject = midPoints
             midPoints = swap
         
-        if (not isinstance(object, Object) or object.network != self.network or 
+        if (not isinstance(networkObject, Object) or networkObject.network != self.network or 
             not isinstance(startObject, (Object, Visible)) or (isinstance(startObject, Object) and startObject.network != self.network) or 
             not isinstance(endObject, (Object, Visible)) or (isinstance(endObject, Object) and endObject.network != self.network)):
             raise ValueError, 'The object, startObject and endObject arguments passed to setVisiblePath() must be objects from the network being visualized by this display.'
@@ -1532,11 +1530,11 @@ class Display(wx.glcanvas.GLCanvas):
             if not isinstance(fixed, bool):
                 raise TypeError, 'The fixed argument passed to setVisiblePath() must be True, False or None'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             visible = visibles[0 if visibles[0].isPath() else 1]
         if visible is not None:
             if isinstance(startObject, Object):
@@ -1558,7 +1556,7 @@ class Display(wx.glcanvas.GLCanvas):
                 visible.setPathIsFixed(fixed)
     
     
-    def setVisibleFlowTo(self, object, show = True, color = None, spacing = None, speed = None, spread = None):
+    def setVisibleFlowTo(self, networkObject, show = True, color = None, spacing = None, speed = None, spread = None):
         """
         Set the visualization style for the flow of information from the :class:`path object <Network.Object.Object>` start to its end.
         
@@ -1575,14 +1573,14 @@ class Display(wx.glcanvas.GLCanvas):
         The spread argument determines how far the tail of the pulse reaches, from 0.0 (no tail) to 1.0 (the tail reaches all the way to the next pulse).
         """
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise TypeError, 'The object argument passed to setVisibleFlowTo() must be an object from the network being visualized by this display.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             visible = visibles[0 if visibles[0].isPath() else 1]
         if visible is not None:
             visible.setFlowTo(show)
@@ -1598,7 +1596,7 @@ class Display(wx.glcanvas.GLCanvas):
                 visible.setFlowToSpread(spread)
     
     
-    def setVisibleFlowFrom(self, object, show = True, color = None, spacing = None, speed = None, spread = None):
+    def setVisibleFlowFrom(self, networkObject, show = True, color = None, spacing = None, speed = None, spread = None):
         """
         Set the visualization style for the flow of information from the :class:`path object's <Network.Object.Object>` end back to its start.
         
@@ -1615,14 +1613,14 @@ class Display(wx.glcanvas.GLCanvas):
         The spread argument determines how far the tail of the pulse reaches, from 0.0 (no tail) to 1.0 (the tail reaches all the way to the next pulse).
         """
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise TypeError, 'The object argument passed to setVisibleFlowFrom() must be an object from the network being visualized by this display.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         visible = None
         if len(visibles) == 1:
             visible = visibles[0]
-        elif isinstance(object, Stimulus):
+        elif isinstance(networkObject, Stimulus):
             visible = visibles[0 if visibles[0].isPath() else 1]
         if visible is not None:
             visible.setFlowFrom(show)
@@ -1638,7 +1636,7 @@ class Display(wx.glcanvas.GLCanvas):
                 visible.setFlowFromSpread(color)
     
     
-    def setArrangedAxis(self, object, axis = 'largest', recurse = False):
+    def setArrangedAxis(self, networkObject, axis = 'largest', recurse = False):
         """
         Automatically arrange the visible children of the indicated :class:`network object <Network.Object.Object>` along the specified axis.
         
@@ -1647,17 +1645,17 @@ class Display(wx.glcanvas.GLCanvas):
         If recurse is True then all descendants will have their axes set as well.
         """
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise ValueError, 'The object argument passed to setArrangedAxis() must be an object from the network being visualized by this display .'
         if axis not in [None, 'largest', 'X', 'Y', 'Z']:
             raise ValueError, 'The axis argument passed to setArrangedAxis() must be one of \'largest\', \'X\', \'Y\', \'Z\' or None.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         if len(visibles) == 1:
             visibles[0].setArrangedAxis(axis = axis, recurse = recurse)
     
     
-    def setArrangedSpacing(self, object, spacing = .02, recurse = False):
+    def setArrangedSpacing(self, networkObject, spacing = .02, recurse = False):
         """
         Set the visible spacing between the children of the indicated :class:`network object <Network.Object.Object>`.
         
@@ -1666,17 +1664,17 @@ class Display(wx.glcanvas.GLCanvas):
         If recurse is True then all descendants will have their spacing set as well.
         """
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise ValueError, 'The object argument passed to setArrangedSpacing() must be an object from the network being visualized by this display .'
         if not isinstance(spacing, (int, float)):
             raise TypeError, 'The spacing argument passed to setArrangedSpacing() must be an integer or floating point value.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         if len(visibles) == 1:
             visibles[0].setArrangedSpacing(spacing = spacing, recurse = recurse)
     
     
-    def setArrangedWeight(self, object, weight):
+    def setArrangedWeight(self, networkObject, weight):
         """
         Set the amount of its parent's space the indicated :class:`network object <Network.Object.Object>` should use compared to its siblings.
         
@@ -1685,26 +1683,26 @@ class Display(wx.glcanvas.GLCanvas):
         If recurse is True then all descendants will have their spacing set as well.
         """
         
-        if not isinstance(object, Object) or object.network != self.network:
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise ValueError, 'The object argument passed to setArrangedWeight() must be an object from the network being visualized by this display .'
         if not isinstance(weight, (int, float)):
             raise TypeError, 'The weight argument passed to setArrangedWeight() must be an integer or floating point value.'
         
-        visibles = self.visiblesForObject(object)
+        visibles = self.visiblesForObject(networkObject)
         if len(visibles) == 1:
             visibles[0].setArrangedWeight(weight)
     
     
     def selectObjectsMatching(self, predicate):
         matchingVisibles = []
-        for object in self.network.objects:
-            if predicate.matches(object):
-                for visible in self.visiblesForObject(object):
+        for networkObject in self.network.objects:
+            if predicate.matches(networkObject):
+                for visible in self.visiblesForObject(networkObject):
                     matchingVisibles.append(visible)
         self._selectVisibles(matchingVisibles)
     
     
-    def selectObjects(self, objects = [], extend = False, findShortestPath = False):
+    def selectObjects(self, objects, extend = False, findShortestPath = False):
         """
         Select the indicated :class:`network objects <Network.Object.Object>`.
         
@@ -1713,13 +1711,16 @@ class Display(wx.glcanvas.GLCanvas):
         If findShortestPath is True then the shortest path between the currently selected object(s)s and the indicated object(s) will be found and all will be selected.
         """
         
+        if not isinstance(objects, (list, tuple, set)):
+            raise TypeError, 'The objects argument passed to selectObjects must be a list, tuple or set.'
+        
         visibles = []
-        for object in objects:
-            visibles.extend(self.visiblesForObject(object))
+        for networkObject in objects:
+            visibles.extend(self.visiblesForObject(networkObject))
         self._selectVisibles(visibles, extend, findShortestPath)
     
     
-    def selectObject(self, object, extend = False, findShortestPath = False):
+    def selectObject(self, networkObject, extend = False, findShortestPath = False):
         """
         Select the indicated :class:`network object <Network.Object.Object>`.
         
@@ -1728,16 +1729,16 @@ class Display(wx.glcanvas.GLCanvas):
         If findShortestPath is True then the shortest path between the currently selected object(s)s and the indicated object will be found and all will be selected.
         """
         
-        for visible in self.visiblesForObject(object):
+        for visible in self.visiblesForObject(networkObject):
             self._selectVisibles([visible], extend, findShortestPath)
     
     
-    def objectIsSelected(self, object):
+    def objectIsSelected(self, networkObject):
         """
         Return whether the indicated :class:`network object <Network.Object.Object>` is part of the current selection.
         """
         
-        for visible in self.visiblesForObject(object):
+        for visible in self.visiblesForObject(networkObject):
             if visible in self.selectedVisibles:
                 return True
         return False
@@ -1836,23 +1837,23 @@ class Display(wx.glcanvas.GLCanvas):
         self._selectVisibles(visiblesToSelect)
     
     
-    def _onSelectionOrShowFlowChanged(self, signal, sender):
+    def _onSelectionOrShowFlowChanged(self):
         # Update the highlighting, animation and ghosting based on the current selection.
         # TODO: this should all be handled by display rules
         
         self._suppressRefresh = True
         
-        def _highlightObject(object):
+        def _highlightObject(networkObject):
             # Highlight/animate all visibles for this object.
-            for visible in self.visiblesForObject(object):
+            for visible in self.visiblesForObject(networkObject):
                 if visible.isPath():
                     visiblesToAnimate.add(visible)
                 else:
                     visiblesToHighlight.add(visible)
             # If it's a neurite then highlight all the way back to the soma.
-            while isinstance(object, Neurite):
-                _highlightObject(object.root)
-                object = object.root 
+            while isinstance(networkObject, Neurite):
+                _highlightObject(networkObject.root)
+                networkObject = networkObject.root 
             
         visiblesToHighlight = set()
         visiblesToAnimate = set()
@@ -1861,13 +1862,13 @@ class Display(wx.glcanvas.GLCanvas):
         for selectedVisible in self.selectedVisibles:
             if isinstance(selectedVisible.client, Object):
                 # Highlight/animate objects connected to this object based on biological connectivity.
-                object = selectedVisible.client
-                _highlightObject(object)
+                networkObject = selectedVisible.client
+                _highlightObject(networkObject)
                 if self.selectConnectedVisibles and not self._selectedShortestPath:
-                    for connection in object.connections():
+                    for connection in networkObject.connections():
                         if isinstance(connection, Stimulus):
                             _highlightObject(connection)
-                        if isinstance(object, Neuron) or isinstance(object, Neurite):
+                        if isinstance(networkObject, Neuron) or isinstance(networkObject, Neurite):
                             connectionHighlighted = False
                             objectNeurites = set()
                             
@@ -1877,7 +1878,7 @@ class Display(wx.glcanvas.GLCanvas):
                                     rootCounterpart = counterpart.neuron()
                                 else:
                                     rootCounterpart = counterpart
-                                if rootCounterpart == object or (isinstance(object, Neurite) and rootCounterpart == object.neuron()):
+                                if rootCounterpart == networkObject or (isinstance(networkObject, Neurite) and rootCounterpart == networkObject.neuron()):
                                     objectNeurites.add(counterpart)
                                 elif singleSelection or rootCounterpart in selectedObjects:
                                     _highlightObject(connection)
@@ -1887,9 +1888,9 @@ class Display(wx.glcanvas.GLCanvas):
                             if connectionHighlighted:
                                 for objectNeurite in objectNeurites:
                                     _highlightObject(objectNeurite)
-                        elif isinstance(object, Region):
+                        elif isinstance(networkObject, Region):
                             if isinstance(connection, Pathway):
-                                connectedRegion = (set(connection.regions()) & set([object] + object.allSubRegions())).pop()
+                                connectedRegion = (set(connection.regions()) & set([networkObject] + networkObject.allSubRegions())).pop()
                                 nonSelf = set(connection.regions()) - set([connectedRegion])
                                 if any(nonSelf):
                                     otherRegion = nonSelf.pop()
@@ -1905,18 +1906,18 @@ class Display(wx.glcanvas.GLCanvas):
                                         if (connection.sendsOutput and arborization.receivesInput) or (connection.receivesInput and arborization.sendsOutput):
                                             _highlightObject(arborization)
                                             _highlightObject(arborization.region)
-                        elif isinstance(object, Muscle):
+                        elif isinstance(networkObject, Muscle):
                             if singleSelection or connection.neurite in selectedObjects or connection.neurite.neuron() in selectedObjects:
                                 _highlightObject(connection)
                                 _highlightObject(connection.neurite)
                         else:
                             _highlightObject(connection)
                     if singleSelection:
-                        if isinstance(object, Neuron):
-                            for neurite in object.neurites():
+                        if isinstance(networkObject, Neuron):
+                            for neurite in networkObject.neurites():
                                 _highlightObject(neurite)
-                        elif isinstance(object, Neurite):
-                            _highlightObject(object.root)
+                        elif isinstance(networkObject, Neurite):
+                            _highlightObject(networkObject.root)
             else:
                 # The selected visible has no biological counterpart so highlight/animate connected visibles purely based on connectivity in the visualization.
                 visiblesToHighlight.add(selectedVisible)
@@ -1965,7 +1966,6 @@ class Display(wx.glcanvas.GLCanvas):
         
         if self._useGhosts:
             # Dim everything that isn't selected, highlighted or animated.
-            selectionIsEmpty = len(self.selectedVisibles) == 0
             for visibles in self.visibles.itervalues():
                 for visible in visibles:
                     visible._updateOpacity()
@@ -2147,10 +2147,10 @@ class Display(wx.glcanvas.GLCanvas):
         The layout parameter should be one of the classes in layouts, an instance of one of the classes or None to re-execute the previous or default layout.
         """
         
-        if layout != None and not isinstance(layout, Layout.Layout) and not issubclass(layout, Layout.Layout):
-            raise TypeError, 'The layout parameter passed to performLayout() should be an instance of one of the classes in layouts or None.'
+        if layout != None and not isinstance(layout, Layout) and (not type(layout) == type(self.__class__) or not issubclass(layout, Layout)):
+            raise TypeError, 'The layout parameter passed to performLayout() should be one of the classes in layouts, an instance of one of the classes or None.'
         
-        if layout is None:
+        if layout == None:
             # Fall back to the last layout used.
             layout = self.lastUsedLayout
         else:
@@ -2161,7 +2161,7 @@ class Display(wx.glcanvas.GLCanvas):
             if not layout.__class__.canLayoutDisplay(self):
                 raise ValueError, gettext('The supplied layout cannot be used.')
         
-        if layout is None or not layout.__class__.canLayoutDisplay(self):
+        if layout == None or not layout.__class__.canLayoutDisplay(self):   # pylint: disable-msg=E1103
             # Pick the first layout class capable of laying out the display.
             for layoutClass in sys.modules['Display'].layoutClasses().itervalues():
                 if layoutClass.canLayoutDisplay(self):
@@ -2192,7 +2192,7 @@ class Display(wx.glcanvas.GLCanvas):
         osgDB.writeImageFile(image, path)
     
     
-    def onSaveView(self, event):
+    def onSaveView(self, event_):
         fileTypes = ['JPG', 'Microsoft BMP', 'PNG', 'TIFF']
         fileExtensions = ['jpg', 'bmp', 'png', 'tiff']
         wildcard = ''
@@ -2233,8 +2233,9 @@ class Display(wx.glcanvas.GLCanvas):
         
         if color != self.defaultFlowColor:
             self.defaultFlowColor = color
-            self.defaultFlowToColorUniform.set(osg.Vec4f(*color))
-            self.defaultFlowFromColorUniform.set(osg.Vec4f(*color))
+            vec4color = osg.Vec4f(color[0], color[1], color[2], color[3])
+            self.defaultFlowToColorUniform.set(vec4color)
+            self.defaultFlowFromColorUniform.set(vec4color)
             dispatcher.send(('set', 'defaultFlowColor'), self)
     
     
@@ -2300,20 +2301,19 @@ class DisplayDropTarget(wx.PyDropTarget):
         self.SetDataObject(self.dropData)
     
     
-    def OnData(self, x, y, dragType):
+    def OnData(self, x_, y_, dragType):
         if self.GetData():
             termData = self.dropData.GetData()
             termDict = cPickle.loads(termData)
             ontologyId = termDict['Ontology']
             termId = termDict['Term']
             
-            ontology = wx.GetApp().library.ontology(ontologyId)
+            ontology = Neuroptikon.library.ontology(ontologyId)
             if ontology is not None:
                 term = ontology[termId]
                 if term is not None:
-                    region = self.display.network.createRegion(ontologyTerm = term, addSubTerms = wx.GetKeyState(wx.WXK_ALT))
-                    # TODO: self.display.setDisplayPosition(region, ???)
-                    if True:    # TODO: only if new region is the only visible
+                    self.display.network.createRegion(ontologyTerm = term, addSubTerms = wx.GetKeyState(wx.WXK_ALT))
+                    if len(self.display.visibles) == 1:
                         self.display.centerView()
             
         return dragType

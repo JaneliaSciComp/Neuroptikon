@@ -1,7 +1,6 @@
 import wx
-import sys
+import Neuroptikon
 from pydispatch import dispatcher
-import Library
 
 
 class LibraryFrame( wx.Frame ):
@@ -40,7 +39,7 @@ class LibraryFrame( wx.Frame ):
             if len(self.itemClasses) == 1:
                 self.showItemClass(itemClass)
             
-            dispatcher.connect(self.libraryWasUpdated, ('addition', itemClass), wx.GetApp().library)
+            dispatcher.connect(self.libraryWasUpdated, ('addition', itemClass), Neuroptikon.library)
     
     
     def libraryWasUpdated(self, signal):
@@ -50,7 +49,7 @@ class LibraryFrame( wx.Frame ):
     
     def showItemClass(self, itemClass):
         self._currentItemClass = itemClass
-        libraryItems = getattr(wx.GetApp().library, itemClass.listProperty())()
+        libraryItems = getattr(Neuroptikon.library, itemClass.listProperty())()
         self.listBox.Clear()
         for libraryItem in libraryItems:
             self.listBox.Append(libraryItem.name or libraryItem.identifier, libraryItem)

@@ -1,4 +1,5 @@
 import wx
+import Neuroptikon
 from ObjectInspector import ObjectInspector
 from Network.Neuron import Neuron
 
@@ -28,7 +29,7 @@ class NeuronInspector( ObjectInspector ):
             
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Class:')))
             self._neuronClassChoice = wx.Choice(parentWindow, wx.ID_ANY)
-            for neuronClass in wx.GetApp().library.neuronClasses():
+            for neuronClass in Neuroptikon.library.neuronClasses():
                 if neuronClass.parentClass is None:
                     self._appendNeuronClass(neuronClass, 0)
             self._unknownNeuronClassId = self._neuronClassChoice.Append(gettext('Unknown'), None)
@@ -122,7 +123,7 @@ class NeuronInspector( ObjectInspector ):
                 self._neurotransmitterChoice.Clear()
                 self._neurotransmitterChoice.Append(gettext('Add...'))
                 self._neurotransmitterChoice.SetSelection(0)
-                for neurotransmitter in wx.GetApp().library.neurotransmitters():
+                for neurotransmitter in Neuroptikon.library.neurotransmitters():
                     if neurotransmitter in self.objects[0].neurotransmitters:
                         self._neurotransmittersSizer.Add(wx.StaticText(self._parentWindow, wx.ID_ANY, neurotransmitter.name))
                         removeButton = wx.Button(self._parentWindow, wx.ID_ANY, gettext('Remove'), style = wx.BU_EXACTFIT)

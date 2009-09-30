@@ -1,5 +1,5 @@
 import wx
-import os, sys
+import Neuroptikon
 from LibraryItem import LibraryItem
 from OntologyTerm import OntologyTerm
 from OntologyFrame import OntologyFrame
@@ -26,7 +26,7 @@ class Ontology(LibraryItem, dict):
     def bitmap(cls):
         bitmap = None
         try:
-            image = wx.GetApp().loadImage("Ontology.png")
+            image = Neuroptikon.loadImage("Ontology.png")
             if image is not None and image.IsOk():
                 bitmap = wx.BitmapFromImage(image)
         except:

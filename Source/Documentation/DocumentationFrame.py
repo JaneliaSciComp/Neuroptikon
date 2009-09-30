@@ -1,15 +1,16 @@
 import Documentation
 import wx
-import platform, urllib
+import platform
+import Neuroptikon
 
 try:
     import wx.webkit as webkit
-except:
+except ImportError:
     webkit = None
 
 try:
     import wx.lib.iewin_old as iewin
-except:
+except ImportError:
     iewin = None
 
 def showPage(pageURL):
@@ -22,7 +23,6 @@ def showPage(pageURL):
 class DocumentationFrame( wx.Frame ):
     
     def __init__(self, pageURL):
-        import wx
         wx.Frame.__init__(self, None, size = (800, 600), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
         
         self.Bind(wx.EVT_CLOSE, self.onClose)
@@ -30,7 +30,7 @@ class DocumentationFrame( wx.Frame ):
         # Build the UI
         if webkit:
             try:
-                self.htmlViewer = wx.webkit.WebKitCtrl(self)
+                self.htmlViewer = webkit.WebKitCtrl(self)
             except:
                 self.htmlViewer = None
         if (not webkit or self.htmlViewer == None) and iewin:
@@ -65,7 +65,7 @@ class DocumentationFrame( wx.Frame ):
     
     
     def _loadBitmap(self, fileName):
-        image = wx.GetApp().loadImage(fileName)
+        image = Neuroptikon.loadImage(fileName)
         if image is None or not image.IsOk():
             image = wx.EmptyImage(32, 32)
         if platform.system() == 'Windows':

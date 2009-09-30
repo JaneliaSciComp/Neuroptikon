@@ -1,5 +1,4 @@
 import osg, osgGA, osgManipulator, osgUtil, osgViewer
-import wx
 
 from Shape import UnitShape
 
@@ -15,7 +14,7 @@ class PickHandler(osgGA.GUIEventHandler):
         osgGA.GUIEventHandler.__init__(self)
     
     
-    def handle(self, eventAdaptor, actionAdaptor, object, nodeVisitor):
+    def handle(self, eventAdaptor, actionAdaptor, osgObject_, nodeVisitor_):
         eventWasHandled = False
         viewer = osgViewer.GUIActionAdapterToViewer(actionAdaptor)
         if viewer:
@@ -126,14 +125,14 @@ class PickHandler(osgGA.GUIEventHandler):
                     # Make a first pass only picking non-ghosted items.
                     # TODO: this could be done with node masks...
                     deepestVisible = None
-                    for distance, visible in visibleHits:
+                    for distance_, visible in visibleHits:
                         if (visible in self._display.highlightedVisibles or visible in self._display.animatedVisibles) and (deepestVisible is None or deepestVisible in visible.ancestors()):
                             deepestVisible = visible
                     if deepestVisible is not None:
                         self._display._selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)
                         return True
                 deepestVisible = None
-                for distance, visible in visibleHits:
+                for distance_, visible in visibleHits:
                     if deepestVisible is None or deepestVisible in visible.ancestors():
                         deepestVisible = visible
                 self._display._selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)

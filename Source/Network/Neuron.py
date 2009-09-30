@@ -1,21 +1,21 @@
 from Object import Object
-from Neurite import Neurite as Neurite
+from Neurite import Neurite
 import xml.etree.ElementTree as ElementTree
-import wx
+import Neuroptikon
 from pydispatch import dispatcher
 
 
 class Neuron(Object):
     
     
-    class Polarity:
+    class Polarity: # pylint: disable-msg=W0232
         UNIPOLAR = 'UNIPOLAR'
         BIPOLAR = 'BIPOLAR'
         PSEUDOUNIPOLAR = 'PSEUDOUNIPOLAR'
         MULTIPOLAR = 'MULTIPOLAR'
     
     
-    class Function:
+    class Function: # pylint: disable-msg=W0232
         SENSORY = 'SENSORY'
         INTERNEURON = 'INTERNEURON'
         MOTOR = 'MOTOR'
@@ -55,7 +55,11 @@ class Neuron(Object):
         
         self._neurites = []
         self.neuronClass = neuronClass
+        self.activation = None
         self._functions = set()
+        self.neurotransmitters = []
+        self.polarity = None
+        self.region = None
         
         for attrName in localAttrNames:
             if attrName == 'functions':
@@ -82,49 +86,49 @@ class Neuron(Object):
     
     @classmethod
     def _fromXMLElement(cls, network, xmlElement):
-        object = super(Neuron, cls)._fromXMLElement(network, xmlElement)
+        neuron = super(Neuron, cls)._fromXMLElement(network, xmlElement)
         classId = xmlElement.findtext('Class')
         if classId is None:
             classId = xmlElement.findtext('class')
-        object.neuronClass = wx.GetApp().library.neuronClass(classId)
-        if classId is not None and object.neuronClass is None:
+        neuron.neuronClass = Neuroptikon.library.neuronClass(classId)
+        if classId is not None and neuron.neuronClass is None:
             raise ValueError, gettext('Neuron class "%s" does not exist') % (classId)
-        object.neurotransmitters = []
+        neuron.neurotransmitters = []
         for ntName in ['Neurotransmitter', 'neurotransmitter']:
             for ntElement in xmlElement.findall(ntName):
                 ntId = ntElement.text
                 if ntId is not None:
-                    nt = wx.GetApp().library.neurotransmitter(ntId)
+                    nt = Neuroptikon.library.neurotransmitter(ntId)
                     if nt is None:
                         raise ValueError, gettext('Neurotransmitter "%s" does not exist') % (ntId)
                     else:
-                        object.neurotransmitters.append(nt)
-        object.activation = xmlElement.findtext('Activation')
-        if object.activation is None:
-            object.activation = xmlElement.findtext('activation')
-        object._functions = set()
+                        neuron.neurotransmitters.append(nt)
+        neuron.activation = xmlElement.findtext('Activation')
+        if neuron.activation is None:
+            neuron.activation = xmlElement.findtext('activation')
+        neuron._functions = set()
         for functionName in ['Function', 'function']:
             for functionElement in xmlElement.findall(functionName):
                 if functionElement.text in Neuron.Functions:
-                    object.setHasFunction(functionElement.text, True)
-        object.polarity = xmlElement.findtext('Polarity')
-        if object.polarity is None:
-            object.polarity = xmlElement.findtext('polarity')
+                    neuron.setHasFunction(functionElement.text, True)
+        neuron.polarity = xmlElement.findtext('Polarity')
+        if neuron.polarity is None:
+            neuron.polarity = xmlElement.findtext('polarity')
         regionId = xmlElement.get('somaRegionId')
-        object.region = network.objectWithId(regionId)
-        if regionId is not None and object.region is None:
+        neuron.region = network.objectWithId(regionId)
+        if regionId is not None and neuron.region is None:
             raise ValueError, gettext('Region with id "%s" does not exist') % (regionId)
-        if object.region is not None:
-            object.region.neurons.append(object)
-        object._neurites = []
+        if neuron.region is not None:
+            neuron.region.neurons.append(neuron)
+        neuron._neurites = []
         for neuriteElement in xmlElement.findall('Neurite'):
             neurite = Neurite._fromXMLElement(network, neuriteElement)
             if neurite is None:
                 raise ValueError, gettext('Could not create neurite')
-            neurite.root = object
-            object._neurites.append(neurite)
+            neurite.root = neuron
+            neuron._neurites.append(neurite)
             network.addObject(neurite)
-        return object
+        return neuron
     
     
     def _toXMLElement(self, parentElement):

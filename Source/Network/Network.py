@@ -1,4 +1,4 @@
-from networkx import *
+from networkx import XDiGraph
 import os.path, sys
 from pydispatch import dispatcher
 import xml.etree.ElementTree as ElementTree
@@ -15,8 +15,8 @@ from Innervation import Innervation
 from Attribute import Attribute
 
 try:
-    import pydot
-except:
+    import pydot    # pylint: disable-msg=F0401,W0611
+except ImportError:
     pydot = None
 
 
@@ -51,9 +51,9 @@ class Network:
             elementModule = getattr(sys.modules['Network'], className)
             elementClass = getattr(elementModule, className)
             for element in xmlElement.findall(className):
-                object = elementClass._fromXMLElement(network, element)
-                if object is not None:
-                    network.addObject(object)
+                networkObject = elementClass._fromXMLElement(network, element)
+                if networkObject is not None:
+                    network.addObject(networkObject)
         
         for element in xmlElement.findall('Attribute'):
             attribute = Attribute._fromXMLElement(network, element)
@@ -67,10 +67,10 @@ class Network:
     
     def _toXMLElement(self, parentElement):
         networkElement = ElementTree.SubElement(parentElement, 'Network')
-        for object in self.objects:
+        for networkObject in self.objects:
             # Nested regions are handled by their parents and neurites are handled by their neurons.
-            if not (isinstance(object, Region) and object.parentRegion is not None) and not isinstance(object, Neurite):
-                objectElement = object._toXMLElement(networkElement)
+            if not (isinstance(networkObject, Region) and networkObject.parentRegion is not None) and not isinstance(networkObject, Neurite):
+                objectElement = networkObject._toXMLElement(networkElement)
                 if objectElement is None:
                     pass    # TODO: are there any cases where this is NOT an error?
         for attribute in self._attributes:
@@ -90,9 +90,9 @@ class Network:
             objects = self.objectsOfClass(objectClass)
             if len(objects) > 0:
                 scriptFile.write('\n# ' + gettext('Create each %s') % (objectClass.displayName().lower()) + '\n\n')
-                for object in objects:
-                    if object._includeInScript(atTopLevel = True):
-                        object._toScriptFile(scriptFile, scriptRefs)
+                for networkObject in objects:
+                    if networkObject._includeInScript(atTopLevel = True):
+                        networkObject._toScriptFile(scriptFile, scriptRefs)
    
    
     def setSavePath(self, path):
@@ -128,9 +128,9 @@ class Network:
         """
         
         if name is not None:
-            for object in self.objects:
-                if isinstance(object, objectClass) and ((not default and object.name == name) or (default and object.defaultName() == name)):
-                    return object
+            for networkObject in self.objects:
+                if isinstance(networkObject, objectClass) and ((not default and networkObject.name == name) or (default and networkObject.defaultName() == name)):
+                    return networkObject
         return None
     
     
@@ -382,7 +382,7 @@ class Network:
         return self.objectsOfClass(Muscle)
     
     
-    def _objectChanged(self, sender, signal):
+    def _objectChanged(self):
         if not self._loadingFromXML and not self._modified:
             self._modified = True
             dispatcher.send(('set', 'modified'), self)
@@ -406,49 +406,49 @@ class Network:
         return self._modified
 
     
-    def addObject(self, object):
-        if object.networkId in self.idDict:
+    def addObject(self, objectToAdd):
+        if objectToAdd.networkId in self.idDict:
             raise ValueError, gettext('All objects in a network must have unique identifiers.')
         
-        self.objects.append(object)
-        self.idDict[object.networkId] = object
+        self.objects.append(objectToAdd)
+        self.idDict[objectToAdd.networkId] = objectToAdd
         
-        if object.networkId > self._nextUniqueId:
-            self._nextUniqueId = object.networkId
+        if objectToAdd.networkId > self._nextUniqueId:
+            self._nextUniqueId = objectToAdd.networkId
         
         # Update the NetworkX graph representation of the network.
-        if isinstance(object, Arborization):
-            if object.sendsOutput == None or object.sendsOutput:
-                self.graph.add_edge(object.neurite.neuron().networkId, object.region.networkId, object)
-            if object.receivesInput == None or object.receivesInput:
-                self.graph.add_edge(object.region.networkId, object.neurite.neuron().networkId, object)
-        elif isinstance(object, Synapse):
-            for postSynapticNeurite in object.postSynapticNeurites:
-                self.graph.add_edge(object.preSynapticNeurite.neuron().networkId, postSynapticNeurite.neuron().networkId, object)
-        elif isinstance(object, GapJunction):
-            neurite1, neurite2 = object.neurites()
-            self.graph.add_edge(neurite1.neuron().networkId, neurite2.neuron().networkId, object)
-            self.graph.add_edge(neurite2.neuron().networkId, neurite1.neuron().networkId, object)
-        elif isinstance(object, Pathway):
-            if object.region1Projects == None or object.region1Projects:
-                self.graph.add_edge(object.region1.networkId, object.region2.networkId, object)
-            if object.region2Projects == None or object.region2Projects:
-                self.graph.add_edge(object.region2.networkId, object.region1.networkId, object)
-        elif isinstance(object, Innervation):
-            self.graph.add_edge(object.neurite.neuron().networkId, object.muscle.networkId, object)
-        elif isinstance(object, Stimulus):
-            self.graph.add_node(object.networkId)
-            self.graph.add_edge(object.networkId, object.target.networkId, object)
-        elif isinstance(object, Neurite):
+        if isinstance(objectToAdd, Arborization):
+            if objectToAdd.sendsOutput == None or objectToAdd.sendsOutput:
+                self.graph.add_edge(objectToAdd.neurite.neuron().networkId, objectToAdd.region.networkId, objectToAdd)
+            if objectToAdd.receivesInput == None or objectToAdd.receivesInput:
+                self.graph.add_edge(objectToAdd.region.networkId, objectToAdd.neurite.neuron().networkId, objectToAdd)
+        elif isinstance(objectToAdd, Synapse):
+            for postSynapticNeurite in objectToAdd.postSynapticNeurites:
+                self.graph.add_edge(objectToAdd.preSynapticNeurite.neuron().networkId, postSynapticNeurite.neuron().networkId, objectToAdd)
+        elif isinstance(objectToAdd, GapJunction):
+            neurite1, neurite2 = objectToAdd.neurites()
+            self.graph.add_edge(neurite1.neuron().networkId, neurite2.neuron().networkId, objectToAdd)
+            self.graph.add_edge(neurite2.neuron().networkId, neurite1.neuron().networkId, objectToAdd)
+        elif isinstance(objectToAdd, Pathway):
+            if objectToAdd.region1Projects == None or objectToAdd.region1Projects:
+                self.graph.add_edge(objectToAdd.region1.networkId, objectToAdd.region2.networkId, objectToAdd)
+            if objectToAdd.region2Projects == None or objectToAdd.region2Projects:
+                self.graph.add_edge(objectToAdd.region2.networkId, objectToAdd.region1.networkId, objectToAdd)
+        elif isinstance(objectToAdd, Innervation):
+            self.graph.add_edge(objectToAdd.neurite.neuron().networkId, objectToAdd.muscle.networkId, objectToAdd)
+        elif isinstance(objectToAdd, Stimulus):
+            self.graph.add_node(objectToAdd.networkId)
+            self.graph.add_edge(objectToAdd.networkId, objectToAdd.target.networkId, objectToAdd)
+        elif isinstance(objectToAdd, Neurite):
             pass    # TODO: are neurites nodes or edges or either?
-        elif isinstance(object, Region) or isinstance(object, Neuron) or isinstance(object, Muscle):
-            self.graph.add_node(object.networkId)
+        elif isinstance(objectToAdd, Region) or isinstance(objectToAdd, Neuron) or isinstance(objectToAdd, Muscle):
+            self.graph.add_node(objectToAdd.networkId)
         
         # Watch for any changes to the object so we can update our dirty state.
-        dispatcher.connect(self._objectChanged, dispatcher.Any, object)
+        dispatcher.connect(self._objectChanged, dispatcher.Any, objectToAdd)
         
         # Let anyone who cares know that the network was changed.
-        dispatcher.send('addition', self, affectedObjects = [object])
+        dispatcher.send('addition', self, affectedObjects = [objectToAdd])
     
     
     def objectWithId(self, objectId):
@@ -460,15 +460,15 @@ class Network:
     
     def objectsOfClass(self, objectClass):
         objects = []
-        for object in self.objects:
-            if isinstance(object, objectClass):
-                objects.append(object)
+        for networkObject in self.objects:
+            if isinstance(networkObject, objectClass):
+                objects.append(networkObject)
         return objects
     
     
     def removeAllObjects(self):
-        for object in self.objects:
-            object.network = None
+        for networkObject in self.objects:
+            networkObject.network = None
         self.objects = []
         self.idDict = {}
         self.graph.clear()
@@ -492,7 +492,7 @@ class Network:
                 self._synchronizeDisplays(None, self.displays[0])
     
     
-    def _synchronizeDisplays(self, signal, sender):
+    def _synchronizeDisplays(self, sender):
         if self._displaysAreSynchronized:
             selection = sender.selectedObjects()
             for display in self.displays:

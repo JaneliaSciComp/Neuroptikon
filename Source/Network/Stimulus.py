@@ -1,6 +1,5 @@
 from Object import Object
-import wx
-import xml.etree.ElementTree as ElementTree
+import Neuroptikon
 
 class Stimulus(Object):
     
@@ -37,7 +36,7 @@ class Stimulus(Object):
             raise ValueError, gettext('Object with id "%s" does not exist') % (targetId)
         object.target.stimuli.append(object)
         modalityId = xmlElement.get('modality')
-        object.modality = wx.GetApp().library.modality(modalityId)
+        object.modality = Neuroptikon.library.modality(modalityId)
         if object.modality is None:
             raise ValueError, gettext('Modality "%s" does not exist') % (modalityId)
         return object

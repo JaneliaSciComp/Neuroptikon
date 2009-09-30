@@ -1,15 +1,9 @@
 from Display.Layout import Layout
-from math import ceil, floor, sqrt
 import numpy as N
 
 import pyheapq
 from heapset import HeapSet
-from copy import copy
 import os
-
-
-class NotImplemented(Exception):
-    pass
 
 
 class VisibleMap:
@@ -53,7 +47,7 @@ class VisibleMap:
                 neighbor = node.copy()
                 hoppedNeighbors = []
                 lastNeighbors = []
-                for hopCount in range(0, self.maxHops + 1):
+                for hopCount_ in range(1, self.maxHops + 1):
                     neighbor += offset
                     if min(neighbor) < 0:
                         # Don't go outside of the grid.
@@ -118,8 +112,8 @@ class VisibleMap:
 def reconstruct_path(came_from, current_node):
     if current_node in came_from:
         node, hoppedNeighbors = came_from[current_node]
-        p = reconstruct_path(came_from, node)
-        return p + [(current_node, hoppedNeighbors)]
+        path = reconstruct_path(came_from, node)
+        return path + [(current_node, hoppedNeighbors)]
     else:
         return []
 
@@ -129,25 +123,25 @@ class HeapItem:
 
         self.node = node
 
-        """ g_score = Distance from start along optimal path."""
+        # g_score: Distance from start along optimal path.
         self.g_score = g_score
 
-        """h_score the heuristic estimates of the distances to goal"""
+        # h_score: the heuristic estimates of the distances to goal
         self.h_score = a_map.heuristic_estimate_of_distance(node, goal)
 
-        """f_score Estimated total distance from start to goal through node."""
+        # f_score: Estimated total distance from start to goal through node.
         self.f_score = self.h_score + self.g_score
 
     def as_tuple(self):
         return (self.f_score, self.g_score, self.h_score, self.node)
 
     def __hash__(self):
-         return self.as_tuple().__hash__()
+        return self.as_tuple().__hash__()
 
     def __repr__(self):
         return str(self.as_tuple())
 
-    def type_check(self,other):
+    def type_check(self, other):
         return type(self) == type(other)
     def __lt__(self, other):
         return self.type_check(other) and self.as_tuple().__lt__(other.as_tuple())
@@ -252,7 +246,7 @@ class OrthogonalPathLayout(Layout):
         mapSize = (maxBound - minBound) / nodeSpacing
         
         # Build the node map
-        map = VisibleMap(display, mapSize, self.allowDiagonalPaths)
+        nodeMap = VisibleMap(display, mapSize, self.allowDiagonalPaths)
         for visible in minPositions.iterkeys():
             minMap = N.ceil((minPositions[visible] - minBound) / nodeSpacing)
             maxMap = N.ceil((maxPositions[visible] - minBound) / nodeSpacing)
@@ -264,15 +258,15 @@ class OrthogonalPathLayout(Layout):
                         if xOut != yOut:
                             ports[visible].append((x, y))
                         if not any(visible.children):
-                            map.setNodeOccupier((x, y), visible)
+                            nodeMap.setNodeOccupier((x, y), visible)
                     else:
                         for z in range(int(minMap[2]) - 1, int(maxMap[2]) + 1):
                             if x < minMap[0] or x == maxMap[0] or y < minMap[1] or y == maxMap[1] or z < minMap[2] or z == maxMap[2]:
                                 ports[visible].append((x, y, z))
                             elif not any(visible.children) :
-                                map.setNodeOccupier((x, y, z), visible)
+                                nodeMap.setNodeOccupier((x, y, z), visible)
         
-        #map.show()
+        #nodeMap.show()
         
         # TODO: pre-assign ports? or at least port edges?
         
@@ -289,7 +283,7 @@ class OrthogonalPathLayout(Layout):
             
             # Make a copy of the map to hold our tentative routing.  Once the actual route is determined this map will be discarded and the main map will be updated.
             # TODO: is this really necessary?
-            edgeMap = map.copy()
+            edgeMap = nodeMap.copy()
             
             openHeap = HeapSet()    # priority queue of potential steps in the route
             openDict = {}           # the set of tentative nodes to be evaluated
@@ -319,14 +313,13 @@ class OrthogonalPathLayout(Layout):
                     path = []
                     prevNode = None
                     for node, hoppedNeighbors in reconstruct_path(came_from, x.node):  #[:-1]:
-                        map.setNodeOccupier(node, edge)
+                        nodeMap.setNodeOccupier(node, edge)
                         for hoppedNeighbor in hoppedNeighbors:
-                            map.addNodeOccupier(hoppedNeighbor, edge)
+                            nodeMap.addNodeOccupier(hoppedNeighbor, edge)
                         prevNode = node
                         pathPoint = tuple(N.array(node) * nodeSpacing + minBound)
                         path += [(pathPoint[0], pathPoint[1], 0.0 if len(pathPoint) == 2 else pathPoint[2])]
                     # Combine consectutive path segments with the same slope.
-                    originalLen = len(path)
                     for index in range(len(path) - 2, 0, -1):
                         delta0 = N.array(path[index + 1]) - N.array(path[index])
                         delta1 = N.array(path[index]) - N.array(path[index - 1])
@@ -339,8 +332,6 @@ class OrthogonalPathLayout(Layout):
                                 break
                         if sameSlope:
                             del path[index]
-#                    if len(path) < originalLen:
-#                        print '\treduced path segment count by ' + str(originalLen - len(path))
                     edge.setPathMidPoints(path)
                     del edgeMap
                     break
@@ -360,7 +351,7 @@ class OrthogonalPathLayout(Layout):
                     
                     # Penalize turning.
                     if x.node in came_from:
-                        prevNode, prevHoppedNeighbors = came_from[x.node]
+                        prevNode = came_from[x.node][0]
                         
                         delta0 = x.node[0] - prevNode[0]
                         delta1 = node_y[0] - x.node[0]
@@ -410,7 +401,7 @@ class OrthogonalPathLayout(Layout):
             if 'edgeMap' in dir():
                 print '\tCould not find route from ' + (pathStart.client.abbreviation or '???') + ' to ' + (pathEnd.client.abbreviation or '???')
         
-        #map.show()
+        #nodeMap.show()
 
 #import pyheapq
 #

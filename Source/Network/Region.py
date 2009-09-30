@@ -1,8 +1,8 @@
-from Object import *
+from Object import Object
 from Pathway import Pathway
-import wx
-from pydispatch import dispatcher
 import xml.etree.ElementTree as ElementTree
+from pydispatch import dispatcher
+import Neuroptikon
 
 
 class Region(Object):
@@ -38,35 +38,35 @@ class Region(Object):
     
     @classmethod
     def _fromXMLElement(cls, network, xmlElement):
-        object = super(Region, cls)._fromXMLElement(network, xmlElement)
-        object.parentRegion = None
-        object.subRegions = []
-        for regionElement in xmlElement.findall('Region'):
-            region = Region._fromXMLElement(network, regionElement)
-            if region is None:
+        region = super(Region, cls)._fromXMLElement(network, xmlElement)
+        region.parentRegion = None
+        region.subRegions = []
+        for subRegionElement in xmlElement.findall('Region'):
+            subRegion = Region._fromXMLElement(network, subRegionElement)
+            if subRegion is None:
                 raise ValueError, gettext('Could not create region')
-            region.parentRegion = object
-            object.subRegions.append(region)
-            network.addObject(region)
+            subRegion.parentRegion = region
+            region.subRegions.append(subRegion)
+            network.addObject(subRegion)
         ontologyElement = xmlElement.find('OntologyTerm')
         if ontologyElement is None:
             ontologyElement = xmlElement.find('ontologyTerm')
         if ontologyElement is None:
-            object.ontologyTerm = None
+            region.ontologyTerm = None
         else:
-            ontology = wx.GetApp().library.ontology(ontologyElement.get('ontologyId'))
+            ontology = Neuroptikon.library.ontology(ontologyElement.get('ontologyId'))
             if ontology is None:
                 raise ValueError, gettext('Could not find ontology "%s"') % (ontologyElement.get('ontologyId'))
             else:
                 termId = ontologyElement.get('ontologyTermId')
                 if termId in ontology:
-                    object.ontologyTerm = ontology[termId]
+                    region.ontologyTerm = ontology[termId]
                 else:
                     raise ValueError, gettext('Could not find ontology term "%s"') % (termId)
-        object.arborizations = []
-        object.pathways = []
-        object.neurons = []
-        return object
+        region.arborizations = []
+        region.pathways = []
+        region.neurons = []
+        return region
     
     
     def _toXMLElement(self, parentElement):

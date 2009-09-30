@@ -1,4 +1,5 @@
 import wx
+import Neuroptikon
 from ObjectInspector import ObjectInspector
 from Network.Stimulus import Stimulus
 
@@ -21,7 +22,7 @@ class StimulusInspector( ObjectInspector ):
             self._sizer.SetFlexibleDirection(wx.HORIZONTAL)
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Modality') + ":"))
             self._modalityChoice = wx.Choice(parentWindow, wx.ID_ANY)
-            for modality in wx.GetApp().library.modalities():
+            for modality in Neuroptikon.library.modalities():
                 self._modalityChoice.Append(modality.name, modality)
             self._unknownModalityId = self._modalityChoice.Append(gettext('Unknown'), None)
             self._multipleModalitiesId = wx.NOT_FOUND

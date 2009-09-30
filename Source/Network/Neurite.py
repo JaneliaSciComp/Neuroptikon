@@ -5,8 +5,7 @@ from Synapse import Synapse
 from GapJunction import GapJunction
 from Muscle import Muscle
 from Innervation import Innervation
-
-import xml.etree.ElementTree as ElementTree
+from Pathway import Pathway
 
 
 class Neurite(Object):
@@ -36,24 +35,24 @@ class Neurite(Object):
     
     @classmethod
     def _fromXMLElement(cls, network, xmlElement):
-        object = super(Neurite, cls)._fromXMLElement(network, xmlElement)
+        neurite = super(Neurite, cls)._fromXMLElement(network, xmlElement)
         pathwayId = xmlElement.get('pathwayId')
-        object._pathway = network.objectWithId(pathwayId)
-        if pathwayId is not None and object._pathway is None:
+        neurite.setPathway(network.objectWithId(pathwayId))
+        if pathwayId is not None and neurite.pathway() is None:
             raise ValueError, gettext('Pathway with id "%s" does not exist') % (pathwayId)
-        object._neurites = []
-        for neuriteElement in xmlElement.findall('Neurite'):
-            neurite = Neurite._fromXMLElement(network, neuriteElement)
-            if neurite is None:
+        neurite._neurites = []
+        for subNeuriteElement in xmlElement.findall('Neurite'):
+            subNeurite = Neurite._fromXMLElement(network, subNeuriteElement)
+            if subNeurite is None:
                 raise ValueError, gettext('Could not create neurite')
-            neurite.root = object
-            object._neurites += [neurite]
-            network.addObject(neurite)
-        object.arborization = None
-        object._synapses = []
-        object._gapJunctions = []
-        object._innervations = []
-        return object
+            subNeurite.root = object
+            neurite._neurites += [neurite]
+            network.addObject(subNeurite)
+        neurite.arborization = None
+        neurite._synapses = []
+        neurite._gapJunctions = []
+        neurite._innervations = []
+        return neurite
     
     
     def _toXMLElement(self, parentElement):
@@ -98,7 +97,7 @@ class Neurite(Object):
     def _creationScriptParams(self, scriptRefs):
         args, keywords = Object._creationScriptParams(self, scriptRefs)
         if self._pathway is not None:
-            keywords['pathway'] = scriptRefs[pathway.networkId]
+            keywords['pathway'] = scriptRefs[self._pathway.networkId]
         return (args, keywords)
     
     

@@ -1,9 +1,8 @@
-import wx
-import osg
+import wx, wx.lib.colourselect
+import Neuroptikon
 from pydispatch import dispatcher
 from Inspection.Inspector import Inspector
 from Network.ObjectList import ObjectList
-from Display.Visible import Visible
 
 
 class AppearanceInspector(Inspector):
@@ -37,7 +36,7 @@ class AppearanceInspector(Inspector):
             
             # Add a pop-up for choosing the shape.
             self._shapeChoice = wx.Choice(self._window, wx.ID_ANY)
-            shapes = wx.GetApp().scriptLocals()['shapes']
+            shapes = Neuroptikon.scriptLocals()['shapes']
             for shapeKey in sorted(shapes.keys()):
                 shapeClass = shapes[shapeKey]
                 self._shapeChoice.Append(shapeClass.name(), shapeClass)
@@ -49,7 +48,7 @@ class AppearanceInspector(Inspector):
             
             # Add a pop-up for choosing the texture.
             self._textureChoice = wx.Choice(self._window, wx.ID_ANY)
-            for texture in wx.GetApp().library.textures():
+            for texture in Neuroptikon.library.textures():
                 self._textureChoice.Append(gettext(texture.name), texture)
             self._textureChoice.Append(gettext('None'), None)
             self._multipleTexturesId = wx.NOT_FOUND

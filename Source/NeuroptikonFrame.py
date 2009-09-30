@@ -1,12 +1,11 @@
-import wx
+import wx, wx.py
 from pydispatch import dispatcher
 import datetime, os, platform, sys
 import xml.etree.ElementTree as ElementTree
-from xml.dom import minidom
+import Neuroptikon
 import Display, Display.Display
 from Network.Network import Network
 from Search.Finder import Finder
-import Layouts
 
 if platform.system() == 'Darwin':
     import ctypes
@@ -14,12 +13,12 @@ if platform.system() == 'Darwin':
 
 
 class NeuroptikonFrame( wx.Frame ):
-    def __init__(self, network = None, id = wx.ID_ANY):
+    def __init__(self, network = None, wxId = wx.ID_ANY):
         if network is None:
             title = Network().name()
         else:
             title = network.name()
-        wx.Frame.__init__(self, None, id, title, size=(800,600), style=wx.DEFAULT_FRAME_STYLE|wx.FULL_REPAINT_ON_RESIZE)
+        wx.Frame.__init__(self, None, wxId, title, size=(800,600), style=wx.DEFAULT_FRAME_STYLE|wx.FULL_REPAINT_ON_RESIZE)
         
         self.Bind(wx.EVT_ACTIVATE, self.onActivate)
         self.Bind(wx.EVT_CLOSE, self.onCloseWindow)
@@ -75,7 +74,7 @@ class NeuroptikonFrame( wx.Frame ):
         self.splitter.SetSashPosition(-100)
     
     
-    def networkDidChangeSavePath(self, signal = None, sender = None):
+    def networkDidChangeSavePath(self):
         self.SetTitle(self.display.network.name())
     
     
@@ -123,7 +122,7 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     def loadBitmap(self, fileName):
-        image = wx.GetApp().loadImage(fileName)
+        image = Neuroptikon.loadImage(fileName)
         if image is None or not image.IsOk():
             image = wx.EmptyImage(32, 32)
         if platform.system() == 'Windows':
@@ -133,6 +132,8 @@ class NeuroptikonFrame( wx.Frame ):
     
     def menuBar(self):
         menuBar = wx.GetApp().menuBar(self)
+        
+        # pylint: disable-msg=W0201
         
         editMenu = wx.Menu()
         self.Bind(wx.EVT_MENU, self.onUndo, editMenu.Append(wx.NewId(), gettext('Undo\tCtrl-Z'), gettext('Undo the last action')))
@@ -177,10 +178,12 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_MENU, self.display.onSaveView, viewMenu.Append(wx.NewId(), gettext('Save View as...'), gettext('Save the current view to a file')))
         menuBar.Insert(menuBar.GetMenuCount() - 1, viewMenu, gettext('&View'))
         
+        # pylint: enable-msg=W0201
+        
         return menuBar
     
     
-    def displayChangedMenuState(self, sender = None, signal = None):
+    def displayChangedMenuState(self):
         self.mouseOverSelectingItem.Check(self.display.useMouseOverSelecting())
         self.showRegionNamesMenuItem.Check(self.display.showRegionNames())
         self.showNeuronNamesMenuItem.Check(self.display.showNeuronNames())
@@ -188,7 +191,7 @@ class NeuroptikonFrame( wx.Frame ):
         self.useGhostsMenuItem.Check(self.display.useGhosts())
     
     
-    def viewDimensionsDidChange(self, sender = None, signal = None):
+    def viewDimensionsDidChange(self):
         self.GetToolBar().ToggleTool(self._view2DId, self.display.viewDimensions == 2)
         self.GetToolBar().ToggleTool(self._view3DId, self.display.viewDimensions == 3)
     
@@ -199,12 +202,12 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     def scriptLocals(self):
-        locals = wx.GetApp().scriptLocals()
-        locals['network'] = self.display.network
-        locals['display'] = self.display
+        scriptLocals = Neuroptikon.scriptLocals()
+        scriptLocals['network'] = self.display.network
+        scriptLocals['display'] = self.display
         if 'DEBUG' in os.environ:
-            locals['profileScript'] = self._profileScript
-        return locals
+            scriptLocals['profileScript'] = self._profileScript
+        return scriptLocals
     
         
     def runScript(self, scriptPath):
@@ -213,9 +216,9 @@ class NeuroptikonFrame( wx.Frame ):
             startTime = datetime.datetime.now()
         prevDir = os.getcwd()
         os.chdir(os.path.dirname(scriptPath))
-        locals = self.scriptLocals()
+        scriptLocals = self.scriptLocals()
         try:
-            execfile(os.path.basename(scriptPath), locals)
+            execfile(os.path.basename(scriptPath), scriptLocals)
             self.Refresh(False)
         finally:
             os.chdir(prevDir)
@@ -233,7 +236,7 @@ class NeuroptikonFrame( wx.Frame ):
         p.strip_dirs().sort_stats('time').print_stats(30)
     
         
-    def onRunScript(self, event):
+    def onRunScript(self, event_):
         dlg = wx.FileDialog(None, 'Choose a script to run', './Scripts', '', '*.py', wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
             try:
@@ -266,11 +269,11 @@ class NeuroptikonFrame( wx.Frame ):
         pass    # TODO
     
     
-    def onSelectAll(self, event):
+    def onSelectAll(self, event_):
         self.display.selectAll()
     
     
-    def onFind(self, event):
+    def onFind(self, event_):
         if self.finder is None:
             self.finder = Finder(self, -1, gettext('Finder'), pos=(-1,-1))
         
@@ -278,27 +281,27 @@ class NeuroptikonFrame( wx.Frame ):
             self.display.selectObjectsMatching(self.finder.predicate)
     
     
-    def OnUseMouseOverSelecting(self, event):
+    def OnUseMouseOverSelecting(self, event_):
         self.display.setUseMouseOverSelecting(not self.display.useMouseOverSelecting())
     
     
-    def onShowHideRegionNames(self, event):
+    def onShowHideRegionNames(self, event_):
         self.display.setShowRegionNames(not self.display.showRegionNames())
     
     
-    def onShowHideNeuronNames(self, event):
+    def onShowHideNeuronNames(self, event_):
         self.display.setShowNeuronNames(not self.display.showNeuronNames())
     
     
-    def onSetLabelsFloatOnTop(self, event):
+    def onSetLabelsFloatOnTop(self, event_):
         self.display.setLabelsFloatOnTop(not self.display.labelsFloatOnTop())
     
     
-    def onShowFlow(self, event):
+    def onShowFlow(self, event_):
         self.display.setShowFlow(not self.display.showFlow())
     
     
-    def onUseGhosts(self, event):
+    def onUseGhosts(self, event_):
         self.display.setUseGhosts(not self.display.useGhosts())
     
     
@@ -308,7 +311,7 @@ class NeuroptikonFrame( wx.Frame ):
         menuItem.Enable(layoutClass.canLayoutDisplay(self.display))
     
     
-    def onCloseWindow(self, event = None):
+    def onCloseWindow(self, event_ = None):
         success = True
         
         if self._modified:
@@ -396,41 +399,41 @@ class NeuroptikonFrame( wx.Frame ):
         if not saveNetwork:
             # Attempt to create script refs for all objects using the network.find* methods.
             objectNames = {}
-            for object in network.objects:
-                if object._includeInScript():
-                    objectName = object.name
-                    defaultName = object.defaultName()
+            for networkObject in network.objects:
+                if networkObject._includeInScript():
+                    objectName = networkObject.name
+                    defaultName = networkObject.defaultName()
                     
                     # Make sure the object has a name.
                     if not objectName and not defaultName:
                         for display in network.displays:
-                            display.selectObject(object)
+                            display.selectObject(networkObject)
                         raise ValueError, gettext('The display of the selected object cannot be saved because it does not have a name.')
                     
                     # Make sure the name is unique.
                     if objectName:
-                        nameKey = object.__class__.__name__ + ': ' + objectName
+                        nameKey = networkObject.__class__.__name__ + ': ' + objectName
                         if nameKey in objectNames:
                             for display in network.displays:
-                                display.selectObjects([object, objectNames[nameKey]])
-                            raise ValueError, gettext('The display cannot be saved because there is more than one %s with the name \'%s\'.') % (object.__class__.__name__.lower(), objectName)
+                                display.selectObjects([networkObject, objectNames[nameKey]])
+                            raise ValueError, gettext('The display cannot be saved because there is more than one %s with the name \'%s\'.') % (networkObject.__class__.__name__.lower(), objectName)
                     else:
-                        nameKey = object.__class__.__name__ + ': ' + defaultName
+                        nameKey = networkObject.__class__.__name__ + ': ' + defaultName
                         if nameKey in objectNames:
                             for display in network.displays:
-                                display.selectObjects([object, objectNames[nameKey]])
-                            raise ValueError, gettext('The display cannot be saved because there is more than one %s with the default name \'%s\'.') % (object.__class__.__name__.lower(), defaultName)
+                                display.selectObjects([networkObject, objectNames[nameKey]])
+                            raise ValueError, gettext('The display cannot be saved because there is more than one %s with the default name \'%s\'.') % (networkObject.__class__.__name__.lower(), defaultName)
                     
                     # Create the script ref.
-                    objectNames[nameKey] = object
-                    if 'find' + object.__class__.__name__ in dir(network):
-                        prefix = 'network.find' + object.__class__.__name__ + '(\''
+                    objectNames[nameKey] = networkObject
+                    if 'find' + networkObject.__class__.__name__ in dir(network):
+                        prefix = 'network.find' + networkObject.__class__.__name__ + '(\''
                     else:
-                        prefix = 'network.findObject(' + object.__class__.__name__ + ', \''
+                        prefix = 'network.findObject(' + networkObject.__class__.__name__ + ', \''
                     if objectName:
-                        scriptRefs[object.networkId] = prefix + objectName + '\')'
+                        scriptRefs[networkObject.networkId] = prefix + objectName + '\')'
                     else:
-                        scriptRefs[object.networkId] = prefix + defaultName + '\', default = True)'
+                        scriptRefs[networkObject.networkId] = prefix + defaultName + '\', default = True)'
         
         scriptFile = open(savePath, 'w')
         scriptFile.write('from datetime import datetime, date, time\n\n')
@@ -457,7 +460,7 @@ class NeuroptikonFrame( wx.Frame ):
             scriptFile.close()
     
     
-    def onSaveNetwork(self, event = None):
+    def onSaveNetwork(self, event_ = None):
         success = False
         
         network = self.display.network
@@ -484,7 +487,7 @@ class NeuroptikonFrame( wx.Frame ):
         return success
     
     
-    def onSaveNetworkAs(self, event):
+    def onSaveNetworkAs(self, event_):
         network = self.display.network
         fileTypes = ['XML File', 'XML File (network only)', 'Python Script', 'Python Script (network only)', 'Python Script (display only)']
         fileExtensions = ['xml', 'xml', 'py', 'py', 'py']

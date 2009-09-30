@@ -1,6 +1,6 @@
 import wx
 import osg, osgDB
-import os, sys
+import Neuroptikon
 from LibraryItem import LibraryItem
 
 class Texture(LibraryItem):
@@ -19,7 +19,7 @@ class Texture(LibraryItem):
     def bitmap(cls):
         bitmap = None
         try:
-            image = wx.GetApp().loadImage("Texture.png")
+            image = Neuroptikon.loadImage("Texture.png")
             if image is not None and image.IsOk():
                 bitmap = wx.BitmapFromImage(image)
         except:

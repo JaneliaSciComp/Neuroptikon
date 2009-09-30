@@ -1,26 +1,22 @@
 from __future__ import with_statement # This isn't required in Python 2.6
 
-import osg, osgDB, osgFX, osgText
+import osg, osgDB, osgText
 
 from Shape import Shape, UnitShape, PathShape
 
+import Neuroptikon
 from Network.Object import Object
 from Network.Region import Region
 from Network.Neuron import Neuron
-from Network.Neurite import Neurite
-from Network.Arborization import Arborization
+from Network.Neurite import Neurite # pylint: disable-msg=E0611,F0401
 from Network.Stimulus import Stimulus
 from Network.Attribute import Attribute
 from Library.Texture import Texture
 
-import wx
 from pydispatch import dispatcher
 import os.path, random, sys
-from math import atan2, pi, sqrt
+from math import atan2, sqrt
 import xml.etree.ElementTree as ElementTree
-
-
-runningFromSource = not hasattr(sys, "frozen")
 
 
 class Visible(object):
@@ -40,18 +36,18 @@ class Visible(object):
         print 'Could not load Arial font (' + exceptionValue.message + ')'
         labelFont = None
     
-    if wx.GetApp():
-        shaderDir = wx.GetApp().rootDir
-        if runningFromSource:
-            shaderDir = os.path.join(shaderDir, 'Display')
-        with open(os.path.join(shaderDir, 'FlowShader.vert')) as f:
-            flowVertexShader = f.read()
-        with open(os.path.join(shaderDir, 'FlowShader.frag')) as f:
-            flowFragmentShader = f.read()
-        flowProgram = osg.Program()
-        flowProgram.addShader(osg.Shader(osg.Shader.VERTEX, flowVertexShader))
-        flowProgram.addShader(osg.Shader(osg.Shader.FRAGMENT, flowFragmentShader))
-        del shaderDir
+    if Neuroptikon.runningFromSource:
+        shaderDir = os.path.join(Neuroptikon.rootDir, 'Display')
+    else:
+        shaderDir = Neuroptikon.rootDir
+    with open(os.path.join(shaderDir, 'FlowShader.vert')) as f:
+        flowVertexShader = f.read()
+    with open(os.path.join(shaderDir, 'FlowShader.frag')) as f:
+        flowFragmentShader = f.read()
+    flowProgram = osg.Program()
+    flowProgram.addShader(osg.Shader(osg.Shader.VERTEX, flowVertexShader))
+    flowProgram.addShader(osg.Shader(osg.Shader.FRAGMENT, flowFragmentShader))
+    del shaderDir
     
     osgDB.Registry.instance().getReaderWriterForExtension('osg')    # Make sure the osg plug-in can be found before the cwd gets changed for a script run.
     
@@ -60,9 +56,11 @@ class Visible(object):
         self.display = display
         self.displayId = display._generateUniqueId() # a unique identifier within the display
         self.client = client
+        
         self._glowColor = None
         self._glowNode = None
-        
+        self._glowNodeMaterial = None
+                
         # Geometry attributes
         self._position = (random.random() - 0.5, random.random() - 0.5, 0)
         self._positionIsFixed = False
@@ -147,10 +145,10 @@ class Visible(object):
         if not hasattr(Visible, 'cullFrontFacesAttr'):
             # This is a bit of a hack.  osgswig does not expose the osg::CullFace class which is needed to get proper transparency.
             # To get around this we load an osg file which contains nodes with both front and back cull face state attributes and extract them. 
-            if runningFromSource:
-                cullFacesPath = os.path.join(wx.GetApp().rootDir, 'Display', 'CullFaces.osg')
+            if Neuroptikon.runningFromSource:
+                cullFacesPath = os.path.join(Neuroptikon.rootDir, 'Display', 'CullFaces.osg')
             else:
-                cullFacesPath = os.path.join(wx.GetApp().rootDir, 'CullFaces.osg')
+                cullFacesPath = os.path.join(Neuroptikon.rootDir, 'CullFaces.osg')
             cullFacesNode = osgDB.readNodeFile(cullFacesPath)
             cullFacesGroup = cullFacesNode.asGroup()
             Visible.cullFrontFacesAttr = cullFacesGroup.getChild(0).getStateSet().getAttribute(osg.StateAttribute.CULLFACE)
@@ -260,7 +258,7 @@ class Visible(object):
             if shapeClassName == None:
                 visible.setShape(None)
             else:
-                shapes = wx.GetApp().scriptLocals()['shapes']
+                shapes = Neuroptikon.scriptLocals()['shapes']
                 shape = shapes[shapeClassName](**shapeAttrs)
                 visible.setShape(shape)
             
@@ -288,7 +286,7 @@ class Visible(object):
                     textureId = textureElement.text
                     textureScale = "10.0"
                 if textureId is not None:
-                    visible.setTexture(wx.GetApp().library.texture(textureId))
+                    visible.setTexture(Neuroptikon.library.texture(textureId))
                 if textureScale is not None:
                     visible.setTextureScale(float(textureScale))
         
@@ -790,8 +788,8 @@ class Visible(object):
                 self._shapeGeode.addDrawable(self._shape.geometry())
                 if self._shape.interiorBounds() != None:
                     minBound, maxBound = self._shape.interiorBounds()
-                    minBound = osg.Vec3(*minBound)
-                    maxBound = osg.Vec3(*maxBound)
+                    minBound = osg.Vec3(minBound[0], minBound[1], minBound[2])
+                    maxBound = osg.Vec3(maxBound[0], maxBound[1], maxBound[2])
                     self.childGroup.setMatrix(osg.Matrixd.scale(maxBound - minBound) * osg.Matrixd.translate((minBound + maxBound) / 2.0))
             
             for child in self.children:
@@ -810,7 +808,7 @@ class Visible(object):
             self._updateOpacity()
     
     
-    def _displayChangedShowName(self, signal, sender):
+    def _displayChangedShowName(self):
         self._updateLabel()
     
     
@@ -968,7 +966,7 @@ class Visible(object):
         return self._color
     
     
-    def _displayChangedGhosting(self, sender, signal):
+    def _displayChangedGhosting(self):
         self._updateOpacity()
     
     
@@ -1227,7 +1225,7 @@ class Visible(object):
                     dispatcher.disconnect(self._maintainAbsoluteSize, ('set', 'rotation'), ancestor)
     
     
-    def _maintainAbsoluteSize( self, signal, sender, event=None, value=None, **arguments):
+    def _maintainAbsoluteSize(self):
         self._updateTransform()
         self._arrangeChildren()
     
@@ -1520,7 +1518,7 @@ class Visible(object):
             self.display.Update()
     
     
-    def _childArrangedWeightChanged(self, signal, sender, **arguments):
+    def _childArrangedWeightChanged(self):
         self._arrangeChildren()
     
     
@@ -1533,7 +1531,7 @@ class Visible(object):
             ancestor = ancestor.parent
     
     
-    def _dependentVisibleChanged( self, signal, sender, event=None, value=None, **arguments):
+    def _dependentVisibleChanged(self):
         if self.isPath():
             self._updatePath()
     
@@ -1607,7 +1605,7 @@ class Visible(object):
             else:
                 textureMatrix = osg.TexMat()
                 textureMatrix.setMatrix(osg.Matrixd.scale(scale, scale, scale))
-                self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON);
+                self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON)
             self._staticTextureScale = scale
             self._updateFlowAnimation()
             dispatcher.send(('set', 'textureScale'), self)
@@ -1940,7 +1938,7 @@ class Visible(object):
         path.insert(0, self._pathStart.worldPosition())
         path.append(self._pathEnd.worldPosition())
         
-        if self._pathStart._shape and self._pathStart._opacity > 0.0:
+        if self._pathStart.shape() and self._pathStart.opacity() > 0.0:
             # Try to find the point where the path intersects the shape.
             # TODO: use OSG's line segment intersector?  Then shapes don't have to write intersectionPoint() methods.
             rayOrigin = path[1]
@@ -1948,19 +1946,19 @@ class Visible(object):
                 rayDirection = (path[1][0] - path[2][0], path[1][1] - path[2][1], path[1][2] - path[2][2])
             else:
                 rayDirection = (path[0][0] - path[1][0], path[0][1] - path[1][1], path[0][2] - path[1][2])
-            if isinstance(self._pathStart._shape, UnitShape):
+            if isinstance(self._pathStart.shape(), UnitShape):
                 # Translate the ray into the shape's coordinate system.
                 size = self._pathStart.worldSize()
                 rayOrigin = ((rayOrigin[0] - path[0][0]) / size[0], (rayOrigin[1] - path[0][1]) / size[1], (rayOrigin[2] - path[0][2]) / size[2])
                 rayDirection = (rayDirection[0] / size[0], rayDirection[1] / size[1], rayDirection[2] / size[2])
-            intersectionPoint = self._pathStart._shape.intersectionPoint(rayOrigin, rayDirection)
+            intersectionPoint = self._pathStart.shape().intersectionPoint(rayOrigin, rayDirection)
             if intersectionPoint:
-                if isinstance(self._pathStart._shape, UnitShape):
+                if isinstance(self._pathStart.shape(), UnitShape):
                     # Translate back into world space coordinates.
                     intersectionPoint = (intersectionPoint[0] * size[0] + path[0][0], intersectionPoint[1] * size[1] + path[0][1], intersectionPoint[2] * size[2] + path[0][2])
                 path[0:1] = [intersectionPoint]
         
-        if self._pathEnd._shape and self._pathEnd._opacity > 0.0:
+        if self._pathEnd.shape() and self._pathEnd.opacity() > 0.0:
             # Try to find the point where the path intersects the shape.
             # TODO: use OSG's line segment intersector?  Then shapes don't have to write intersectionPoint() methods.
             rayOrigin = path[-2]
@@ -1968,14 +1966,14 @@ class Visible(object):
                 rayDirection = (path[-2][0] - path[-3][0], path[-2][1] - path[-3][1], path[-2][2] - path[-3][2])
             else:
                 rayDirection = (path[-1][0] - path[-2][0], path[-1][1] - path[-2][1], path[-1][2] - path[-2][2])
-            if isinstance(self._pathEnd._shape, UnitShape):
+            if isinstance(self._pathEnd.shape(), UnitShape):
                 # Translate the ray into the shape's coordinate system.
                 size = self._pathEnd.worldSize()
                 rayOrigin = ((rayOrigin[0] - path[-1][0]) / size[0], (rayOrigin[1] - path[-1][1]) / size[1], (rayOrigin[2] - path[-1][2]) / size[2])
                 rayDirection = (rayDirection[0] / size[0], rayDirection[1] / size[1], rayDirection[2] / size[2])
-            intersectionPoint = self._pathEnd._shape.intersectionPoint(rayOrigin, rayDirection)
+            intersectionPoint = self._pathEnd.shape().intersectionPoint(rayOrigin, rayDirection)
             if intersectionPoint:
-                if isinstance(self._pathEnd._shape, UnitShape):
+                if isinstance(self._pathEnd.shape(), UnitShape):
                     # Translate back into world space coordinates.
                     intersectionPoint = (intersectionPoint[0] * size[0] + path[-1][0], intersectionPoint[1] * size[1] + path[-1][1], intersectionPoint[2] * size[2] + path[-1][2])
                 path[-1:] = [intersectionPoint]
