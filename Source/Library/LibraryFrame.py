@@ -1,5 +1,5 @@
-import wx
 import Neuroptikon
+import wx
 from pydispatch import dispatcher
 
 

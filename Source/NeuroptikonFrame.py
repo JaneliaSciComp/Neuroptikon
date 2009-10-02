@@ -1,8 +1,8 @@
+import Neuroptikon
 import wx, wx.py
 from pydispatch import dispatcher
 import datetime, os, platform, sys
 import xml.etree.ElementTree as ElementTree
-import Neuroptikon
 import Display, Display.Display
 from Network.Network import Network
 from Search.Finder import Finder

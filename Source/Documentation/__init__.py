@@ -2,10 +2,10 @@
 
 __version__ = "1.0.0"
 
+import Neuroptikon
+
 import wx
 import os.path, sys, urllib
-
-import Neuroptikon
 
 _sharedFrame = None
 

@@ -1,5 +1,5 @@
-import wx
 import Neuroptikon
+import wx
 from LibraryItem import LibraryItem
 from OntologyTerm import OntologyTerm
 from OntologyFrame import OntologyFrame

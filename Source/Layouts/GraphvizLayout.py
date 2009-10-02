@@ -1,6 +1,6 @@
+import Neuroptikon
 from Display.Layout import Layout
 import os, stat, sys
-import Neuroptikon
 
 
 # Make sure all the graphviz pieces can be found and used.

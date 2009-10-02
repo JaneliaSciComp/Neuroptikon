@@ -1,8 +1,8 @@
+import Neuroptikon
 from pydispatch import dispatcher
 import xml.etree.ElementTree as ElementTree
 from networkx import shortest_path
 from Attribute import Attribute
-import Neuroptikon
 
     
 class Object(object):

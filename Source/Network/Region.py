@@ -1,8 +1,8 @@
+import Neuroptikon
 from Object import Object
 from Pathway import Pathway
 import xml.etree.ElementTree as ElementTree
 from pydispatch import dispatcher
-import Neuroptikon
 
 
 class Region(Object):

@@ -1,5 +1,5 @@
-from Object import Object
 import Neuroptikon
+from Object import Object
 
 class Stimulus(Object):
     

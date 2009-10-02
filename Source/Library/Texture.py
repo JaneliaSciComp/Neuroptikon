@@ -1,6 +1,6 @@
+import Neuroptikon
 import wx
 import osg, osgDB
-import Neuroptikon
 from LibraryItem import LibraryItem
 
 class Texture(LibraryItem):

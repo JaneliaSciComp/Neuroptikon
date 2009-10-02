@@ -1,3 +1,4 @@
+import Neuroptikon
 import wx.glcanvas
 from pydispatch import dispatcher
 import osg, osgDB, osgGA, osgManipulator, osgViewer
@@ -8,7 +9,6 @@ import xml.etree.ElementTree as ElementTree
 from PickHandler import PickHandler
 from DraggerCullCallback import DraggerCullCallback
 from Network.Object import Object
-import Neuroptikon
 from Network.Region import Region
 from Network.Pathway import Pathway # pylint: disable-msg=E0611,F0401
 from Network.Neuron import Neuron

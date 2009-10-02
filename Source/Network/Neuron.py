@@ -1,7 +1,7 @@
+import Neuroptikon
 from Object import Object
 from Neurite import Neurite
 import xml.etree.ElementTree as ElementTree
-import Neuroptikon
 from pydispatch import dispatcher
 
 

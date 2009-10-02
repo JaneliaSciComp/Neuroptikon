@@ -1,5 +1,5 @@
-import wx, wx.lib.colourselect
 import Neuroptikon
+import wx, wx.lib.colourselect
 from pydispatch import dispatcher
 from Inspection.Inspector import Inspector
 from Network.ObjectList import ObjectList

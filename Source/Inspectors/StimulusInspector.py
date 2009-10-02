@@ -1,5 +1,5 @@
-import wx
 import Neuroptikon
+import wx
 from ObjectInspector import ObjectInspector
 from Network.Stimulus import Stimulus
 

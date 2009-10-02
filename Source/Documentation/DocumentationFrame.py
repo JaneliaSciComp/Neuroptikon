@@ -1,7 +1,7 @@
+import Neuroptikon
 import Documentation
 import wx
 import platform
-import Neuroptikon
 
 try:
     import wx.webkit as webkit
