@@ -279,6 +279,8 @@ class NeuroptikonFrame( wx.Frame ):
         
         if self.finder.ShowModal() == wx.ID_OK:
             self.display.selectObjectsMatching(self.finder.predicate)
+            if not any(self.display.selection()):
+                wx.Bell()
     
     
     def OnUseMouseOverSelecting(self, event_):
