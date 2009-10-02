@@ -345,7 +345,7 @@ class NeuroptikonApp(wx.App):
         elif event.GetId() == self._scriptingDocSetId:
             page = 'Scripting/index.html'
         elif event.GetId() == self._uiDocSetId:
-            page = 'UserInterface.html'
+            page = 'UserInterface/index.html'
         
         Documentation.showPage(page)
             

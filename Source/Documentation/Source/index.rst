@@ -10,7 +10,7 @@ Circuits are defined using a biological model independent of any particular visu
 .. toctree::
    :maxdepth: 2
    
-   UserInterface
+   UserInterface/index
    DataManagement
    Scripting/index
    Customizing/index
