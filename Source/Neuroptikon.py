@@ -15,16 +15,17 @@ if not runningFromSource:
         sys.path.append(rootDir)
     platformLibPath = rootDir
 else:
-    rootDir = os.path.abspath(os.path.dirname(sys.modules['__main__'].__file__))
+    rootDir = os.path.abspath(os.path.dirname(__file__))
     
     # Make sure that the library paths are set up correctly for the current location.
     commonLibPath = os.path.join(rootDir, 'lib', 'CrossPlatform')
     platformLibPath = os.path.join(rootDir, 'lib', platform.system())
 
     if platform.system() == 'Darwin':
-        # Use the copy of wx in /Library
-        import wxversion
-        wxversion.select('2.8')
+        if 'wx' not in sys.modules:
+            # Use the copy of wx in /Library
+            import wxversion
+            wxversion.select('2.8')
         
         libraryEnvVar = 'DYLD_LIBRARY_PATH'
     elif platform.system() == 'Windows':
@@ -106,7 +107,7 @@ library = None
 def scriptLocals():
     return {}
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     
     from NeuroptikonApp import NeuroptikonApp
     
