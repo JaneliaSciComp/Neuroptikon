@@ -26,7 +26,7 @@ class Finder(wx.Dialog):
         self.label_2 = wx.StaticText(self.find_by_text_panel, -1, "Find")
         self.text_object_type_choice = wx.Choice(self.find_by_text_panel, -1, choices=["objects", "regions", "pathways", "neurons", "neurites", "synapses", "gap junctions", "muscles", "arborizations", "innervations", "stimuli"])
         self.label_3 = wx.StaticText(self.find_by_text_panel, -1, "whose")
-        self.text_field_choice = wx.Choice(self.find_by_text_panel, -1, choices=["name or description", "name", "description"])
+        self.text_field_choice = wx.Choice(self.find_by_text_panel, -1, choices=["name or abbreviation", "name", "abbreviation"])
         self.text_operator_choice = wx.Choice(self.find_by_text_panel, -1, choices=["contains", "starts with", "ends with"])
         self.find_text = wx.TextCtrl(self.find_by_text_panel, -1, "")
         self.label_4 = wx.StaticText(self.find_by_io_panel, -1, "Find")
@@ -121,7 +121,7 @@ class Finder(wx.Dialog):
             event.Skip()
     
     
-    def on_find(self, event): # wxGlade: Finder.<event_handler>
+    def on_find(self, event_): # wxGlade: Finder.<event_handler>
         self.predicate = CompoundPredicate()
         
         if self.notebook.GetCurrentPage() == self.find_by_text_panel:
@@ -149,32 +149,32 @@ class Finder(wx.Dialog):
             findText = self.find_text.GetValue().upper()
             if self.text_operator_choice.GetCurrentSelection() == 0:
                 namePredicate = Predicate(lambda x: (x.name is None and findText == '') or (x.name != None and x.name.upper().find(findText) != -1))
-                descriptionPredicate = Predicate(lambda x: (x.description is None and findText == '') or (x.description != None and x.description.upper().find(self.find_text.GetValue().upper()) != -1))
+                abbreviationPredicate = Predicate(lambda x: (x.abbreviation is None and findText == '') or (x.abbreviation != None and x.abbreviation.upper().find(self.find_text.GetValue().upper()) != -1))
             elif self.text_operator_choice.GetCurrentSelection() == 1:
                 namePredicate = Predicate(lambda x: x.name != None and x.name.upper().startswith(findText))
-                descriptionPredicate = Predicate(lambda x: x.description != None and x.description.upper().startswith(self.find_text.GetValue().upper()))
+                abbreviationPredicate = Predicate(lambda x: x.abbreviation != None and x.abbreviation.upper().startswith(self.find_text.GetValue().upper()))
             elif self.text_operator_choice.GetCurrentSelection() == 2:
                 namePredicate = Predicate(lambda x: x.name != None and x.name.upper().endswith(findText))
-                descriptionPredicate = Predicate(lambda x: x.description != None and x.description.upper().endswith(findText))
-            if self.text_field_choice.GetCurrentSelection() == 0:   # name or description
+                abbreviationPredicate = Predicate(lambda x: x.abbreviation != None and x.abbreviation.upper().endswith(findText))
+            if self.text_field_choice.GetCurrentSelection() == 0:   # name or abbreviation
                 fieldPredicate = CompoundPredicate()
                 fieldPredicate.matchAll = False
                 fieldPredicate.predicates.append(namePredicate)
-                fieldPredicate.predicates.append(descriptionPredicate)
+                fieldPredicate.predicates.append(abbreviationPredicate)
                 self.predicate.predicates.append(fieldPredicate)
             elif self.text_field_choice.GetCurrentSelection() == 1: # just name
                 self.predicate.predicates.append(namePredicate)
-            elif self.text_field_choice.GetCurrentSelection() == 2: # just description
-                self.predicate.predicates.append(descriptionPredicate)
+            elif self.text_field_choice.GetCurrentSelection() == 2: # just abbreviation
+                self.predicate.predicates.append(abbreviationPredicate)
         elif self.notebook.GetCurrentPage() == self.find_by_io_panel:
             if self.io_connection_type_choice.GetCurrentSelection() == 1:
                 self.predicate.addStatement(lambda x: x.__class__ == Network.Pathway.Pathway)
             elif self.text_object_type_choice.GetCurrentSelection() == 2:
                 self.predicate.addStatement(lambda x: x.__class__ == Network.Neuron.Neuron)
             
-            object = self.io_object_choice.GetClientData(self.io_object_choice.GetCurrentSelection());
-            inputs = object.inputs()
-            outputs = object.outputs()
+            sourceObject = self.io_object_choice.GetClientData(self.io_object_choice.GetCurrentSelection())
+            inputs = sourceObject.inputs()
+            outputs = sourceObject.outputs()
             if self.input_output_choice.GetCurrentSelection() == 0:   # just send
                 self.predicate.addStatement(lambda x: x in inputs)
             elif self.input_output_choice.GetCurrentSelection() == 1:   # just receive
