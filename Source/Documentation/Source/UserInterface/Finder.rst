@@ -1,7 +1,7 @@
 Finder
 ======
 
-The finder window allows you to search for objects in the network based on their name or their connectivity.  Choose "Find" from the Edit menu and then use the tabs at the top to pick the type of search.  After searching the matching objects will be selected in the display or your computer will beep in no objects matched.
+The finder window allows you to search for objects in the network based on their name or their connectivity.  Choose "Find" from the Edit menu and then use the tabs at the top to pick the type of search.  After searching the matching objects will be selected in the display or your computer will beep in no objects matched.  If you wish to see a list of the matching objects open the :ref:`group inspector <group-inspector>`.
 
 Find by text
 ------------

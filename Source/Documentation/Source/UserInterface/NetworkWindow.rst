@@ -1,7 +1,7 @@
 Network Window
 ==============
 
-A network window presents a visualization of a network and provides an interactive Python console.  This document covers the visualization portion of the window, please see :doc:`this page <../Scripting/Console>` for documentation of the console.
+A network window presents a visualization of a network and provides an interactive Python console.  This document covers the visualization portion of the window, the console is discussed in the :doc:`scripting section<../Scripting/Console>`.
 
 .. image:: ../images/NetworkWindow.png
    :align: center

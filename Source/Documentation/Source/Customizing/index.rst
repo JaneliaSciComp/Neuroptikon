@@ -1,29 +1,12 @@
 Customizing Neuroptikon
 =======================
 
-Layouts
--------
-
-Coming soon...
-
-Shapes
-------
-
-Coming soon...
-
-Inspectors
-----------
-
-Coming soon...
-
-Library
--------
-
-* Ontologies
-* Textures
-* Neuron classes
-* Modalities
-
-Coming soon...
+.. toctree::
+   :maxdepth: 2
+   
+   Layout
+   Shape
+   Inspector
+   Library
 
 .. TODO: Start up script
