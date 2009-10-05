@@ -24,6 +24,7 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_CLOSE, self.onCloseWindow)
         
         self.splitter = wx.SplitterWindow(self, wx.ID_ANY, style = wx.SP_LIVE_UPDATE)
+        self.splitter.SetMinimumPaneSize(20)
         
         self._modified = False
         
