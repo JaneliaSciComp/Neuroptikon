@@ -10,22 +10,26 @@ class Box(UnitShape):
     
     
     def __init__(self, *args, **keywordArgs):
-        Shape.__init__(self, *args, **keywordArgs)
+        UnitShape.__init__(self, *args, **keywordArgs)
         
         # TODO: use VBO's so all instances share the same data?
-        # TODO: texture coordinates
         
-        vertices = [(-0.5, -0.5, -0.5), (-0.5, -0.5,  0.5), (-0.5,  0.5, -0.5), (-0.5,  0.5,  0.5), ( 0.5, -0.5, -0.5), ( 0.5, -0.5,  0.5), ( 0.5,  0.5, -0.5), ( 0.5,  0.5,  0.5)]
+        baseVertices = [(-0.5, -0.5, -0.5), (-0.5, -0.5,  0.5), (-0.5,  0.5, -0.5), (-0.5,  0.5,  0.5), ( 0.5, -0.5, -0.5), ( 0.5, -0.5,  0.5), ( 0.5,  0.5, -0.5), ( 0.5,  0.5,  0.5)]
+        
+        vertices = []
+        faceNormals = []
+        texCoords = []
+        for (v0, v1, v2, v3, normal) in [(0, 1, 3, 2, (-1.0, 0.0, 0.0)), (2, 3, 7, 6, (0.0, 1.0, 0.0)), (6, 7, 5, 4, (1.0, 0.0, 0.0)), (4, 5, 1, 0, (0.0, -1.0, 0.0)), (3, 1, 5, 7, (0.0, 0.0, 1.0)), (0, 2, 6, 4, (0.0, 0.0, -1.0))]:
+            vertices += [baseVertices[v0], baseVertices[v1], baseVertices[v2], baseVertices[v3]]
+            faceNormals += [normal]
+            texCoords += [(1, 1), (1, 0), (0, 0), (0, 1)]
+            faceSet = Shape.primitiveSetFromList(osg.PrimitiveSet.QUADS, [len(vertices) - 4, len(vertices) - 3, len(vertices) - 2, len(vertices) - 1])
+            self.geometry().addPrimitiveSet(faceSet)
+        
         self.geometry().setVertexArray(Shape.vectorArrayFromList(vertices))
-        
-        faceNormals = [(-1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (1.0, 0.0, 0.0), (0.0, -1.0, 0.0), (0.0, 0.0, 1.0), (0.0, 0.0, -1.0)]
         self.geometry().setNormalArray(Shape.vectorArrayFromList(faceNormals))
         self.geometry().setNormalBinding(osg.Geometry.BIND_PER_PRIMITIVE_SET)
-        
-        facesVertices = [(0, 1, 3, 2), (2, 3, 7, 6), (6, 7, 5, 4), (4, 5, 1, 0), (3, 1, 5, 7), (0, 2, 6, 4)]
-        for faceVertices in facesVertices:
-            faceSet = Shape.primitiveSetFromList(osg.PrimitiveSet.QUADS, faceVertices)
-            self.geometry().addPrimitiveSet(faceSet)
+        self.geometry().setTexCoordArray(0, Shape.vectorArrayFromList(texCoords))
     
     
     def interiorBounds(self):
