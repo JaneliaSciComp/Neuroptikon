@@ -1,6 +1,6 @@
 import wx, wx.grid
 from pydispatch import dispatcher
-import sys, weakref
+import datetime, sys, weakref
 from Network.Attribute import Attribute
 
 
@@ -112,17 +112,17 @@ class AttributesTable(wx.grid.PyGridTableBase):
                     value = value == 1
                 elif attribute.type() == Attribute.DATETIME_TYPE:
                     try:
-                        value = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+                        value = datetime.datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
                     except:
                         raise ValueError, gettext('Date time values must be in YYYY-MM-DD HH:MM:SS format')
                 elif attribute.type() == Attribute.DATE_TYPE:
                     try:
-                        value = datetime.strptime(value, '%Y-%m-%d').date()
+                        value = datetime.datetime.strptime(value, '%Y-%m-%d').date()
                     except:
                         raise ValueError, gettext('Date values must be in YYYY-MM-DD format')
                 elif attribute.type() == Attribute.TIME_TYPE:
                     try:
-                        value = datetime.strptime(value, '%H:%M:%S').time()
+                        value = datetime.datetime.strptime(value, '%H:%M:%S').time()
                     except:
                         raise ValueError, gettext('Time values must be in HH:MM:SS format')
                 attribute.setValue(value)
@@ -148,14 +148,15 @@ class AttributesTable(wx.grid.PyGridTableBase):
     
     def AppendRows(self, numRows):
         for rowNum in range(0, numRows):
-            self.object._attributes.append(Attribute(self.object, gettext('Attribute'), Attribute.STRING_TYPE, ''))
+            self.object.addAttribute(gettext('Attribute'), Attribute.STRING_TYPE, '')
         self.getGrid().ProcessTableMessage(wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, numRows))
         self.ResetView()
         return True
         
     
     def DeleteRows(self, startRow, numRows):
-        del self.object._attributes[startRow:startRow + numRows]
+        for attribute in self.object._attributes[startRow:startRow + numRows]:
+            self.object.removeAttribute(attribute)
         self.getGrid().ProcessTableMessage(wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, startRow, numRows))
         self.ResetView()
         return True
