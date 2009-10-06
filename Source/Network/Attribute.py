@@ -123,6 +123,11 @@ class Attribute(object):
         if name != self._name:
             self._name = name
             dispatcher.send(('set', 'name'), self)
+            from Object import Object
+            if isinstance(self.object, Object):
+                self.object.network.setModified(True)
+            else:
+                self.object.setModified(True)
     
     
     def name(self):
@@ -182,6 +187,11 @@ class Attribute(object):
             dispatcher.send(('set', 'type'), self)
             if self._value != originalValue:
                 dispatcher.send(('set', 'value'), self)
+            from Object import Object
+            if isinstance(self.object, Object):
+                self.object.network.setModified(True)
+            else:
+                self.object.setModified(True)
     
     
     def type(self):
@@ -211,6 +221,11 @@ class Attribute(object):
         if value != self._value:
             self._value = value
             dispatcher.send(('set', 'value'), self)
+            from Object import Object
+            if isinstance(self.object, Object):
+                self.object.network.setModified(True)
+            else:
+                self.object.setModified(True)
     
     
     def value(self):
