@@ -552,3 +552,16 @@ class Network:
             if name == None or attribute.name() == name:
                 attributes += [attribute]
         return attributes
+    
+    
+    def removeAttribute(self, attribute):
+        """
+        Remove the given attribute from the network.
+        """
+        
+        if not isinstance(attribute, Attribute) or not attribute in self._attributes:
+            raise ValueError, 'The attribute passed to removeAttribute() must be an existing attribute of the network.'
+        
+        self._attributes.remove(attribute)
+        dispatcher.send(('set', 'attributes'), self)
+        

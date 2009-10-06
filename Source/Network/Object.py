@@ -317,7 +317,20 @@ class Object(object):
             if name == None or attribute.name() == name:
                 attributes += [attribute]
         return attributes
-
+    
+    
+    def removeAttribute(self, attribute):
+        """
+        Remove the given attribute from the object.
+        """
+        
+        if not isinstance(attribute, Attribute) or not attribute in self._attributes:
+            raise ValueError, 'The attribute passed to removeAttribute() must be an existing attribute of the object.'
+        
+        self._attributes.remove(attribute)
+        dispatcher.send(('set', 'attributes'), self)
+        
+        
     def _printConnections(self):
         print self.name or self.defaultName() or '<anonymous %s>' % self.__class__.displayName()
         print '\tConnections: ' + ', '.join([connection.name or connection.defaultName() or '<anonymous %s>' % connection.__class__.displayName().lower() for connection in self.connections()])
