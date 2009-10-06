@@ -44,8 +44,8 @@ class InspectorFrame( wx.Frame ):
             self.display = display
             if self.display is not None:
                 dispatcher.connect(self.onDisplaySelectionChanged, ('set', 'selection'), self.display)
-            self.updateInspectors()
-            # TODO: Are there display attributes other than the selection that would cause the list of inspectors to change?
+        self.updateInspectors()
+        # TODO: Are there display attributes other than the selection that would cause the list of inspectors to change?
     
     
     def onDisplaySelectionChanged(self, signal, sender):

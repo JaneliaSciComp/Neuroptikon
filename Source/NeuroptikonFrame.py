@@ -96,6 +96,7 @@ class NeuroptikonFrame( wx.Frame ):
         frame.display._fromXMLElement(displayElement)
         frame.networkDidChangeSavePath()
         frame.setModified(False)
+        wx.GetApp().inspector.inspectDisplay(frame.display)
         
         return frame
     
