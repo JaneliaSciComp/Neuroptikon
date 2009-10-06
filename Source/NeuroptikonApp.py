@@ -193,6 +193,7 @@ class NeuroptikonApp(wx.App):
                         'Neurotransmitter': Neurotransmitter, 
                         'Modality': Modality, 
                         'Ontology': Ontology, 
+                        'Texture': Texture, 
                         'NeuralPolarity': Neuron.Polarity,    # DEPRECATED: remove soon... 
                         'NeuralFunction': Neuron.Function,    # DEPRECATED: remove soon...
                         'Attribute': Attribute, 
