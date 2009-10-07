@@ -255,7 +255,7 @@ class Network:
         Return a list of all :class:`arborizations <Network.Arborization.Arborization>` in the network.
         
         >>> for arborization in network.arborizations():
-        ...     display.setVisibleShape(arborization, shapes['Cone']())
+        ...     display.setVisibleShape(arborization, shapes['Cone'])
         
         An empty list will be returned if there are no arborizations in the network.
         """

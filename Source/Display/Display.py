@@ -1422,16 +1422,11 @@ class Display(wx.glcanvas.GLCanvas):
         """
         Set the shape of the :class:`network object's <Network.Object.Object>` visualization.
         
-        >>> display.setVisibleShape(neuron1, shapes['Ball']())
+        >>> display.setVisibleShape(neuron1, shapes['Ball'])
         >>> display.setVisibleShape(muscle1, shapes['Ring'](startAngle = 0.0, endAngle = pi))
         
-        The shape parameter should be an instance of one of the classes in the shapes dictionary or None.
+        The shape parameter should be one of the classes in the shapes dictionary, an instance of one of the classes or None.
         """
-        
-        if not isinstance(networkObject, Object) or networkObject.network != self.network:
-            raise TypeError, 'The object argument passed to setVisibleShape() must be an object from the network being visualized by this display.'
-        if not isinstance(shape, (Shape, type(None), str)):
-            raise TypeError, 'The shape parameter must be an instance of one of the classes in the shapes dictionary or None.'
         
         # Code to support pre-0.9.4 scripts.
         if isinstance(shape, str):
@@ -1445,7 +1440,14 @@ class Display(wx.glcanvas.GLCanvas):
             elif shape == 'cone':
                 shape = shapes['Cone']()
             elif shape == 'tube':
-                shape = shapes['Line']()
+                shape = shapes['Cylinder']()
+            else:
+                raise ValueError, '\'' + shape + '\' is an unknown shape name.'
+        
+        if not isinstance(networkObject, Object) or networkObject.network != self.network:
+            raise TypeError, 'The object argument passed to setVisibleShape() must be an object from the network being visualized by this display.'
+        if shape != None and not isinstance(shape, Shape) and (not type(shape) == type(self.__class__) or not issubclass(shape, Shape)):
+            raise TypeError, 'The shape parameter must be an instance of one of the classes in the shapes dictionary, an instance of one of the classes or None.'
         
         visibles = self.visiblesForObject(networkObject)
         visible = None

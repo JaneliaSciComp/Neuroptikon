@@ -764,14 +764,18 @@ class Visible(object):
         """
         Set the :class:`shape <Display.Shape.Shape>` of this visualized :class:`object <Network.Object.Object>`.
         
-        >>> visible.setShape(shapes['Ball']())
+        >>> visible.setShape(shapes['Ball'])
         >>> visible.setShape(shapes['Ring'](startAngle = 0.0, endAngle = pi))
         
-        The shape must be an instance of one of the classes in shapes or None.
+        The shape must one of the classes in shapes, an instance of one of the classes or None.
         """
         
-        if not isinstance(shape, (Shape, type(None))):
-            raise TypeError, 'The argument passed to setShape() must be a Shape instance or None'
+        if shape != None and not isinstance(shape, Shape) and (not type(shape) == type(self.__class__) or not issubclass(shape, Shape)):
+            raise TypeError, 'The argument passed to setShape() must be a Shape class, an instance of one of the classes or None'
+        
+        # If shape is a class then create a default instance of the class.
+        if isinstance(shape, type(self.__class__)):
+            shape = shape()
         
         if self._shape != shape:
             # Clean up any existing shape
