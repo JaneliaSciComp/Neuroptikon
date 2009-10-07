@@ -1,5 +1,9 @@
-# Dataset from "Neuron Connections to Sensory Organs and Body Muscles" section of:
-#   http://www.wormatlas.org/handbook/nshandbook.htm/nswiring.htm
+"""
+This script adds all of the muscles and innervations of C. elegans to the current network, also creating the neurons if necessary.
+
+Dataset from "Neuron Connections to Sensory Organs and Body Muscles" section of:
+    http://www.wormatlas.org/handbook/nshandbook.htm/nswiring.htm
+"""
 
 # Make sure the network of neurons has been loaded.
 if not any(network.neurons()):

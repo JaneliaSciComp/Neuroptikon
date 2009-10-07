@@ -1,3 +1,8 @@
+"""
+This script demonstrates creating an arbitrary network.
+"""
+
+
 count = 8
 neurons = {}
 for i in range(count):

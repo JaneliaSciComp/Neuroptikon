@@ -1,4 +1,6 @@
-""" A script to demonstrate using ring segments in visualizations."""
+"""
+This script demonstrates using ring segments in a visualization.
+"""
 
 from math import pi
 

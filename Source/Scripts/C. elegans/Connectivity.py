@@ -1,3 +1,7 @@
+"""
+This script visualizes the connectivity of the C. elegans nervous system.
+"""
+
 display.setViewDimensions(3)
 display.setShowNeuronNames(True)
 display.setUseGhosts(True)

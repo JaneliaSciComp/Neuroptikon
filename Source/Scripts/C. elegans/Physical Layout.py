@@ -1,3 +1,7 @@
+"""
+This script demonstrates using external data (in this case a tabbed-text file) to aid in visualizing a network.
+"""
+
 import os.path, sys
 from math import pi
 

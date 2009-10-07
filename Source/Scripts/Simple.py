@@ -1,3 +1,7 @@
+"""
+This script creates a simple network that includes each type of network component. 
+"""
+
 regionA = network.createRegion(name = 'A')
 regionB = network.createRegion(name = 'B')
 pathway = regionA.projectToRegion(regionB)

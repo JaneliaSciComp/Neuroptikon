@@ -1,4 +1,6 @@
-""" This script demonstrates creating a simple visualization without anything in the biological layer. """
+"""
+This script demonstrates creating a simple visualization without anything in the biological layer.
+"""
 
 # Create some nodes
 nodes = {}

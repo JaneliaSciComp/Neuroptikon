@@ -1,3 +1,7 @@
+"""
+This script demonstrates opening two visualizations of the same network.
+"""
+
 # Open the "connectivity" visualization in the current display.
 execfile('Connectivity.py')
 

@@ -1,8 +1,12 @@
-# Connectivity and layout from:
-#   "Information processing in the primate visual system: an integrated systems perspective."
-#   Van Essen DC, Anderson CH, Felleman DJ.
-#   Science. 1992 Jan 24;255(5043):419-23. Review.
-#   <http://dx.doi.org/10.1126/science.1734518>
+"""
+This script recreates a circuit diagram from a paper.
+
+Connectivity and layout from:
+    "Information processing in the primate visual system: an integrated systems perspective."
+    Van Essen DC, Anderson CH, Felleman DJ.
+    Science. 1992 Jan 24;255(5043):419-23. Review.
+    <http://dx.doi.org/10.1126/science.1734518>
+"""
 
 
 # Create the regions

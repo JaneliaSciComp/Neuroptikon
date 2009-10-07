@@ -1,5 +1,9 @@
-# Dataset from:
-#   L. R. Varshney, B. L. Chen, E. Paniagua, D. H. Hall, and D. B. Chklovskii, "Structural properties of the Caenorhabditis elegans neuronal network," 2009, in preparation.
+"""
+This script creates all of the neurons in the C. elegans nervous system and their interconnections.
+
+ Dataset from:
+   L. R. Varshney, B. L. Chen, E. Paniagua, D. H. Hall, and D. B. Chklovskii, "Structural properties of the Caenorhabditis elegans neuronal network," 2009, in preparation.
+"""
 
 neurons = {}
 

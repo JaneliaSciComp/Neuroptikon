@@ -3,6 +3,7 @@ A script to demonstrate how to use the centrality algorithms built into NetworkX
 See <http://networkx.lanl.gov/reference/algorithms.centrality.html> for the full list of algorithms and their descriptions.
 """
 
+# Load the neurons and their interconnections if needed.
 if not any(network.neurons()):
     execfile('Connectivity.py')
 

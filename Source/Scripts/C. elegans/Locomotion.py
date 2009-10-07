@@ -1,3 +1,7 @@
+"""
+This script demonstrates visualizing only part of a network.
+"""
+
 display.autoVisualize = False
 display.setShowNeuronNames(True)
 display.setUseGhosts(True)
