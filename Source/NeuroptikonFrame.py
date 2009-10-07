@@ -30,9 +30,11 @@ class NeuroptikonFrame( wx.Frame ):
         
         self.display = Display.Display.Display(self.splitter)
         self.display.setNetwork(network)
+        dispatcher.connect(self.networkDidChange, ('set', 'network'), self.display)
         dispatcher.connect(self.networkDidChangeSavePath, ('set', 'savePath'), network)
         
-        self._console = wx.py.shell.Shell(self.splitter, wx.ID_ANY, locals = self.scriptLocals(), introText=gettext('Welcome to Neuroptikon.'))
+        self._scriptLocals = self.scriptLocals()
+        self._console = wx.py.shell.Shell(self.splitter, wx.ID_ANY, locals = self._scriptLocals, introText=gettext('Welcome to Neuroptikon.'))
         self._console.autoCompleteIncludeSingle = False
         self._console.autoCompleteIncludeDouble = False
         
@@ -73,6 +75,10 @@ class NeuroptikonFrame( wx.Frame ):
         
         self.Show(1)
         self.splitter.SetSashPosition(-100)
+    
+    
+    def networkDidChange(self):
+        self._scriptLocals['network'] = self.display.network
     
     
     def networkDidChangeSavePath(self):

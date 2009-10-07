@@ -1063,25 +1063,29 @@ class Display(wx.glcanvas.GLCanvas):
     
         
     def setNetwork(self, network):
-        if self.network != None:
-            self.network.removeDisplay(self)
+        if network != self.network:
+            if self.network != None:
+                self.network.removeDisplay(self)
+                
+                while any(self.visibles):
+                    self.removeVisible(self.visibles.values()[0][0])
+                
+                # TODO: anything else?
             
-            while any(self.visibles):
-                self.removeVisible(self.visibles.values()[0][0])
+            self.network = network
             
-            # TODO: anything else?
+            if network is not None:
+                self.network.addDisplay(self)
+                
+                if self.autoVisualize:
+                    for networkObject in network.objects:
+                        if not isinstance(networkObject, Neurite):
+                            self.visualizeObject(networkObject)
+                
+                dispatcher.connect(receiver=self._networkChanged, signal=dispatcher.Any, sender=self.network)
+            
+            dispatcher.send(('set', 'network'), self)
         
-        self.network = network
-        
-        if network is not None:
-            self.network.addDisplay(self)
-            
-            if self.autoVisualize:
-                for networkObject in network.objects:
-                    if not isinstance(networkObject, Neurite):
-                        self.visualizeObject(networkObject)
-            
-            dispatcher.connect(receiver=self._networkChanged, signal=dispatcher.Any, sender=self.network)
     
     
     def _networkChanged(self, affectedObjects=None, **arguments):
