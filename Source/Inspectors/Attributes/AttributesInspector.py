@@ -113,27 +113,28 @@ class AttributesInspector(Inspector):
     
     def inspectDisplay(self, display):
         if len(display.selection()) == 0:
-            object = display.network
+            attributedObject = display.network
             self.label.SetLabel(gettext('Attributes of the network:'))
         else:
-            object = display.selection()[0].client
-            if object.name is None:
-                self.label.SetLabel(gettext('Attributes of unnamed %s:') % (object.__class__.displayName().lower()))
+            attributedObject = display.selection()[0].client
+            if attributedObject.name is None:
+                self.label.SetLabel(gettext('Attributes of unnamed %s:') % (attributedObject.__class__.displayName().lower()))
             else:
-                self.label.SetLabel(gettext('Attributes of %s %s:') % (object.__class__.displayName().lower(), object.name))
+                self.label.SetLabel(gettext('Attributes of %s %s:') % (attributedObject.__class__.displayName().lower(), attributedObject.name))
         
-        self.attributesTable.setObject(object)
+        self.attributesTable.setObject(attributedObject)
         self.grid.SetGridCursor(self.grid.GetNumberCols() + 1, self.grid.GetNumberRows() + 1)
         self.grid.AutoSizeColumns()
         self.onResizeLastColumn(None)
+        self.attributesTable.ResetView()
         
-        dispatcher.connect(self.attributesDidChange, ('set', 'attributes'), object)
+        dispatcher.connect(self.attributesDidChange, ('set', 'attributes'), attributedObject)
         
         self._window.Layout()
     
     
-    def attributesDidChange(self, signal, sender):
-        self.attributesTable.ResetView()
+    def attributesDidChange(self):
+        self.attributesTable.Reload()
     
     
     def onCellSelected(self, event):
@@ -156,11 +157,23 @@ class AttributesInspector(Inspector):
     
     
     def onRemoveAttribute(self, event):
-        rowNums = self.grid.GetSelectedRows()
-        if len(rowNums) == 1:
-            if self.grid.IsCellEditControlEnabled():
-                self.grid.DisableCellEditControl()
-            self.grid.DeleteRows(rowNums[0], 1)
+        if self.grid.IsCellEditControlEnabled():
+            self.grid.DisableCellEditControl()
+        rowNums = set()
+        for rowNum in self.grid.GetSelectedRows():
+            rowNums.add(rowNum)
+        blockTopLefts = self.grid.GetSelectionBlockTopLeft()
+        blockBottomRights = self.grid.GetSelectionBlockBottomRight()
+        for blockNum in range(len(blockTopLefts)):
+            startRow = blockTopLefts[blockNum][0]
+            endRow = blockBottomRights[blockNum][0]
+            for rowNum in range(startRow, endRow + 1):
+                rowNums.add(rowNum)
+        rowNums = list(rowNums)
+        rowNums.sort()
+        rowNums.reverse()
+        for rowNum in rowNums:
+            self.grid.DeleteRows(rowNum, 1)
         event.Skip()
     
     

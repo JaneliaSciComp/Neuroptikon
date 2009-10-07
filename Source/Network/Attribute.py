@@ -101,7 +101,8 @@ class Attribute(object):
             scriptFile.write('network')
         else:
             scriptFile.write(scriptRefs[self.object.networkId])
-        scriptFile.write('.addAttribute(\'' + self._name.replace('\\', '\\\\').replace('\'', '\\\'') + '\', Attribute.' + self._type.upper() + '_TYPE, ')
+        typeString = 'DECIMAL' if self._type == Attribute.DECIMAL_TYPE else self._type.upper()
+        scriptFile.write('.addAttribute(\'' + self._name.replace('\\', '\\\\').replace('\'', '\\\'') + '\', Attribute.' + typeString + '_TYPE, ')
         if self._type == Attribute.STRING_TYPE:
             scriptFile.write('\'' + self._value.replace('\\', '\\\\').replace('\'', '\\\'') + '\'')
         elif self._type in (Attribute.INTEGER_TYPE, Attribute.DECIMAL_TYPE, Attribute.BOOLEAN_TYPE):

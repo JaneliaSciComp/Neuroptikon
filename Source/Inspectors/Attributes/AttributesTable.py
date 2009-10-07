@@ -19,8 +19,8 @@ class AttributesTable(wx.grid.PyGridTableBase):
         return self.gridRef()
         
     
-    def setObject(self, object):
-        self.object = object
+    def setObject(self, attributedObject):
+        self.object = attributedObject
         rowDiff = self.GetNumberRows() - self._rows
         if rowDiff > 0:
             self.getGrid().ProcessTableMessage(wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, rowDiff))
@@ -149,16 +149,12 @@ class AttributesTable(wx.grid.PyGridTableBase):
     def AppendRows(self, numRows):
         for rowNum in range(0, numRows):
             self.object.addAttribute(gettext('Attribute'), Attribute.STRING_TYPE, '')
-        self.getGrid().ProcessTableMessage(wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, numRows))
-        self.ResetView()
         return True
         
     
     def DeleteRows(self, startRow, numRows):
         for attribute in self.object._attributes[startRow:startRow + numRows]:
             self.object.removeAttribute(attribute)
-        self.getGrid().ProcessTableMessage(wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, startRow, numRows))
-        self.ResetView()
         return True
     
     
@@ -171,4 +167,16 @@ class AttributesTable(wx.grid.PyGridTableBase):
 
             grid.AdjustScrollbars()
             grid.ForceRefresh()
+    
+    
+    def Reload(self):
+        grid = self.getGrid()
+        
+        if grid is not None:
+            grid.ProcessTableMessage(wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_REQUEST_VIEW_GET_VALUES))
+            self.Clear()
+            self.getGrid().ProcessTableMessage(wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, 0, self._rows))
+            attrCount = 0 if self.object == None else len(self.object._attributes)
+            grid.ProcessTableMessage(wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, attrCount))
+            self.ResetView()
     
