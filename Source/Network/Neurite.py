@@ -37,6 +37,7 @@ class Neurite(Object):
     def _fromXMLElement(cls, network, xmlElement):
         neurite = super(Neurite, cls)._fromXMLElement(network, xmlElement)
         pathwayId = xmlElement.get('pathwayId')
+        neurite._pathway = None
         neurite.setPathway(network.objectWithId(pathwayId))
         if pathwayId is not None and neurite.pathway() is None:
             raise ValueError, gettext('Pathway with id "%s" does not exist') % (pathwayId)
