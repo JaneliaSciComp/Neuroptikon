@@ -130,3 +130,8 @@ class Ball(UnitShape):
             u2 = (-b - sqrt(core)) / (2 * a)
             u = min(u1, u2)
         return (rayOrigin[0] + rayDirection[0] * u, rayOrigin[1] + rayDirection[1] * u, rayOrigin[2] + rayDirection[2] * u)
+    
+    
+    def persistentAttributes(self):
+        return {'tessellation': self.tessellation}
+    
