@@ -161,8 +161,14 @@ class NeuroptikonApp(wx.App):
         self.Bind(wx.EVT_MENU, self.onOpenConsole, fileMenu.Append(wx.NewId(), gettext('Open the Console\tCtrl-Alt-O'), gettext('Open the Console window')))
         self.Bind(wx.EVT_MENU, self.onOpenPreferences, fileMenu.Append(wx.ID_PREFERENCES, gettext('Settings'), gettext('Change Neuroptikon preferences')))
         fileMenu.AppendSeparator()
-        self.Bind(wx.EVT_MENU, self.onQuit, fileMenu.Append(wx.ID_EXIT, gettext('E&xit\tCtrl-Q'), gettext('Exit the Neuroptikon application')))
+        if wx.Platform == '__WXMAC__':
+            exitId = wx.NewId()
+        else:
+            exitId = wx.ID_EXIT
+        self.Bind(wx.EVT_MENU, self.onQuit, fileMenu.Append(exitId, gettext('E&xit\tCtrl-Q'), gettext('Exit the Neuroptikon application')))
         menuBar.Append(fileMenu, gettext('&File'))
+        if platform.system == 'Darwin':
+            wx.App.SetMacExitMenuItemId(exitId)
         
         helpMenu = wx.Menu()
         self._customizationDocSetId = wx.NewId()
