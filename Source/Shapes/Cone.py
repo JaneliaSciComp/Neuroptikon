@@ -10,34 +10,34 @@ class Cone(UnitShape):
         return gettext('Cone')
     
     
-    def __init__(self, *args, **keywordArgs):
+    def __init__(self, segments = 32, *args, **keywordArgs):
         Shape.__init__(self, *args, **keywordArgs)
         
         # TODO: use VBO's so all instances share the same data?
         # TODO: should have separate vertex per angled face so they can have face-specific normals
         
-        steps = 32
-        angleStep = 2.0 * pi / steps
+        self.segments = segments
+        angleStep = 2.0 * pi / self.segments
         
         vertices = [(0.0, 0.5, 0.0)]
         vertexNormals = [(0.0, 1.0, 0.0)]
         textureCoords = [(1.0, 1.0)]
-        for increment in range(0, steps):
+        for increment in range(0, self.segments):
             angle = increment * angleStep
             vertex = (sin(angle) * 0.5, -0.5, cos(angle) * 0.5)
             vertices += [vertex]
             vertexNormals += [(vertex[0] / .7071, 0.0, vertex[2] / .7071)]
             textureCoords += [(0.1, 0.1)]
-        vertices += vertices[1:steps + 1]
+        vertices += vertices[1:self.segments + 1]
         vertices += [(0.0, -0.5, 0.0)]
-        vertexNormals += [(0.0, -1.0, 0.0)] * (steps + 1)
-        textureCoords += textureCoords[1:steps + 1]
+        vertexNormals += [(0.0, -1.0, 0.0)] * (self.segments + 1)
+        textureCoords += textureCoords[1:self.segments + 1]
         textureCoords += [(0.0, 0.0)]
         self.geometry().setVertexArray(Shape.vectorArrayFromList(vertices))
         
-        faceSet = Shape.primitiveSetFromList(osg.PrimitiveSet.TRIANGLE_FAN, range(0, steps + 1) + [1, 0])
+        faceSet = Shape.primitiveSetFromList(osg.PrimitiveSet.TRIANGLE_FAN, range(0, self.segments + 1) + [1, 0])
         self.geometry().addPrimitiveSet(faceSet)
-        faceSet = Shape.primitiveSetFromList(osg.PrimitiveSet.TRIANGLE_FAN, [steps * 2 + 1] + range(steps + 1, steps * 2 + 1) + [steps + 1, steps * 2 + 1])
+        faceSet = Shape.primitiveSetFromList(osg.PrimitiveSet.TRIANGLE_FAN, [self.segments * 2 + 1] + range(self.segments + 1, self.segments * 2 + 1) + [self.segments + 1, self.segments * 2 + 1])
         self.geometry().addPrimitiveSet(faceSet)
         
         self.geometry().setNormalArray(Shape.vectorArrayFromList(vertexNormals))
@@ -54,3 +54,8 @@ class Cone(UnitShape):
     def intersectionPoint(self, rayOrigin, rayDirection):
         # TODO: use the logic from <http://www.geometrictools.com/Documentation/IntersectionLineCone.pdf>
         return None
+    
+    
+    def persistentAttributes(self):
+        return {'segments': self.segments}
+    
