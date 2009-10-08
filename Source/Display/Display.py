@@ -975,6 +975,8 @@ class Display(wx.glcanvas.GLCanvas):
             visible.setPosition(params['position'])
         if 'positionIsFixed' in params:
             visible.setPositionIsFixed(params['positionIsFixed'])
+        if 'rotation' in params:
+            visible.setRotation(params['rotation'])
         
         if 'arrangedAxis' in params:
             visible.setArrangedAxis(params['arrangedAxis'])
@@ -992,6 +994,9 @@ class Display(wx.glcanvas.GLCanvas):
             pathFlowsTo = params['flowTo']
         if 'flowFrom' in params:
             pathFlowsTo = params['flowFrom']
+        
+        if 'parent' in params:
+            parentObject = params['parent']
         
         parentVisibles = self.visiblesForObject(parentObject)
         self.addVisible(visible, parentVisibles[0] if len(parentVisibles) == 1 else None)
