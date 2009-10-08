@@ -236,7 +236,7 @@ class NeuroptikonApp(wx.App):
     
     
     def onOpenConsole(self, event_):
-        if '_console' not in dir(self):
+        if not self._console:
             confDir = wx.StandardPaths.Get().GetUserDataDir()
             if not os.path.exists(confDir):
                 os.mkdir(confDir)
@@ -353,6 +353,9 @@ class NeuroptikonApp(wx.App):
     
     def onAboutNeuroptikon(self, event_):
         import __version__
-        dialog = wx.MessageDialog(None, gettext("Version %s") % (__version__.version), gettext("Neuroptikon"), wx.ICON_INFORMATION | wx.OK)
-        dialog.ShowModal()
-        dialog.Destroy()
+        info = wx.AboutDialogInfo()
+        info.SetName(gettext('Neuroptikon'))
+        info.SetVersion(__version__.version)
+        info.SetDescription(gettext('Neural ciruit visualization'))
+        info.SetCopyright(gettext('Copyright (c) 2009 - Howard Hughes Medical Institute'))
+        wx.AboutBox(info)
