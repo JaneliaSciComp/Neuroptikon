@@ -131,8 +131,16 @@ class PathShape(Shape):
         raise NotImplementedError, gettext('PathShape sub-classes must override the setPoints method.')
     
     
+    def points(self):
+        raise NotImplementedError, gettext('PathShape sub-classes must override the points method.')
+        
+    
     def setWeight(self, weight):
         raise NotImplementedError, gettext('PathShape sub-classes must override the setWeight method.')
+        
+    
+    def weight(self):
+        raise NotImplementedError, gettext('PathShape sub-classes must override the weight method.')
     
     
     def intersectionPoint(self, rayOrigin, rayDirection):

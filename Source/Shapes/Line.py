@@ -13,6 +13,8 @@ class Line(PathShape):
     
     def __init__(self, *args, **keywordArgs):
         self._pathPoints = []
+        self._weight = 1.0
+        
         PathShape.__init__(self, *args, **keywordArgs)
         
         if wx.Config('Neuroptikon').ReadBool('Smooth Lines'):
@@ -57,9 +59,19 @@ class Line(PathShape):
             self.geometry().dirtyDisplayList()
     
     
+    def points(self):
+        return list(self._pathPoints)
+    
+    
     def setWeight(self, weight):
-        self.geometry().getOrCreateStateSet().setAttributeAndModes(osg.LineWidth(weight), osg.StateAttribute.ON)
-        self.geometry().dirtyDisplayList()
+        if weight != self._weight:
+            self.geometry().getOrCreateStateSet().setAttributeAndModes(osg.LineWidth(weight), osg.StateAttribute.ON)
+            self.geometry().dirtyDisplayList()
+            self._weight = weight
+    
+    
+    def weight(self):
+        return self._weight
     
     
     def intersectionPoint(self, rayOrigin, rayDirection):
