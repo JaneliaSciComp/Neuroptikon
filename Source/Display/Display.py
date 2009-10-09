@@ -98,10 +98,12 @@ class Display(wx.glcanvas.GLCanvas):
         self.viewer.addEventHandler(osgViewer.StatsHandler())
         self.viewer.setSceneData(self.rootNode)
         self.viewer.addEventHandler(self._pickHandler)
+        
         light = self.viewer.getLight()
         light.setAmbient(osg.Vec4f(0.4, 0.4, 0.4, 1))
         light.setDiffuse(osg.Vec4f(0.5, 0.5, 0.5, 1))
         self.viewer.setLight(light)
+        
         self._first3DView = True
         
         self.backgroundColor = None
@@ -115,8 +117,8 @@ class Display(wx.glcanvas.GLCanvas):
         self.Bind(wx.EVT_SIZE, self.onSize)
         self.Bind(wx.EVT_PAINT, self.onPaint)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.onEraseBackground)
-        self.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
-        self.Bind(wx.EVT_KEY_UP, self.OnKeyUp)
+        self.Bind(wx.EVT_KEY_DOWN, self.onKeyDown)
+        self.Bind(wx.EVT_KEY_UP, self.onKeyUp)
         self.Bind(wx.EVT_MOUSE_EVENTS, self.onMouseEvent)  # TODO: factor this out into individual events
         self.Bind(wx.EVT_MOUSEWHEEL, self.onMouseWheel)
         self.Bind(wx.EVT_SCROLLWIN, self.onScroll)
@@ -714,13 +716,13 @@ class Display(wx.glcanvas.GLCanvas):
         return key
     
     
-    def OnKeyDown(self, event):
+    def onKeyDown(self, event):
         key = self._getConvertedKeyCode(event)
         self.graphicsWindow.getEventQueue().keyPress(key)
         event.Skip()
     
     
-    def OnKeyUp(self, event):
+    def onKeyUp(self, event):
         key = self._getConvertedKeyCode(event)
         self.graphicsWindow.getEventQueue().keyRelease(key)
         event.Skip()
