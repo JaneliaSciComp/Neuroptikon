@@ -40,6 +40,8 @@ else:
         else:
             os.environ[libraryEnvVar] = platformLibPath
         # Restart this script with the same instance of python and the same arguments.
+        if 'DEBUG' in os.environ:
+            print 'Restarting with corrected ' + libraryEnvVar
         arguments = [sys.executable]
         arguments.extend(sys.argv)
         os.system(' '.join(arguments))
