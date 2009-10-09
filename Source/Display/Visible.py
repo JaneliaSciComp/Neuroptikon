@@ -814,6 +814,7 @@ class Visible(object):
     
     def _displayChangedShowName(self):
         self._updateLabel()
+        self._updateOpacity()
     
     
     def _updateLabel(self, opacity = 1.0):
