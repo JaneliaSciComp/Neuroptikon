@@ -105,25 +105,17 @@ class Visible(object):
         self.sgNode = osg.MatrixTransform()
         self._shapeGeode = osg.Geode()
         self._shapeGeode.setName(str(self.displayId))
-        self._shapeGeode2 = None
-        self._stateSet = self._shapeGeode.getOrCreateStateSet()
-        self._stateSet.setAttributeAndModes(osg.BlendFunc(), osg.StateAttribute.ON)
         self.sgNode.addChild(self._shapeGeode)
-        self._textGeode = osg.Geode()
-        self._textGeode.setName(str(self.displayId))
-        self._textGeode.getOrCreateStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
-        self._textGeode.getOrCreateStateSet().setRenderBinDetails(51, 'RenderBin')
-        self._textGeode.setDataVariance(osg.Object.DYNAMIC)
+        self._shapeGeode2 = None
+        self._textGeode = None
         self._textDrawable = None
-        self.sgNode.addChild(self._textGeode)
         self._staticTexture = None
         self._staticTextureScale = 1.0
         
         # Parent and children
         self.parent = None
         self.children = []
-        self.childGroup = osg.MatrixTransform(osg.Matrixd.identity())
-        self.sgNode.addChild(self.childGroup)
+        self.childGroup = None  # will get created when children are added
         
         # Arrangement attributes
         self.arrangedAxis = 'largest'
@@ -790,7 +782,7 @@ class Visible(object):
             if self._shape:
                 self._shape.setColor(list(self._color) + [self._opacity])
                 self._shapeGeode.addDrawable(self._shape.geometry())
-                if self._shape.interiorBounds() != None:
+                if self.childGroup and self._shape.interiorBounds() != None:
                     minBound, maxBound = self._shape.interiorBounds()
                     minBound = osg.Vec3(minBound[0], minBound[1], minBound[2])
                     maxBound = osg.Vec3(maxBound[0], maxBound[1], maxBound[2])
@@ -826,9 +818,17 @@ class Visible(object):
             if self._textDrawable is not None:
                 self._textGeode.removeDrawable(self._textDrawable)
                 self._textDrawable = None
+                self.sgNode.removeChild(self._textGeode)
+                self._textGeode = None
         else:
             if self._textDrawable is None:
-                # Create the text drawable
+                # Create the text geode and drawable.
+                self._textGeode = osg.Geode()
+                self._textGeode.setName(str(self.displayId))
+                self._textGeode.getOrCreateStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+                self._textGeode.getOrCreateStateSet().setRenderBinDetails(51, 'RenderBin')
+                self._textGeode.setDataVariance(osg.Object.DYNAMIC)
+                self.sgNode.addChild(self._textGeode)
                 self._textDrawable = osgText.Text()
                 self._textDrawable.setDataVariance(osg.Object.DYNAMIC)
                 self._textDrawable.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
@@ -1302,7 +1302,15 @@ class Visible(object):
         
         if not isinstance(childVisible, Visible):
             raise TypeError, 'The argument passed to addChildVisible() must be a visible in the same display.'
-         
+        
+        if not any(self.children):
+            self.childGroup = osg.MatrixTransform(osg.Matrixd.identity())
+            minBound, maxBound = self._shape.interiorBounds()
+            minBound = osg.Vec3(minBound[0], minBound[1], minBound[2])
+            maxBound = osg.Vec3(maxBound[0], maxBound[1], maxBound[2])
+            self.childGroup.setMatrix(osg.Matrixd.scale(maxBound - minBound) * osg.Matrixd.translate((minBound + maxBound) / 2.0))
+            self.sgNode.addChild(self.childGroup)
+            
         if childVisible not in self.children:
             if childVisible.parent:
                 childVisible.parent.removeChildVisible(childVisible)
@@ -1341,6 +1349,8 @@ class Visible(object):
             childVisible.parent = None
             self.children.remove(childVisible)
             if not any(self.children):
+                self.sgNode.removeChild(self.childGroup)
+                self.childGroup = None
                 self._updateOpacity()
             if self.arrangedAxis is None:
                 childVisible._updateTransform()
@@ -1579,9 +1589,9 @@ class Visible(object):
         
         if self._staticTexture != texture:
             if texture is None:
-                self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXTURE)
+                self._shapeGeode.getOrCreateStateSet().removeTextureAttribute(0, osg.StateAttribute.TEXTURE)
             else:
-                self._stateSet.setTextureAttributeAndModes(0, texture.textureData(), osg.StateAttribute.ON)
+                self._shapeGeode.getOrCreateStateSet().setTextureAttributeAndModes(0, texture.textureData(), osg.StateAttribute.ON)
             self._staticTexture = texture
             dispatcher.send(('set', 'texture'), self)
     
@@ -1606,11 +1616,11 @@ class Visible(object):
         
         if self._staticTextureScale != scale:
             if scale == 1.0:
-                self._stateSet.removeTextureAttribute(0, osg.StateAttribute.TEXMAT)
+                self._shapeGeode.getOrCreateStateSet().removeTextureAttribute(0, osg.StateAttribute.TEXMAT)
             else:
                 textureMatrix = osg.TexMat()
                 textureMatrix.setMatrix(osg.Matrixd.scale(scale, scale, scale))
-                self._stateSet.setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON)
+                self._shapeGeode.getOrCreateStateSet().setTextureAttributeAndModes(0, textureMatrix, osg.StateAttribute.ON)
             self._staticTextureScale = scale
             self._updateFlowAnimation()
             dispatcher.send(('set', 'textureScale'), self)
@@ -1672,9 +1682,9 @@ class Visible(object):
         if color != self._flowToColor:
             self._flowToColor = color
             if self._flowToColor is None:
-                self._stateSet.removeUniform('flowToColor')
+                self._shapeGeode.getOrCreateStateSet().removeUniform('flowToColor')
             else:
-                self._stateSet.addUniform(osg.Uniform('flowToColor', osg.Vec4f(*self._flowToColor)))
+                self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('flowToColor', osg.Vec4f(*self._flowToColor)))
             self._updateFlowAnimation()
             dispatcher.send(('set', 'flowToColor'), self)
     
@@ -1700,9 +1710,9 @@ class Visible(object):
         if spacing != self._flowToSpacing:
             self._flowToSpacing =float(spacing)
             if self._flowToSpacing is None:
-                self._stateSet.removeUniform('flowToSpacing')
+                self._shapeGeode.getOrCreateStateSet().removeUniform('flowToSpacing')
             else:
-                self._stateSet.addUniform(osg.Uniform('flowToSpacing', self._flowToSpacing))
+                self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('flowToSpacing', self._flowToSpacing))
             self._updateFlowAnimation()
             dispatcher.send(('set', 'flowToSpacing'), self)
     
@@ -1728,9 +1738,9 @@ class Visible(object):
         if speed != self._flowToSpeed:
             self._flowToSpeed = float(speed)
             if self._flowToSpeed is None:
-                self._stateSet.removeUniform('flowToSpeed')
+                self._shapeGeode.getOrCreateStateSet().removeUniform('flowToSpeed')
             else:
-                self._stateSet.addUniform(osg.Uniform('flowToSpeed', self._flowToSpeed))
+                self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('flowToSpeed', self._flowToSpeed))
             self._updateFlowAnimation()
             dispatcher.send(('set', 'flowToSpeed'), self)
     
@@ -1756,9 +1766,9 @@ class Visible(object):
         if spread != self._flowToSpread:
             self._flowToSpread = float(spread)
             if self._flowToSpread is None:
-                self._stateSet.removeUniform('flowToSpread')
+                self._shapeGeode.getOrCreateStateSet().removeUniform('flowToSpread')
             else:
-                self._stateSet.addUniform(osg.Uniform('flowToSpread', self._flowToSpread))
+                self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('flowToSpread', self._flowToSpread))
             self._updateFlowAnimation()
             dispatcher.send(('set', 'flowToSpread'), self)
     
@@ -1818,9 +1828,9 @@ class Visible(object):
         if color != self._flowFromColor:
             self._flowFromColor = color
             if self._flowFromColor is None:
-                self._stateSet.removeUniform('flowFromColor')
+                self._shapeGeode.getOrCreateStateSet().removeUniform('flowFromColor')
             else:
-                self._stateSet.addUniform(osg.Uniform('flowFromColor', osg.Vec4f(*self._flowFromColor)))
+                self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('flowFromColor', osg.Vec4f(*self._flowFromColor)))
             self._updateFlowAnimation()
             dispatcher.send(('set', 'flowFromColor'), self)
     
@@ -1846,9 +1856,9 @@ class Visible(object):
         if spacing != self._flowFromSpacing:
             self._flowFromSpacing = float(spacing)
             if self._flowFromSpacing is None:
-                self._stateSet.removeUniform('flowFromSpacing')
+                self._shapeGeode.getOrCreateStateSet().removeUniform('flowFromSpacing')
             else:
-                self._stateSet.addUniform(osg.Uniform('flowFromSpacing', self._flowFromSpacing))
+                self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('flowFromSpacing', self._flowFromSpacing))
             self._updateFlowAnimation()
             dispatcher.send(('set', 'flowFromSpacing'), self)
     
@@ -1874,9 +1884,9 @@ class Visible(object):
         if speed != self._flowFromSpeed:
             self._flowFromSpeed = float(speed)
             if self._flowFromSpeed is None:
-                self._stateSet.removeUniform('flowFromSpeed')
+                self._shapeGeode.getOrCreateStateSet().removeUniform('flowFromSpeed')
             else:
-                self._stateSet.addUniform(osg.Uniform('flowFromSpeed', self._flowFromSpeed))
+                self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('flowFromSpeed', self._flowFromSpeed))
             self._updateFlowAnimation()
             dispatcher.send(('set', 'flowFromSpeed'), self)
     
@@ -1902,9 +1912,9 @@ class Visible(object):
         if spread != self._flowFromSpread:
             self._flowFromSpread = float(spread)
             if self._flowFromSpread is None:
-                self._stateSet.removeUniform('flowFromSpread')
+                self._shapeGeode.getOrCreateStateSet().removeUniform('flowFromSpread')
             else:
-                self._stateSet.addUniform(osg.Uniform('flowFromSpread', self._flowFromSpread))
+                self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('flowFromSpread', self._flowFromSpread))
             self._updateFlowAnimation()
             dispatcher.send(('set', 'flowFromSpread'), self)
     
@@ -1919,17 +1929,17 @@ class Visible(object):
     
     def _updateFlowAnimation(self):
         if self._animateFlow and (self._flowTo or self._flowFrom):
-            self._stateSet.addUniform(osg.Uniform('flowTo', self._flowTo))
-            self._stateSet.addUniform(osg.Uniform('flowFrom', self._flowFrom))
-            self._stateSet.addUniform(osg.Uniform('textureScale', (self._size[1] if isinstance(self._shape, UnitShape) else 1.0) / self._staticTextureScale))
-            self._stateSet.addUniform(osg.Uniform('hasTexture', self._staticTexture != None))
-            self._stateSet.setAttributeAndModes(Visible.flowProgram, osg.StateAttribute.ON)
-        elif self._stateSet.getAttribute(osg.StateAttribute.PROGRAM) is not None:
-            self._stateSet.removeAttribute(osg.StateAttribute.PROGRAM)
-            self._stateSet.removeUniform('flowTo')
-            self._stateSet.removeUniform('flowFrom')
-            self._stateSet.removeUniform('textureScale')
-            self._stateSet.removeUniform('hasTexture')
+            self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('flowTo', self._flowTo))
+            self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('flowFrom', self._flowFrom))
+            self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('textureScale', (self._size[1] if isinstance(self._shape, UnitShape) else 1.0) / self._staticTextureScale))
+            self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('hasTexture', self._staticTexture != None))
+            self._shapeGeode.getOrCreateStateSet().setAttributeAndModes(Visible.flowProgram, osg.StateAttribute.ON)
+        elif self._shapeGeode.getOrCreateStateSet().getAttribute(osg.StateAttribute.PROGRAM) is not None:
+            self._shapeGeode.getOrCreateStateSet().removeAttribute(osg.StateAttribute.PROGRAM)
+            self._shapeGeode.getOrCreateStateSet().removeUniform('flowTo')
+            self._shapeGeode.getOrCreateStateSet().removeUniform('flowFrom')
+            self._shapeGeode.getOrCreateStateSet().removeUniform('textureScale')
+            self._shapeGeode.getOrCreateStateSet().removeUniform('hasTexture')
     
     
     def animateFlow(self, animate=True):
