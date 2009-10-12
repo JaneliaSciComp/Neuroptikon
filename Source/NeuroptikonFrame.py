@@ -321,8 +321,8 @@ class NeuroptikonFrame( wx.Frame ):
         menuItem.Enable(layoutClass.canLayoutDisplay(self.display))
     
     
-    def onCloseWindow(self, event_ = None):
-        success = True
+    def onCloseWindow(self, event):
+        doClose = True
         
         if self._modified:
             if platform.system() == 'Windows':
@@ -335,11 +335,11 @@ class NeuroptikonFrame( wx.Frame ):
             result = dialog.ShowModal()
             dialog.Destroy()
             if result == wx.ID_YES:
-                success = self.onSaveNetwork()
+                doClose = self.onSaveNetwork()
             elif result == wx.ID_CANCEL:
-                success = False
+                doClose = False
         
-        if success:
+        if doClose:
             self.display.selectObjects([])
             wx.GetApp().inspector.inspectDisplay(None)
             network = self.display.network
@@ -348,11 +348,10 @@ class NeuroptikonFrame( wx.Frame ):
             self.display = None
             self.Destroy()
             wx.GetApp().displayWasClosed(self)
-            
             if not any(network.displays):
                 wx.GetApp().releaseNetwork(network)
-            
-        return success
+        elif event.GetEventType() == wx.wxEVT_CLOSE_WINDOW:
+            event.Veto()
     
     
     def indentXMLElement(self, element, level=0):

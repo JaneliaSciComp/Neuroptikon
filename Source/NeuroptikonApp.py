@@ -18,6 +18,9 @@ from Inspection.InspectorFrame import InspectorFrame
 import Display
 import Documentation
 
+# The following import is required to allow quitting on Mac OS X when no windows are open.  If osgViewer is imported after the common menu bar is set then the quit event handler is overwritten.
+import osgViewer
+
     
 class NeuroptikonApp(wx.App):
     
@@ -123,7 +126,7 @@ class NeuroptikonApp(wx.App):
         for frame in list(self._frames):
             if frame.isModified():
                 frame.Raise()
-            if not frame.onCloseWindow():
+            if not frame.Close():
                 continueQuit = False
                 break
         if continueQuit and not any(self._frames) and platform.system() != 'Windows':
@@ -161,14 +164,8 @@ class NeuroptikonApp(wx.App):
         self.Bind(wx.EVT_MENU, self.onOpenConsole, fileMenu.Append(wx.NewId(), gettext('Open the Console\tCtrl-Alt-O'), gettext('Open the Console window')))
         self.Bind(wx.EVT_MENU, self.onOpenPreferences, fileMenu.Append(wx.ID_PREFERENCES, gettext('Settings'), gettext('Change Neuroptikon preferences')))
         fileMenu.AppendSeparator()
-        if wx.Platform == '__WXMAC__':
-            exitId = wx.NewId()
-        else:
-            exitId = wx.ID_EXIT
-        self.Bind(wx.EVT_MENU, self.onQuit, fileMenu.Append(exitId, gettext('E&xit\tCtrl-Q'), gettext('Exit the Neuroptikon application')))
+        self.Bind(wx.EVT_MENU, self.onQuit, fileMenu.Append(wx.ID_EXIT, gettext('E&xit\tCtrl-Q'), gettext('Exit the Neuroptikon application')))
         menuBar.Append(fileMenu, gettext('&File'))
-        if platform.system == 'Darwin':
-            wx.App.SetMacExitMenuItemId(exitId)
         
         helpMenu = wx.Menu()
         self._customizationDocSetId = wx.NewId()
