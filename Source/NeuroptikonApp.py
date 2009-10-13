@@ -176,6 +176,8 @@ class NeuroptikonApp(wx.App):
         self.Bind(wx.EVT_MENU, self.onShowDocumentation, helpMenu.Append(self._scriptingDocSetId, gettext('Scripting Interface'), gettext('Show the documentation on scripting Neuroptikon')))
         self._uiDocSetId = wx.NewId()
         self.Bind(wx.EVT_MENU, self.onShowDocumentation, helpMenu.Append(self._uiDocSetId, gettext('User Interface'), gettext('Show the documentation on interacting with Neuroptikon')))
+        if platform.system() != 'Darwin':
+            helpMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, self.onAboutNeuroptikon, helpMenu.Append(wx.ID_ABOUT, gettext('About Neuroptikon'), gettext('Information about this program')))
         menuBar.Append(helpMenu, gettext('&Help'))
         
