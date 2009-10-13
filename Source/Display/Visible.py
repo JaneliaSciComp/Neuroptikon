@@ -998,7 +998,7 @@ class Visible(object):
             # Otherwise use the user-specified opacity.
             opacity = self._opacity
         
-        if self._shape is not None:
+        if self._shape:
             self._shape.setColor(list(self._color) + [opacity])
             stateSet1 = self._shapeGeode.getOrCreateStateSet()
             if opacity == 1.0:
@@ -1305,7 +1305,7 @@ class Visible(object):
         
         if not any(self.children):
             self.childGroup = osg.MatrixTransform(osg.Matrixd.identity())
-            minBound, maxBound = self._shape.interiorBounds()
+            minBound, maxBound = ((-0.5, -0.5, -0.5), (0.5, 0.5, 0.5)) if not self._shape else self._shape.interiorBounds()
             minBound = osg.Vec3(minBound[0], minBound[1], minBound[2])
             maxBound = osg.Vec3(maxBound[0], maxBound[1], maxBound[2])
             self.childGroup.setMatrix(osg.Matrixd.scale(maxBound - minBound) * osg.Matrixd.translate((minBound + maxBound) / 2.0))
