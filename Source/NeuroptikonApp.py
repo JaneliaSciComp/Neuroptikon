@@ -360,5 +360,6 @@ class NeuroptikonApp(wx.App):
         info.SetName(gettext('Neuroptikon'))
         info.SetVersion(__version__.version)
         info.SetDescription(gettext('Neural ciruit visualization'))
-        info.SetCopyright(gettext('Copyright (c) 2009 - Howard Hughes Medical Institute'))
+        info.SetCopyright(gettext('Copyright \xa9 2009 - Howard Hughes Medical Institute'))
         wx.AboutBox(info)
+    
