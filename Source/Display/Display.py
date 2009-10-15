@@ -860,7 +860,7 @@ class Display(wx.glcanvas.GLCanvas):
             params['pathEndPoints'] = (networkObject.neurite.neuron(), networkObject.region)
         elif isinstance(networkObject, Synapse):
             params['shape'] = shapes['Line']()
-            params['color'] = neuralTissueColor
+            params['color'] = (1.0, 0.0, 0.0) if networkObject.activation == 'inhibitory' else (0.0, 0.0, 1.0)
             params['pathEndPoints'] = (networkObject.preSynapticNeurite.neuron(), networkObject.postSynapticNeurites[0].neuron())
         elif isinstance(networkObject, GapJunction):
             params['shape'] = shapes['Line']()
