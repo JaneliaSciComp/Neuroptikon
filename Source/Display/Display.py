@@ -1886,17 +1886,23 @@ class Display(wx.glcanvas.GLCanvas):
                             objectNeurites = set()
                             
                             # Highlight the counterpart(s) of the connection.
+                            selfConnected = True
                             for counterpart in connection.connections():
                                 if isinstance(counterpart, Neurite):
                                     rootCounterpart = counterpart.neuron()
                                 else:
                                     rootCounterpart = counterpart
+                                if rootCounterpart != networkObject:
+                                    selfConnected = False
                                 if rootCounterpart == networkObject or (isinstance(networkObject, Neurite) and rootCounterpart == networkObject.neuron()):
                                     objectNeurites.add(counterpart)
                                 elif singleSelection or rootCounterpart in selectedObjects:
                                     _highlightObject(connection)
                                     _highlightObject(counterpart)
                                     connectionHighlighted = True
+                            if selfConnected:
+                                _highlightObject(connection)
+                                connectionHighlighted = True
                             # Highlight the neurites of the neuron involved in the connection.
                             if connectionHighlighted:
                                 for objectNeurite in objectNeurites:
