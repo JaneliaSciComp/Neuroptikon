@@ -1959,9 +1959,11 @@ class Visible(object):
             # Once mid-points become editable in the GUI the temporary mid-points should become permanent once modified by the user.
             center = path[0]
             size = self._pathStart.worldSize()
-            pad1 = (sum(size) / len(size)) / 2.0 * 1.1
-            pad2 = (sum(size) / len(size)) / 2.0 * 1.5
-            path += [(center[0] + pad1, center[1], center[2]), (center[0] + pad2, center[1], center[2]), (center[0] + pad2, center[1] + pad2, center[2]), (center[0], center[1] + pad2, center[2]), (center[0], center[1] + pad1, center[2]), center]
+            halfSize = (size[0] / 2.0, size[1] / 2.0, size[2] / 2.0)
+            minHalfSize = min(halfSize)
+            pad1 = minHalfSize * 0.1
+            pad2 = minHalfSize * 0.5
+            path += [(center[0] + halfSize[0] + pad1, center[1], center[2]), (center[0] + halfSize[0] + pad2, center[1], center[2]), (center[0] + halfSize[0] + pad2, center[1] + halfSize[1] + pad2, center[2]), (center[0], center[1] + halfSize[1] + pad2, center[2]), (center[0], center[1] + halfSize[1] + pad1, center[2]), center]
         else:
             path += [self._pathEnd.worldPosition()]
         
