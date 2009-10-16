@@ -90,7 +90,7 @@ for synapse in synapses:
         if not isinstance(postRoot, Neuron):
             postSynapticPath = visualizeNeurite(postRoot)
             updateFlow(postSynapticPath, flowFrom = True)
-            synapseEnd = postSynapticPath.pathEndPoints()[0]
+            synapseEnd = postSynapticPath.pathEndPoints()[1]
         synapsePath.setPathEndPoints(synapseStart, synapseEnd)
         # TODO: handle synapses with multiple post-synaptic neurites
 
