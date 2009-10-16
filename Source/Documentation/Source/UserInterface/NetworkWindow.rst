@@ -31,10 +31,12 @@ Show flow of information
 
 Connections show their flow of information whenever they are part of the current selection but if you wish to see the flow for the entire network then you can turn on this option in the View menu.  If a selection is made then only the connections involved will show their flow but as soon as the selection is cleared to full network flow will again be shown.
 
+.. _ghosting:
+
 Ghosting
 ........
 
-Whenever a selection is made the objects not involved with the selected objects are dimmed (ghosted) to aid in highlighting the local connections.  If you wish for all objects to remain fully visible even when there is a selection then turn this option off in the View menu.
+Whenever a selection is made the objects not involved with the selected objects are dimmed (ghosted) to aid in highlighting the local connections.  If you wish for all objects to remain fully visible even when there is a selection then turn this option off in the View menu.  You can also alter the level of dimming in the :ref:`display inspector <display-inspector>`.
 
 Interacting with the visualization
 ----------------------------------

@@ -34,6 +34,8 @@ Use the following methods to change the settings of the entire visualization.
 .. automethod:: Display.Display.Display.showRegionNames
 .. automethod:: Display.Display.Display.setUseGhosts
 .. automethod:: Display.Display.Display.useGhosts
+.. automethod:: Display.Display.Display.setGhostingOpacity
+.. automethod:: Display.Display.Display.ghostingOpacity
 .. automethod:: Display.Display.Display.setUseMouseOverSelecting
 .. automethod:: Display.Display.Display.useMouseOverSelecting
 .. automethod:: Display.Display.Display.setUseStereo

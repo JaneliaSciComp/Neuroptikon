@@ -61,8 +61,9 @@ class Display(wx.glcanvas.GLCanvas):
         self._labelsFloatOnTop = False
         self._showFlow = False
         self._useGhosts = True
-        self._primarySelectionColor = (0, 0, 1, .25)
-        self._secondarySelectionColor = (0, 0, 1, .125)
+        self._ghostingOpacity = 0.25
+        self._primarySelectionColor = (0, 0, 1, .4)
+        self._secondarySelectionColor = (0, 0, 1, .2)
         self.viewDimensions = 2
         
         self._recomputeBounds = True
@@ -248,6 +249,8 @@ class Display(wx.glcanvas.GLCanvas):
             self.setShowFlow(xmlElement.get('showFlow') in trueValues)
         if xmlElement.get('useGhosting') is not None:
             self.setUseGhosts(xmlElement.get('useGhosting') in trueValues)
+        if xmlElement.get('ghostingOpacity') is not None:
+            self.setGhostingOpacity(float(xmlElement.get('ghostingOpacity')))
         if xmlElement.get('useMouseOverSelecting') is not None:
             self._useMouseOverSelecting = xmlElement.get('useMouseOverSelecting') in trueValues
         if xmlElement.get('autoVisualize') is not None:
@@ -310,6 +313,7 @@ class Display(wx.glcanvas.GLCanvas):
         displayElement.set('showNeuronNames', 'true' if self._showNeuronNames else 'false')
         displayElement.set('showFlow', 'true' if self._showFlow else 'false')
         displayElement.set('useGhosting', 'true' if self._useGhosts else 'false')
+        displayElement.set('ghostingOpacity', str(self._ghostingOpacity))
         displayElement.set('useMouseOverSelecting', 'true' if self._useMouseOverSelecting else 'false')
         displayElement.set('autoVisualize', 'true' if self.autoVisualize else 'false')
         displayElement.set('labelsFloatOnTop', 'true' if self._labelsFloatOnTop else 'false')
@@ -334,6 +338,7 @@ class Display(wx.glcanvas.GLCanvas):
         scriptFile.write(displayRef + '.setShowNeuronNames(' + str(self._showNeuronNames) + ')\n')
         scriptFile.write(displayRef + '.setShowFlow(' + str(self._showFlow) + ')\n')
         scriptFile.write(displayRef + '.setUseGhosts(' + str(self._useGhosts) + ')\n')
+        scriptFile.write(displayRef + '.setGhostingOpacity(' + str(self._ghostingOpacity) + ')\n')
         scriptFile.write(displayRef + '.setUseMouseOverSelecting(' + str(self._useMouseOverSelecting) + ')\n')
         scriptFile.write(displayRef + '.setLabelsFloatOnTop(' + str(self._labelsFloatOnTop) + ')\n')
         scriptFile.write('\n')
@@ -817,7 +822,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     def defaultVisualizationParams(self, networkObject):
         # TODO: replace this whole block with display rules
-        neuralTissueColor = (0.85, 0.75, 0.6)
+        neuralTissueColor = (0.9, 0.85, 0.75)
         params = {}
         
         params['opacity'] = 1.0
@@ -834,7 +839,7 @@ class Display(wx.glcanvas.GLCanvas):
         elif isinstance(networkObject, Pathway):
             params['shape'] = shapes['Line']()
             params['weight'] = 5.0
-            params['color'] = neuralTissueColor
+            params['color'] = (0.0, 0.0, 0.0)
             params['pathEndPoints'] = (networkObject.region1, networkObject.region2)
         elif isinstance(networkObject, Neuron):
             params['shape'] = shapes['Ball']()
@@ -856,7 +861,7 @@ class Display(wx.glcanvas.GLCanvas):
             params['label'] = networkObject.abbreviation or networkObject.name
         elif isinstance(networkObject, Arborization):
             params['shape'] = shapes['Line']()
-            params['color'] = neuralTissueColor
+            params['color'] = (0.0, 0.0, 0.0)
             params['pathEndPoints'] = (networkObject.neurite.neuron(), networkObject.region)
         elif isinstance(networkObject, Synapse):
             params['shape'] = shapes['Line']()
@@ -1214,6 +1219,32 @@ class Display(wx.glcanvas.GLCanvas):
         """
         
         return self._useGhosts
+    
+    
+    def setGhostingOpacity(self, opacity):
+        """
+        Set the opacity to be used for unselected objects when ghosting is enabled.
+        
+        The opacity must be between 0.0 and 1.0, inclusive.
+        """
+        
+        if not isinstance(opacity, (float, int)):
+            raise TypeError, 'The value passed to setGhostingOpacity() must be a number.'
+        elif opacity < 0.0 or opacity > 1.0:
+            raise ValueError, 'The value passed to setGhostingOpacity() must be between 0.0 and 1.0, inclusive.'
+        
+        if opacity != self._ghostingOpacity:
+            self._ghostingOpacity = opacity
+            dispatcher.send(('set', 'ghostingOpacity'), self)
+            self.Refresh()
+    
+    
+    def ghostingOpacity(self):
+        """
+        Return the opacity to be used for unselected objects when ghosting is enabled.
+        """
+        
+        return self._ghostingOpacity
     
     
     def setLabel(self, networkObject, label):
@@ -1967,6 +1998,7 @@ class Display(wx.glcanvas.GLCanvas):
                 highlightedNode.setGlowColor(None)
         for animatedEdge in self.animatedVisibles:
             if animatedEdge not in visiblesToAnimate:
+                animatedEdge.setGlowColor(None)
                 animatedEdge.animateFlow(False)
         
         # Highlight/animate the visibles that should have it now.
@@ -1978,6 +2010,12 @@ class Display(wx.glcanvas.GLCanvas):
             else:
                 visibleToHighlight.setGlowColor(None)
         for visibleToAnimate in visiblesToAnimate:
+            if visibleToAnimate in self.selectedVisibles:
+                visibleToAnimate.setGlowColor(self._primarySelectionColor)
+            elif not self._useGhosts:
+                visibleToAnimate.setGlowColor(self._secondarySelectionColor)
+            else:
+                visibleToAnimate.setGlowColor(None)
             visibleToAnimate.animateFlow()
         
         self.highlightedVisibles = visiblesToHighlight

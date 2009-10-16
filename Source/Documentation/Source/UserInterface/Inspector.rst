@@ -1,7 +1,7 @@
 Inspector
 =========
 
-The inspector window allows you to view and modify the properties of objects in biological networks and their visualizations.  There is a single inspector window that inspects whichever :doc:`network window <NetworkWindow>` is in front.
+The inspector window allows you to view and modify the properties of objects in biological networks and their visualizations.  There is a single inspector window that inspects whichever :doc:`network window <NetworkWindow>` is in front.  You can open the inspector window by choosing the first item in the View menu.
 
 Neuroptikon includes biological inspectors for :ref:`arborizations <arborization-inspector>`, :ref:`gap junctions <gap-junction-inspector>`, :ref:`innervations <innervation-inspector>`, :ref:`muscles <muscle-inspector>`, :ref:`neurites <neurite-inspector>`, :ref:`neurons <neuron-inspector>`, :ref:`pathways <pathway-inspector>`, :ref:`regions <region-inspector>`, :ref:`stimuli <stimulus-inspector>`, :ref:`synapses <synapse-inspector>` and :ref:`user defined attributes <attributes-inspector>`.  On the visualization side, inspectors are included for :ref:`appearance <appearance-inspector>`, :ref:`automatic arrangement of nested objects <arrangement-inspector>`, :ref:`general display settings <display-inspector>`, :ref:`geometry <geometry-inspector>`, :ref:`groups <group-inspector>` and :ref:`paths <path-inspector>`.
 
@@ -158,7 +158,7 @@ When automatic arrangement is being used then the weight and spacing settings co
 Display Inspector
 -----------------
 
-The display inspector allows you to choose the background color of the visualization and to choose the viewing plane when viewing in two dimensions.  You can choose a background color with an alpha value and it won't be noticeable on screen, but if you save the view to an image the background alpha will be used.
+The display inspector allows you to choose the background color of the visualization, the viewing plane when viewing in two dimensions and how opaque :ref:`ghosted objects <ghosting>` should be.  You can choose a background color with an alpha value and it won't be noticeable on screen, but if you save the view to an image the background alpha will be used.
 
 .. image:: ../images/DisplayInspector.png
    :align: center

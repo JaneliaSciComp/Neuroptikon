@@ -60,6 +60,7 @@ class Visible(object):
         self._glowColor = None
         self._glowNode = None
         self._glowNodeMaterial = None
+        self._glowShape = None
                 
         # Geometry attributes
         self._position = (random.random() - 0.5, random.random() - 0.5, 0)
@@ -133,6 +134,7 @@ class Visible(object):
         
         self._updateOpacity()
         dispatcher.connect(self._displayChangedGhosting, ('set', 'useGhosts'), self.display)
+        dispatcher.connect(self._displayChangedGhosting, ('set', 'ghostingOpacity'), self.display)
         
         if not hasattr(Visible, 'cullFrontFacesAttr'):
             # This is a bit of a hack.  osgswig does not expose the osg::CullFace class which is needed to get proper transparency.
@@ -162,7 +164,6 @@ class Visible(object):
         visible = Visible(display, client)
         visible.displayId = int(xmlElement.get('id'))
         visible._shapeGeode.setName(str(visible.displayId))
-        visible._textGeode.setName(str(visible.displayId))
         
         trueStrings = ['true', 't', 'T', 'yes', 'y', 'Y']
         falseStrings = ['false', 'f', 'F', 'no', 'n', 'N']
@@ -976,27 +977,27 @@ class Visible(object):
     
     
     def _updateOpacity(self):
-        # Figure out what opacity to use based on the current selection, etc.
-        if self.display.useGhosts() and any(self.display.selection()) and self not in self.display.highlightedVisibles and self not in self.display.animatedVisibles:
-            # This visible should be ghosted.
-            opacity = 0.1
-            for ancestor in self.ancestors():
-                if ancestor in self.display.selectedVisibles:
-                    # An ancestor of this visible is in the selection so only partly ghost it.
-                    opacity = 0.5
-                    break
-            if opacity == 0.1:
-                for child in self.allChildren():
-                    if child in self.display.selectedVisibles:
-                        # A descendent of this visible is in the selection so only partly ghost it.
-                        opacity = 0.5
-                        break
-        elif any(self.children) and self._shape != None:
+        # Figure out the regular opacity.
+        if any(self.children) and self._shape != None:
             # Visible containing other visibles are always transparent.
             opacity = 0.5
         else:
             # Otherwise use the user-specified opacity.
             opacity = self._opacity
+        
+        # Check if this visible should be ghosted.
+        if self.display.useGhosts() and any(self.display.selection()) and self not in self.display.highlightedVisibles and self not in self.display.animatedVisibles:
+            # Check if any of the visible's ancestors or descendants are selected or highlighted and if so then only partially ghost. 
+            partialGhost = False
+            for ancestorOrDescendant in self.ancestors() + self.descendants():
+                if ancestorOrDescendant in self.display.selectedVisibles or ancestorOrDescendant in self.display.highlightedVisibles:
+                    partialGhost = True
+                    break
+            ghosting = self.display.ghostingOpacity()
+            if partialGhost:
+                opacity = opacity * (ghosting + (1.0 - ghosting) / 2.0)
+            else:
+                opacity = opacity * ghosting
         
         if self._shape:
             self._shape.setColor(list(self._color) + [opacity])
@@ -1010,7 +1011,7 @@ class Visible(object):
                 stateSet1.removeAttribute(osg.StateAttribute.CULLFACE)
             else:
                 if not self._shapeGeode2:
-                    # Technique that may correctly render nested, transparent geometries, from http://www.mail-archive.com/osg-users@lists.openscenegraph.org/msg06863.html
+                    # Technique that may correctly render nested, transparent geometries, from <http://www.mail-archive.com/osg-users@lists.openscenegraph.org/msg06863.html>
                     self._shapeGeode2 = osg.Geode()
                     self._shapeGeode2.addDrawable(self._shape.geometry())
                     stateSet2 = self._shapeGeode2.getOrCreateStateSet()
@@ -1023,6 +1024,7 @@ class Visible(object):
                 # Place more deeply nested regions in lower render bins so they are rendered before the containing visible.
                 # Each nesting depth needs four render bins: two for the front and back face of the shape and one for the glow shape.
                 # This assumes a maximum nesting depth of 10.
+                # TODO: The glow node needs to be double rendered as well to ensure it's always visible.
                 sceneDepth = len(self.ancestors())
                 stateSet1.setRenderBinDetails(40 - sceneDepth * 3 - 1, 'DepthSortedBin')
                 stateSet2.setRenderBinDetails(40 - sceneDepth * 3 - 2, 'DepthSortedBin')
@@ -1385,7 +1387,7 @@ class Visible(object):
         return ancestors
     
     
-    def allChildren(self):
+    def descendants(self):
         """
         Return all visibles contained by this visible.
         
@@ -1395,7 +1397,7 @@ class Visible(object):
         children = []
         for child in self.children:
             children += [child]
-            children += child.allChildren()
+            children += child.descendants()
         return children
     
     
@@ -2165,29 +2167,42 @@ class Visible(object):
             if self._shape is not None:
                 # TODO: use a shader effect to produce the glow rather than additional geometry
                 w, h, d = self.size()
-                if color is None or w == 0.0 or h == 0.0 or d == 0.0 or isinstance(self._shape, PathShape):
+                if color is None or (isinstance(self._shape, UnitShape) and (w == 0.0 or h == 0.0 or d == 0.0)):
                     if self._glowNode is not None:
                         self.sgNode.removeChild(self._glowNode)
                         self._glowNode = None
                         self._glowNodeMaterial = None
+                        self._glowShape = None
                 else:
                     if self._glowNode is None:
-                        self._glowNode = osg.MatrixTransform(osg.Matrixd.scale(osg.Vec3((w * 1.01) / w, (h * 1.01) / h, (d * 1.01) / d)))
                         glowGeode = osg.Geode()
                         glowGeode.setName(str(self.displayId))
-                        glowGeode.addDrawable(self._shape.geometry())
+                        if isinstance(self._shape, UnitShape):
+                            self._glowNode = osg.MatrixTransform(osg.Matrixd.scale(osg.Vec3((w * 1.01) / w, (h * 1.01) / h, (d * 1.01) / d)))
+                            glowGeode.addDrawable(self._shape.geometry())
+                            stateSet1 = self._glowNode.getOrCreateStateSet()
+                            stateSet1.clear()
+                            self._glowNodeMaterial = osg.Material()
+                            stateSet1.setAttribute(self._glowNodeMaterial)
+                        elif isinstance(self._shape, PathShape):
+                            self._glowNode = osg.MatrixTransform(osg.Matrixd.identity())
+                            self._glowShape = self._shape.__class__(**self._shape.persistentAttributes())
+                            self._glowShape.setPoints(self._shape.points())
+                            self._glowShape.setWeight(self._shape.weight() + 4.0)
+                            glowGeode.addDrawable(self._glowShape.geometry())
+                            stateSet1 = self._glowNode.getOrCreateStateSet()
+                            stateSet1.clear()
                         self._glowNode.addChild(glowGeode)
-                        stateSet1 = self._glowNode.getOrCreateStateSet()
-                        stateSet1.clear()
-                        self._glowNodeMaterial = osg.Material()
-                        stateSet1.setAttribute(self._glowNodeMaterial)
                         self.sgNode.addChild(self._glowNode)
                     else:
                         stateSet1 = self._glowNode.getOrCreateStateSet()
-                    colorVec = osg.Vec4(color[0], color[1], color[2], color[3])
-                    self._glowNodeMaterial.setDiffuse(osg.Material.FRONT_AND_BACK, colorVec)
-                    self._glowNodeMaterial.setEmission(osg.Material.FRONT_AND_BACK, colorVec)
-                    self._glowNodeMaterial.setAlpha(osg.Material.FRONT_AND_BACK, color[3])
+                    if isinstance(self._shape, UnitShape):
+                        colorVec = osg.Vec4(color[0], color[1], color[2], color[3])
+                        self._glowNodeMaterial.setDiffuse(osg.Material.FRONT_AND_BACK, colorVec)
+                        self._glowNodeMaterial.setEmission(osg.Material.FRONT_AND_BACK, colorVec)
+                        self._glowNodeMaterial.setAlpha(osg.Material.FRONT_AND_BACK, color[3])
+                    else:
+                        self._glowShape.setColor(color)
                     if color[3] == 1:
                         stateSet1.setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
                         stateSet1.setMode(osg.GL_BLEND, osg.StateAttribute.OFF)

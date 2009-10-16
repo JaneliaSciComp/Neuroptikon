@@ -34,6 +34,11 @@ class DisplayInspector(Inspector):
             self._window.Bind(wx.EVT_RADIOBUTTON, self.onSetOrthoViewZY, self.zyButton)
             self._sizer.Add(self.zyButton, 0)
             
+            self._ghostingOpacitySlider = wx.Slider(self._window, wx.ID_ANY, 20, 0, 100)
+            self._ghostingOpacitySlider.Bind(wx.EVT_SCROLL, self.onSetGhostingOpacity, self._ghostingOpacitySlider)
+            self._sizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Ghosting Opacity:')), 0)
+            self._sizer.Add(self._ghostingOpacitySlider, 1, wx.EXPAND)
+            
             mainSizer = wx.BoxSizer(wx.VERTICAL)
             mainSizer.Add(self._sizer, 1, wx.ALL, 5)
             self._window.SetSizer(mainSizer)
@@ -57,6 +62,8 @@ class DisplayInspector(Inspector):
             self.xzButton.SetValue(True)
         elif self.display.orthoViewPlane == 'zy':
             self.zyButton.SetValue(True)
+        
+        self._ghostingOpacitySlider.SetValue(self.display.ghostingOpacity() * 100.0)
     
     
     def onColorChanged(self, event):
@@ -74,4 +81,9 @@ class DisplayInspector(Inspector):
     
     def onSetOrthoViewZY(self, event):
         self.display.setOrthoViewPlane('zy')
+    
+    
+    def onSetGhostingOpacity(self, event):
+        opacity = self._ghostingOpacitySlider.GetValue() / 100.0
+        self.display.setGhostingOpacity(opacity)
     
