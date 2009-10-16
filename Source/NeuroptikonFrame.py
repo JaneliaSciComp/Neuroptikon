@@ -32,6 +32,7 @@ class NeuroptikonFrame( wx.Frame ):
         self.display.setNetwork(network)
         dispatcher.connect(self.networkDidChange, ('set', 'network'), self.display)
         dispatcher.connect(self.networkDidChangeSavePath, ('set', 'savePath'), network)
+        dispatcher.connect(self.displayDidChange, dispatcher.Any, self.display)
         
         self._scriptLocals = self.scriptLocals()
         self._console = wx.py.shell.Shell(self.splitter, wx.ID_ANY, locals = self._scriptLocals, introText=gettext('Welcome to Neuroptikon.'))
@@ -83,6 +84,11 @@ class NeuroptikonFrame( wx.Frame ):
     
     def networkDidChangeSavePath(self):
         self.SetTitle(self.display.network.name())
+    
+    
+    def displayDidChange(self, signal = None):
+        if isinstance(signal, tuple) and signal[0] == 'set':
+            self.setModified(True)
     
     
     @classmethod

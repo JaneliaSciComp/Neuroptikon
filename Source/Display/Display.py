@@ -627,6 +627,7 @@ class Display(wx.glcanvas.GLCanvas):
         if color != self.backgroundColor:
             self.viewer.getCamera().setClearColor(osg.Vec4f(color[0], color[1], color[2], color[3]))
             self.backgroundColor = color
+            dispatcher.send(('set', 'backgroundColor'), self)
     
     
     def setUseMouseOverSelecting(self, useIt):

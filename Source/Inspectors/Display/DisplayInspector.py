@@ -54,7 +54,7 @@ class DisplayInspector(Inspector):
         red, green, blue, alpha = self.display.backgroundColor
         self.backgroundColorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, alpha * 255))
     
-        # TODO: listen for changes to the background color
+        # TODO: listen for changes to the background color, view plane or ghosting opacity
         
         if self.display.orthoViewPlane == 'xy':
             self.xyButton.SetValue(True)
