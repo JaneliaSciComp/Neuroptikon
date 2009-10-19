@@ -31,6 +31,8 @@ class Visible(object):
             labelFont = 'Arial Bold.ttf'
         elif osgText.readFontFile("ArialBD.ttf"):
             labelFont = 'ArialBD.ttf'
+        else:
+            labelFont = None
     except:
         (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
         print 'Could not load Arial font (' + exceptionValue.message + ')'
