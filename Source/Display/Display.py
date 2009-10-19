@@ -2167,10 +2167,10 @@ class Display(wx.glcanvas.GLCanvas):
             else:
                 rootNode.removeChild(self.simpleDragger)
             
-            self.simpleDragger.setUpdateCallback(None)
+            self.simpleDragger.setCullCallback(None)
             self.simpleDragger = None
             if self.compositeDragger is not None:
-                self.compositeDragger.setUpdateCallback(None)
+                self.compositeDragger.setCullCallback(None)
                 self.compositeDragger = None
             self.draggerLOD = None
     
