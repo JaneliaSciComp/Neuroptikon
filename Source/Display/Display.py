@@ -676,7 +676,8 @@ class Display(wx.glcanvas.GLCanvas):
                 # TODO: alter orthoCenter to keep visibles in view
             self._resetView()
         elif self.viewDimensions == 3:
-            self.trackball.setDistance(self.trackball.getDistance() - event.GetWheelRotation() * .02 * self.scrollWheelScale)
+            self.computeVisiblesBound()
+            self.trackball.setDistance(self.trackball.getDistance() - event.GetWheelRotation() * max(self.visiblesSize) * .02 * self.scrollWheelScale)
         self.Refresh()
         event.Skip()
     
@@ -1889,16 +1890,25 @@ class Display(wx.glcanvas.GLCanvas):
         self._suppressRefresh = True
         
         def _highlightObject(networkObject):
+            highlightedSomething = False
+            
             # Highlight/animate all visibles for this object.
             for visible in self.visiblesForObject(networkObject):
                 if visible.isPath():
-                    visiblesToAnimate.add(visible)
-                else:
+                    if visible not in visiblesToAnimate:
+                        visiblesToAnimate.add(visible)
+                        highlightedSomething = True
+                elif visible not in visiblesToHighlight:
                     visiblesToHighlight.add(visible)
+                    highlightedSomething = True
             # If it's a neurite then highlight all the way back to the soma.
             while isinstance(networkObject, Neurite):
-                _highlightObject(networkObject.root)
-                networkObject = networkObject.root 
+                if _highlightObject(networkObject.root):
+                    networkObject = networkObject.root
+                else:
+                    networkObject = None
+            
+            return highlightedSomething  
             
         visiblesToHighlight = set()
         visiblesToAnimate = set()
