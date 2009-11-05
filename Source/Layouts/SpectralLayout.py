@@ -66,7 +66,7 @@ class SpectralLayout(Layout):
             d2 = mat(d**-0.5)
             d2[isinf(d2)] = 0
             q = d2 * l * d2
-            (eVal, eVec) = eigh(q)
+            eVec = eigh(q)[1]
             x = d2 * mat(eVec[:,1])
             y = d2 * mat(eVec[:,2])
             xMin, xMax = x.min(), x.max()
