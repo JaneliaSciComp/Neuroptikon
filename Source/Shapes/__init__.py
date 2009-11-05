@@ -21,7 +21,7 @@ try:
                     Display.registerShapeClass(shapeClass)
         except:
             (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-            print 'Could not load shape %s (%s)' % (shapeName, exceptionValue.message)
+            print 'Could not load shape %s (%s)' % (shapeName, str(exceptionValue) + ' (' + exceptionType.__name__ + ')')
 except:
     (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-    print 'Could not load shapes (' + exceptionValue.message + ')'
+    print 'Could not load shapes (' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + ')'

@@ -18,7 +18,7 @@ try:
             os.chmod(fdpPath, os.stat(fdpPath).st_mode | stat.S_IXUSR)
 except:
     (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-    print 'Could not configure graphviz (' + exceptionValue.message + ')'
+    print 'Could not configure graphviz (' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + ')'
 
 try:
     import pygraphviz

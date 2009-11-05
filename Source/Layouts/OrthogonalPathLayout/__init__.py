@@ -10,4 +10,4 @@ try:
 except:
     import sys
     (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-    print 'Could not load the orthogonal path layout (%s)' % (exceptionValue.message)
+    print 'Could not load the orthogonal path layout (%s)' % (str(exceptionValue) + ' (' + exceptionType.__name__ + ')')

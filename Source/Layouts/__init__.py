@@ -21,7 +21,7 @@ try:
                     Display.registerLayoutClass(layoutClass)
         except:
             (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-            print 'Could not load layout %s (%s)' % (layoutName, exceptionValue.message)
+            print 'Could not load layout %s (%s)' % (layoutName, str(exceptionValue) + ' (' + exceptionType.__name__ + ')')
 except:
     (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-    print 'Could not load layouts (' + exceptionValue.message + ')'
+    print 'Could not load layouts (' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + ')'

@@ -103,10 +103,10 @@ class NeuroptikonApp(wx.App):
                         Neuroptikon.library.add(ontology)
                     except:
                         (exceptionType_, exceptionValue, exceptionTraceback_) = sys.exc_info()
-                        print 'Could not import ontology ' + fileName + ' (' + exceptionValue.message + ')'
+                        print 'Could not import ontology ' + fileName + ' (' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + ')'
         except:
             (exceptionType_, exceptionValue, exceptionTraceback_) = sys.exc_info()
-            print 'Could not import ontologies (' + exceptionValue.message + ')'
+            print 'Could not import ontologies (' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + ')'
         
         # Load any textures in <root>/Textures
         try:
@@ -118,7 +118,7 @@ class NeuroptikonApp(wx.App):
                         Neuroptikon.library.add(texture)
         except:
             (exceptionType_, exceptionValue, exceptionTraceback_) = sys.exc_info()
-            print 'Could not import textures (' + exceptionValue.message + ')'
+            print 'Could not import textures (' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + ')'
     
     
     def onQuit(self, event_):
@@ -234,7 +234,7 @@ class NeuroptikonApp(wx.App):
                 execfile(dlg.GetPath(), self.scriptLocals())
             except:
                 (exceptionType_, exceptionValue, exceptionTraceback) = sys.exc_info()
-                dialog = wx.MessageDialog(self, exceptionValue.message, gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
+                dialog = wx.MessageDialog(self, str(exceptionValue) + ' (' + exceptionType.__name__ + ')', gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
             os.chdir(prevDir)
         dlg.Destroy()
