@@ -6,6 +6,7 @@ from GapJunction import GapJunction
 from Muscle import Muscle
 from Innervation import Innervation
 from Pathway import Pathway
+from Stimulus import Stimulus
 
 
 class Neurite(Object):
@@ -31,6 +32,36 @@ class Neurite(Object):
         if pathway is not None:
             pathway.addNeurite(self)
         #self.isStretchReceptor ???
+    
+    
+    def defaultName(self):
+        neuron = self.neuron()
+        connectedObjects = set()
+        for connection in self.connections():
+            if isinstance(connection, Stimulus):
+                connectedObjects.add(connection)
+            elif isinstance(connection, Arborization):
+                connectedObjects.add(connection.region)
+            elif isinstance(connection, GapJunction):
+                for neurite in connection.neurites():
+                    if neurite.neuron() != neuron:
+                        connectedObjects.add(neurite.neuron())
+                        break
+            elif isinstance(connection, Synapse):
+                if connection.preSynapticNeurite.neuron() != neuron:
+                    connectedObjects.add(connection.preSynapticNeurite)
+                for neurite in connection.postSynapticNeurites:
+                    if neurite.neuron() != neuron:
+                        connectedObjects.add(neurite.neuron())
+            elif isinstance(connection, Innervation):
+                connectedObjects.add(connection.muscle)
+        objectNames = [connectedObject.name or connectedObject.defaultName() for connectedObject in connectedObjects]
+        if not any(objectNames):
+            defaultName = None
+        else:
+            objectNames.sort()
+            defaultName = (neuron.name or neuron.defaultName()) + ' -< ' + ', '.join(objectNames) 
+        return defaultName
     
     
     @classmethod
@@ -133,6 +164,7 @@ class Neurite(Object):
         
         neurite = Neurite(self.network, self, *args, **keywords)
         self._neurites += [neurite]
+        self.network.addObject(neurite)
         return neurite
     
     
