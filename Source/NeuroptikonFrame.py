@@ -1,7 +1,7 @@
 import Neuroptikon
 import wx, wx.py
 from pydispatch import dispatcher
-import datetime, os, platform, sys
+import datetime, os, platform, sys, traceback
 import xml.etree.ElementTree as ElementTree
 import Display, Display.Display
 from Network.Network import Network
@@ -230,15 +230,23 @@ class NeuroptikonFrame( wx.Frame ):
             startTime = datetime.datetime.now()
         prevDir = os.getcwd()
         os.chdir(os.path.dirname(scriptPath))
+        if 'DEBUG' in os.environ:
+            self._console.redirectStdin(True)
+            self._console.redirectStdout(True)
+            self._console.redirectStderr(True)
         scriptLocals = self.scriptLocals()
         try:
             execfile(os.path.basename(scriptPath), scriptLocals)
             self.Refresh(False)
         finally:
             os.chdir(prevDir)
+            if 'DEBUG' in os.environ:
+                self._console.redirectStdin(False)
+                self._console.redirectStdout(False)
+                self._console.redirectStderr(False)
         if 'DEBUG' in os.environ:
             runTime = datetime.datetime.now() - startTime
-            print 'Ran ' + os.path.basename(scriptPath) + ' in ' + str(round(runTime.seconds + runTime.microseconds / 1000000.0, 2)) + ' seconds.'
+            self._console.writeOut('# Ran ' + os.path.basename(scriptPath) + ' in ' + str(round(runTime.seconds + runTime.microseconds / 1000000.0, 2)) + ' seconds.')
     
         
     def _profileScript(self, scriptPath):
@@ -257,7 +265,8 @@ class NeuroptikonFrame( wx.Frame ):
                 self.runScript(dlg.GetPath())
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-                dialog = wx.MessageDialog(self, exceptionValue.message, gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
+                frames = traceback.extract_tb(exceptionTraceback)[2:]
+                dialog = wx.MessageDialog(self, str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + '\n\nTraceback:\n' + ''.join(traceback.format_list(frames)), gettext('An error occurred while running the script:'), style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
         dlg.Destroy()
         self.Show(True)
@@ -496,7 +505,7 @@ class NeuroptikonFrame( wx.Frame ):
                 success = True
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-                dialog = wx.MessageDialog(self, exceptionValue.message, gettext('The file could not be saved.'), style = wx.ICON_ERROR | wx.OK)
+                dialog = wx.MessageDialog(self, str(exceptionValue) + ' (' + exceptionType.__name__ + ')', gettext('The file could not be saved.'), style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
         
         return success
@@ -536,7 +545,7 @@ class NeuroptikonFrame( wx.Frame ):
                     self.saveNetworkAndDisplaysAsScript(savePath, saveNetwork, saveDisplays)
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-                dialog = wx.MessageDialog(self, exceptionValue.message, gettext('The file could not be saved.'), style = wx.ICON_ERROR | wx.OK)
+                dialog = wx.MessageDialog(self, exceptionType.__name__ + ": " + str(exceptionValue), gettext('The file could not be saved.'), style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
     
     
