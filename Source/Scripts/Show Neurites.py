@@ -3,7 +3,9 @@ Visualize any neurites that are not dedicated to a single connection, e.g. those
 
 If nothing is selected then all neurites in the network will be visualized.  If there is a selection then only the neurites connected to the arborizations and synapses in the selection will be visualized.
 
-This functionality will eventually be folded into Neuroptikon. 
+This functionality will eventually be folded into Neuroptikon.
+
+Warning: This script is currently incompatible with saving the network as display-only.  Duplicate neurites and branch points will get created when the display-only script is run.
 '''
 
 
