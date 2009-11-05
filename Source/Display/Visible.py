@@ -1,5 +1,3 @@
-from __future__ import with_statement # This isn't required in Python 2.6
-
 import osg, osgDB, osgText
 
 from Shape import Shape, UnitShape, PathShape
@@ -35,21 +33,8 @@ class Visible(object):
             labelFont = None
     except:
         (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-        print 'Could not load Arial font (' + exceptionValue.message + ')'
+        print 'Could not load Arial font (' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + ')'
         labelFont = None
-    
-    if Neuroptikon.runningFromSource:
-        shaderDir = os.path.join(Neuroptikon.rootDir, 'Display')
-    else:
-        shaderDir = Neuroptikon.rootDir
-    with open(os.path.join(shaderDir, 'FlowShader.vert')) as f:
-        flowVertexShader = f.read()
-    with open(os.path.join(shaderDir, 'FlowShader.frag')) as f:
-        flowFragmentShader = f.read()
-    flowProgram = osg.Program()
-    flowProgram.addShader(osg.Shader(osg.Shader.VERTEX, flowVertexShader))
-    flowProgram.addShader(osg.Shader(osg.Shader.FRAGMENT, flowFragmentShader))
-    del shaderDir
     
     osgDB.Registry.instance().getReaderWriterForExtension('osg')    # Make sure the osg plug-in can be found before the cwd gets changed for a script run.
     
@@ -1937,7 +1922,7 @@ class Visible(object):
             self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('flowFrom', self._flowFrom))
             self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('textureScale', (self._size[1] if isinstance(self._shape, UnitShape) else 1.0) / self._staticTextureScale))
             self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('hasTexture', self._staticTexture != None))
-            self._shapeGeode.getOrCreateStateSet().setAttributeAndModes(Visible.flowProgram, osg.StateAttribute.ON)
+            self._shapeGeode.getOrCreateStateSet().setAttributeAndModes(self.display.flowProgram, osg.StateAttribute.ON)
         elif self._shapeGeode.getOrCreateStateSet().getAttribute(osg.StateAttribute.PROGRAM) is not None:
             self._shapeGeode.getOrCreateStateSet().removeAttribute(osg.StateAttribute.PROGRAM)
             self._shapeGeode.getOrCreateStateSet().removeUniform('flowTo')

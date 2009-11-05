@@ -1,9 +1,11 @@
+from __future__ import with_statement # This isn't required in Python 2.6
+
 import Neuroptikon
 import wx.glcanvas
 from pydispatch import dispatcher
 import osg, osgDB, osgGA, osgManipulator, osgViewer
 from math import pi
-import platform, sys, cPickle
+import os.path, platform, sys, cPickle
 import xml.etree.ElementTree as ElementTree
 
 from PickHandler import PickHandler
@@ -152,6 +154,18 @@ class Display(wx.glcanvas.GLCanvas):
         self._animationTimer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.onAnimate, self._animationTimer)
         self._suppressRefresh = False
+        
+        if Neuroptikon.runningFromSource:
+            shaderDir = os.path.join(Neuroptikon.rootDir, 'Display')
+        else:
+            shaderDir = Neuroptikon.rootDir
+        with open(os.path.join(shaderDir, 'FlowShader.vert')) as f:
+            flowVertexShader = f.read()
+        with open(os.path.join(shaderDir, 'FlowShader.frag')) as f:
+            flowFragmentShader = f.read()
+        self.flowProgram = osg.Program()
+        self.flowProgram.addShader(osg.Shader(osg.Shader.VERTEX, flowVertexShader))
+        self.flowProgram.addShader(osg.Shader(osg.Shader.FRAGMENT, flowFragmentShader))
         
         self.defaultFlowColor = (1.0, 1.0, 1.0, 1.0)
         self.defaultFlowToColorUniform = osg.Uniform('flowToColor', osg.Vec4f(*self.defaultFlowColor))
