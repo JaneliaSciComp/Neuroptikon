@@ -47,14 +47,15 @@ try:
             somaPosition = fields[1]
             somaPositions[neuronName] = somaPosition
             neuron = network.findNeuron(neuronName)
-            clusterKey = somaPosition + neuron.getAttribute('Side').value()
-            if clusterKey in clusters:
-                clusters[clusterKey] += [neuron]
-            else:
-                clusters[clusterKey] = [neuron]
+            if neuron:
+                clusterKey = somaPosition + neuron.getAttribute('Side').value()
+                if clusterKey in clusters:
+                    clusters[clusterKey] += [neuron]
+                else:
+                    clusters[clusterKey] = [neuron]
 except:
     (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-    print 'Could not load soma positions (' + exceptionValue.message + ')'
+    print 'Could not load soma positions (' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + ')'
 neuronTypesFile.close()
 
 for cluster in clusters.itervalues():
@@ -69,6 +70,18 @@ display.setDefaultFlowSpread(0.5)
 
 ACh = library.neurotransmitter('ACh')
 GABA = library.neurotransmitter('GABA')
+
+for neuron in display.network.neurons():
+    if neuron.name not in somaPositions:
+        if neuron.name[0] == 'R':
+            somaPositions[neuron.name] = '0.9'
+        else:
+            somaPositions[neuron.name] = '0.5'
+        clusterKey = somaPositions[neuron.name] + neuron.getAttribute('Side').value()
+        if clusterKey in clusters:
+            clusters[clusterKey] += [neuron]
+        else:
+            clusters[clusterKey] = [neuron]
 
 for neuron in display.network.neurons():
     # Color the soma based on function.
@@ -94,7 +107,7 @@ for neuron in display.network.neurons():
         elif somaSide.value() == 'R':
             somaY = 0.15
     # Many soma have the exact same X/Y coordinates so we distribute them evenly around the common point.
-    clusterKey = str(somaPositions[neuron.name]) + neuron.getAttribute('Side').value()
+    clusterKey = somaPositions[neuron.name] + neuron.getAttribute('Side').value()
     cluster = clusters[clusterKey]
     somaY += (len(cluster) - 1) / 2.0 * 0.015 * somaSign - cluster.index(neuron) * 0.015 * somaSign
     display.setVisiblePosition(neuron, (somaX, somaY, -1.0), fixed = True)
@@ -117,24 +130,25 @@ for gapJunction in display.network.gapJunctions():
 for muscle in display.network.muscles():
     if not any(display.visiblesForObject(muscle)):
         display.visualizeObject(muscle)
-    muscleX = muscle.getAttribute('A-P Position').value() * 4.0 - 2.0
-    if muscle.name in ['MANAL', 'MVULVA']:
-        muscleX += 0.02 # Shift the muscles slightly so they don't obscure the neurons at the same postion.
-    muscleY = 0.0
-    muscleSide = muscle.getAttribute('Side')
-    if muscleSide is not None:
-        if muscleSide.value() == 'L':
-            muscleY = -0.3
-        elif muscleSide.value() == 'R':
-            muscleY = 0.3
-    muscleFace = muscle.getAttribute('Face')
-    if muscleFace is not None:
-        if muscleFace.value() == 'D':
-            muscleY -= 0.025
-        elif muscleFace.value() == 'V':
-            muscleY += 0.025
-    display.setVisiblePosition(muscle, (muscleX, muscleY, -1.0), fixed = True)
-    display.setVisibleSize(muscle, (0.01, 0.02, .01))
+    if muscle.getAttribute('A-P Position'):
+        muscleX = muscle.getAttribute('A-P Position').value() * 4.0 - 2.0
+        if muscle.name in ['MANAL', 'MVULVA']:
+            muscleX += 0.02 # Shift the muscles slightly so they don't obscure the neurons at the same position.
+        muscleY = 0.0
+        muscleSide = muscle.getAttribute('Side')
+        if muscleSide is not None:
+            if muscleSide.value() == 'L':
+                muscleY = -0.3
+            elif muscleSide.value() == 'R':
+                muscleY = 0.3
+        muscleFace = muscle.getAttribute('Face')
+        if muscleFace is not None:
+            if muscleFace.value() == 'D':
+                muscleY -= 0.025
+            elif muscleFace.value() == 'V':
+                muscleY += 0.025
+        display.setVisiblePosition(muscle, (muscleX, muscleY, -1.0), fixed = True)
+        display.setVisibleSize(muscle, (0.01, 0.02, .01))
 
 for innervation in display.network.innervations():
     if not any(display.visiblesForObject(innervation)):
