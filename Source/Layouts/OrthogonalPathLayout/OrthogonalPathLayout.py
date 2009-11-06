@@ -38,7 +38,7 @@ class VisibleMap:
         return self.dist_between(start, goal)
     
     
-    def neighbor_nodes(self, node):
+    def neighbor_nodes(self, node, edge):
         node = N.array(node)
         
         # TODO: only allow orthogonal hops?
@@ -58,7 +58,8 @@ class VisibleMap:
                         yield (tuple(neighbor), hoppedNeighbors)
                         break
                     hoppedNeighbors.append(tuple(neighbor))
-                    if not neighborVisibles[0].isPath():
+                    (pathStart, pathEnd) = edge.pathEndPoints()
+                    if not neighborVisibles[0].isPath() and neighborVisibles[0] not in pathStart.ancestors() and neighborVisibles[0] not in pathEnd.ancestors():
                         # Don't hop into a node's space.
                         break
                     if any(set(neighborVisibles).intersection(set(lastNeighbors))):
@@ -277,7 +278,9 @@ class OrthogonalPathLayout(Layout):
             edgeCount += 1
             (pathStart, pathEnd) = edge.pathEndPoints()
             if 'DEBUG' in os.environ:
-                print 'Routing path from ' + (pathStart.client.abbreviation or '???') + ' to ' + (pathEnd.client.abbreviation or '???') + ' (' + str(edgeCount) + ' of ' + str(len(edges)) + ')'
+                startName = '???' if not pathStart.client or not pathStart.client.abbreviation else pathStart.client.abbreviation
+                endName = '???' if not pathEnd.client or not pathEnd.client.abbreviation else pathEnd.client.abbreviation
+                print 'Routing path from ' + startName + ' to ' + endName + ' (' + str(edgeCount) + ' of ' + str(len(edges)) + ')'
             
             # TODO: weight the search based on any previous path
             
@@ -319,7 +322,7 @@ class OrthogonalPathLayout(Layout):
                         prevNode = node
                         pathPoint = tuple(N.array(node) * nodeSpacing + minBound)
                         path += [(pathPoint[0], pathPoint[1], 0.0 if len(pathPoint) == 2 else pathPoint[2])]
-                    # Combine consectutive path segments with the same slope.
+                    # Combine consecutive path segments with the same slope.
                     for index in range(len(path) - 2, 0, -1):
                         delta0 = N.array(path[index + 1]) - N.array(path[index])
                         delta1 = N.array(path[index]) - N.array(path[index - 1])
@@ -340,7 +343,7 @@ class OrthogonalPathLayout(Layout):
                 closedSet.add(x.node)
                 
                 neighbornodes =  []
-                for node_y, hoppedNeighbors in edgeMap.neighbor_nodes(x.node):
+                for node_y, hoppedNeighbors in edgeMap.neighbor_nodes(x.node, edge):
                     # This block of code gets executed at least hundreds of thousands of times so it needs to be seriously tight.
                     
                     # Start with the distance between the nodes.
@@ -399,7 +402,7 @@ class OrthogonalPathLayout(Layout):
                 #edgeMap.show()
             
             if 'edgeMap' in dir():
-                print '\tCould not find route from ' + (pathStart.client.abbreviation or '???') + ' to ' + (pathEnd.client.abbreviation or '???')
+                print '\tCould not find route from ' + startName + ' to ' + endName
         
         #nodeMap.show()
 
