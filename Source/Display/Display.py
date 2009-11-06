@@ -1911,6 +1911,7 @@ class Display(wx.glcanvas.GLCanvas):
                 if visible.isPath():
                     if visible not in visiblesToAnimate:
                         visiblesToAnimate.add(visible)
+                        visiblesToHighlight.add(visible)
                         highlightedSomething = True
                 elif visible not in visiblesToHighlight:
                     visiblesToHighlight.add(visible)
@@ -1998,10 +1999,12 @@ class Display(wx.glcanvas.GLCanvas):
                 visiblesToHighlight.add(selectedVisible)
                 if selectedVisible.isPath() and (selectedVisible.flowTo() or selectedVisible.flowFrom()):
                     visiblesToAnimate.add(selectedVisible)
+                    visiblesToHighlight.add(selectedVisible)
                 if selectedVisible.isPath():
                     # Highlight the visibles at each end of the path.
                     if selectedVisible.flowTo() or selectedVisible.flowFrom():
                         visiblesToAnimate.add(selectedVisible)
+                        visiblesToHighlight.add(selectedVisible)
                     [visiblesToHighlight.add(endPoint) for endPoint in selectedVisible.pathEndPoints()] 
                 elif self.selectConnectedVisibles and not self._selectedShortestPath:
                     # Animate paths connecting to this non-path visible and highlight the other end of the paths.
@@ -2009,6 +2012,7 @@ class Display(wx.glcanvas.GLCanvas):
                         otherVis = pathVisible._pathCounterpart(selectedVisible)
                         if singleSelection or otherVis in self.selectedVisibles:
                             visiblesToAnimate.add(pathVisible)
+                            visiblesToHighlight.add(pathVisible)
                             visiblesToHighlight.add(otherVis)
         
         if len(self.selectedVisibles) == 0 and self._showFlow:
@@ -2023,7 +2027,6 @@ class Display(wx.glcanvas.GLCanvas):
                 highlightedNode.setGlowColor(None)
         for animatedEdge in self.animatedVisibles:
             if animatedEdge not in visiblesToAnimate:
-                animatedEdge.setGlowColor(None)
                 animatedEdge.animateFlow(False)
         
         # Highlight/animate the visibles that should have it now.
@@ -2035,12 +2038,6 @@ class Display(wx.glcanvas.GLCanvas):
             else:
                 visibleToHighlight.setGlowColor(None)
         for visibleToAnimate in visiblesToAnimate:
-            if visibleToAnimate in self.selectedVisibles:
-                visibleToAnimate.setGlowColor(self._primarySelectionColor)
-            elif not self._useGhosts:
-                visibleToAnimate.setGlowColor(self._secondarySelectionColor)
-            else:
-                visibleToAnimate.setGlowColor(None)
             visibleToAnimate.animateFlow()
         
         self.highlightedVisibles = visiblesToHighlight
