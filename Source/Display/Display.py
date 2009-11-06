@@ -1833,7 +1833,7 @@ class Display(wx.glcanvas.GLCanvas):
         else:
             # Add the visibles to the new selection.
             for visible in visibles:
-                if isinstance(visible.client, Neurite) and not self.objectIsSelected(visible.client.neuron()):
+                if isinstance(visible.client, Neurite) and not self.objectIsSelected(visible.client.neuron()) and not self.visiblesForObject(visible.client.neuron())[0] in visibles:
                     visibles = self.visiblesForObject(visible.client.neuron())
                     if any(visibles):
                         # TODO: only the neuron's visible connected to the neurite visible? 
