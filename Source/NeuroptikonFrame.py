@@ -246,7 +246,7 @@ class NeuroptikonFrame( wx.Frame ):
                 self._console.redirectStderr(False)
         if 'DEBUG' in os.environ:
             runTime = datetime.datetime.now() - startTime
-            self._console.writeOut('# Ran ' + os.path.basename(scriptPath) + ' in ' + str(round(runTime.seconds + runTime.microseconds / 1000000.0, 2)) + ' seconds.')
+            self._console.writeOut('# Ran ' + os.path.basename(scriptPath) + ' in ' + str(round(runTime.seconds + runTime.microseconds / 1000000.0, 2)) + ' seconds.\n')
     
         
     def _profileScript(self, scriptPath):
