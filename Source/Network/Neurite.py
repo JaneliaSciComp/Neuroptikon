@@ -77,8 +77,8 @@ class Neurite(Object):
             subNeurite = Neurite._fromXMLElement(network, subNeuriteElement)
             if subNeurite is None:
                 raise ValueError, gettext('Could not create neurite')
-            subNeurite.root = object
-            neurite._neurites += [neurite]
+            subNeurite.root = neurite
+            neurite._neurites += [subNeurite]
             network.addObject(subNeurite)
         neurite.arborization = None
         neurite._synapses = []
