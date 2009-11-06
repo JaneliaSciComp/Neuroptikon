@@ -1978,9 +1978,11 @@ class Display(wx.glcanvas.GLCanvas):
                                     _highlightObject(connection)
                                     _highlightObject(connection.neurite)
                                 if singleSelection:
+                                    # Also highlight any other arborizations the neuron makes that could send information to or receive it from this region.
                                     for arborization in connection.neurite.neuron().arborizations():
                                         if (connection.sendsOutput and arborization.receivesInput) or (connection.receivesInput and arborization.sendsOutput):
                                             _highlightObject(arborization)
+                                            _highlightObject(arborization.neurite)
                                             _highlightObject(arborization.region)
                         elif isinstance(networkObject, Muscle):
                             if singleSelection or connection.neurite in selectedObjects or connection.neurite.neuron() in selectedObjects:
