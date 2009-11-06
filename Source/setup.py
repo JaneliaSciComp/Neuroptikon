@@ -72,7 +72,7 @@ if sys.platform == 'darwin':
     py2app_options['excludes'] = excludes
     
     resources += ['../Artwork/Neuroptikon.icns']
-    resources += ['lib/Darwin/fdp', 'lib/Darwin/graphviz']
+    resources += ['lib/Darwin/fdp', 'lib/Darwin/graphviz', 'lib/Darwin/libgvc.4.dylib', 'lib/Darwin/libgraph.4.dylib', 'lib/Darwin/libcdt.4.dylib', 'lib/Darwin/libpathplan.4.dylib']
     resources += ['lib/Darwin/osgdb_freetype.so', 'lib/Darwin/osgdb_osg.so', 'lib/Darwin/osgdb_qt.so']
     resources += ['Documentation/build/Documentation']
     py2app_options['resources'] = ','.join(resources)
