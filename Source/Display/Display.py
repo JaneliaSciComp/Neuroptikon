@@ -1358,8 +1358,8 @@ class Display(wx.glcanvas.GLCanvas):
         if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise ValueError, 'The object argument passed to setVisiblePosition() must be an object from the network being visualized by this display .'
         if position != None:
-            if not isinstance(position, (tuple, list)):
-                raise TypeError, 'The position argument passed to setVisiblePosition() must be a tuple or list of numbers.'
+            if not isinstance(position, (tuple, list)) or len(position) != 3:
+                raise TypeError, 'The position argument passed to setVisiblePosition() must be a tuple or list of three numbers.'
             for dim in position:
                 if not isinstance(dim, (int, float)):
                     raise TypeError, 'The components of the position argument passed to setVisiblePosition() must be numbers.'
