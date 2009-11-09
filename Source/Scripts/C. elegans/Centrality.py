@@ -4,7 +4,7 @@ See <http://networkx.lanl.gov/reference/algorithms.centrality.html> for the full
 """
 
 # Load the neurons and their interconnections if needed.
-if not any(network.neurons()):
+if not any(network.objects):
     execfile('Connectivity.py')
 
 import networkx
@@ -28,9 +28,9 @@ for (node1, node2, object) in network.graph.edges():
     graph.add_edge(node1, node2, 1.0 / (previousWeight + weight))   # the more connections the lower the weight
     
 # Compute the centrality of each node in the graph. (uncomment one of the following)
-centralities = networkx.degree_centrality(graph)
+#centralities = networkx.degree_centrality(graph)
 #centralities = networkx.closeness_centrality(graph, weighted_edges = True)
-#centralities = networkx.betweenness_centrality(graph, weighted_edges = True)
+centralities = networkx.betweenness_centrality(graph, weighted_edges = True)
 #centralities = networkx.load_centrality(graph, weighted_edges = True)
     
 # Compute the maximum centrality so we can normalize.
