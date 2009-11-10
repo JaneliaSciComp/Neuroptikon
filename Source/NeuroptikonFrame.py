@@ -235,6 +235,7 @@ class NeuroptikonFrame( wx.Frame ):
             self._console.redirectStdout(True)
             self._console.redirectStderr(True)
         scriptLocals = self.scriptLocals()
+        scriptLocals['__file__'] = scriptPath   # Let the script know where it is being run from.
         try:
             execfile(os.path.basename(scriptPath), scriptLocals)
             self.Refresh(False)

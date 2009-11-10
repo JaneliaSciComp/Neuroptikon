@@ -10,6 +10,8 @@ display  the :class:`display <Display.Display.Display>` object managing the visu
 network  the :class:`network <Network.Network.Network>` being displayed.
 =======  =================================================================================
 
+When a script is run via File > Run Script the current working directory is set to directory containing the script file.  This allows simple access to other files or scripts in the same directory, e.g. "textFile = open('file.txt')" would open a text file stored with the script.  Scripts can also query the __file__ local variable to get the full path of their location.
+
 There is also an application-wide console that can be used to create new networks or do multi-network scripting.
 
 ==============  =============================================================================
