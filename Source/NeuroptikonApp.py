@@ -46,6 +46,10 @@ class NeuroptikonApp(wx.App):
         Neuroptikon.library = Library()
         self._loadDefaultLibraryItems()
         
+        self._customizationDocSetId = wx.NewId()
+        self._dataMgmtDocSetId = wx.NewId()
+        self._scriptingDocSetId = wx.NewId()
+        self._uiDocSetId = wx.NewId()
         if platform.system() == 'Darwin':
             wx.MenuBar.MacSetCommonMenuBar(self.menuBar())
         
@@ -102,10 +106,10 @@ class NeuroptikonApp(wx.App):
                         ontology.importOBO(Neuroptikon.rootDir + os.sep + 'Ontologies' + os.sep + fileName)
                         Neuroptikon.library.add(ontology)
                     except:
-                        (exceptionType_, exceptionValue, exceptionTraceback_) = sys.exc_info()
+                        (exceptionType, exceptionValue, exceptionTraceback_) = sys.exc_info()
                         print 'Could not import ontology ' + fileName + ' (' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + ')'
         except:
-            (exceptionType_, exceptionValue, exceptionTraceback_) = sys.exc_info()
+            (exceptionType, exceptionValue, exceptionTraceback_) = sys.exc_info()
             print 'Could not import ontologies (' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + ')'
         
         # Load any textures in <root>/Textures
@@ -117,7 +121,7 @@ class NeuroptikonApp(wx.App):
                     if texture.loadImage(Neuroptikon.rootDir + os.sep + 'Textures' + os.sep + fileName):
                         Neuroptikon.library.add(texture)
         except:
-            (exceptionType_, exceptionValue, exceptionTraceback_) = sys.exc_info()
+            (exceptionType, exceptionValue, exceptionTraceback_) = sys.exc_info()
             print 'Could not import textures (' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + ')'
     
     
@@ -168,13 +172,9 @@ class NeuroptikonApp(wx.App):
         menuBar.Append(fileMenu, gettext('&File'))
         
         helpMenu = wx.Menu()
-        self._customizationDocSetId = wx.NewId()
         self.Bind(wx.EVT_MENU, self.onShowDocumentation, helpMenu.Append(self._customizationDocSetId, gettext('Customizing Neuroptikon'), gettext('Show the documentation on customizing Neuroptikon')))
-        self._dataMgmtDocSetId = wx.NewId()
         self.Bind(wx.EVT_MENU, self.onShowDocumentation, helpMenu.Append(self._dataMgmtDocSetId, gettext('Data Management'), gettext('Show the documentation on managing Neuroptikon data')))
-        self._scriptingDocSetId = wx.NewId()
         self.Bind(wx.EVT_MENU, self.onShowDocumentation, helpMenu.Append(self._scriptingDocSetId, gettext('Scripting Interface'), gettext('Show the documentation on scripting Neuroptikon')))
-        self._uiDocSetId = wx.NewId()
         self.Bind(wx.EVT_MENU, self.onShowDocumentation, helpMenu.Append(self._uiDocSetId, gettext('User Interface'), gettext('Show the documentation on interacting with Neuroptikon')))
         if platform.system() != 'Darwin':
             helpMenu.AppendSeparator()
@@ -233,7 +233,7 @@ class NeuroptikonApp(wx.App):
             try:
                 execfile(dlg.GetPath(), self.scriptLocals())
             except:
-                (exceptionType_, exceptionValue, exceptionTraceback) = sys.exc_info()
+                (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                 dialog = wx.MessageDialog(self, str(exceptionValue) + ' (' + exceptionType.__name__ + ')', gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
             os.chdir(prevDir)
