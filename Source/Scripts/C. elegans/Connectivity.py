@@ -59,4 +59,4 @@ def weightByCount(edgeVisible):
     countAttr = edgeVisible.client.getAttribute('Count')
     return 0 if not countAttr else countAttr.value()
 
-display.performLayout(layouts['SpectralLayout'](weightFunction = weightByCount, scaling = (-40.0, 12.5, 0.25)))
+display.performLayout(layouts['SpectralLayout'](weightFunction = weightByCount, scaling = (-40.0, 12.5, 0.25), autoScale = False))

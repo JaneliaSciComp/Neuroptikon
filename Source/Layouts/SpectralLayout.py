@@ -9,11 +9,12 @@ class SpectralLayout(Layout):
         return gettext('Spectral')
     
     
-    def __init__(self, weightFunction = None, scaling = (1.0, 1.0, 1.0), *args, **keywordArgs):
+    def __init__(self, weightFunction = None, scaling = (1.0, 1.0, 1.0), autoScale = True, *args, **keywordArgs):
         Layout.__init__(self, *args, **keywordArgs)
     
         self.weightingFunction = weightFunction
         self.scaling = scaling
+        self.autoScale = autoScale
     
     
     def layoutDisplay(self, display):
@@ -71,9 +72,12 @@ class SpectralLayout(Layout):
             y = d2 * mat(eVec[:,2])
             xMin, xMax = x.min(), x.max()
             xOff = (xMax + xMin) / 2.0
+            xSize = xMax - xMin if self.autoScale else 1.0
             yMin, yMax = y.min(), y.max()
             yOff = (yMax + yMin) / 2.0
+            ySize = yMax - yMin if self.autoScale else 1.0
             zMin, zMax = z.min(), z.max()
             zOff = (zMax + zMin) / 2.0
+            zSize = zMax - zMin if self.autoScale else 1.0
             for i in range(n):
-                nodes[i].setPosition(((x[i,0] - xOff) * self.scaling[0], (y[i,0] - yOff) * self.scaling[1], (z[i,0] - zOff) * self.scaling[2]))
+                nodes[i].setPosition(((x[i,0] - xOff) / xSize * self.scaling[0], (y[i,0] - yOff) / ySize * self.scaling[1], (z[i,0] - zOff) / zSize * self.scaling[2]))
