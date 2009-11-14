@@ -277,9 +277,9 @@ class OrthogonalPathLayout(Layout):
         for edgeLength, edge in edges:
             edgeCount += 1
             (pathStart, pathEnd) = edge.pathEndPoints()
+            startName = '???' if not pathStart.client or not pathStart.client.abbreviation else pathStart.client.abbreviation
+            endName = '???' if not pathEnd.client or not pathEnd.client.abbreviation else pathEnd.client.abbreviation
             if 'DEBUG' in os.environ:
-                startName = '???' if not pathStart.client or not pathStart.client.abbreviation else pathStart.client.abbreviation
-                endName = '???' if not pathEnd.client or not pathEnd.client.abbreviation else pathEnd.client.abbreviation
                 print 'Routing path from ' + startName + ' to ' + endName + ' (' + str(edgeCount) + ' of ' + str(len(edges)) + ')'
             
             # TODO: weight the search based on any previous path
