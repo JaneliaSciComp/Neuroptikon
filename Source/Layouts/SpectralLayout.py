@@ -27,7 +27,7 @@ class SpectralLayout(Layout):
                 elif visible.parent is None:
                     nodes.append(visible)
         n=len(nodes)
-        if n > 0:
+        if n > 1:
             # Build the adjacency matrix
             A = zeros((n, n))
             for edge in edges:
