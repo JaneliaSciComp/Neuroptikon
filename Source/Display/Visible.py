@@ -1341,11 +1341,12 @@ class Visible(object):
                 self.sgNode.removeChild(self.childGroup)
                 self.childGroup = None
                 self._updateOpacity()
-            if self.arrangedAxis is None:
-                childVisible._updateTransform()
-            else:
-                self._arrangeChildren()
-            dispatcher.send(('set', 'children'), self)
+            if not self.display._closing:
+                if self.arrangedAxis is None:
+                    childVisible._updateTransform()
+                else:
+                    self._arrangeChildren()
+                dispatcher.send(('set', 'children'), self)
     
     
     def rootVisible(self):

@@ -192,6 +192,8 @@ class Display(wx.glcanvas.GLCanvas):
         dispatcher.connect(self._onSelectionOrShowFlowChanged, ('set', 'showFlow'), self)
         
         self.lastUsedLayout = None
+        
+        self._closing = False
     
     
     def _fromXMLElement(self, xmlElement):
@@ -796,6 +798,11 @@ class Display(wx.glcanvas.GLCanvas):
         else:
             return None
     
+    
+    def close(self):
+        self._closing = True
+        self.setNetwork(None)
+        
     
     def removeVisible(self, visible):
         if visible.displayId not in self._visibleIds:

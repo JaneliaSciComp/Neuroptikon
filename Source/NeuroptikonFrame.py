@@ -360,7 +360,7 @@ class NeuroptikonFrame( wx.Frame ):
             wx.GetApp().inspector.inspectDisplay(None)
             network = self.display.network
             dispatcher.disconnect(self.networkDidChangeSavePath, ('set', 'savePath'), network)
-            self.display.setNetwork(None)
+            self.display.close()
             self.display = None
             self.Destroy()
             wx.GetApp().displayWasClosed(self)
