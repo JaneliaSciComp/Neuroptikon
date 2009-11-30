@@ -1,7 +1,8 @@
-from Object import Object
-import xml.etree.ElementTree as ElementTree
+import Neuroptikon
+from neuro_object import NeuroObject
 
-class Muscle(Object):
+
+class Muscle(NeuroObject):
     
     # TODO: stretch receptors?
     
@@ -15,15 +16,15 @@ class Muscle(Object):
         >>> neuron1.innervate(muscle1)
         """
         
-        Object.__init__(self, network, *args, **keywords)
+        NeuroObject.__init__(self, network, *args, **keywords)
         self._innervations = []
     
     
     @classmethod
     def _fromXMLElement(cls, network, xmlElement):
-        object = super(Muscle, cls)._fromXMLElement(network, xmlElement)
-        object._innervations = []
-        return object
+        muscle = super(Muscle, cls)._fromXMLElement(network, xmlElement)
+        muscle._innervations = []
+        return muscle
     
     
     def _needsScriptRef(self):
@@ -41,8 +42,23 @@ class Muscle(Object):
     
     
     def connections(self, recurse = True):
-        return Object.connections(self, recurse) + self._innervations
+        return NeuroObject.connections(self, recurse) + self._innervations
     
     
     def inputs(self, recurse = True):
-        return Object.inputs(self, recurse) + self._innervations
+        return NeuroObject.inputs(self, recurse) + self._innervations
+    
+    
+    def defaultVisualizationParams(self):
+        params = NeuroObject.defaultVisualizationParams(self)
+        shapeClasses = Neuroptikon.scriptLocals()['shapes']
+        params['shape'] = shapeClasses['Capsule']
+        params['size'] = (.05, .1, .02)
+        params['color'] = (0.75, 0.5, 0.5)
+        try:
+            params['texture'] = Neuroptikon.library.texture('Stripes')
+        except:
+            pass
+        params['textureScale'] = 20.0
+        params['label'] = self.abbreviation or self.name
+        return params

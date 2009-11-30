@@ -1,4 +1,5 @@
-from Object import Object
+import Neuroptikon
+from neuro_object import NeuroObject
 from pydispatch import dispatcher
 
 
@@ -36,7 +37,7 @@ class PathwayTerminus(object):
         return PathwayTerminus(network, region, sends, receives)
     
     
-class Pathway(Object):
+class Pathway(NeuroObject):
     
     def __init__(self, region1, region2, region1Projects = None, region2Projects = None, *args, **keywords):
         """
@@ -47,7 +48,7 @@ class Pathway(Object):
         >>> pathway_1_2 = region1.projectToRegion(region2)
         """
         
-        Object.__init__(self, region1.network, *args, **keywords)
+        NeuroObject.__init__(self, region1.network, *args, **keywords)
         
         self._neurites = []
         
@@ -110,7 +111,7 @@ class Pathway(Object):
      
     
     def _toXMLElement(self, parentElement):
-        pathwayElement = Object._toXMLElement(self, parentElement)
+        pathwayElement = NeuroObject._toXMLElement(self, parentElement)
         pathwayElement.set('region1Id', str(self.region1.networkId))
         if self.region1Projects != None:
             pathwayElement.set('region1Projects', str(self.region1Projects).lower())
@@ -121,7 +122,7 @@ class Pathway(Object):
     
     
     def _needsScriptRef(self):
-        return any(self._neurites) or Object._needsScriptRef(self)
+        return any(self._neurites) or NeuroObject._needsScriptRef(self)
         
         
     def _creationScriptCommand(self, scriptRefs):
@@ -129,7 +130,7 @@ class Pathway(Object):
     
     
     def _creationScriptParams(self, scriptRefs):
-        args, keywords = Object._creationScriptParams(self, scriptRefs)
+        args, keywords = NeuroObject._creationScriptParams(self, scriptRefs)
         args.insert(0, scriptRefs[self.region2.networkId])
         if self.region1Projects != True:
             keywords['knownProjection'] = str(self.region1Projects)
@@ -177,11 +178,11 @@ class Pathway(Object):
     
     
     def connections(self, recurse = True):
-        return Object.connections(self, recurse) + [self.region1, self.region2]
+        return NeuroObject.connections(self, recurse) + [self.region1, self.region2]
     
     
     def inputs(self, recurse = True):
-        inputs = Object.inputs(self, recurse)
+        inputs = NeuroObject.inputs(self, recurse)
         if self.region1Projects:
             inputs += [self.region1]
         if self.region2Projects:
@@ -190,10 +191,22 @@ class Pathway(Object):
     
     
     def outputs(self, recurse = True):
-        outputs = Object.outputs(self, recurse)
+        outputs = NeuroObject.outputs(self, recurse)
         if self.region1Projects:
             outputs += [self.region2]
         if self.region2Projects:
             outputs += [self.region1]
         return outputs
+    
+    
+    def defaultVisualizationParams(self):
+        params = NeuroObject.defaultVisualizationParams(self)
+        shapeClasses = Neuroptikon.scriptLocals()['shapes']
+        params['shape'] = shapeClasses['Line']
+        params['weight'] = 5.0
+        params['color'] = (0.0, 0.0, 0.0)
+        params['pathEndPoints'] = (self.region1, self.region2)
+        params['flowTo'] = self.region1Projects
+        params['flowFrom'] = self.region2Projects
+        return params
     

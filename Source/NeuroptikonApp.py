@@ -4,7 +4,7 @@ import wx.py as py
 import os, platform, sys
 import xml.etree.ElementTree as ElementTree
 from Network.Network import Network
-from Network.Object import Object
+from Network.neuro_object import NeuroObject
 from Network.Neuron import Neuron
 from Network.Attribute import Attribute
 from Library.Library import Library
@@ -36,6 +36,11 @@ class NeuroptikonApp(wx.App):
         # TODO: use wxWidget's document/view framework instead
         self._frames = []
         
+        self._customizationDocSetId = wx.NewId()
+        self._dataMgmtDocSetId = wx.NewId()
+        self._scriptingDocSetId = wx.NewId()
+        self._uiDocSetId = wx.NewId()
+        
         wx.App.__init__(self, *args, **keywordArgs)
     
     
@@ -46,10 +51,6 @@ class NeuroptikonApp(wx.App):
         Neuroptikon.library = Library()
         self._loadDefaultLibraryItems()
         
-        self._customizationDocSetId = wx.NewId()
-        self._dataMgmtDocSetId = wx.NewId()
-        self._scriptingDocSetId = wx.NewId()
-        self._uiDocSetId = wx.NewId()
         if platform.system() == 'Darwin':
             wx.MenuBar.MacSetCommonMenuBar(self.menuBar())
         
@@ -204,7 +205,7 @@ class NeuroptikonApp(wx.App):
                         'Attribute': Attribute, 
                         'layouts': layoutClasses, 
                         'shapes': shapeClasses}
-        for objectClass in Object.__subclasses__(): # pylint: disable-msg=E1101
+        for objectClass in NeuroObject.__subclasses__(): # pylint: disable-msg=E1101
             scriptLocals[objectClass.__name__] = objectClass
         if 'DEBUG' in os.environ:
             scriptLocals['os'] = os

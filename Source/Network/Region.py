@@ -1,11 +1,11 @@
 import Neuroptikon
-from Object import Object
+from neuro_object import NeuroObject
 from Pathway import Pathway
 import xml.etree.ElementTree as ElementTree
 from pydispatch import dispatcher
 
 
-class Region(Object):
+class Region(NeuroObject):
     
     #TODO: sub region layout (layers, columns, etc)
     
@@ -24,7 +24,7 @@ class Region(Object):
             if 'abbreviation' not in keywords and ontologyTerm.abbreviation is not None:
                 keywords['abbreviation'] = ontologyTerm.abbreviation
         
-        Object.__init__(self, network, *args, **keywords)
+        NeuroObject.__init__(self, network, *args, **keywords)
         
         self.parentRegion = None
         self.subRegions = []
@@ -70,7 +70,7 @@ class Region(Object):
     
     
     def _toXMLElement(self, parentElement):
-        regionElement = Object._toXMLElement(self, parentElement)
+        regionElement = NeuroObject._toXMLElement(self, parentElement)
         if self.ontologyTerm is not None:
             ElementTree.SubElement(regionElement, 'OntologyTerm', ontologyId = str(self.ontologyTerm.ontology.identifier), ontologyTermId = str(self.ontologyTerm.identifier))
         for subRegion in self.subRegions:
@@ -88,7 +88,7 @@ class Region(Object):
     
     
     def _creationScriptParams(self, scriptRefs):
-        args, keywords = Object._creationScriptParams(self, scriptRefs)
+        args, keywords = NeuroObject._creationScriptParams(self, scriptRefs)
         if self.parentRegion is not None:
             keywords['parentRegion'] = '' + scriptRefs[self.parentRegion.networkId]
         if self.ontologyTerm is not None:
@@ -99,9 +99,7 @@ class Region(Object):
     
     
     def _creationScriptChildren(self):
-        children = Object._creationScriptChildren(self)
-        children.extend(self.subRegions)
-        return children
+        return NeuroObject._creationScriptChildren(self) + self.subRegions
     
     
     def _addSubRegion(self, subRegion):
@@ -141,7 +139,7 @@ class Region(Object):
     
     
     def connections(self, recurse = True):
-        connections = Object.connections(self, recurse) + self.pathways + self.arborizations
+        connections = NeuroObject.connections(self, recurse) + self.pathways + self.arborizations
         if recurse:
             for subRegion in self.subRegions:
                 connections += subRegion.connections() 
@@ -149,7 +147,7 @@ class Region(Object):
     
     
     def inputs(self, recurse = True):
-        inputs = Object.inputs(self, recurse)
+        inputs = NeuroObject.inputs(self, recurse)
         for pathway in self.pathways:
             if pathway.region1 == self and pathway.region2Projects or pathway.region2 == self and pathway.region1Projects:
                 inputs.append(pathway)
@@ -163,7 +161,7 @@ class Region(Object):
     
     
     def outputs(self, recurse = True):
-        outputs = Object.outputs(self, recurse)
+        outputs = NeuroObject.outputs(self, recurse)
         for pathway in self.pathways:
             if pathway.region1 == self and pathway.region1Projects or pathway.region2 == self and pathway.region2Projects:
                 outputs.append(pathway)
@@ -181,3 +179,13 @@ class Region(Object):
         for subRegion in self.subRegions:
             allSubRegions += [subRegion] + subRegion.allSubRegions()
         return allSubRegions
+    
+    
+    def defaultVisualizationParams(self):
+        params = NeuroObject.defaultVisualizationParams(self)
+        params['size'] = (0.1, 0.1, 0.1)
+        if self.parentRegion:
+            params['parent'] = self.parentRegion
+        if any(self.subRegions) or any(self.neurons):
+            params['children'] = self.subRegions + self.neurons
+        return params

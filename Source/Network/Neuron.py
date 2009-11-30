@@ -1,11 +1,11 @@
 import Neuroptikon
-from Object import Object
+from neuro_object import NeuroObject
 from Neurite import Neurite
 import xml.etree.ElementTree as ElementTree
 from pydispatch import dispatcher
 
 
-class Neuron(Object):
+class Neuron(NeuroObject):
     
     
     class Polarity: # pylint: disable-msg=W0232
@@ -51,7 +51,7 @@ class Neuron(Object):
                 localKeywordArgs[attrName] = keywordArgs[attrName]
                 del keywordArgs[attrName]
         
-        Object.__init__(self, network, *args, **keywordArgs)
+        NeuroObject.__init__(self, network, *args, **keywordArgs)
         
         self._neurites = []
         self.neuronClass = neuronClass
@@ -132,7 +132,7 @@ class Neuron(Object):
     
     
     def _toXMLElement(self, parentElement):
-        neuronElement = Object._toXMLElement(self, parentElement)
+        neuronElement = NeuroObject._toXMLElement(self, parentElement)
         if self.neuronClass is not None:
             ElementTree.SubElement(neuronElement, 'Class').text = self.neuronClass.identifier
         for neurotransmitter in self.neurotransmitters:
@@ -151,11 +151,11 @@ class Neuron(Object):
     
     
     def _needsScriptRef(self):
-        return len(self._neurites) > 0 or Object._needsScriptRef(self)
+        return len(self._neurites) > 0 or NeuroObject._needsScriptRef(self)
     
     
     def _creationScriptParams(self, scriptRefs):
-        args, keywords = Object._creationScriptParams(self, scriptRefs)
+        args, keywords = NeuroObject._creationScriptParams(self, scriptRefs)
         if self.neuronClass is not None:
             keywords['neuronClass'] = 'library.neuronClass(\'' + self.neuronClass.identifier + '\')'
         if len(self.neurotransmitters) > 0:
@@ -175,9 +175,7 @@ class Neuron(Object):
     
     
     def _creationScriptChildren(self):
-        children = Object._creationScriptChildren(self)
-        children.extend(self._neurites)
-        return children
+        return NeuroObject._creationScriptChildren(self) + self._neurites
     
     
     def createNeurite(self, *args, **keywords):
@@ -318,7 +316,7 @@ class Neuron(Object):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        connections = Object.connections(self, recurse)
+        connections = NeuroObject.connections(self, recurse)
         if recurse:
             for neurite in self._neurites:
                 connections += neurite.connections()
@@ -332,7 +330,7 @@ class Neuron(Object):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        inputs = Object.inputs(self, recurse)
+        inputs = NeuroObject.inputs(self, recurse)
         if recurse:
             for neurite in self._neurites:
                 inputs += neurite.inputs()
@@ -346,7 +344,7 @@ class Neuron(Object):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        outputs = Object.outputs(self, recurse)
+        outputs = NeuroObject.outputs(self, recurse)
         if recurse:
             for neurite in self._neurites:
                 outputs += neurite.outputs()
@@ -384,4 +382,15 @@ class Neuron(Object):
         """
         
         return function in self._functions
+    
+    
+    def defaultVisualizationParams(self):
+        params = NeuroObject.defaultVisualizationParams(self)
+        shapeClasses = Neuroptikon.scriptLocals()['shapes']
+        params['shape'] = shapeClasses['Ball']
+        params['size'] = (.01, .01, .01)
+        params['sizeIsAbsolute'] = True
+        if self.region:
+            params['parent'] = self.region
+        return params
     

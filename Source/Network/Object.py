@@ -11,7 +11,7 @@ class Object(object):
         """
         The Object class is the base-class for every object in a :class:`network <Network.Network.Network>`.
         
-        Any number of user-defined attributes or stimuli can be added to an object.  The connectivity of objects can also be investigated.
+        Any number of user-defined attributes can be added to an object.  The connectivity of objects can also be investigated.
         """
         
         self.network = network
@@ -21,8 +21,6 @@ class Object(object):
         self.abbreviation = abbreviation
         self.description = description
         self._attributes = []
-        
-        self.stimuli = []
     
     
     @classmethod
@@ -47,8 +45,6 @@ class Object(object):
             if attribute is not None:
                 networkObject._attributes.append(attribute)
         
-        networkObject.stimuli = []
-        
         # TODO: handle links
         # TODO: handle notes
         return networkObject
@@ -71,7 +67,7 @@ class Object(object):
     
     
     def _needsScriptRef(self):
-        if len(self._attributes) > 0 or len(self.stimuli) > 0:
+        if len(self._attributes) > 0:
             return True
         
         for display in self.network.displays:
@@ -184,7 +180,7 @@ class Object(object):
         Return a list of the objects that connect to this object.
         """
         
-        return list(self.stimuli)
+        return []
     
     
     def inputs(self, recurse = True):  # pylint: disable-msg=W0613
@@ -192,7 +188,7 @@ class Object(object):
         Return a list of objects that send information into this object.
         """
         
-        return list(self.stimuli)
+        return []
     
     
     def outputs(self, recurse = True):  # pylint: disable-msg=W0613
@@ -200,28 +196,14 @@ class Object(object):
         """
         
         return []
+        
+        
+    def _printConnections(self):
+        print self.name or self.defaultName() or '<anonymous %s>' % self.__class__.displayName()
+        print '\tConnections: ' + ', '.join([connection.name or connection.defaultName() or '<anonymous %s>' % connection.__class__.displayName().lower() for connection in self.connections()])
+        print '\tInputs: ' + ', '.join([input.name or input.defaultName() or '<anonymous %s>' % input.__class__.displayName().lower() for input in self.inputs()])  # pylint: disable-msg=W0622
+        print '\tOutputs: ' + ', '.join([output.name or output.defaultName() or '<anonymous %s>' % output.__class__.displayName().lower() for output in self.outputs()])
     
-    
-    def stimulate(self, modality = None, *args, **keywordArgs):
-        """
-        Add a :class:`stimulus <Network.Stimulus.Stimulus>` to this object with the given :class:`modality <Library.Modality.Modality>`.
-        
-        >>> neuron1.stimulate(library.modality('light')) 
-        
-        Returns the stimulus object that is created.
-        """
-        
-        from Stimulus import Stimulus
-        from Library.Modality import Modality
-        
-        if modality != None and not isinstance(modality, Modality):
-            raise TypeError, 'The modality argument passed to stimulate() must be a value obtained from the library or None.'
-        
-        stimulus = Stimulus(self.network, target = self, modality = modality, *args, **keywordArgs)
-        self.stimuli.append(stimulus)
-        self.network.addObject(stimulus)
-        return stimulus
-        
     
     def shortestPathTo(self, otherObject):
         """
@@ -329,11 +311,18 @@ class Object(object):
         
         self._attributes.remove(attribute)
         dispatcher.send(('set', 'attributes'), self)
+    
+    
+    def defaultVisualizationParams(self):
+        # TODO: replace this with a display rule.
+        params = {}
         
-        
-    def _printConnections(self):
-        print self.name or self.defaultName() or '<anonymous %s>' % self.__class__.displayName()
-        print '\tConnections: ' + ', '.join([connection.name or connection.defaultName() or '<anonymous %s>' % connection.__class__.displayName().lower() for connection in self.connections()])
-        print '\tInputs: ' + ', '.join([input.name or input.defaultName() or '<anonymous %s>' % input.__class__.displayName().lower() for input in self.inputs()])  # pylint: disable-msg=W0622
-        print '\tOutputs: ' + ', '.join([output.name or output.defaultName() or '<anonymous %s>' % output.__class__.displayName().lower() for output in self.outputs()])
+        params['opacity'] = 1.0
+        params['weight'] = 1.0
+        params['label'] = None
+        params['texture'] = None
+        shapeClasses = Neuroptikon.scriptLocals()['shapes']
+        params['shape'] = shapeClasses['Box']
+       
+        return params
         

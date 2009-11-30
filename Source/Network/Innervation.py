@@ -1,7 +1,8 @@
-from Object import Object
-import xml.etree.ElementTree as ElementTree
+import Neuroptikon
+from neuro_object import NeuroObject
 
-class Innervation(Object):
+
+class Innervation(NeuroObject):
     
     def __init__(self, network, neurite, muscle, *args, **keywords):
         """
@@ -14,7 +15,7 @@ class Innervation(Object):
         >>> innervation_1_1 = neuron1.innervate(muscle1)
         """
         
-        Object.__init__(self, network, *args, **keywords)
+        NeuroObject.__init__(self, network, *args, **keywords)
         self.neurite = neurite
         self.muscle = muscle
     
@@ -25,22 +26,22 @@ class Innervation(Object):
     
     @classmethod
     def _fromXMLElement(cls, network, xmlElement):
-        object = super(Innervation, cls)._fromXMLElement(network, xmlElement)
+        innervation = super(Innervation, cls)._fromXMLElement(network, xmlElement)
         neuriteId = xmlElement.get('neuriteId')
-        object.neurite = network.objectWithId(neuriteId)
-        if object.neurite is None:
+        innervation.neurite = network.objectWithId(neuriteId)
+        if innervation.neurite is None:
             raise ValueError, gettext('Neurite with id "%s" does not exist') % (neuriteId)
-        object.neurite._innervations.append(object)
+        innervation.neurite._innervations.append(innervation)
         muscleId = xmlElement.get('muscleId')
-        object.muscle = network.objectWithId(muscleId)
-        if object.muscle is None:
+        innervation.muscle = network.objectWithId(muscleId)
+        if innervation.muscle is None:
             raise ValueError, gettext('Muscle with id "%s" does not exist') % (muscleId)
-        object.muscle._innervations.append(object)
-        return object
+        innervation.muscle._innervations.append(innervation)
+        return innervation
     
     
     def _toXMLElement(self, parentElement):
-        innervationElement = Object._toXMLElement(self, parentElement)
+        innervationElement = NeuroObject._toXMLElement(self, parentElement)
         innervationElement.set('neuriteId', str(self.neurite.networkId))
         innervationElement.set('muscleId', str(self.muscle.networkId))
         return innervationElement
@@ -55,19 +56,29 @@ class Innervation(Object):
     
     
     def _creationScriptParams(self, scriptRefs):
-        args, keywords = Object._creationScriptParams(self, scriptRefs)
+        args, keywords = NeuroObject._creationScriptParams(self, scriptRefs)
         args.insert(0, scriptRefs[self.muscle.networkId])
         return (args, keywords)
     
     
     def connections(self, recurse = True):
-        return Object.connections(self, recurse) + [self.neurite, self.muscle]
+        return NeuroObject.connections(self, recurse) + [self.neurite, self.muscle]
     
     
     def inputs(self, recurse = True):
-        return Object.inputs(self, recurse) + [self.neurite]
+        return NeuroObject.inputs(self, recurse) + [self.neurite]
     
     
     def outputs(self, recurse = True):
-        return Object.outputs(self, recurse) + [self.muscle]
+        return NeuroObject.outputs(self, recurse) + [self.muscle]
+    
+    
+    def defaultVisualizationParams(self):
+        params = NeuroObject.defaultVisualizationParams(self)
+        shapeClasses = Neuroptikon.scriptLocals()['shapes']
+        params['shape'] = shapeClasses['Line']
+        params['color'] = (0.55, 0.35, 0.25)
+        params['pathEndPoints'] = (self.neurite.neuron(), self.muscle)
+        params['flowTo'] = True
+        return params
     

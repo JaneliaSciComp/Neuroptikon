@@ -16,11 +16,8 @@ from Network.Pathway import Pathway # pylint: disable-msg=E0611,F0401
 from Network.Neuron import Neuron
 from Network.Neurite import Neurite # pylint: disable-msg=E0611,F0401
 from Network.Arborization import Arborization
-from Network.Synapse import Synapse
-from Network.GapJunction import GapJunction
 from Network.Stimulus import Stimulus
 from Network.Muscle import Muscle
-from Network.Innervation import Innervation
 from Network.ObjectList import ObjectList
 from Visible import Visible
 from Layout import Layout
@@ -843,79 +840,6 @@ class Display(wx.glcanvas.GLCanvas):
         self.Refresh()
     
     
-    def defaultVisualizationParams(self, networkObject):
-        # TODO: replace this whole block with display rules
-        neuralTissueColor = (0.9, 0.85, 0.75)
-        params = {}
-        
-        params['opacity'] = 1.0
-        params['weight'] = 1.0
-        params['label'] = None
-        params['texture'] = None
-        
-        shapes = Neuroptikon.scriptLocals()['shapes']
-        
-        if isinstance(networkObject, Region):
-            params['shape'] = shapes['Box']()
-            params['size'] = (0.1, 0.1, 0.01)
-            params['color'] = neuralTissueColor
-        elif isinstance(networkObject, Pathway):
-            params['shape'] = shapes['Line']()
-            params['weight'] = 5.0
-            params['color'] = (0.0, 0.0, 0.0)
-            params['pathEndPoints'] = (networkObject.region1, networkObject.region2)
-        elif isinstance(networkObject, Neuron):
-            params['shape'] = shapes['Ball']()
-            params['size'] = (.01, .01, .01)
-            params['sizeIsAbsolute'] = True
-            params['color'] = neuralTissueColor
-        elif isinstance(networkObject, Neurite):
-            params['shape'] = shapes['Line']()
-            params['color'] = neuralTissueColor
-        elif isinstance(networkObject, Muscle):
-            params['shape'] = shapes['Capsule']()
-            params['size'] = (.05, .1, .02)
-            params['color'] = (0.75, 0.5, 0.5)
-            try:
-                params['texture'] = Neuroptikon.library.texture('Stripes')
-            except:
-                pass
-            params['textureScale'] = 20.0
-            params['label'] = networkObject.abbreviation or networkObject.name
-        elif isinstance(networkObject, Arborization):
-            params['shape'] = shapes['Line']()
-            params['color'] = (0.0, 0.0, 0.0)
-            params['pathEndPoints'] = (networkObject.neurite.neuron(), networkObject.region)
-        elif isinstance(networkObject, Synapse):
-            params['shape'] = shapes['Line']()
-            params['color'] = (1.0, 0.0, 0.0) if networkObject.activation == 'inhibitory' else (0.0, 0.0, 1.0)
-            params['pathEndPoints'] = (networkObject.preSynapticNeurite.neuron(), networkObject.postSynapticNeurites[0].neuron())
-        elif isinstance(networkObject, GapJunction):
-            params['shape'] = shapes['Line']()
-            params['color'] = (.65, 0.75, 0.4)
-            params['pathEndPoints'] = tuple([neurite.neuron() for neurite in networkObject.neurites()])
-        elif isinstance(networkObject, Innervation):
-            params['shape'] = shapes['Line']()
-            params['color'] = (0.55, 0.35, 0.25)
-            params['pathEndPoints'] = (networkObject.neurite.neuron(), networkObject.muscle)
-        elif isinstance(networkObject, Stimulus):
-            params['shape'] = shapes['Cone']()
-            params['size'] = (.02, .02, .02) # so the label is in front (hacky...)
-            params['color'] = (0.5, 0.5, 0.5)
-            params['label'] = networkObject.abbreviation or networkObject.name
-            params['weight'] = 5.0
-            params['pathIsFixed'] = True
-        else:
-            params['shape'] = shapes['Box']()
-            params['size'] = (0.01, 0.01, 0.01)
-        
-#        if display and 'pathEndPoints' in params:
-#            visibles = [display.visiblesForObject(networkObject)[0] for networkObject in params['pathEndPoints']]
-#            params['pathEndPoints'] = tuple(visibles)
-        
-        return params
-    
-    
     def visualizeObject(self, networkObject, **keywordArgs):
         """
         Create a visual representation of the :class:`object <Network.Object.Object>`.
@@ -924,54 +848,22 @@ class Display(wx.glcanvas.GLCanvas):
         
         Returns the :class:`visible proxy <Display.Visible.Visible>` of the object.
         """
-        # TODO: replace this whole block with display rules
+        # TODO: replace this whole block with display rules.
         
         visible = Visible(self, networkObject)
         
+        # Create a dummy object if needed.
+        if networkObject is None:
+            networkObject = Object(self.network)
+        
         # Start with the default params for this object and override with any supplied params.
-        params = self.defaultVisualizationParams(networkObject)
+        params = networkObject.defaultVisualizationParams()
         for key, value in keywordArgs.iteritems():
             params[key] = value
             
-        parentObject = None
-        childObjects = []
-        pathStart = None
-        pathEnd = None
-        pathFlowsTo = False
-        pathFlowsFrom = False
-        
-        if isinstance(networkObject, Region):
-            parentObject = networkObject.parentRegion
-            childObjects.extend(networkObject.subRegions)
-            childObjects.extend(networkObject.neurons)
-        elif isinstance(networkObject, Pathway):
-            pathStart = networkObject.region1
-            pathEnd = networkObject.region2
-            pathFlowsTo = networkObject.region1Projects
-            pathFlowsFrom = networkObject.region2Projects
-        elif isinstance(networkObject, Neuron):
-            parentObject = networkObject.region
-            #TODO: dispatcher.connect(self._neuronRegionChanged, ('set', 'region'), networkObject)
-        elif isinstance(networkObject, Arborization):
-            pathStart = networkObject.neurite.neuron()
-            pathEnd = networkObject.region
-            pathFlowsTo = networkObject.sendsOutput
-            pathFlowsFrom = networkObject.receivesInput
+        if isinstance(networkObject, Arborization):
             dispatcher.connect(self._arborizationChangedFlow, ('set', 'sendsOutput'), networkObject)
             dispatcher.connect(self._arborizationChangedFlow, ('set', 'receivesInput'), networkObject)
-        elif isinstance(networkObject, Synapse):
-            pathStart = networkObject.preSynapticNeurite.neuron()
-            if len(networkObject.postSynapticNeurites) > 0:
-                pathEnd = networkObject.postSynapticNeurites[0].neuron()
-                pathFlowsTo = True
-        elif isinstance(networkObject, GapJunction):
-            pathStart, pathEnd = [neurite.neuron() for neurite in networkObject.neurites()]
-            pathFlowsTo = True
-            pathFlowsFrom = True
-        elif isinstance(networkObject, Innervation):
-            pathStart = networkObject.neurite.neuron()
-            pathEnd = networkObject.muscle
-            pathFlowsTo = True
         elif isinstance(networkObject, Stimulus):
             edgeVisible = visible
             nodeVisible = Visible(self, networkObject)
@@ -1018,16 +910,11 @@ class Display(wx.glcanvas.GLCanvas):
         if 'path' in params:
             params['pathMidPoints'] = params['path']
             del params['path']
-        if 'pathEndPoints' in params:
-            pathStart, pathEnd = params['pathEndPoints']
-        if 'flowTo' in params:
-            pathFlowsTo = params['flowTo']
-        if 'flowFrom' in params:
-            pathFlowsTo = params['flowFrom']
+        pathStart, pathEnd = params.get('pathEndPoints', (None, None))
+        pathFlowsTo = params.get('flowTo', None)
+        pathFlowsFrom = params.get('flowFrom', None)
         
-        if 'parent' in params:
-            parentObject = params['parent']
-        
+        parentObject = params.get('parent', None)
         parentVisibles = self.visiblesForObject(parentObject)
         self.addVisible(visible, parentVisibles[0] if len(parentVisibles) == 1 else None)
         
@@ -1062,6 +949,7 @@ class Display(wx.glcanvas.GLCanvas):
                     if self._showFlow:
                         visible.animateFlow()
             
+            childObjects = params.get('children', [])
             for childObject in childObjects:
                 subVisibles = self.visiblesForObject(childObject)
                 if len(subVisibles) == 1:

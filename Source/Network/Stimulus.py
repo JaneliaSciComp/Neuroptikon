@@ -1,7 +1,7 @@
 import Neuroptikon
-from Object import Object
+from neuro_object import NeuroObject
 
-class Stimulus(Object):
+class Stimulus(NeuroObject):
     
     def __init__(self, network, target = None, modality = None, *args, **keywords):
         """
@@ -18,7 +18,7 @@ class Stimulus(Object):
         if not keywords.has_key('name') or keywords['name'] is None:
             keywords['name'] = modality.name
             
-        Object.__init__(self, network, *args, **keywords)
+        NeuroObject.__init__(self, network, *args, **keywords)
         self.target = target
         self.modality = modality
     
@@ -29,21 +29,21 @@ class Stimulus(Object):
     
     @classmethod
     def _fromXMLElement(cls, network, xmlElement):
-        object = super(Stimulus, cls)._fromXMLElement(network, xmlElement)
+        stimulus = super(Stimulus, cls)._fromXMLElement(network, xmlElement)
         targetId = xmlElement.get('targetId')
-        object.target = network.objectWithId(targetId)
-        if object.target is None:
+        stimulus.target = network.objectWithId(targetId)
+        if stimulus.target is None:
             raise ValueError, gettext('Object with id "%s" does not exist') % (targetId)
-        object.target.stimuli.append(object)
+        stimulus.target.stimuli.append(stimulus)
         modalityId = xmlElement.get('modality')
-        object.modality = Neuroptikon.library.modality(modalityId)
-        if object.modality is None:
+        stimulus.modality = Neuroptikon.library.modality(modalityId)
+        if stimulus.modality is None:
             raise ValueError, gettext('Modality "%s" does not exist') % (modalityId)
-        return object
+        return stimulus
     
     
     def _toXMLElement(self, parentElement):
-        stimulusElement = Object._toXMLElement(self, parentElement)
+        stimulusElement = NeuroObject._toXMLElement(self, parentElement)
         stimulusElement.set('targetId', str(self.target.networkId))
         stimulusElement.set('modality', self.modality.identifier)
         return stimulusElement
@@ -54,7 +54,7 @@ class Stimulus(Object):
     
     
     def _creationScriptParams(self, scriptRefs):
-        args, keywords = Object._creationScriptParams(self, scriptRefs)
+        args, keywords = NeuroObject._creationScriptParams(self, scriptRefs)
         if self.modality is not None:
             keywords['modality'] = 'library.modality(\'' + self.modality.identifier.replace('\\', '\\\\').replace('\'', '\\\'') + '\')'
         return (args, keywords)
@@ -66,5 +66,17 @@ class Stimulus(Object):
     
     def outputs(self, recurse = True):
         return [self.target]
+    
+    
+    def defaultVisualizationParams(self):
+        params = NeuroObject.defaultVisualizationParams(self)
+        shapeClasses = Neuroptikon.scriptLocals()['shapes']
+        params['shape'] = shapeClasses['Cone']
+        params['size'] = (.02, .02, .02) # so the label is in front (hacky...)
+        params['color'] = (0.5, 0.5, 0.5)
+        params['label'] = self.abbreviation or self.name
+        params['weight'] = 5.0
+        params['pathIsFixed'] = True
+        return params
     
     

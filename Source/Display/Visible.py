@@ -522,7 +522,7 @@ class Visible(object):
         # opacity       path          node or path
         # texture       path          node or path
         
-        defaultParams = self.display.defaultVisualizationParams(self.client)
+        defaultParams = self.client.defaultVisualizationParams()
         params = {}
         
         if isinstance(self.client, Stimulus):
@@ -1370,8 +1370,8 @@ class Visible(object):
         
         ancestors = []
         if self.parent is not None:
-            ancestors.append(self.parent)
-            ancestors.extend(self.parent.ancestors())
+            ancestors += [self.parent]
+            ancestors += self.parent.ancestors()
         return ancestors
     
     

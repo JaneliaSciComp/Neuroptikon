@@ -1,7 +1,7 @@
-from Object import Object
-import xml.etree.ElementTree as ElementTree
+import Neuroptikon
+from neuro_object import NeuroObject
 
-class GapJunction(Object):
+class GapJunction(NeuroObject):
     
     # TODO: gap junctions can be directional?
     
@@ -14,7 +14,7 @@ class GapJunction(Object):
         >>> neuron1.gapJunctionWith(neuron2)
         """
         
-        Object.__init__(self, network, *args, **keywords)
+        NeuroObject.__init__(self, network, *args, **keywords)
         self._neurites = set([neurite1, neurite2])
     
     
@@ -27,7 +27,7 @@ class GapJunction(Object):
     
     @classmethod
     def _fromXMLElement(cls, network, xmlElement):
-        object = super(GapJunction, cls)._fromXMLElement(network, xmlElement)
+        gapJunction = super(GapJunction, cls)._fromXMLElement(network, xmlElement)
         neurite1Id = xmlElement.get('neurite1Id')
         neurite1 = network.objectWithId(neurite1Id)
         neurite2Id = xmlElement.get('neurite2Id')
@@ -37,14 +37,14 @@ class GapJunction(Object):
         elif neurite2 is None:
             raise ValueError, gettext('Neurite with id "%s" does not exist') % (neurite2Id)
         else:
-            object._neurites = set([neurite1, neurite2])
-            neurite1._gapJunctions.append(object)
-            neurite2._gapJunctions.append(object)
-            return object
+            gapJunction._neurites = set([neurite1, neurite2])
+            neurite1._gapJunctions.append(gapJunction)
+            neurite2._gapJunctions.append(gapJunction)
+            return gapJunction
     
     
     def _toXMLElement(self, parentElement):
-        gapJunctionElement = Object._toXMLElement(self, parentElement)
+        gapJunctionElement = NeuroObject._toXMLElement(self, parentElement)
         neurites = list(self._neurites)
         gapJunctionElement.set('neurite1Id', str(neurites[0].networkId))
         gapJunctionElement.set('neurite2Id', str(neurites[1].networkId))
@@ -52,15 +52,15 @@ class GapJunction(Object):
     
     
     def _creationScriptCommand(self, scriptRefs):
-        neurite1, neurite2 = list(self._neurites)
+        neurite1 = list(self._neurites)[0]
         if neurite1.networkId not in scriptRefs:
             neurite1 = neurite1.root
         return scriptRefs[neurite1.networkId] + '.gapJunctionWith'
     
     
     def _creationScriptParams(self, scriptRefs):
-        args, keywords = Object._creationScriptParams(self, scriptRefs)
-        neurite1, neurite2 = list(self._neurites)
+        args, keywords = NeuroObject._creationScriptParams(self, scriptRefs)
+        neurite2 = list(self._neurites)[1]
         if neurite2.networkId not in scriptRefs:
             neurite2 = neurite2.root
         args.insert(0, scriptRefs[neurite2.networkId])
@@ -81,13 +81,24 @@ class GapJunction(Object):
     
     
     def connections(self, recurse = True):
-        return Object.connections(self, recurse) + list(self._neurites)    
+        return NeuroObject.connections(self, recurse) + list(self._neurites)    
     
     
     def inputs(self, recurse = True):
-        return Object.inputs(self, recurse) + list(self._neurites)    
+        return NeuroObject.inputs(self, recurse) + list(self._neurites)    
     
     
     def outputs(self, recurse = True):
-        return Object.outputs(self, recurse) + list(self._neurites)
+        return NeuroObject.outputs(self, recurse) + list(self._neurites)
+    
+    
+    def defaultVisualizationParams(self):
+        params = NeuroObject.defaultVisualizationParams(self)
+        shapeClasses = Neuroptikon.scriptLocals()['shapes']
+        params['shape'] = shapeClasses['Line']
+        params['color'] = (.65, 0.75, 0.4)
+        params['pathEndPoints'] = tuple([neurite.neuron() for neurite in self.neurites()])
+        params['flowTo'] = True
+        params['flowFrom'] = True
+        return params
     

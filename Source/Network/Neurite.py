@@ -1,4 +1,5 @@
-from Object import Object
+import Neuroptikon
+from neuro_object import NeuroObject
 from Region import Region
 from Arborization import Arborization
 from Synapse import Synapse
@@ -9,7 +10,7 @@ from Pathway import Pathway
 from Stimulus import Stimulus
 
 
-class Neurite(Object):
+class Neurite(NeuroObject):
     
     def __init__(self, network, root, pathway = None, *args, **keywords):
         """
@@ -21,7 +22,7 @@ class Neurite(Object):
         >>> neurite2 = neurite1.extendNeurite(...)
         """
         
-        Object.__init__(self, network, *args, **keywords)
+        NeuroObject.__init__(self, network, *args, **keywords)
         self.root = root
         self._neurites = []
         self.arborization = None
@@ -88,7 +89,7 @@ class Neurite(Object):
     
     
     def _toXMLElement(self, parentElement):
-        neuriteElement = Object._toXMLElement(self, parentElement)
+        neuriteElement = NeuroObject._toXMLElement(self, parentElement)
         if self._pathway is not None:
             neuriteElement.set('pathwayId', str(self._pathway.networkId))
         for neurite in self._neurites:
@@ -104,11 +105,11 @@ class Neurite(Object):
             if isinstance(connections[0], (Arborization, Innervation, GapJunction, Synapse)):
                 return False
         
-        return Object._includeInScript(self)
+        return NeuroObject._includeInScript(self)
     
     
     def _needsScriptRef(self):
-        return self._pathway is not None or isinstance(self.root, Neurite) or len(self.connections()) > 1 or any(self._neurites) or Object._needsScriptRef(self)
+        return self._pathway is not None or isinstance(self.root, Neurite) or len(self.connections()) > 1 or any(self._neurites) or NeuroObject._needsScriptRef(self)
     
     
     def _createScriptRef(self, scriptRefs):
@@ -127,14 +128,14 @@ class Neurite(Object):
     
     
     def _creationScriptParams(self, scriptRefs):
-        args, keywords = Object._creationScriptParams(self, scriptRefs)
+        args, keywords = NeuroObject._creationScriptParams(self, scriptRefs)
         if self._pathway is not None:
             keywords['pathway'] = scriptRefs[self._pathway.networkId]
         return (args, keywords)
     
     
     def _creationScriptChildren(self):
-        children = Object._creationScriptChildren(self)
+        children = NeuroObject._creationScriptChildren(self)
         children += self._neurites
         return children
     
@@ -382,7 +383,7 @@ class Neurite(Object):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        connections = Object.connections(self, recurse)
+        connections = NeuroObject.connections(self, recurse)
         connections += self.arborizations(recurse)
         connections += self.gapJunctions(recurse)
         connections += self.innervations(recurse)
@@ -397,7 +398,7 @@ class Neurite(Object):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        inputs = Object.inputs(self, recurse)
+        inputs = NeuroObject.inputs(self, recurse)
         if self.arborization is not None and self.arborization.receivesInput:
             inputs += [self.arborization]
         inputs += self._gapJunctions
@@ -415,7 +416,7 @@ class Neurite(Object):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        outputs = Object.outputs(self, recurse)
+        outputs = NeuroObject.outputs(self, recurse)
         if self.arborization is not None and self.arborization.sendsOutput:
             outputs += [self.arborization]
         outputs += self._gapJunctions
@@ -425,3 +426,10 @@ class Neurite(Object):
             for neurite in self._neurites:
                 outputs += neurite.outputs()
         return outputs
+    
+    
+    def defaultVisualizationParams(self):
+        params = NeuroObject.defaultVisualizationParams(self)
+        shapeClasses = Neuroptikon.scriptLocals()['shapes']
+        params['shape'] = shapeClasses['Line']
+        return params

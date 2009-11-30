@@ -1,8 +1,8 @@
-from Object import Object
-import xml.etree.ElementTree as ElementTree
+import Neuroptikon
+from neuro_object import NeuroObject
 
 
-class Arborization(Object):
+class Arborization(NeuroObject):
     
     def __init__(self, neurite, region, sendsOutput=None, receivesInput=None, *args, **keywords):
         """
@@ -15,7 +15,7 @@ class Arborization(Object):
         >>> arborization_1_1 = neuron1.arborize(region1)
         """
         
-        Object.__init__(self, neurite.network, *args, **keywords)
+        NeuroObject.__init__(self, neurite.network, *args, **keywords)
         self.neurite = neurite
         self.region = region
         self.sendsOutput = sendsOutput      # does the neurite send output to the arbor?      None = unknown
@@ -28,36 +28,36 @@ class Arborization(Object):
     
     @classmethod
     def _fromXMLElement(cls, network, xmlElement):
-        object = super(Arborization, cls)._fromXMLElement(network, xmlElement)
+        arborization = super(Arborization, cls)._fromXMLElement(network, xmlElement)
         neuriteId = xmlElement.get('neuriteId')
-        object.neurite = network.objectWithId(neuriteId)
-        if object.neurite is None:
+        arborization.neurite = network.objectWithId(neuriteId)
+        if arborization.neurite is None:
             raise ValueError, gettext('Neurite with id "%s" does not exist') % (neuriteId)
-        object.neurite.arborization = object
+        arborization.neurite.arborization = arborization
         regionId = xmlElement.get('regionId')
-        object.region = network.objectWithId(regionId)
-        if object.region is None:
+        arborization.region = network.objectWithId(regionId)
+        if arborization.region is None:
             raise ValueError, gettext('Region with id "%s" does not exist') % (regionId)
-        object.region.arborizations.append(object)
+        arborization.region.arborizations.append(arborization)
         sends = xmlElement.get('sends')
         if sends == 'true':
-            object.sendsOutput = True
+            arborization.sendsOutput = True
         elif sends == 'false':
-            object.sendsOutput = False
+            arborization.sendsOutput = False
         else:
-            object.sendsOutput = None
+            arborization.sendsOutput = None
         receives = xmlElement.get('receives')
         if receives == 'true':
-            object.receivesInput = True
+            arborization.receivesInput = True
         elif receives == 'false':
-            object.receivesInput = False
+            arborization.receivesInput = False
         else:
-            object.receivesInput = None
-        return object
+            arborization.receivesInput = None
+        return arborization
     
     
     def _toXMLElement(self, parentElement):
-        arborizationElement = Object._toXMLElement(self, parentElement)
+        arborizationElement = NeuroObject._toXMLElement(self, parentElement)
         arborizationElement.set('neuriteId', str(self.neurite.networkId))
         arborizationElement.set('regionId', str(self.region.networkId))
         if self.sendsOutput is not None:
@@ -76,7 +76,7 @@ class Arborization(Object):
     
     
     def _creationScriptParams(self, scriptRefs):
-        args, keywords = Object._creationScriptParams(self, scriptRefs)
+        args, keywords = NeuroObject._creationScriptParams(self, scriptRefs)
         args.insert(0, scriptRefs[self.region.networkId])
         if self.sendsOutput is not None:
             keywords['sendsOutput'] = str(self.sendsOutput)
@@ -86,11 +86,11 @@ class Arborization(Object):
     
     
     def connections(self, recurse = True):
-        return Object.connections(self, recurse) + [self.neurite, self.region]
+        return NeuroObject.connections(self, recurse) + [self.neurite, self.region]
     
     
     def inputs(self, recurse = True):
-        inputs = Object.inputs(self, recurse)
+        inputs = NeuroObject.inputs(self, recurse)
         if self.sendsOutput:
             inputs += [self.neurite]
         if self.receivesInput:
@@ -99,10 +99,21 @@ class Arborization(Object):
     
     
     def outputs(self, recurse = True):
-        outputs = Object.outputs(self, recurse)
+        outputs = NeuroObject.outputs(self, recurse)
         if self.sendsOutput:
             outputs += [self.region]
         if self.receivesInput:
             outputs += [self.neurite]
         return outputs
+    
+    
+    def defaultVisualizationParams(self):
+        params = NeuroObject.defaultVisualizationParams(self)
+        shapeClasses = Neuroptikon.scriptLocals()['shapes']
+        params['shape'] = shapeClasses['Line']
+        params['color'] = (0.0, 0.0, 0.0)
+        params['pathEndPoints'] = (self.neurite.neuron(), self.region)
+        params['flowTo'] = self.sendsOutput
+        params['flowFrom'] = self.receivesInput
+        return params
     
