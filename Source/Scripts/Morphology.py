@@ -66,7 +66,7 @@ execfile('Show Neurites.py')
 
 # Layout the examples (using graphviz if it's available).
 try:
-    display.performLayout(layouts['GraphvizLayout'])
+    display.performLayout(layouts['Graphviz'])
 except:
     display.performLayout() # fall back to the default
     

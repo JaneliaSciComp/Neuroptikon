@@ -188,7 +188,7 @@ class NeuroptikonApp(wx.App):
     def scriptLocals(self):
         layoutClasses = {}
         for layoutClass in Display.layoutClasses().itervalues():
-            layoutClasses[layoutClass.__name__] = layoutClass
+            layoutClasses[layoutClass.name()] = layoutClass
         shapeClasses = {}
         for shapeClass in Display.shapeClasses().itervalues():
             shapeClasses[shapeClass.__name__] = shapeClass

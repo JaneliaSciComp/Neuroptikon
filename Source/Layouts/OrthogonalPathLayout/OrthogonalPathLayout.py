@@ -162,7 +162,7 @@ class OrthogonalPathLayout(Layout):
     
     @classmethod
     def name(cls):
-        return gettext('Orthogonal Path')
+        return gettext('Path Routing')
     
     
     @classmethod

@@ -2118,7 +2118,7 @@ class Display(wx.glcanvas.GLCanvas):
     def performLayout(self, layout = None):
         """ Perform an automatic layout of the :class:`network objects <Network.Object.Object>` in the visualization.
         
-        >>> display.performLayout(layouts['ForceDirectedLayout'])
+        >>> display.performLayout(layouts['Force Directed'])
         
         The layout parameter should be one of the classes in layouts, an instance of one of the classes or None to re-execute the previous or default layout.
         """
@@ -2138,11 +2138,19 @@ class Display(wx.glcanvas.GLCanvas):
                 raise ValueError, gettext('The supplied layout cannot be used.')
         
         if layout == None or not layout.__class__.canLayoutDisplay(self):   # pylint: disable-msg=E1103
-            # Pick the first layout class capable of laying out the display.
-            for layoutClass in sys.modules['Display'].layoutClasses().itervalues():
-                if layoutClass.canLayoutDisplay(self):
-                    layout = layoutClass()
-                    break
+            layouts = Neuroptikon.scriptLocals()['layouts']
+            if 'Graphviz' in layouts:
+                layout = layouts['Graphviz']()
+            elif 'Force Directed' in layouts:
+                layout = layouts['Force Directed']()
+            elif 'Spectral' in layouts:
+                layout = layouts['Spectral']()
+            else:
+                # Pick the first layout class capable of laying out the display.
+                for layoutClass in layouts.itervalues():
+                    if layoutClass.canLayoutDisplay(self):
+                        layout = layoutClass()
+                        break
         
         self._suppressRefresh = True
         layout.layoutDisplay(self)
