@@ -40,7 +40,7 @@ class OntologyTerm(object):
                 # TODO: grab other synonyms?
             
             if self.oboStanza.definition is not None and self.oboStanza.definition.value == 'Obsolete.':
-               self.obsolete = True
+                self.obsolete = True
     
     
     
