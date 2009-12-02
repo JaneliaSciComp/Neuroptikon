@@ -151,6 +151,8 @@ class Visible(object):
         visible = Visible(display, client)
         visible.displayId = int(xmlElement.get('id'))
         visible._shapeGeode.setName(str(visible.displayId))
+        if visible._textGeode:
+            visible._textGeode.setName(str(visible.displayId))
         
         trueStrings = ['true', 't', 'T', 'yes', 'y', 'Y']
         falseStrings = ['false', 'f', 'F', 'no', 'n', 'N']
