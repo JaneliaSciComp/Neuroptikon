@@ -86,81 +86,82 @@ class AppearanceInspector(Inspector):
         self.visibles = ObjectList()
     
     
-    def refreshGUI(self, signal = ('set', None), **arguments):
-        updatedAttribute = signal[1]
-        
-        if updatedAttribute is None or updatedAttribute == 'color':
-            if self.visibles.haveEqualAttr('color'):
-                red, green, blue = self.visibles[0].color()
-                self._colorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, 255))
-                self._colorPicker.SetLabel(gettext(''))
-            else:
-                self._colorPicker.SetColour(wx.NamedColour('GRAY'))  # TODO: be clever and pick the average color?
-                self._colorPicker.SetLabel(gettext('Multiple values'))
-        
-        if updatedAttribute is None or updatedAttribute == 'opacity':
-            if self.visibles.haveEqualAttr('opacity'):
-                self._opacitySlider.SetLabel('')
-                self._opacitySlider.SetValue(self.visibles[0].opacity() * 100.0)
-            else:
-                self._opacitySlider.SetLabel(gettext('Multiple values'))
-                self._opacitySlider.SetValue(100)
-        
-        if updatedAttribute is None or updatedAttribute == 'shape':
-            shapeClass = type(self.visibles[0].shape())
-            equalClasses = True
-            for visible in self.visibles[1:]:
-                if type(visible) != shapeClass:
-                    equalClasses = False
-            if equalClasses:
-                for index in range(0, self._shapeChoice.GetCount()):
-                    if self._shapeChoice.GetClientData(index) == shapeClass:
-                        self._shapeChoice.SetSelection(index)
-                        break
-            else:
-                if self._multipleShapesId == wx.NOT_FOUND:
-                    self._multipleShapesId = self._shapeChoice.Append(gettext('Multiple values'), None)
-                self._shapeChoice.SetSelection(self._multipleShapesId)
-        
-        if updatedAttribute is None or updatedAttribute == 'texture':
-            if self.visibles.haveEqualAttr('texture'):
-                for index in range(0, self._textureChoice.GetCount()):
-                    if self._textureChoice.GetClientData(index) == self.visibles[0].texture():
-                        self._textureChoice.SetSelection(index)
-                        break
-            else:
-                if self._multipleTexturesId == wx.NOT_FOUND:
-                    self._multipleTexturesId = self._textureChoice.Append(gettext('Multiple values'), None)
-                self._textureChoice.SetSelection(self._multipleTexturesId)
-        
-        if updatedAttribute is None or updatedAttribute == 'weight':
-            if self.visibles.haveEqualAttr('weight'):
-                self._weightSlider.SetLabel('')
-                if self.visibles[0].weight() >= 1.0:
-                    self._weightSlider.SetValue((self.visibles[0].weight() - 1.0) * 50.0 / 9.0 + 50.0)
+    def refreshGUI(self, signal = ('set', None)):
+        if any(self.visibles):
+            updatedAttribute = signal[1]
+            
+            if updatedAttribute is None or updatedAttribute == 'color':
+                if self.visibles.haveEqualAttr('color'):
+                    red, green, blue = self.visibles[0].color()
+                    self._colorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, 255))
+                    self._colorPicker.SetLabel(gettext(''))
                 else:
-                    self._weightSlider.SetValue(50.0 - (1.0 - self.visibles[0].weight()) * 10.0 * 50.0 / 9.0)
-            else:
-                self._weightSlider.SetLabel(gettext('Multiple values'))
-                self._weightSlider.SetValue(50)
-        
-        self._window.Layout()
+                    self._colorPicker.SetColour(wx.NamedColour('GRAY'))  # TODO: be clever and pick the average color?
+                    self._colorPicker.SetLabel(gettext('Multiple values'))
+            
+            if updatedAttribute is None or updatedAttribute == 'opacity':
+                if self.visibles.haveEqualAttr('opacity'):
+                    self._opacitySlider.SetLabel('')
+                    self._opacitySlider.SetValue(self.visibles[0].opacity() * 100.0)
+                else:
+                    self._opacitySlider.SetLabel(gettext('Multiple values'))
+                    self._opacitySlider.SetValue(100)
+            
+            if updatedAttribute is None or updatedAttribute == 'shape':
+                shapeClass = type(self.visibles[0].shape())
+                equalClasses = True
+                for visible in self.visibles[1:]:
+                    if type(visible) != shapeClass:
+                        equalClasses = False
+                if equalClasses:
+                    for index in range(0, self._shapeChoice.GetCount()):
+                        if self._shapeChoice.GetClientData(index) == shapeClass:
+                            self._shapeChoice.SetSelection(index)
+                            break
+                else:
+                    if self._multipleShapesId == wx.NOT_FOUND:
+                        self._multipleShapesId = self._shapeChoice.Append(gettext('Multiple values'), None)
+                    self._shapeChoice.SetSelection(self._multipleShapesId)
+            
+            if updatedAttribute is None or updatedAttribute == 'texture':
+                if self.visibles.haveEqualAttr('texture'):
+                    for index in range(0, self._textureChoice.GetCount()):
+                        if self._textureChoice.GetClientData(index) == self.visibles[0].texture():
+                            self._textureChoice.SetSelection(index)
+                            break
+                else:
+                    if self._multipleTexturesId == wx.NOT_FOUND:
+                        self._multipleTexturesId = self._textureChoice.Append(gettext('Multiple values'), None)
+                    self._textureChoice.SetSelection(self._multipleTexturesId)
+            
+            if updatedAttribute is None or updatedAttribute == 'weight':
+                if self.visibles.haveEqualAttr('weight'):
+                    self._weightSlider.SetLabel('')
+                    if self.visibles[0].weight() >= 1.0:
+                        self._weightSlider.SetValue((self.visibles[0].weight() - 1.0) * 50.0 / 9.0 + 50.0)
+                    else:
+                        self._weightSlider.SetValue(50.0 - (1.0 - self.visibles[0].weight()) * 10.0 * 50.0 / 9.0)
+                else:
+                    self._weightSlider.SetLabel(gettext('Multiple values'))
+                    self._weightSlider.SetValue(50)
+            
+            self._window.Layout()
     
     
-    def onSetColor(self, event):
+    def onSetColor(self, event_):
         wxColor = self._colorPicker.GetColour()
         colorTuple = (wxColor.Red() / 255.0, wxColor.Green() / 255.0, wxColor.Blue() / 255.0)
         for visible in self.visibles:
             visible.setColor(colorTuple)
         
     
-    def onSetOpacity(self, event):
+    def onSetOpacity(self, event_):
         newOpacity = self._opacitySlider.GetValue() / 100.0
         for visible in self.visibles:
             visible.setOpacity(newOpacity)
         
     
-    def onSetShape(self, event):
+    def onSetShape(self, event_):
         shapeClass = self._shapeChoice.GetClientData(self._shapeChoice.GetSelection())
         for visible in self.visibles:
             visible.setShape(None if shapeClass is None else shapeClass())
@@ -170,7 +171,7 @@ class AppearanceInspector(Inspector):
             self._multipleShapesId = wx.NOT_FOUND
         
     
-    def onSetTexture(self, event):
+    def onSetTexture(self, event_):
         texture = self._textureChoice.GetClientData(self._textureChoice.GetSelection())
         for visible in self.visibles:
             visible.setTexture(texture)
@@ -181,7 +182,7 @@ class AppearanceInspector(Inspector):
             self._multipleTexturesId = wx.NOT_FOUND
         
     
-    def onSetWeight(self, event):
+    def onSetWeight(self, event_):
         newWeight = self._weightSlider.GetValue()
         if newWeight >= 50:
             newWeight = 1.0 + (newWeight - 50.0) / (50.0 / 9.0)
