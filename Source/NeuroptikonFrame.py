@@ -47,15 +47,9 @@ class NeuroptikonFrame( wx.Frame ):
         self.SetAutoLayout(True)
         self.SetSizer(sizer)
         
-        self.SetMenuBar(self.menuBar())
-        self.displayChangedMenuState()
-        dispatcher.connect(self.displayChangedMenuState, ('set', 'useMouseOverSelecting'), self.display)
-        dispatcher.connect(self.displayChangedMenuState, ('set', 'showRegionNames'), self.display)
-        dispatcher.connect(self.displayChangedMenuState, ('set', 'showNeuronNames'), self.display)
-        dispatcher.connect(self.displayChangedMenuState, ('set', 'useGhosts'), self.display)
-        dispatcher.connect(self.displayChangedMenuState, ('set', 'labelsFloatOnTop'), self.display)
-        
         self.finder = None
+        
+        self.SetMenuBar(self.menuBar())
         
         toolbar = wx.ToolBar(self)
         self._view2DId = wx.NewId()
@@ -67,8 +61,15 @@ class NeuroptikonFrame( wx.Frame ):
         toolbar.Realize()
         self.SetToolBar(toolbar)
         
-        dispatcher.connect(self.viewDimensionsDidChange, ('set', 'viewDimensions'), self.display)
-        self.viewDimensionsDidChange()
+        # Watch for changes in the display that would cause menu or toolbar state to change.
+        self.displayChangedMenuState()
+        dispatcher.connect(self.displayChangedMenuState, ('set', 'useMouseOverSelecting'), self.display)
+        dispatcher.connect(self.displayChangedMenuState, ('set', 'showRegionNames'), self.display)
+        dispatcher.connect(self.displayChangedMenuState, ('set', 'showNeuronNames'), self.display)
+        dispatcher.connect(self.displayChangedMenuState, ('set', 'useGhosts'), self.display)
+        dispatcher.connect(self.displayChangedMenuState, ('set', 'labelsFloatOnTop'), self.display)
+        dispatcher.connect(self.displayChangedMenuState, ('set', 'selection'), self.display)
+        dispatcher.connect(self.displayChangedMenuState, ('set', 'viewDimensions'), self.display)
         
         if platform.system() == 'Darwin':
             # Have new windows cascade so they don't sit right on top of each other.
@@ -187,7 +188,16 @@ class NeuroptikonFrame( wx.Frame ):
             self.Bind(wx.EVT_UPDATE_UI, self.onUpdateLayoutUI, menuItem)
         self.Bind(wx.EVT_MENU, self.display.onLayout, viewMenu.Append(wx.NewId(), gettext('Repeat Last Layout\tCtrl-L')))
         viewMenu.AppendSeparator()
-        self.Bind(wx.EVT_MENU, self.display.onCenterView, viewMenu.Append(wx.NewId(), gettext('Center View'), gettext('Center the display on all objects')))
+        self.resetViewMenuItem = viewMenu.Append(wx.NewId(), gettext('Reset View'), gettext('Return to the default view'))
+        self.Bind(wx.EVT_MENU, self.onResetView, self.resetViewMenuItem)
+        self.zoomToFitMenuItem = viewMenu.Append(wx.NewId(), gettext('Zoom to Fit\tCtrl-0'), gettext('Fit all objects within the display'))
+        self.Bind(wx.EVT_MENU, self.onZoomToFit, self.zoomToFitMenuItem)
+        self.zoomToSelectionMenuItem = viewMenu.Append(wx.NewId(), gettext('Zoom to Selection\tCtrl-\\'), gettext('Fit all selected objects within the display'))
+        self.Bind(wx.EVT_MENU, self.onZoomToSelection, self.zoomToSelectionMenuItem)
+        self.zoomInMenuItem = viewMenu.Append(wx.NewId(), gettext('Zoom In\tCtrl-+'), gettext('Make objects appear larger'))
+        self.Bind(wx.EVT_MENU, self.onZoomIn, self.zoomInMenuItem)
+        self.zoomOutMenuItem = viewMenu.Append(wx.NewId(), gettext('Zoom Out\tCtrl--'), gettext('Make objects appear smaller'))
+        self.Bind(wx.EVT_MENU, self.onZoomOut, self.zoomOutMenuItem)
         viewMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, self.display.onSaveView, viewMenu.Append(wx.NewId(), gettext('Save View as...'), gettext('Save the current view to a file')))
         menuBar.Insert(menuBar.GetMenuCount() - 1, viewMenu, gettext('&View'))
@@ -203,9 +213,9 @@ class NeuroptikonFrame( wx.Frame ):
         self.showNeuronNamesMenuItem.Check(self.display.showNeuronNames())
         self.labelsFloatOnTopMenuItem.Check(self.display.labelsFloatOnTop())
         self.useGhostsMenuItem.Check(self.display.useGhosts())
-    
-    
-    def viewDimensionsDidChange(self):
+        self.resetViewMenuItem.Enable(self.display.viewDimensions == 3)
+        self.zoomToFitMenuItem.Enable(self.display.viewDimensions == 2)
+        self.zoomToSelectionMenuItem.Enable(self.display.viewDimensions == 2 and any(self.display.selection()))
         self.GetToolBar().ToggleTool(self._view2DId, self.display.viewDimensions == 2)
         self.GetToolBar().ToggleTool(self._view3DId, self.display.viewDimensions == 3)
     
@@ -335,6 +345,26 @@ class NeuroptikonFrame( wx.Frame ):
         menuItem = self.GetMenuBar().FindItemById(event.GetId())
         layoutClass = Display.layoutClasses()[event.GetId()]
         menuItem.Enable(layoutClass.canLayoutDisplay(self.display))
+    
+    
+    def onResetView(self, event_):
+        self.display.resetView()
+    
+    
+    def onZoomToFit(self, event_):
+        self.display.zoomToFit()
+    
+    
+    def onZoomToSelection(self, event_):
+        self.display.zoomToSelection()
+    
+    
+    def onZoomIn(self, event_):
+        self.display.zoomIn()
+    
+    
+    def onZoomOut(self, event_):
+        self.display.zoomOut()
     
     
     def onCloseWindow(self, event):
@@ -478,7 +508,7 @@ class NeuroptikonFrame( wx.Frame ):
                 for display in network.displays:
                     display.GetTopLevelParent()._toScriptFile(scriptFile, scriptRefs)
             else:
-                scriptFile.write('\n# Reveal the default visualization\ndisplay.centerView()\n')
+                scriptFile.write('\n# Reveal the default visualization\ndisplay.zoomToFit()\n')
         except:
             raise    # TODO: inform the user nicely
         finally:

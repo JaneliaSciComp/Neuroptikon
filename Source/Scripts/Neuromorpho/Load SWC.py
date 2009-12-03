@@ -46,7 +46,7 @@ for line in swcFile:
 swcFile.close()
 
 display.setViewDimensions(3)
-display.centerView()
+display.resetView()
 
 # Make the flow look better than the defaults.
 sizes = display.visiblesSize

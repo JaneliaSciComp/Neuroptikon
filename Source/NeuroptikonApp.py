@@ -297,7 +297,7 @@ class NeuroptikonApp(wx.App):
                 
                 # Create a default display if none were specified in the file.
                 if len(network.displays) == 0:
-                    self.displayNetwork(network).centerView()
+                    self.displayNetwork(network).zoomToFit()
             except:
                 raise
     

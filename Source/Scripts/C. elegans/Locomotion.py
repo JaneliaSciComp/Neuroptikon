@@ -99,4 +99,4 @@ for neuron in neurons:
             muscles += [muscle]
         display.visualizeObject(innervation, weight = 0.5, opacity = 0.75)
     
-display.centerView()
+display.zoomToFit()

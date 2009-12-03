@@ -155,4 +155,4 @@ for innervation in display.network.innervations():
         display.visualizeObject(innervation)
     display.setVisibleWeight(innervation, 0.5 if innervation.getAttribute('Count').value() < 5.0 else 2.0)
 
-display.centerView()
+display.zoomToFit()

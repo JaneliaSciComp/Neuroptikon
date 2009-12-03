@@ -465,4 +465,4 @@ for pathway in network.pathways():
     display.setVisibleColor(pathway, (1.0, 1.0, 1.0))
     display.setVisibleWeight(pathway, 1.0)
 
-display.centerView()
+display.zoomToFit()

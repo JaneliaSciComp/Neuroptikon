@@ -4,7 +4,7 @@ import Neuroptikon
 import wx.glcanvas
 from pydispatch import dispatcher
 import osg, osgDB, osgGA, osgManipulator, osgViewer
-from math import pi
+from math import log, pi
 import os.path, platform, sys, cPickle
 import xml.etree.ElementTree as ElementTree
 
@@ -52,8 +52,8 @@ class Display(wx.glcanvas.GLCanvas):
         self.visibles = {}
         self._visibleIds = {}
         self.selectedVisibles = set()
-        self.highlightedVisibles = []
-        self.animatedVisibles = []
+        self.highlightedVisibles = set()
+        self.animatedVisibles = set()
         self.selectConnectedVisibles = True
         self._showRegionNames = True
         self._showNeuronNames = False
@@ -282,7 +282,10 @@ class Display(wx.glcanvas.GLCanvas):
         self._suppressRefresh = False
         
         self._recomputeBounds = True
-        self.centerView()
+        if self.viewDimensions == 2:
+            self.zoomToFit()
+        else:
+            self.resetView()
         self.Refresh()
     
     
@@ -379,7 +382,10 @@ class Display(wx.glcanvas.GLCanvas):
         for visibleId in visibleIds:
             scriptFile.write(displayRef + '._selectVisibles([' + displayRef + '.visibleWithId(' + visibleId + ')], extend = True)')
         
-        scriptFile.write('\n' + displayRef + '.centerView()\n')
+        if self.viewDimensions == 2:
+            scriptFile.write('\n' + displayRef + '.zoomToFit()\n')
+        else:
+            scriptFile.write('\n' + displayRef + '.resetView()\n')
     
     
     def _generateUniqueId(self):
@@ -402,22 +408,21 @@ class Display(wx.glcanvas.GLCanvas):
             
             self._clearDragger()
             
-            if self.viewDimensions == 3:
-                self.SetScrollbar(wx.HORIZONTAL, 0, width, width, True)
-                self.SetScrollbar(wx.VERTICAL, 0, height, height, True)
-                width, height = self.GetClientSize()
-                self.graphicsWindow = self.viewer.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
-            
             if self.viewDimensions == 2:
                 self._previousTrackballMatrix = self.trackball.getMatrix()
                 self._previousTrackballCenter = self.trackball.getCenter()
                 self.viewer.setCameraManipulator(None)
                 self._resetView()
             elif self.viewDimensions == 3:
+                # Hide the scroll bars before we get the size of the viewport.
+                self.SetScrollbar(wx.HORIZONTAL, 0, width, width, True)
+                self.SetScrollbar(wx.VERTICAL, 0, height, height, True)
+                width, height = self.GetClientSize()
+                self.graphicsWindow = self.viewer.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
                 self.viewer.getCamera().setProjectionMatrixAsPerspective(30.0, float(width)/height, 1.0, 10000.0)
                 self.viewer.setCameraManipulator(self.trackball)
                 if self._first3DView:
-                    self.centerView()
+                    self.resetView()
                     self._first3DView = False
                 else:
                     self.trackball.computeHomePosition()
@@ -490,6 +495,7 @@ class Display(wx.glcanvas.GLCanvas):
     def _resetView(self):
         if self.viewDimensions == 2:
             width, height = self.GetClientSize()
+            # TODO: if self.orthoZoom just changed to 0 then width and height will be too small by assuming the scroll bars are still there.
             zoom = 2.0 ** (self.orthoZoom / 10.0)
             self.viewer.getCamera().setProjectionMatrixAsOrtho2D(self.orthoCenter[0] - (width + 20) * self.zoomScale / 2.0 / zoom, 
                                                                  self.orthoCenter[0] + (width + 20) * self.zoomScale / 2.0 / zoom, 
@@ -560,42 +566,99 @@ class Display(wx.glcanvas.GLCanvas):
             self.zoomScale = yZoom
     
     
-    def centerView(self, networkObject = None):
+    def resetView(self):
         """
-        Change the view so that all objects are visible or zoom onto the indicated object.
-        
-        By default the view will be centered so that all objects are visible.  If a :class:`network object <Network.Object.Object>` is provided then the view will be centered on that object's visualization.  An exception is raised if the object is not visualized.
+        Reset the view point of the 3D view to the default distance and rotation.
         """
         
-        if networkObject is None:
-            node = self.rootNode
-        else:
-            visibles = self.visiblesForObject(networkObject)
-            if any(visibles):
-                node = visibles[0].sgNode
-            else:
-                raise ValueError, 'The object passed to centerView() is not currently being visualized.'
-        
-        self.computeVisiblesBound()
-        
-        if self.viewDimensions == 2:
-            # TODO: handle case of visible != None
-            self.orthoCenter = (self.visiblesCenter[self.orthoXPlane], self.visiblesCenter[self.orthoYPlane])
-            self.orthoZoom = 0
-            self._resetView()
-        elif self.viewDimensions == 3:
-            self.trackball.setNode(node)
+        if self.viewDimensions == 3:
+            self.trackball.setNode(self.rootNode)
             self.trackball.computeHomePosition()
             self.viewer.home()
             self.trackball.setRotation(osg.Quat(0, 0, 0, 1))
+            self.Refresh()
+    
+    
+    def zoomToFit(self):
+        """
+        Change the magnification of the 2D view so that all objects are visible.
+        """
         
-        self.Refresh()
+        if self.viewDimensions == 2:
+            self.computeVisiblesBound()
+            self.orthoCenter = (self.visiblesCenter[self.orthoXPlane], self.visiblesCenter[self.orthoYPlane])
+            self.orthoZoom = 0
+            self._resetView()
+            self.Refresh()
         
         #osgDB.writeNodeFile(self.rootNode, "test.osg");
     
+    
+    def zoomToSelection(self):
+        """
+        Change the magnification of the view so that all selected or highlighted objects are visible.
+        """
         
-    def onCenterView(self, event_):
-        self.centerView()
+        minX, maxX = (1e300, -1e300)
+        minY, maxY = (1e300, -1e300)
+        for visible in self.selectedVisibles.union(self.highlightedVisibles).union(self.animatedVisibles):
+            worldPos = visible.worldPosition()
+            worldSize = visible.worldSize()
+            minX = min(minX, worldPos[0] - worldSize[0] / 2.0) 
+            maxX = max(maxX, worldPos[0] + worldSize[0] / 2.0) 
+            minY = min(minY, worldPos[1] - worldSize[1] / 2.0) 
+            maxY = max(maxY, worldPos[1] + worldSize[1] / 2.0) 
+        self.orthoCenter = ((minX + maxX) / 2.0, (minY + maxY) / 2.0)
+        width, height = self.GetClientSize()
+        xZoom = (width - 20) * self.zoomScale / (maxX - minX)
+        yZoom = (height - 20) * self.zoomScale / (maxY - minY)
+        self.orthoZoom = log(min(xZoom, yZoom), 2) * 10.0
+        self._resetView()
+        self.Refresh()
+    
+    
+    def _zoom(self, amount):
+        if self.viewDimensions == 2:
+            self.orthoZoom += 10 * amount
+            if self.orthoZoom < 0:
+                self.orthoZoom = 0
+            
+            # Alter orthoCenter if the new zoom level will cause any visibles to fall outside the reach of the scroll bars.
+            width, height = self.GetClientSize()
+            zoom = 2 ** (self.orthoZoom / 10.0)
+            horScrollPos = (self.orthoCenter[0] - self.visiblesMin[0]) / self.visiblesSize[0] * width - width / zoom / 2.0
+            maxHorScrollPos = width - width / zoom
+            if horScrollPos < 0.0:
+                self.orthoCenter = ((width / zoom / 2.0) / width * self.visiblesSize[0] + self.visiblesMin[0], self.orthoCenter[1])
+            elif horScrollPos > maxHorScrollPos:
+                self.orthoCenter = ((maxHorScrollPos + width / zoom / 2.0) / width * self.visiblesSize[0] + self.visiblesMin[0], self.orthoCenter[1])
+            vertScrollPos = (self.visiblesMax[1] - self.orthoCenter[1]) / self.visiblesSize[1] * height - height / zoom / 2.0
+            maxVertScrollPos = height - height / zoom
+            if vertScrollPos < 0.0:
+                self.orthoCenter = (self.orthoCenter[0], self.visiblesMax[1] - (height / zoom / 2.0) * self.visiblesSize[1] / height)
+            elif vertScrollPos > maxVertScrollPos:
+                self.orthoCenter = (self.orthoCenter[0], self.visiblesMax[1] - (maxVertScrollPos + height / zoom / 2.0) * self.visiblesSize[1] / height)
+        elif self.viewDimensions == 3:
+            self.computeVisiblesBound()
+            self.trackball.setDistance(self.trackball.getDistance() - max(self.visiblesSize) * 0.2 * amount)
+        self._resetView()
+        self.Refresh()
+    
+    
+    def zoomIn(self):
+        """
+        Increase the magnification of the view.
+        """
+        
+        self._zoom(1.0)
+    
+    
+    def zoomOut(self):
+        """
+        Decrease the magnification of the view.
+        """
+        
+        self._zoom(-1.0)
     
     
     def onScroll(self, event):
@@ -677,21 +740,10 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def onMouseWheel(self, event):
-        if self.viewDimensions == 2:
-            if event.ShiftDown():
-                self.orthoCenter = (self.orthoCenter[0] + event.GetWheelRotation() * .002, self.orthoCenter[1])
-            elif event.AltDown():
-                self.orthoCenter = (self.orthoCenter[0], self.orthoCenter[1] - event.GetWheelRotation() * 10.0)
-            else:
-                self.orthoZoom += event.GetWheelRotation() * self.scrollWheelScale
-                if self.orthoZoom < 0:
-                    self.orthoZoom = 0
-                # TODO: alter orthoCenter to keep visibles in view
-            self._resetView()
-        elif self.viewDimensions == 3:
-            self.computeVisiblesBound()
-            self.trackball.setDistance(self.trackball.getDistance() - event.GetWheelRotation() * max(self.visiblesSize) * .02 * self.scrollWheelScale)
-        self.Refresh()
+        if event.ShiftDown():
+            self._zoom(event.GetWheelRotation() / 100.0 * self.scrollWheelScale)
+        else:
+            self._zoom(event.GetWheelRotation() / 10.0 * self.scrollWheelScale)
         event.Skip()
     
     
@@ -2156,8 +2208,10 @@ class Display(wx.glcanvas.GLCanvas):
         layout.layoutDisplay(self)
         self.lastUsedLayout = layout
         self._suppressRefresh = False
-        self.centerView()
-        self.Refresh()
+        if self.viewDimensions == 2:
+            self.zoomToFit()
+        else:
+            self.resetView()
     
     
     def saveViewAsImage(self, path):
@@ -2298,7 +2352,7 @@ class DisplayDropTarget(wx.PyDropTarget):
                 if term is not None:
                     self.display.network.createRegion(ontologyTerm = term, addSubTerms = wx.GetKeyState(wx.WXK_ALT))
                     if len(self.display.visibles) == 1:
-                        self.display.centerView()
+                        self.display.zoomToFit()
             
         return dragType
     
