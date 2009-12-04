@@ -596,7 +596,7 @@ class Display(wx.glcanvas.GLCanvas):
     
     def zoomToSelection(self):
         """
-        Change the magnification of the view so that all selected or highlighted objects are visible.
+        Change the magnification of the 2D view so that all selected or highlighted objects are visible.
         """
         
         minX, maxX = (1e300, -1e300)
@@ -676,6 +676,30 @@ class Display(wx.glcanvas.GLCanvas):
             # pos + height / zoom / 2 = (self.visiblesMax[1] - self.orthoCenter[1]) / self.visiblesSize[1] * height
             # (pos + height / zoom / 2) * self.visiblesSize[1] / height = self.visiblesMax[1] - self.orthoCenter[1]
             self.orthoCenter = (self.orthoCenter[0], self.visiblesMax[1] - (event.GetPosition() + height / zoom / 2.0) * self.visiblesSize[1] / height)
+        self._resetView()
+        self.Refresh()
+    
+    
+    def isPanning(self):
+        # TODO: support other 2D modes (drag selecting, others?)
+        # TODO: support panning in 3D
+        
+        return self.viewDimensions == 2
+    
+    
+    def shiftView(self, dx, dy):
+        if self.orthoZoom > 0:
+            # At least on the Mac the scroll bars don't update if set directly.  Instead, queue the update to happen after all current events have cleared.
+            wx.CallAfter(self._shiftView, dx, dy)
+    
+    
+    def _shiftView(self, dx, dy):
+        # Convert screen coordinates to world coordinates.
+        width, height = self.GetClientSize()
+        dx = dx / (width - 20.0) * width
+        dy = dy / (height - 20.0) * height
+        zoom = 2.0 ** (self.orthoZoom / 10.0)
+        self.orthoCenter = (self.orthoCenter[0] + dx * self.zoomScale / zoom, self.orthoCenter[1] + dy * self.zoomScale / zoom)
         self._resetView()
         self.Refresh()
    
@@ -854,6 +878,12 @@ class Display(wx.glcanvas.GLCanvas):
         
     
     def removeVisible(self, visible):
+        """
+        Remove the indicated :class:`visual proxy <Display.Visible.Visible>` from the visualization.
+        
+        If the object has any nested objects or connections then they will be removed as well. 
+        """
+        
         if visible.displayId not in self._visibleIds:
             raise ValueError, 'The visible passed to removeVisible() is not part of the display.'
         
@@ -904,12 +934,8 @@ class Display(wx.glcanvas.GLCanvas):
         
         visible = Visible(self, networkObject)
         
-        # Create a dummy object if needed.
-        if networkObject is None:
-            networkObject = Object(self.network)
-        
-        # Start with the default params for this object and override with any supplied params.
-        params = networkObject.defaultVisualizationParams()
+        # Start with the default params for this object (or a dummy object) and override with any supplied params.
+        params = (networkObject.defaultVisualizationParams() if networkObject else Object(self.network).defaultVisualizationParams())
         for key, value in keywordArgs.iteritems():
             params[key] = value
             
@@ -1018,6 +1044,8 @@ class Display(wx.glcanvas.GLCanvas):
     def removeObject(self, networkObject):
         """
         Remove the indicated :class:`network object <Network.Object.Object>` from the visualization.
+        
+        If the object has any nested objects or connections then they will be removed as well. 
         """
         
         visibles = self.visiblesForObject(networkObject)

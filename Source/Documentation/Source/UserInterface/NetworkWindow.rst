@@ -84,7 +84,7 @@ If the selected object has its size or position :ref:`fixed <geometry-inspector>
 Zooming, scrolling, centering the view
 ......................................
 
-You can zoom into and out of the visualization by using the scroll wheel on your mouse or any of the "Zoom..." options in the View menu.  When viewing in two dimensions you will get a set of scroll bars when zoomed in that let you see the rest of the network.  When viewing in three dimensions you can click in empty space and drag to rotate the display.  Clicking and dragging with the center mouse button or the left and right buttons together will move the entire display.
+You can zoom into and out of the visualization by using the scroll wheel on your mouse or any of the "Zoom..." options in the View menu.  When viewing in two dimensions you will get a set of scroll bars when zoomed in that let you see the rest of the network.  Clicking in an empty space and dragging will scroll the display.  When viewing in three dimensions you can click in empty space and drag to rotate the display.  Clicking and dragging with the center mouse button or the left and right buttons together will move the entire display.
 
 At any time you can bring the entire network into view by choosing "Reset View" (3D) or "Zoom to Fit" (2D) from the View menu.  This is useful, for example, if you've zoomed in or out too far and can't find your network anymore.   
 

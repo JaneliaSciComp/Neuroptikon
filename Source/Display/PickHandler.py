@@ -9,6 +9,7 @@ class PickHandler(osgGA.GUIEventHandler):
     def __init__(self, display):
         self._display = display
         self._lastMouse = (0, 0)
+        self._panning = False
         self.pointerInfo = osgManipulator.PointerInfo()
         self.dragger = None
         osgGA.GUIEventHandler.__init__(self)
@@ -22,7 +23,7 @@ class PickHandler(osgGA.GUIEventHandler):
             if eventtype == eventAdaptor.PUSH:
                 self.pointerInfo.reset()
                 self._lastMouse = (eventAdaptor.getX(), eventAdaptor.getY())
-                eventWasHandled = self.drag(eventAdaptor, viewer)
+                eventWasHandled = self.startDragPanOrPick(eventAdaptor, viewer)
             elif eventtype == eventAdaptor.MOVE:
                 self._lastMouse = (eventAdaptor.getX(), eventAdaptor.getY())
                 eventWasHandled = False
@@ -33,21 +34,31 @@ class PickHandler(osgGA.GUIEventHandler):
                     eventWasHandled = self.dragger.handle(self.pointerInfo, eventAdaptor, actionAdaptor)
                     if eventWasHandled:
                         self._display._visibleWasDragged()
-                        
+                elif self._panning or self._display.isPanning():
+                    self._display.shiftView(self._lastMouse[0] - eventAdaptor.getX(), self._lastMouse[1] - eventAdaptor.getY())
+                    self._panning = True
+                self._lastMouse = (eventAdaptor.getX(), eventAdaptor.getY())
             elif eventtype == eventAdaptor.RELEASE:
                 if self.dragger != None:
+                    # Finish the drag.
                     self.pointerInfo.setCamera(viewer.getCamera())
                     self.pointerInfo.setMousePosition(eventAdaptor.getX(), eventAdaptor.getY())
                     eventWasHandled = self.dragger.handle(self.pointerInfo, eventAdaptor, actionAdaptor)
                     self.dragger = None
                     self.pointerInfo.reset()
+                    self._display.computeVisiblesBound()
+                    self._display._resetView()
                     # TODO: is this where visible's size and position should get updated?
+                elif self._panning:
+                    # Finish panning.
+                    self._panning = False
                 elif self._lastMouse == (eventAdaptor.getX(), eventAdaptor.getY()):
+                    # Do a pick.
                     eventWasHandled = self.pick(eventAdaptor.getX(), eventAdaptor.getY(), viewer)
         return eventWasHandled
     
     
-    def drag(self, eventAdaptor, viewer):
+    def startDragPanOrPick(self, eventAdaptor, viewer):
         eventWasHandled = False
         if viewer.getSceneData():
             # TODO: This is a major hack.  The intersection code below always picks the composite dragger, even if it isn't being rendered.  So we remove the inactive dragger while picking.
@@ -93,7 +104,7 @@ class PickHandler(osgGA.GUIEventHandler):
             if picker.containsIntersections():
                 intersections = picker.getIntersections()
                 
-                # The PolytopeIntersector mis-calculates the eye distance for geoemetry nested under a transform, which is true for all UnitShapes.  (See the thread at http://www.mail-archive.com/osg-users@lists.openscenegraph.org/msg29195.html for some discussion.)
+                # The PolytopeIntersector mis-calculates the eye distance for geometry nested under a transform, which is true for all UnitShapes.  (See the thread at http://www.mail-archive.com/osg-users@lists.openscenegraph.org/msg29195.html for some discussion.)
                 # Calculate the correct distance and re-sort.
                 # This will probably still work correctly after that bug is fixed but will be inefficient.
                 visibleHits = []
