@@ -910,6 +910,9 @@ class Visible(object):
         (0.0, 0.5) -> label centered at top of object
         """
         
+        if len(position) == 2:
+            position = tuple(position) + (0,)
+        
         if position != self._labelPosition:
             self._labelPosition = position
             self._updateLabel()
