@@ -21,11 +21,9 @@ Changing the visualization
 
 Use the following methods to change the settings of the entire visualization.
 
-.. automethod:: Display.Display.Display.centerView
 .. automethod:: Display.Display.Display.setBackgroundColor
 .. automethod:: Display.Display.Display.setLabelsFloatOnTop
 .. automethod:: Display.Display.Display.labelsFloatOnTop
-.. automethod:: Display.Display.Display.setOrthoViewPlane
 .. automethod:: Display.Display.Display.setShowFlow
 .. automethod:: Display.Display.Display.showFlow
 .. automethod:: Display.Display.Display.setShowNeuronNames
@@ -38,8 +36,6 @@ Use the following methods to change the settings of the entire visualization.
 .. automethod:: Display.Display.Display.ghostingOpacity
 .. automethod:: Display.Display.Display.setUseMouseOverSelecting
 .. automethod:: Display.Display.Display.useMouseOverSelecting
-.. automethod:: Display.Display.Display.setUseStereo
-.. automethod:: Display.Display.Display.setViewDimensions
 
 .. _specific:
 
@@ -61,6 +57,22 @@ Use the following methods to change the settings for individual objects in the v
 .. automethod:: Display.Display.Display.setLabelPosition
 
 .. automethod:: Display.Display.Display.visiblesForObject
+
+.. _camera:
+
+Changing how the visualization is viewed
+----------------------------------------
+
+Use the following methods to alter how the virtual camera looks at the objects in the visualization.
+
+.. automethod:: Display.Display.Display.resetView
+.. automethod:: Display.Display.Display.zoomToFit
+.. automethod:: Display.Display.Display.zoomToSelection
+.. automethod:: Display.Display.Display.zoomIn
+.. automethod:: Display.Display.Display.zoomOut
+.. automethod:: Display.Display.Display.setViewDimensions
+.. automethod:: Display.Display.Display.setOrthoViewPlane
+.. automethod:: Display.Display.Display.setUseStereo
 
 .. _selection:
 
@@ -114,6 +126,7 @@ By default any object added to the display's network is automatically visualized
 .. automethod:: Display.Display.Display.visualizeObject
 .. automethod:: Display.Display.Display.defaultVisualizationParams
 .. automethod:: Display.Display.Display.removeObject
+.. automethod:: Display.Display.Display.removeVisible
 
 .. _misc:
 
