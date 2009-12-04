@@ -1499,7 +1499,6 @@ class Visible(object):
             self.arrangedSpacing = float(spacing)
             self._arrangeChildren(False)
             dispatcher.send(('set', 'arrangedSpacing'), self)
-            self.display.Update()
         
         if recurse:
             for child in self.children:
@@ -1522,7 +1521,6 @@ class Visible(object):
             self.arrangedWeight = weight
             self._arrangeChildren(False)
             dispatcher.send(('set', 'arrangedWeight'), self)
-            self.display.Update()
     
     
     def _childArrangedWeightChanged(self):
