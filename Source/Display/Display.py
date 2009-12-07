@@ -1941,13 +1941,18 @@ class Display(wx.glcanvas.GLCanvas):
                                     _highlightObject(objectNeurite)
                         elif isinstance(networkObject, Region):
                             if isinstance(connection, Pathway):
-                                connectedRegion = (set(connection.regions()) & set([networkObject] + networkObject.allSubRegions())).pop()
-                                nonSelf = set(connection.regions()) - set([connectedRegion])
-                                if any(nonSelf):
-                                    otherRegion = nonSelf.pop()
-                                    if singleSelection or otherRegion in selectedObjects:
-                                        _highlightObject(connection)
-                                        _highlightObject(otherRegion)
+                                # Highlight any pathways coming out of this region or any of its sub-regions.
+                                if connection.regions()[0] == connection.regions()[1]:
+                                    # Special case for a self-projecting region.
+                                    _highlightObject(connection)
+                                else:
+                                    connectedRegion = (set(connection.regions()) & set([networkObject] + networkObject.allSubRegions())).pop()
+                                    nonSelf = set(connection.regions()) - set([connectedRegion])
+                                    if any(nonSelf):
+                                        otherRegion = nonSelf.pop()
+                                        if singleSelection or otherRegion in selectedObjects:
+                                            _highlightObject(connection)
+                                            _highlightObject(otherRegion)
                             elif isinstance(connection, Arborization):
                                 if singleSelection or connection.neurite in selectedObjects or connection.neurite.neuron() in selectedObjects:
                                     _highlightObject(connection)
