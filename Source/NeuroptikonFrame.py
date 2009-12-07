@@ -133,18 +133,18 @@ class NeuroptikonFrame( wx.Frame ):
         # pylint: disable-msg=W0201
         
         editMenu = wx.Menu()
-        self.Bind(wx.EVT_MENU, self.onUndo, editMenu.Append(wx.NewId(), gettext('Undo\tCtrl-Z'), gettext('Undo the last action')))
-        self.Bind(wx.EVT_MENU, self.onRedo, editMenu.Append(wx.NewId(), gettext('Redo\tCtrl-Shift-Z'), gettext('Redo the last action')))
+        self.Bind(wx.EVT_MENU, self.onUndo, editMenu.Append(wx.ID_UNDO, gettext('Undo\tCtrl-Z'), gettext('Undo the last action')))
+        self.Bind(wx.EVT_MENU, self.onRedo, editMenu.Append(wx.ID_REDO, gettext('Redo\tCtrl-Shift-Z'), gettext('Redo the last action')))
         editMenu.AppendSeparator()
-        self.cutMenuItem = editMenu.Append(wx.NewId(), gettext('Cut\tCtrl-X'), gettext('Move the selected objects to the clipboard'))
+        self.cutMenuItem = editMenu.Append(wx.ID_CUT, gettext('Cut\tCtrl-X'), gettext('Move the selected objects to the clipboard'))
         self.Bind(wx.EVT_MENU, self.onCut, self.cutMenuItem)
-        self.copyMenuItem = editMenu.Append(wx.NewId(), gettext('Copy\tCtrl-C'), gettext('Copy the selected objects to the clipboard'))
+        self.copyMenuItem = editMenu.Append(wx.ID_COPY, gettext('Copy\tCtrl-C'), gettext('Copy the selected objects to the clipboard'))
         self.Bind(wx.EVT_MENU, self.onCopy, self.copyMenuItem)
-        self.pasteMenuItem = editMenu.Append(wx.NewId(), gettext('Paste\tCtrl-V'), gettext('Paste the contents of the clipboard'))
+        self.pasteMenuItem = editMenu.Append(wx.ID_PASTE, gettext('Paste\tCtrl-V'), gettext('Paste the contents of the clipboard'))
         self.Bind(wx.EVT_MENU, self.onPaste, self.pasteMenuItem)
-        self.Bind(wx.EVT_MENU, self.onSelectAll, editMenu.Append(wx.NewId(), gettext('Select All\tCtrl-A'), gettext('Select all objects in the window')))
+        self.Bind(wx.EVT_MENU, self.onSelectAll, editMenu.Append(wx.ID_SELECTALL, gettext('Select All\tCtrl-A'), gettext('Select all objects in the window')))
         editMenu.AppendSeparator()
-        self.pasteMenuItem = editMenu.Append(wx.NewId(), gettext('Find\tCtrl-F'), gettext('Find objects in the network'))
+        self.pasteMenuItem = editMenu.Append(wx.ID_FIND, gettext('Find\tCtrl-F'), gettext('Find objects in the network'))
         self.Bind(wx.EVT_MENU, self.onFind, self.pasteMenuItem)
         menuBar.Insert(menuBar.GetMenuCount() - 1, editMenu, gettext('&Edit'))
         
@@ -177,13 +177,13 @@ class NeuroptikonFrame( wx.Frame ):
         viewMenu.AppendSeparator()  # -----------------
         self.resetViewMenuItem = viewMenu.Append(wx.NewId(), gettext('Reset View'), gettext('Return to the default view'))
         self.Bind(wx.EVT_MENU, self.onResetView, self.resetViewMenuItem)
-        self.zoomToFitMenuItem = viewMenu.Append(wx.NewId(), gettext('Zoom to Fit\tCtrl-0'), gettext('Fit all objects within the display'))
+        self.zoomToFitMenuItem = viewMenu.Append(wx.ID_ZOOM_FIT, gettext('Zoom to Fit\tCtrl-0'), gettext('Fit all objects within the display'))
         self.Bind(wx.EVT_MENU, self.onZoomToFit, self.zoomToFitMenuItem)
         self.zoomToSelectionMenuItem = viewMenu.Append(wx.NewId(), gettext('Zoom to Selection\tCtrl-\\'), gettext('Fit all selected objects within the display'))
         self.Bind(wx.EVT_MENU, self.onZoomToSelection, self.zoomToSelectionMenuItem)
-        self.zoomInMenuItem = viewMenu.Append(wx.NewId(), gettext('Zoom In\tCtrl-+'), gettext('Make objects appear larger'))
+        self.zoomInMenuItem = viewMenu.Append(wx.ID_ZOOM_IN, gettext('Zoom In\tCtrl-+'), gettext('Make objects appear larger'))
         self.Bind(wx.EVT_MENU, self.onZoomIn, self.zoomInMenuItem)
-        self.zoomOutMenuItem = viewMenu.Append(wx.NewId(), gettext('Zoom Out\tCtrl--'), gettext('Make objects appear smaller'))
+        self.zoomOutMenuItem = viewMenu.Append(wx.ID_ZOOM_OUT, gettext('Zoom Out\tCtrl--'), gettext('Make objects appear smaller'))
         self.Bind(wx.EVT_MENU, self.onZoomOut, self.zoomOutMenuItem)
         viewMenu.AppendSeparator()  # -----------------
         self.Bind(wx.EVT_MENU, self.display.onSaveView, viewMenu.Append(wx.NewId(), gettext('Save View as...'), gettext('Save the current view to a file')))
@@ -210,8 +210,19 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     def onUpdateUI(self, event):
+        focusedWindow = self.FindFocus()
         eventId = event.GetId() 
-        if eventId == self.mouseOverSelectingItem.GetId():
+        if eventId == wx.ID_UNDO: 
+            event.Enable(focusedWindow == self._console and self._console.CanUndo())
+        elif eventId == wx.ID_REDO: 
+            event.Enable(focusedWindow == self._console and self._console.CanRedo())
+        elif eventId == wx.ID_CUT: 
+            event.Enable(focusedWindow == self._console and self._console.CanCut())
+        elif eventId == wx.ID_COPY: 
+            event.Enable(focusedWindow == self._console and self._console.CanCopy())
+        elif eventId == wx.ID_PASTE: 
+            event.Enable(focusedWindow == self._console and self._console.CanPaste())
+        elif eventId == self.mouseOverSelectingItem.GetId():
             event.Check(self.display.useMouseOverSelecting())
         elif eventId == self.showRegionNamesMenuItem.GetId():
             event.Check(self.display.showRegionNames())
@@ -296,24 +307,24 @@ class NeuroptikonFrame( wx.Frame ):
         self.Show(True)
     
     
-    def onUndo(self, event):
-        pass    # TODO
+    def onUndo(self, event_):
+        self._console.Undo()
     
     
-    def onRedo(self, event):
-        pass    # TODO
+    def onRedo(self, event_):
+        self._console.Redo()
     
     
-    def onCut(self, event):
-        pass    # TODO
+    def onCut(self, event_):
+        self._console.Cut()
     
     
-    def onCopy(self, event):
-        pass    # TODO
+    def onCopy(self, event_):
+        self._console.Copy()
     
     
-    def onPaste(self, event):
-        pass    # TODO
+    def onPaste(self, event_):
+        self._console.Paste()
     
     
     def onSelectAll(self, event_):

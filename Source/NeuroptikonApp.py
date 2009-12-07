@@ -142,19 +142,19 @@ class NeuroptikonApp(wx.App):
         menuBar = wx.MenuBar()
         
         fileMenu = wx.Menu()
-        self.Bind(wx.EVT_MENU, self.onNewNetwork, fileMenu.Append(wx.NewId(), gettext('New Network\tCtrl-N'), gettext('Open a new network window')))
-        self.Bind(wx.EVT_MENU, self.onOpenNetwork, fileMenu.Append(wx.NewId(), gettext('Open Network...\tCtrl-O'), gettext('Open a previously saved network')))
-        closeItem = fileMenu.Append(wx.NewId(), gettext('Close Network\tCtrl-W'), gettext('Close the current network window'))
+        self.Bind(wx.EVT_MENU, self.onNewNetwork, fileMenu.Append(wx.ID_NEW, gettext('New Network\tCtrl-N'), gettext('Open a new network window')))
+        self.Bind(wx.EVT_MENU, self.onOpenNetwork, fileMenu.Append(wx.ID_OPEN, gettext('Open Network...\tCtrl-O'), gettext('Open a previously saved network')))
+        closeItem = fileMenu.Append(wx.ID_CLOSE, gettext('Close Network\tCtrl-W'), gettext('Close the current network window'))
         if frame:
             self.Bind(wx.EVT_MENU, frame.onCloseWindow, closeItem)
         else:
             closeItem.Enable(False)
-        saveItem = fileMenu.Append(wx.NewId(), gettext('Save Network...\tCtrl-S'), gettext('Save the current network'))
+        saveItem = fileMenu.Append(wx.ID_SAVE, gettext('Save Network...\tCtrl-S'), gettext('Save the current network'))
         if frame:
             self.Bind(wx.EVT_MENU, frame.onSaveNetwork, saveItem)
         else:
             saveItem.Enable(False)
-        saveAsItem = fileMenu.Append(wx.NewId(), gettext('Save As...\tCtrl-Shift-S'), gettext('Save to a new file'))
+        saveAsItem = fileMenu.Append(wx.ID_SAVEAS, gettext('Save As...\tCtrl-Shift-S'), gettext('Save to a new file'))
         if frame:
             self.Bind(wx.EVT_MENU, frame.onSaveNetworkAs, saveAsItem)
         else:
