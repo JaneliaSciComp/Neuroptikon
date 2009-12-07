@@ -99,8 +99,10 @@
 			<xs:extension base="Object">
 				<xs:attribute name="region1Id" type="xs:integer" use="required"/>
 				<xs:attribute name="region1Projects" type="xs:boolean"/>
+				<xs:attribute name="region1Activation" type="xs:string" minOccurs="0"/>
 				<xs:attribute name="region2Id" type="xs:integer" use="required"/>
 				<xs:attribute name="region2Projects" type="xs:boolean"/>
+				<xs:attribute name="region2Activation" type="xs:string" minOccurs="0"/>
 			</xs:extension>
 		</xs:complexContent>
 	</xs:complexType>

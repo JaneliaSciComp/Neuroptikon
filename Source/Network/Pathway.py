@@ -39,7 +39,7 @@ class PathwayTerminus(object):
     
 class Pathway(NeuroObject):
     
-    def __init__(self, region1, region2, region1Projects = None, region2Projects = None, *args, **keywords):
+    def __init__(self, region1, region2, region1Projects = None, region1Activation = None, region2Projects = None, region2Activation = None, *args, **keywords):
         """
         Pathways connect pairs of :class:`regions <Network.Region.Region>`.  They consist of bundles of :class:`neurites <Network.Neurite.Neurite>` which can be optionally specified.
         
@@ -54,8 +54,10 @@ class Pathway(NeuroObject):
         
         self.region1 = region1
         self.region1Projects = region1Projects
+        self.region1Activation = region1Activation
         self.region2 = region2
         self.region2Projects = region2Projects
+        self.region2Activation = region2Activation
     
     
     def defaultName(self):
@@ -83,6 +85,7 @@ class Pathway(NeuroObject):
                 pathway.region1Projects = False
             else:
                 pathway.region1Projects = None
+            pathway.region1Activation = xmlElement.get('region1Activation')
             regionId = xmlElement.get('region2Id')
             pathway.region2 = network.objectWithId(regionId)
             if pathway.region2 is None:
@@ -95,6 +98,7 @@ class Pathway(NeuroObject):
                 pathway.region2Projects = False
             else:
                 pathway.region2Projects = None
+            pathway.region2Activation = xmlElement.get('region2Activation')
         else:
             # Format prior to version 0.9.4
             terminus1 = PathwayTerminus._fromXMLElement(network, terminusElements[0])
@@ -115,9 +119,13 @@ class Pathway(NeuroObject):
         pathwayElement.set('region1Id', str(self.region1.networkId))
         if self.region1Projects != None:
             pathwayElement.set('region1Projects', str(self.region1Projects).lower())
+            if self.region1Projects and self.region2Activation is not None:
+                pathwayElement.set('region2Activation', self.region2Activation)
         pathwayElement.set('region2Id', str(self.region2.networkId))
         if self.region2Projects != None:
             pathwayElement.set('region2Projects', str(self.region2Projects).lower())
+            if self.region2Projects and self.region1Activation is not None:
+                pathwayElement.set('region1Activation', self.region1Activation)
         return pathwayElement
     
     
@@ -134,8 +142,12 @@ class Pathway(NeuroObject):
         args.insert(0, scriptRefs[self.region2.networkId])
         if self.region1Projects != True:
             keywords['knownProjection'] = str(self.region1Projects)
+        elif self.region2Activation is not None:
+            keywords['activation'] = self.region2Activation
         if self.region2Projects != None:
             keywords['bidirectional'] = str(self.region2Projects)
+        elif self.region1Activation is not None:
+            keywords['backActivation'] = self.region1Activation
         return (args, keywords)
    
     
@@ -208,5 +220,15 @@ class Pathway(NeuroObject):
         params['pathEndPoints'] = (self.region1, self.region2)
         params['flowTo'] = self.region1Projects
         params['flowFrom'] = self.region2Projects
+        if self.region1Projects:
+            if self.region2Activation == 'excitatory':
+                params['flowToColor'] = (0.5, 0.5, 1.0)
+            elif self.region2Activation == 'inhibitory':
+                params['flowToColor'] = (1.0, 0.5, 0.5)
+        if self.region2Projects:
+            if self.region1Activation == 'excitatory':
+                params['flowFromColor'] = (0.5, 0.5, 1.0)
+            elif self.region1Activation == 'inhibitory':
+                params['flowFromColor'] = (1.0, 0.5, 0.5)
         return params
     

@@ -942,6 +942,9 @@ class Display(wx.glcanvas.GLCanvas):
         if isinstance(networkObject, Arborization):
             dispatcher.connect(self._arborizationChangedFlow, ('set', 'sendsOutput'), networkObject)
             dispatcher.connect(self._arborizationChangedFlow, ('set', 'receivesInput'), networkObject)
+        elif isinstance(networkObject, Pathway):
+            dispatcher.connect(self._pathwayChangedFlow, ('set', 'region1Projects'), networkObject)
+            dispatcher.connect(self._pathwayChangedFlow, ('set', 'region2Projects'), networkObject)
         elif isinstance(networkObject, Stimulus):
             edgeVisible = visible
             nodeVisible = Visible(self, networkObject)
@@ -991,6 +994,8 @@ class Display(wx.glcanvas.GLCanvas):
         pathStart, pathEnd = params.get('pathEndPoints', (None, None))
         pathFlowsTo = params.get('flowTo', None)
         pathFlowsFrom = params.get('flowFrom', None)
+        flowToColor = params.get('flowToColor', None)
+        flowFromColor = params.get('flowFromColor', None)
         
         parentObject = params.get('parent', None)
         parentVisibles = self.visiblesForObject(parentObject)
@@ -1002,6 +1007,8 @@ class Display(wx.glcanvas.GLCanvas):
                 edgeVisible.setPathEndPoints(nodeVisible, targetVisibles[0])
                 edgeVisible.setPathIsFixed(True)
                 edgeVisible.setFlowTo(True)
+                if flowToColor:
+                    edgeVisible.setFlowToColor(flowToColor)
                 if self._showFlow:
                     edgeVisible.animateFlow()
             nodeVisible.setShape(None)
@@ -1023,7 +1030,11 @@ class Display(wx.glcanvas.GLCanvas):
                     visible.setPathMidPoints(params.get('pathMidPoints', []))
                     visible.setPathIsFixed(params.get('pathIsFixed', None))
                     visible.setFlowTo(pathFlowsTo)
+                    if flowToColor:
+                        visible.setFlowToColor(flowToColor)
                     visible.setFlowFrom(pathFlowsFrom)
+                    if flowFromColor:
+                        visible.setFlowFromColor(flowFromColor)
                     if self._showFlow:
                         visible.animateFlow()
             
@@ -1063,6 +1074,13 @@ class Display(wx.glcanvas.GLCanvas):
         if len(arborizationVis) == 1:
             arborizationVis[0].setFlowTo(sender.sendsOutput)
             arborizationVis[0].setFlowFrom(sender.receivesInput)
+    
+    
+    def _pathwayChangedFlow(self, sender):
+        pathwayVis = self.visiblesForObject(sender)
+        if len(pathwayVis) == 1:
+            pathwayVis[0].setFlowTo(sender.region1Projects)
+            pathwayVis[0].setFlowFrom(sender.region2Projects)
     
         
     def setNetwork(self, network):

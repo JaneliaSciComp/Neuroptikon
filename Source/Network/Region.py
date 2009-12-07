@@ -115,14 +115,17 @@ class Region(NeuroObject):
         return pathway
     
     
-    def projectToRegion(self, otherRegion, knownProjection = True, bidirectional = None, name = None):
+    def projectToRegion(self, otherRegion, knownProjection = True, bidirectional = None, activation = None, backActivation = None, name = None):
         """ Add a pathway connecting this region to the other region. 
         
         The knownProjection parameter indicates whether this region sends information to the other region.  It should be True, False or None (unknown). 
         
         The bidirectional parameter indicates whether the other region sends information back to this region.  It should be True, False or None (unknown). 
         
-        Returns the pathway object that is created. """
+        The activation and backActivation parameters indicate how the pathway activates the other and this region, respectively.  It should be 'excitatory', 'inhibitory' or None (unknown).
+        
+        Returns the pathway object that is created.
+        """
         
         if not isinstance(otherRegion, Region) or otherRegion.network != self.network:
             raise TypeError, 'The otherRegion argument passed to projectToRegion() must be a region from the same network.'
@@ -130,8 +133,12 @@ class Region(NeuroObject):
             raise ValueError, 'The knownProjection argument passed to projectToRegion() must be True, False or None'
         if bidirectional not in (True, False, None):
             raise ValueError, 'The bidirectional argument passed to projectToRegion() must be True, False or None'
+        if activation not in ('excitatory', 'inhibitory', None):
+            raise ValueError, 'The activation argument passed to projectToRegion() must be \'excitatory\', \'inhibitory\' or None'
+        if backActivation not in ('excitatory', 'inhibitory', None):
+            raise ValueError, 'The backActivation argument passed to projectToRegion() must be \'excitatory\', \'inhibitory\' or None'
         
-        pathway = Pathway(region1 = self, region2 = otherRegion, region1Projects = True if knownProjection else None, region2Projects = bidirectional, name = name)
+        pathway = Pathway(region1 = self, region2 = otherRegion, region1Projects = True if knownProjection else None, region2Projects = bidirectional, region1Activation = backActivation, region2Activation = activation, name = name)
         self.pathways.append(pathway)
         otherRegion.pathways.append(pathway)
         self.network.addObject(pathway)

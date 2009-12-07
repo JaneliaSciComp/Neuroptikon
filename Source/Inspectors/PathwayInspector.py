@@ -12,7 +12,7 @@ class PathwayInspector( ObjectInspector ):
     
     @classmethod
     def inspectedAttributes(cls):
-        return ['region1', 'region1Projects', 'region2', 'region2Projects']
+        return ['region1', 'region1Projects', 'region1Activation', 'region2', 'region2Projects', 'region2Activation']
     
     
     def objectSizer(self, parentWindow):
@@ -50,6 +50,17 @@ class PathwayInspector( ObjectInspector ):
             region1ProjectsSizer.Add(self._projectsChoice1, 0, wx.LEFT, 4)
             self._sizer.Add(region1ProjectsSizer, 0, wx.TOP, 8)
             
+            region1ActivationSizer = wx.BoxSizer(wx.HORIZONTAL)
+            region1ActivationSizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Activation:')), 0, wx.LEFT, 16)
+            self._activationChoice1 = wx.Choice(parentWindow, wx.ID_ANY)
+            self._activationChoice1.Append(gettext('Excitatory'), 'excitatory')
+            self._activationChoice1.Append(gettext('Inhibitory'), 'inhibitory')
+            self._activationChoice1.Append(gettext('Unknown'), None)
+            parentWindow.Bind(wx.EVT_CHOICE, self.onChooseActivation, self._activationChoice1)
+            self._multipleActivations1Id = wx.NOT_FOUND
+            region1ActivationSizer.Add(self._activationChoice1, 0, wx.LEFT, 4)
+            self._sizer.Add(region1ActivationSizer, 0, wx.TOP, 8)
+            
             region2Sizer = wx.BoxSizer(wx.HORIZONTAL)
             region2Sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Region 2:')))
             if self._regionBitmap:
@@ -75,6 +86,17 @@ class PathwayInspector( ObjectInspector ):
             region2ProjectsSizer.Add(self._projectsChoice2)
             self._sizer.Add(region2ProjectsSizer, 0, wx.TOP, 8)
             
+            region2ActivationSizer = wx.BoxSizer(wx.HORIZONTAL)
+            region2ActivationSizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Activation:')), 0, wx.LEFT, 16)
+            self._activationChoice2 = wx.Choice(parentWindow, wx.ID_ANY)
+            self._activationChoice2.Append(gettext('Excitatory'), 'excitatory')
+            self._activationChoice2.Append(gettext('Inhibitory'), 'inhibitory')
+            self._activationChoice2.Append(gettext('Unknown'), None)
+            parentWindow.Bind(wx.EVT_CHOICE, self.onChooseActivation, self._activationChoice2)
+            self._multipleActivations2Id = wx.NOT_FOUND
+            region2ActivationSizer.Add(self._activationChoice2, 0, wx.LEFT, 4)
+            self._sizer.Add(region2ActivationSizer, 0, wx.TOP, 8)
+            
             self._sizer.AddStretchSpacer()
             
             self._sizer.Layout()
@@ -99,13 +121,28 @@ class PathwayInspector( ObjectInspector ):
             if self.objects.haveEqualAttr('region1Projects'):
                 if self.objects[0].region1Projects is None:
                     self._projectsChoice1.SetSelection(2)
+                    self._activationChoice1.Enable(False)
                 elif self.objects[0].region1Projects:
                     self._projectsChoice1.SetSelection(0)
+                    self._activationChoice1.Enable(True)
                 else:
                     self._projectsChoice1.SetSelection(1)
+                    self._activationChoice1.Enable(False)
             else:
                 self._multipleSendsOuputs1Id = self._projectsChoice1.Append(gettext('Multiple values'))
                 self._projectsChoice1.SetSelection(3)
+        
+        if attribute is None or attribute == 'region1Activation':
+            if self.objects.haveEqualAttr('region1Activation'):
+                if self.objects[0].region1Activation == 'excitatory':
+                    self._activationChoice2.SetSelection(0)
+                elif self.objects[0].region1Activation == 'inhibitory':
+                    self._activationChoice2.SetSelection(1)
+                else:
+                    self._activationChoice2.SetSelection(2)
+            else:
+                self._multipleActivations2Id = self._activationChoice2.Append(gettext('Multiple values'))
+                self._activationChoice2.SetSelection(3)
             
         if attribute is None or attribute == 'region2':
             if self.objects.haveEqualAttr('region2'):
@@ -123,13 +160,28 @@ class PathwayInspector( ObjectInspector ):
             if self.objects.haveEqualAttr('region2Projects'):
                 if self.objects[0].region2Projects is None:
                     self._projectsChoice2.SetSelection(2)
+                    self._activationChoice2.Enable(False)
                 elif self.objects[0].region2Projects:
                     self._projectsChoice2.SetSelection(0)
+                    self._activationChoice2.Enable(True)
                 else:
                     self._projectsChoice2.SetSelection(1)
+                    self._activationChoice2.Enable(False)
             else:
                 self._multipleSendsOuputs2Id = self._projectsChoice2.Append(gettext('Multiple values'))
                 self._projectsChoice2.SetSelection(3)
+        
+        if attribute is None or attribute == 'region2Activation':
+            if self.objects.haveEqualAttr('region2Activation'):
+                if self.objects[0].region2Activation == 'excitatory':
+                    self._activationChoice1.SetSelection(0)
+                elif self.objects[0].region2Activation == 'inhibitory':
+                    self._activationChoice1.SetSelection(1)
+                else:
+                    self._activationChoice1.SetSelection(2)
+            else:
+                self._multipleActivations1Id = self._activationChoice1.Append(gettext('Multiple values'))
+                self._activationChoice1.SetSelection(3)
         
         self._sizer.Layout()
     
@@ -160,3 +212,25 @@ class PathwayInspector( ObjectInspector ):
                 if self._multipleSendsOuputs2Id != wx.NOT_FOUND:
                     self._projectsChoice2.Delete(self._multipleSendsOuputs2Id)
                     self._multipleSendsOuputs2Id = wx.NOT_FOUND
+        
+    
+    def onChooseActivation(self, event):
+        if event.EventObject == self._activationChoice1:
+            if self._activationChoice1.GetSelection() != 3:
+                activation = self._activationChoice1.GetClientData(self._activationChoice1.GetSelection())
+                for pathway in self.objects:
+                    pathway.region2Activation = activation
+                # Remove the "multiple values" choice now that all of the objects have the same value.
+                if self._multipleActivations1Id != wx.NOT_FOUND:
+                    self._activationChoice1.Delete(self._multipleActivations1Id)
+                    self._multipleActivations1Id = wx.NOT_FOUND
+        elif event.EventObject == self._activationChoice2:
+            if self._activationChoice2.GetSelection() != 3:
+                activation = self._activationChoice2.GetClientData(self._activationChoice2.GetSelection())
+                for pathway in self.objects:
+                    pathway.region1Activation = activation
+                # Remove the "multiple values" choice now that all of the objects have the same value.
+                if self._multipleActivations2Id != wx.NOT_FOUND:
+                    self._activationChoice2.Delete(self._multipleActivations2Id)
+                    self._multipleActivations2Id = wx.NOT_FOUND
+    
