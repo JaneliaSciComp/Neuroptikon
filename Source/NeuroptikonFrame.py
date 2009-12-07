@@ -242,6 +242,8 @@ class NeuroptikonFrame( wx.Frame ):
             event.Enable(self.display.viewDimensions == 2)
         elif eventId == self.zoomToSelectionMenuItem.GetId():
             event.Enable(self.display.viewDimensions == 2 and any(self.display.selection()))
+        elif eventId == self.zoomOutMenuItem.GetId():
+            event.Enable(self.display.viewDimensions == 3 or self.display.orthoZoom > 0)
     
     
     def onActivate(self, event):
