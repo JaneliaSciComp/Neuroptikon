@@ -668,8 +668,8 @@ class Visible(object):
                 scriptFile.write('%s.setArrangedSpacing(%s, %s)\n' % (displayRef, scriptRef, str(self.arrangedSpacing)))
             if 'arrangedWeight' in params:
                 scriptFile.write('%s.setArrangedWeight(%s, %s)\n' % (displayRef, scriptRef, str(self.arrangedWeight)))
-            if 'pathEndPoints' in params:
-                startObject, endObject = params['pathEndPoints']
+            if 'pathEndPoints' in params or 'pathMidPoints' in params or 'pathIsFixed' in params:
+                startObject, endObject = params.get('pathEndPoints', (self._pathStart.client or self._pathStart, self._pathEnd.client or self._pathEnd))
                 if isinstance(startObject, Object):
                     startRef = scriptRefs[startObject.networkId]
                 elif startObject.client:
