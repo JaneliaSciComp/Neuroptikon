@@ -21,6 +21,7 @@ class NeuroptikonFrame( wx.Frame ):
         wx.Frame.__init__(self, None, wxId, title, size=(800,600), style=wx.DEFAULT_FRAME_STYLE|wx.FULL_REPAINT_ON_RESIZE)
         
         self.Bind(wx.EVT_ACTIVATE, self.onActivate)
+        self.Bind(wx.EVT_UPDATE_UI, self.onUpdateUI)
         self.Bind(wx.EVT_CLOSE, self.onCloseWindow)
         
         self.splitter = wx.SplitterWindow(self, wx.ID_ANY, style = wx.SP_LIVE_UPDATE)
@@ -50,26 +51,7 @@ class NeuroptikonFrame( wx.Frame ):
         self.finder = None
         
         self.SetMenuBar(self.menuBar())
-        
-        toolbar = wx.ToolBar(self)
-        self._view2DId = wx.NewId()
-        toolbar.AddCheckLabelTool(self._view2DId, gettext('2D View'), self.loadBitmap("View2D.png"))
-        self.Bind(wx.EVT_TOOL, self.display.onViewIn2D, id=self._view2DId)
-        self._view3DId = wx.NewId()
-        toolbar.AddCheckLabelTool(self._view3DId, gettext('3D View'), self.loadBitmap("View3D.png"))
-        self.Bind(wx.EVT_TOOL, self.display.onViewIn3D, id=self._view3DId)
-        toolbar.Realize()
-        self.SetToolBar(toolbar)
-        
-        # Watch for changes in the display that would cause menu or toolbar state to change.
-        self.displayChangedMenuState()
-        dispatcher.connect(self.displayChangedMenuState, ('set', 'useMouseOverSelecting'), self.display)
-        dispatcher.connect(self.displayChangedMenuState, ('set', 'showRegionNames'), self.display)
-        dispatcher.connect(self.displayChangedMenuState, ('set', 'showNeuronNames'), self.display)
-        dispatcher.connect(self.displayChangedMenuState, ('set', 'useGhosts'), self.display)
-        dispatcher.connect(self.displayChangedMenuState, ('set', 'labelsFloatOnTop'), self.display)
-        dispatcher.connect(self.displayChangedMenuState, ('set', 'selection'), self.display)
-        dispatcher.connect(self.displayChangedMenuState, ('set', 'viewDimensions'), self.display)
+        self.SetToolBar(self.toolBar())
         
         if platform.system() == 'Darwin':
             # Have new windows cascade so they don't sit right on top of each other.
@@ -170,7 +152,7 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_MENU, wx.GetApp().onOpenInspector, viewMenu.Append(wx.NewId(), gettext('Open Inspector Window\tCtrl-I'), gettext('Open the inspector window')))
         self.mouseOverSelectingItem = viewMenu.Append(wx.NewId(), gettext('Use Mouse-Over Highlighting'), gettext('Automatically select the object under the mouse'), True)
         self.Bind(wx.EVT_MENU, self.OnUseMouseOverSelecting, self.mouseOverSelectingItem)
-        viewMenu.AppendSeparator()
+        viewMenu.AppendSeparator()  # -----------------
         self.showRegionNamesMenuItem = viewMenu.Append(wx.NewId(), gettext('Show Region Names'), gettext('Show/hide the region names'), True)
         self.Bind(wx.EVT_MENU, self.onShowHideRegionNames, self.showRegionNamesMenuItem)
         self.showNeuronNamesMenuItem = viewMenu.Append(wx.NewId(), gettext('Show Neuron Names'), gettext('Show/hide the neuron names'), True)
@@ -181,13 +163,18 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_MENU, self.onShowFlow, self.showFlowMenuItem)
         self.useGhostsMenuItem = viewMenu.Append(wx.NewId(), gettext('Use Ghosting'), gettext('Dim objects that are not currently selected'), True)
         self.Bind(wx.EVT_MENU, self.onUseGhosts, self.useGhostsMenuItem)
-        viewMenu.AppendSeparator()
+        viewMenu.AppendSeparator()  # -----------------
         for layoutId, layoutClass in Display.layoutClasses().iteritems():
             menuItem = viewMenu.Append(layoutId, gettext('%s Layout') % layoutClass.name())
             self.Bind(wx.EVT_MENU, self.display.onLayout, menuItem)
             self.Bind(wx.EVT_UPDATE_UI, self.onUpdateLayoutUI, menuItem)
         self.Bind(wx.EVT_MENU, self.display.onLayout, viewMenu.Append(wx.NewId(), gettext('Repeat Last Layout\tCtrl-L')))
-        viewMenu.AppendSeparator()
+        viewMenu.AppendSeparator()  # -----------------
+        self.viewIn2DMenuItem = viewMenu.Append(wx.NewId(), gettext('View in 2D\tCtrl-2'), gettext('Show the objects in the xy, xz or zy plane'), True)
+        self.Bind(wx.EVT_MENU, self.display.onViewIn2D, self.viewIn2DMenuItem)
+        self.viewIn3DMenuItem = viewMenu.Append(wx.NewId(), gettext('View in 3D\tCtrl-3'), gettext('Show the objects in the three dimensional space'), True)
+        self.Bind(wx.EVT_MENU, self.display.onViewIn3D, self.viewIn3DMenuItem)
+        viewMenu.AppendSeparator()  # -----------------
         self.resetViewMenuItem = viewMenu.Append(wx.NewId(), gettext('Reset View'), gettext('Return to the default view'))
         self.Bind(wx.EVT_MENU, self.onResetView, self.resetViewMenuItem)
         self.zoomToFitMenuItem = viewMenu.Append(wx.NewId(), gettext('Zoom to Fit\tCtrl-0'), gettext('Fit all objects within the display'))
@@ -198,7 +185,7 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_MENU, self.onZoomIn, self.zoomInMenuItem)
         self.zoomOutMenuItem = viewMenu.Append(wx.NewId(), gettext('Zoom Out\tCtrl--'), gettext('Make objects appear smaller'))
         self.Bind(wx.EVT_MENU, self.onZoomOut, self.zoomOutMenuItem)
-        viewMenu.AppendSeparator()
+        viewMenu.AppendSeparator()  # -----------------
         self.Bind(wx.EVT_MENU, self.display.onSaveView, viewMenu.Append(wx.NewId(), gettext('Save View as...'), gettext('Save the current view to a file')))
         menuBar.Insert(menuBar.GetMenuCount() - 1, viewMenu, gettext('&View'))
         
@@ -207,17 +194,43 @@ class NeuroptikonFrame( wx.Frame ):
         return menuBar
     
     
-    def displayChangedMenuState(self):
-        self.mouseOverSelectingItem.Check(self.display.useMouseOverSelecting())
-        self.showRegionNamesMenuItem.Check(self.display.showRegionNames())
-        self.showNeuronNamesMenuItem.Check(self.display.showNeuronNames())
-        self.labelsFloatOnTopMenuItem.Check(self.display.labelsFloatOnTop())
-        self.useGhostsMenuItem.Check(self.display.useGhosts())
-        self.resetViewMenuItem.Enable(self.display.viewDimensions == 3)
-        self.zoomToFitMenuItem.Enable(self.display.viewDimensions == 2)
-        self.zoomToSelectionMenuItem.Enable(self.display.viewDimensions == 2 and any(self.display.selection()))
-        self.GetToolBar().ToggleTool(self._view2DId, self.display.viewDimensions == 2)
-        self.GetToolBar().ToggleTool(self._view3DId, self.display.viewDimensions == 3)
+    def toolBar(self):
+        toolBar = wx.ToolBar(self)
+        toolBar.AddCheckLabelTool(self.viewIn2DMenuItem.GetId(), gettext('2D View'), self.loadBitmap("View2D.png"))
+        self.Bind(wx.EVT_TOOL, self.display.onViewIn2D, id = self.viewIn2DMenuItem.GetId())
+        toolBar.AddCheckLabelTool(self.viewIn3DMenuItem.GetId(), gettext('3D View'), self.loadBitmap("View3D.png"))
+        self.Bind(wx.EVT_TOOL, self.display.onViewIn3D, id = self.viewIn3DMenuItem.GetId())
+        toolBar.AddSeparator()
+        toolBar.AddLabelTool(self.zoomToFitMenuItem.GetId(), gettext('Zoom To Fit'), self.loadBitmap("ZoomToFit.png"))
+        toolBar.AddLabelTool(self.zoomToSelectionMenuItem.GetId(), gettext('Zoom To Selection'), self.loadBitmap("ZoomToSelection.png"))
+        toolBar.AddLabelTool(self.zoomInMenuItem.GetId(), gettext('Zoom In'), self.loadBitmap("ZoomIn.png"))
+        toolBar.AddLabelTool(self.zoomOutMenuItem.GetId(), gettext('Zoom Out'), self.loadBitmap("ZoomOut.png"))
+        toolBar.Realize()
+        return toolBar
+    
+    
+    def onUpdateUI(self, event):
+        eventId = event.GetId() 
+        if eventId == self.mouseOverSelectingItem.GetId():
+            event.Check(self.display.useMouseOverSelecting())
+        elif eventId == self.showRegionNamesMenuItem.GetId():
+            event.Check(self.display.showRegionNames())
+        elif eventId == self.showNeuronNamesMenuItem.GetId():
+            event.Check(self.display.showNeuronNames())
+        elif eventId == self.labelsFloatOnTopMenuItem.GetId():
+            event.Check(self.display.labelsFloatOnTop())
+        elif eventId == self.useGhostsMenuItem.GetId():
+            event.Check(self.display.useGhosts())
+        elif eventId == self.viewIn2DMenuItem.GetId():
+            event.Check(self.display.viewDimensions == 2)
+        elif eventId == self.viewIn3DMenuItem.GetId():
+            event.Check(self.display.viewDimensions == 3)
+        elif eventId == self.resetViewMenuItem.GetId():
+            event.Enable(self.display.viewDimensions == 3)
+        elif eventId == self.zoomToFitMenuItem.GetId():
+            event.Enable(self.display.viewDimensions == 2)
+        elif eventId == self.zoomToSelectionMenuItem.GetId():
+            event.Enable(self.display.viewDimensions == 2 and any(self.display.selection()))
     
     
     def onActivate(self, event):
