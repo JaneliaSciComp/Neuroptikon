@@ -691,24 +691,24 @@ class Visible(object):
             if 'flowToColor' in params or 'flowToSpacing' in params or 'flowToSpeed' in params or 'flowToSpread' in params:
                 scriptFile.write('%s.setVisibleFlowTo(%s, True' % (displayRef, scriptRef))
                 if 'flowToColor' in params:
-                    scriptFile.write(', flowToColor = (' + ', '.join([str(component) for component in params['flowToColor']]) + ')')
+                    scriptFile.write(', color = (' + ', '.join([str(component) for component in params['flowToColor']]) + ')')
                 if 'flowToSpacing' in params:
-                    scriptFile.write(', flowToSpacing = ' + str(self.flowToSpacing))
+                    scriptFile.write(', spacing = ' + str(self.flowToSpacing))
                 if 'flowToSpeed' in params:
-                    scriptFile.write(', flowToSpeed = ' + str(self.flowToSpeed))
+                    scriptFile.write(', speed = ' + str(self.flowToSpeed))
                 if 'flowToSpread' in params:
-                    scriptFile.write(', flowToSpread = ' + str(self.flowToSpread))
+                    scriptFile.write(', spread = ' + str(self.flowToSpread))
                 scriptFile.write(')\n')
             if 'flowFromColor' in params or 'flowFromSpacing' in params or 'flowFromSpeed' in params or 'flowFromSpread' in params:
                 scriptFile.write('%s.setVisibleFlowFrom(%s, True' % (displayRef, scriptRef))
                 if 'flowFromColor' in params:
-                    scriptFile.write(', flowFromColor = (' + ', '.join([str(component) for component in params['flowFromColor']]) + ')')
+                    scriptFile.write(', color = (' + ', '.join([str(component) for component in params['flowFromColor']]) + ')')
                 if 'flowFromSpacing' in params:
-                    scriptFile.write(', flowFromSpacing = ' + str(self.flowFromSpacing))
+                    scriptFile.write(', spacing = ' + str(self.flowFromSpacing))
                 if 'flowFromSpeed' in params:
-                    scriptFile.write(', flowFromSpeed = ' + str(self.flowFromSpeed))
+                    scriptFile.write(', speed = ' + str(self.flowFromSpeed))
                 if 'flowFromSpread' in params:
-                    scriptFile.write(', flowFromSpread = ' + str(self.flowFromSpread))
+                    scriptFile.write(', spread = ' + str(self.flowFromSpread))
                 scriptFile.write(')\n')
         else:
             # Manually visualize the object.
