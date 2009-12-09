@@ -46,7 +46,7 @@ The current selection
 
 Each network window maintains a list of selected objects.  Clicking on an object will select it while clicking in any empty space will clear the selection.  Hold down the command/apple key (Mac OS X) or alt key (Windows) while clicking to add to or remove from the selection.
 
-The selected objects are drawn with a blue highlight and are the focus of the :doc:`inspector window <Inspector>`.  Objects that connect to the selected objects are also highlighted.  If ghosting is turned on (the default) then the connected objects will remain opaque while the rest of the network fades out.  If ghosting is off then the connected objects will be drawn with a subtler blue highlight.  Any connections between objects in the selection will display an animated flow based on their :ref:`current settings <path-inspector>`.   
+The selected objects are drawn with a blue highlight and are the focus of the :doc:`inspector window <Inspector>`.  Objects that connect to the selected objects are also highlighted.  (If multiple objects are selected and the "Highlight Only Within Selection" option has been chosen from the View menu or the toolbar then only connections between objects in the selection will be highlighted.)  If ghosting is turned on (the default) then the connected objects will remain opaque while the rest of the network fades out.  If ghosting is off then the connected objects will be drawn with a subtler blue highlight.  Any connections between objects in the selection will display an animated flow based on their :ref:`current settings <path-inspector>`.   
 
 You can also hold down the shift key when clicking on an object and all of the objects along one of the shortest paths between the previously selected object and the new object will be selected.
 
@@ -84,7 +84,7 @@ If the selected object has its size or position :ref:`fixed <geometry-inspector>
 Zooming, scrolling, centering the view
 ......................................
 
-You can zoom into and out of the visualization by using the scroll wheel on your mouse or any of the "Zoom..." options in the View menu.  When viewing in two dimensions you will get a set of scroll bars when zoomed in that let you see the rest of the network.  Clicking in an empty space and dragging will scroll the display.  When viewing in three dimensions you can click in empty space and drag to rotate the display.  Clicking and dragging with the center mouse button or the left and right buttons together will move the entire display.
+You can zoom into and out of the visualization by using the scroll wheel on your mouse or any of the "Zoom..." options in the View menu or on the toolbar.  When viewing in two dimensions you will get a set of scroll bars when zoomed in that let you see the rest of the network.  Clicking in an empty space and dragging will scroll the display.  When viewing in three dimensions you can click in empty space and drag to rotate the display.  Clicking and dragging with the center mouse button or the left and right buttons together will move the entire display.
 
 At any time you can bring the entire network into view by choosing "Reset View" (3D) or "Zoom to Fit" (2D) from the View menu.  This is useful, for example, if you've zoomed in or out too far and can't find your network anymore.   
 

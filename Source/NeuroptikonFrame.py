@@ -53,6 +53,8 @@ class NeuroptikonFrame( wx.Frame ):
         self.SetMenuBar(self.menuBar())
         self.SetToolBar(self.toolBar())
         
+        dispatcher.connect(self.onDisplayChangedHighlightOnlyWithinSelection, ('set', 'highlightOnlyWithinSelection'), self.display)
+        
         if platform.system() == 'Darwin':
             # Have new windows cascade so they don't sit right on top of each other.
             carbon.RepositionWindow(self.MacGetTopLevelWindowRef(), 0, 4)   # 4 = kWindowCascadeOnMainScreen
@@ -152,6 +154,8 @@ class NeuroptikonFrame( wx.Frame ):
         self.Bind(wx.EVT_MENU, wx.GetApp().onOpenInspector, viewMenu.Append(wx.NewId(), gettext('Open Inspector Window\tCtrl-I'), gettext('Open the inspector window')))
         self.mouseOverSelectingItem = viewMenu.Append(wx.NewId(), gettext('Use Mouse-Over Highlighting'), gettext('Automatically select the object under the mouse'), True)
         self.Bind(wx.EVT_MENU, self.OnUseMouseOverSelecting, self.mouseOverSelectingItem)
+        self.highlightOnlyWithinSelectionItem = viewMenu.Append(wx.NewId(), gettext('Highlight Only Within Selection'), gettext('Only highlight connections to other selected objects'), True)
+        self.Bind(wx.EVT_MENU, self.onHighlightOnlyWithinSelection, self.highlightOnlyWithinSelectionItem)
         viewMenu.AppendSeparator()  # -----------------
         self.showRegionNamesMenuItem = viewMenu.Append(wx.NewId(), gettext('Show Region Names'), gettext('Show/hide the region names'), True)
         self.Bind(wx.EVT_MENU, self.onShowHideRegionNames, self.showRegionNamesMenuItem)
@@ -205,6 +209,8 @@ class NeuroptikonFrame( wx.Frame ):
         toolBar.AddLabelTool(self.zoomToSelectionMenuItem.GetId(), gettext('Zoom To Selection'), self.loadBitmap("ZoomToSelection.png"))
         toolBar.AddLabelTool(self.zoomInMenuItem.GetId(), gettext('Zoom In'), self.loadBitmap("ZoomIn.png"))
         toolBar.AddLabelTool(self.zoomOutMenuItem.GetId(), gettext('Zoom Out'), self.loadBitmap("ZoomOut.png"))
+        toolBar.AddSeparator()
+        toolBar.AddCheckLabelTool(self.highlightOnlyWithinSelectionItem.GetId(), gettext('Highlight Only Within Selection'), self.loadBitmap("HighlightOnlyWithinSelectionOff.png"), shortHelp = gettext('Only highlight connections to other selected objects'))
         toolBar.Realize()
         return toolBar
     
@@ -224,6 +230,8 @@ class NeuroptikonFrame( wx.Frame ):
             event.Enable(focusedWindow == self._console and self._console.CanPaste())
         elif eventId == self.mouseOverSelectingItem.GetId():
             event.Check(self.display.useMouseOverSelecting())
+        elif eventId == self.highlightOnlyWithinSelectionItem.GetId():
+            event.Check(self.display.highlightOnlyWithinSelection())
         elif eventId == self.showRegionNamesMenuItem.GetId():
             event.Check(self.display.showRegionNames())
         elif eventId == self.showNeuronNamesMenuItem.GetId():
@@ -245,6 +253,14 @@ class NeuroptikonFrame( wx.Frame ):
         elif eventId == self.zoomOutMenuItem.GetId():
             event.Enable(self.display.viewDimensions == 3 or self.display.orthoZoom > 0)
     
+    
+    def onDisplayChangedHighlightOnlyWithinSelection(self):
+        if self.display.highlightOnlyWithinSelection():
+            bitmap = self.loadBitmap("HighlightOnlyWithinSelectionOn.png")
+        else:
+            bitmap = self.loadBitmap("HighlightOnlyWithinSelectionOff.png")
+        self.GetToolBar().SetToolNormalBitmap(self.highlightOnlyWithinSelectionItem.GetId(), bitmap)
+        
     
     def onActivate(self, event):
         wx.GetApp().inspector.inspectDisplay(self.display)
@@ -345,6 +361,10 @@ class NeuroptikonFrame( wx.Frame ):
     
     def OnUseMouseOverSelecting(self, event_):
         self.display.setUseMouseOverSelecting(not self.display.useMouseOverSelecting())
+    
+    
+    def onHighlightOnlyWithinSelection(self, event_):
+        self.display.setHighlightOnlyWithinSelection(not self.display.highlightOnlyWithinSelection())
     
     
     def onShowHideRegionNames(self, event_):

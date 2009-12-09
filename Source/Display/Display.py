@@ -59,6 +59,7 @@ class Display(wx.glcanvas.GLCanvas):
         self._showNeuronNames = False
         self._labelsFloatOnTop = False
         self._showFlow = False
+        self._highlightOnlyWithinSelection = False
         self._useGhosts = True
         self._ghostingOpacity = 0.25
         self._primarySelectionColor = (0, 0, 1, .4)
@@ -270,6 +271,8 @@ class Display(wx.glcanvas.GLCanvas):
             self.autoVisualize = xmlElement.get('autoVisualize') in trueValues
         if xmlElement.get('labelsFloatOnTop') is not None:
             self.setLabelsFloatOnTop(xmlElement.get('labelsFloatOnTop') in trueValues)
+        if xmlElement.get('highlightOnlyWithinSelection') is not None:
+            self.setHighlightOnlyWithinSelection(xmlElement.get('highlightOnlyWithinSelection') in trueValues)
         
         selectedVisibleIds = xmlElement.get('selectedVisibleIds')
         visiblesToSelect = []
@@ -333,6 +336,7 @@ class Display(wx.glcanvas.GLCanvas):
         displayElement.set('useMouseOverSelecting', 'true' if self._useMouseOverSelecting else 'false')
         displayElement.set('autoVisualize', 'true' if self.autoVisualize else 'false')
         displayElement.set('labelsFloatOnTop', 'true' if self._labelsFloatOnTop else 'false')
+        displayElement.set('highlightOnlyWithinSelection', 'true' if self._highlightOnlyWithinSelection else 'false')
         selectedVisibleIds = []
         for visible in self.selectedVisibles:
             selectedVisibleIds.append(str(visible.displayId))
@@ -357,6 +361,7 @@ class Display(wx.glcanvas.GLCanvas):
         scriptFile.write(displayRef + '.setGhostingOpacity(' + str(self._ghostingOpacity) + ')\n')
         scriptFile.write(displayRef + '.setUseMouseOverSelecting(' + str(self._useMouseOverSelecting) + ')\n')
         scriptFile.write(displayRef + '.setLabelsFloatOnTop(' + str(self._labelsFloatOnTop) + ')\n')
+        scriptFile.write(displayRef + '.setHighlightOnlyWithinSelection(' + str(self._highlightOnlyWithinSelection) + ')\n')
         scriptFile.write('\n')
         
         # First visualize all of the nodes.
@@ -1211,6 +1216,25 @@ class Display(wx.glcanvas.GLCanvas):
         return self._showFlow
     
     
+    def setHighlightOnlyWithinSelection(self, flag):
+        """
+        Set whether connections to objects outside of the selection should be highlighted when more than one object is selected.
+        """
+        
+        if flag != self._highlightOnlyWithinSelection:
+            self._highlightOnlyWithinSelection = flag
+            self._onSelectionOrShowFlowChanged()
+            dispatcher.send(('set', 'highlightOnlyWithinSelection'), self)
+    
+    
+    def highlightOnlyWithinSelection(self):
+        """
+        Return whether connections to objects outside of the selection will be highlighted when more than one object is selected.
+        """
+        
+        return self._highlightOnlyWithinSelection
+    
+    
     def setUseGhosts(self, useGhosts):
         """
         Set whether unselected objects should be dimmed in the visualization.
@@ -1920,7 +1944,7 @@ class Display(wx.glcanvas.GLCanvas):
             
         visiblesToHighlight = set()
         visiblesToAnimate = set()
-        singleSelection = (len(self.selectedVisibles) == 1)
+        singleSelection = (len(self.selectedVisibles) == 1) or not self._highlightOnlyWithinSelection
         selectedObjects = self.selectedObjects()
         for selectedVisible in self.selectedVisibles:
             if isinstance(selectedVisible.client, Object):
