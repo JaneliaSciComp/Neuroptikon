@@ -188,6 +188,15 @@ class Region(NeuroObject):
         return allSubRegions
     
     
+    def dependentObjects(self):
+        return NeuroObject.dependentObjects(self) + self.subRegions + self.arborizations + self.pathways + self.neurons
+    
+    
+    def disconnectFromNetwork(self):
+        if self.parentRegion:
+            self.parentRegion.subRegions.remove(self)
+    
+    
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
         params['size'] = (0.1, 0.1, 0.1)

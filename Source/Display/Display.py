@@ -834,7 +834,7 @@ class Display(wx.glcanvas.GLCanvas):
         Return the list of :class:`visible proxies <Display.Visible.Visible>` for the given object or an empty list if the object is not visualized.
         """
         
-        return self.visibles[networkObject.networkId] if networkObject and networkObject.networkId in self.visibles else []
+        return list(self.visibles[networkObject.networkId]) if networkObject and networkObject.networkId in self.visibles else []
     
     
     def Refresh(self, *args, **keywordArgs):    # pylint: disable-msg=W0221
@@ -933,8 +933,12 @@ class Display(wx.glcanvas.GLCanvas):
         
         If you want to have a purely visual object that does not represent any object in the biological network then pass None.
         
+        You can customize the visualization of the object by passing additional parameters.  The parameters that would be used for automatic visualization can be obtained by calling :meth:`defaultVisualizationParams() <Network.Object.Object.defaultVisualizationParams>` on the object.
+        
         Returns the :class:`visible proxy <Display.Visible.Visible>` of the object.
         """
+        
+        # TODO: document the list of possible params somewhere. 
         # TODO: replace this whole block with display rules.
         
         visible = Visible(self, networkObject)
@@ -1064,14 +1068,8 @@ class Display(wx.glcanvas.GLCanvas):
         If the object has any nested objects or connections then they will be removed as well. 
         """
         
-        visibles = self.visiblesForObject(networkObject)
-        visible = None
-        if len(visibles) == 1:
-            visible = visibles[0]
-        elif isinstance(networkObject, Stimulus):
-            visible = visibles[0 if visibles[1].isPath() else 1]
-        if visible is not None:
-            self.removeVisible(visible)
+        while any(self.visiblesForObject(networkObject)):
+            self.removeVisible(self.visiblesForObject(networkObject)[0])
     
     
     def _arborizationChangedFlow(self, sender):
@@ -1122,7 +1120,6 @@ class Display(wx.glcanvas.GLCanvas):
                     self.visualizeObject(addedObject)
             self.Refresh()
         elif signal == 'deletion':
-            # TODO: untested
             for removedObject in affectedObjects:
                 self.removeObject(removedObject)
         else:

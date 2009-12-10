@@ -43,7 +43,7 @@ External Stimulation
 
 Inputs from outside of the network are represented with :class:`Stimuli <Network.Stimulus.Stimulus>` objects.
 
-.. automethod:: Network.Object.Object.stimulate
+.. automethod:: Network.neuro_object.NeuroObject.stimulate
 
 
 .. _user-defined-attributes:
@@ -56,3 +56,13 @@ Each object in a network can have any number of user-defined attributes.  Each a
 .. automethod:: Network.Object.Object.addAttribute
 .. automethod:: Network.Object.Object.getAttribute
 .. automethod:: Network.Object.Object.getAttributes
+
+
+.. _visualization:
+
+Visualization
+-------------
+
+Each object provides a default set of visualization parameters.  These parameters are used when auto-visualization is enabled (the default) otherwise the parameters can be queried, modified if desired and then used to manually visualize the object.
+
+.. automethod:: Network.Object.Object.defaultVisualizationParams

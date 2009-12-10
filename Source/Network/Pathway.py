@@ -211,6 +211,11 @@ class Pathway(NeuroObject):
         return outputs
     
     
+    def disconnectFromNetwork(self):
+        self.region1.pathways.remove(self)
+        self.region2.pathways.remove(self)
+    
+    
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
         shapeClasses = Neuroptikon.scriptLocals()['shapes']

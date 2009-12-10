@@ -101,6 +101,12 @@ class Synapse(NeuroObject):
         return NeuroObject.outputs(self, recurse) + self.postSynapticNeurites
     
     
+    def disconnectFromNetwork(self):
+        self.preSynapticNeurite._synapses.remove(self)
+        for neurite in self.postSynapticNeurites:
+            neurite._synapses.remove(self)
+    
+    
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
         shapeClasses = Neuroptikon.scriptLocals()['shapes']

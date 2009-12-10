@@ -107,6 +107,11 @@ class Arborization(NeuroObject):
         return outputs
     
     
+    def disconnectFromNetwork(self):
+        self.neurite.arborization = None
+        self.region.arborizations.remove(self)
+    
+    
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
         shapeClasses = Neuroptikon.scriptLocals()['shapes']

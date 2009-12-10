@@ -73,6 +73,11 @@ class Innervation(NeuroObject):
         return NeuroObject.outputs(self, recurse) + [self.muscle]
     
     
+    def disconnectFromNetwork(self):
+        self.neurite._innervations.remove(self)
+        self.muscle._innervations.remove(self)
+    
+    
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
         shapeClasses = Neuroptikon.scriptLocals()['shapes']

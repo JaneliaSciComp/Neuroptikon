@@ -466,7 +466,47 @@ class Network:
         return objects
     
     
+    def removeObject(self, networkObject):
+        """
+        Remove the indicated object and any dependent objects from the network and any displays.
+        
+        >>> network.removeObject(network.findNeuron('AVAL'))
+        """
+        
+        if networkObject in self.objects:
+            # Determine all of the objects that will need to be removed
+            objectsToRemove = set([networkObject])
+            objectsToInspect = [networkObject]
+            while any(objectsToInspect):
+                objectToInspect = objectsToInspect.pop(0)
+                dependentObjects = set(objectToInspect.dependentObjects())
+                objectsToInspect += list(dependentObjects.difference(objectsToRemove))
+                objectsToRemove = objectsToRemove.union(dependentObjects)
+            
+            # Remove all of the objects.
+            for objectToRemove in objectsToRemove:
+                objectToRemove.disconnectFromNetwork()
+                self.objects.remove(objectToRemove)
+                del self.idDict[objectToRemove.networkId]
+            
+                # Keep the NetworkX graph in sync.
+                if objectToRemove.networkId in self.graph:
+                    self.graph.delete_node(objectToRemove.networkId)
+                else:
+                    for edge in self.graph.edges_iter():
+                        if edge[2] == objectToRemove:
+                            self.graph.delete_edge(edge[0], edge[1], edge[2])
+                            break
+            
+            # Let anyone who cares know that the network was changed.
+            dispatcher.send('deletion', self, affectedObjects = objectsToRemove)
+    
+    
     def removeAllObjects(self):
+        """
+        Remove all objects from the network and any displays.
+        """
+        
         for networkObject in self.objects:
             networkObject.network = None
         self.objects = []

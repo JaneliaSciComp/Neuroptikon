@@ -49,6 +49,10 @@ class Muscle(NeuroObject):
         return NeuroObject.inputs(self, recurse) + self._innervations
     
     
+    def dependentObjects(self):
+        return NeuroObject.dependentObjects(self) + self.innervations()
+    
+    
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
         shapeClasses = Neuroptikon.scriptLocals()['shapes']

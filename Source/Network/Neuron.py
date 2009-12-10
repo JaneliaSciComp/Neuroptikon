@@ -351,6 +351,15 @@ class Neuron(NeuroObject):
         return outputs
     
     
+    def dependentObjects(self):
+        return NeuroObject.dependentObjects(self) + self.neurites()
+    
+    
+    def disconnectFromNetwork(self):
+        if self.region:
+            self.region.neurons.remove(self)
+    
+    
     def setHasFunction(self, function, hasFunction):
         """
         Set whether or not this neuron has the indicated function.

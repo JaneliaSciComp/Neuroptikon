@@ -10,7 +10,7 @@ Stimuli
 
 Stimulus objects represent external stimulation of objects in the network.
 
-Stimulii are created by calling the :meth:`stimulate <Network.Object.Object.stimulate>` method on an object in the network.  The modality argument must be a :class:`modality <Library.Modality.Modality>` from the library or None to indicate unknown modality.
+Stimulii are created by calling the :meth:`stimulate <Network.neuro_object.NeuroObject.stimulate>` method on an object in the network.  The modality argument must be a :class:`modality <Library.Modality.Modality>` from the library or None to indicate unknown modality.
 
 >>> stimulus = neuron1.stimulate(modality = library.modality('light'))
 

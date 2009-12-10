@@ -795,8 +795,9 @@ class Visible(object):
     
     
     def _displayChangedShowName(self):
-        self._updateLabel()
-        self._updateOpacity()
+        if self.display:
+            self._updateLabel()
+            self._updateOpacity()
     
     
     def _updateLabel(self, opacity = 1.0):
@@ -965,7 +966,8 @@ class Visible(object):
     
     
     def _displayChangedGhosting(self):
-        self._updateOpacity()
+        if self.display:
+            self._updateOpacity()
     
     
     def _updateOpacity(self):

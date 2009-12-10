@@ -68,6 +68,10 @@ class Stimulus(NeuroObject):
         return [self.target]
     
     
+    def disconnectFromNetwork(self):
+        self.target.stimuli.remove(self)
+    
+    
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
         shapeClasses = Neuroptikon.scriptLocals()['shapes']

@@ -110,7 +110,7 @@ The relationships and appearance of objects that are visually nested within each
 
 .. automethod:: Display.Visible.Visible.addChildVisible
 .. automethod:: Display.Visible.Visible.removeChildVisible
-.. automethod:: Display.Visible.Visible.allChildren
+.. automethod:: Display.Visible.Visible.descendants
 .. automethod:: Display.Visible.Visible.ancestors
 .. automethod:: Display.Visible.Visible.rootVisible
 .. automethod:: Display.Visible.Visible.setArrangedAxis

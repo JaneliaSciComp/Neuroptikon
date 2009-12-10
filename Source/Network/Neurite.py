@@ -428,6 +428,16 @@ class Neurite(NeuroObject):
         return outputs
     
     
+    def dependentObjects(self):
+        return NeuroObject.dependentObjects(self) + self.neurites() + ([self.arborization] if self.arborization else []) + self._innervations + self._gapJunctions + self._synapses
+    
+    
+    def disconnectFromNetwork(self):
+        self.root._neurites.remove(self)
+        if self._pathway:
+            self._pathway.removeNeurite(self)
+    
+    
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
         shapeClasses = Neuroptikon.scriptLocals()['shapes']

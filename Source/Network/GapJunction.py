@@ -92,6 +92,11 @@ class GapJunction(NeuroObject):
         return NeuroObject.outputs(self, recurse) + list(self._neurites)
     
     
+    def disconnectFromNetwork(self):
+        for neurite in self._neurites:
+            neurite._gapJunctions.remove(self)
+    
+    
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
         shapeClasses = Neuroptikon.scriptLocals()['shapes']

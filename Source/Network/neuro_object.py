@@ -44,6 +44,15 @@ class NeuroObject(Object):
         return Object.inputs(self, recurse) + (self.stimuli)
     
     
+    def dependentObjects(self):
+        return Object.dependentObjects(self) + self.stimuli
+    
+    
+    def disconnectFromNetwork(self):
+        for stimulus in self.stimuli:
+            stimulus.target = None
+    
+    
     def stimulate(self, modality = None, *args, **keywordArgs):
         """
         Add a :class:`stimulus <Network.Stimulus.Stimulus>` to this object with the given :class:`modality <Library.Modality.Modality>`.

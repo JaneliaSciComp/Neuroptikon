@@ -246,6 +246,23 @@ class Object(object):
         return path
     
     
+    def dependentObjects(self):
+        """
+        Return the list of other objects in the network that could not exist without this object.
+        """
+        
+        return []
+    
+    
+    def disconnectFromNetwork(self):
+        """
+        Perform any clean up, e.g. removing references in other objects, before being removed from the network.
+        """
+        
+        # TODO: This may not be the best way to handle this.  Another option would be for all objects to hold weak refs to other objects in the network and do their own clean up when the objects go away.
+        pass
+    
+    
     def addAttribute(self, name = None, type = None, value = None):
         """
         Add a user-defined attribute to this object.
@@ -314,6 +331,10 @@ class Object(object):
     
     
     def defaultVisualizationParams(self):
+        """
+        Return a dictionary containing the default visualization parameters for this object.
+        """
+        
         # TODO: replace this with a display rule.
         params = {}
         

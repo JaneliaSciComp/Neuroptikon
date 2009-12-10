@@ -40,6 +40,14 @@ Finding objects in the network
 .. automethod:: Network.Network.Network.stimuli
 .. automethod:: Network.Network.Network.synapses
 
+.. _removing-objects:
+
+Removing objects from the network
+---------------------------------
+
+.. automethod:: Network.Network.Network.removeObject
+.. automethod:: Network.Network.Network.removeAllObjects
+
 .. _user-defined-network-attributes:
 
 User-Defined Attributes

@@ -126,7 +126,6 @@ Manually visualizing objects
 By default any object added to the display's network is automatically visualized.  However you can set the display's autoVisualize attribute to False and then choose which parts of the network should be visualized.
 
 .. automethod:: Display.Display.Display.visualizeObject
-.. automethod:: Display.Display.Display.defaultVisualizationParams
 .. automethod:: Display.Display.Display.removeObject
 .. automethod:: Display.Display.Display.removeVisible
 
