@@ -320,6 +320,8 @@ class Neuron(NeuroObject):
         if recurse:
             for neurite in self._neurites:
                 connections += neurite.connections()
+        else:
+            connections += self._neurites
         return connections
     
     
@@ -334,6 +336,8 @@ class Neuron(NeuroObject):
         if recurse:
             for neurite in self._neurites:
                 inputs += neurite.inputs()
+        else:
+            inputs += self._neurites
         return inputs
     
     
@@ -348,6 +352,8 @@ class Neuron(NeuroObject):
         if recurse:
             for neurite in self._neurites:
                 outputs += neurite.outputs()
+        else:
+            outputs += self._neurites
         return outputs
     
     

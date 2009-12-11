@@ -383,11 +383,14 @@ class Neurite(NeuroObject):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        connections = NeuroObject.connections(self, recurse)
-        connections += self.arborizations(recurse)
-        connections += self.gapJunctions(recurse)
-        connections += self.innervations(recurse)
-        connections += self.synapses(recurse)
+        connections = NeuroObject.connections(self, recurse) + [self.root]
+        if recurse:
+            connections += self.arborizations()
+            connections += self.gapJunctions()
+            connections += self.innervations()
+            connections += self.synapses()
+        else:
+            connections += self._neurites
         return connections
     
     
@@ -402,10 +405,12 @@ class Neurite(NeuroObject):
         if self.arborization is not None and self.arborization.receivesInput:
             inputs += [self.arborization]
         inputs += self._gapJunctions
-        inputs += self.synapses(includePre = False)
+        inputs += self.synapses(includePre = False, recurse = recurse)
         if recurse:
             for neurite in self._neurites:
                 inputs += neurite.inputs()
+        else:
+            inputs += self._neurites
         return inputs
     
     
@@ -421,10 +426,12 @@ class Neurite(NeuroObject):
             outputs += [self.arborization]
         outputs += self._gapJunctions
         outputs += self._innervations
-        outputs += self.synapses(includePost = False)
+        outputs += self.synapses(includePost = False, recurse = recurse)
         if recurse:
             for neurite in self._neurites:
                 outputs += neurite.outputs()
+        else:
+            outputs += self._neurites
         return outputs
     
     

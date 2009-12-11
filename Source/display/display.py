@@ -1829,16 +1829,10 @@ class Display(wx.glcanvas.GLCanvas):
             pathWasFound = False
             for visible in visibles:
                 for startVisible in self.selectedVisibles:
-                    prevObject = startVisible.client if startVisible.client.networkId in self.network.graph else None
                     for pathObject in startVisible.client.shortestPathTo(visible.client):
                         for pathVisible in self.visiblesForObject(pathObject):
                             pathWasFound = True
                             newSelection.add(pathVisible)
-                        if prevObject != None:
-                            edgeObject = self.network.graph.get_edge(prevObject.networkId, pathObject.networkId)[0]
-                            for pathVisible in self.visiblesForObject(edgeObject):
-                                newSelection.add(pathVisible)
-                        prevObject = pathObject
             if not pathWasFound:
                 wx.Bell()
         elif extend and len(visibles) == 1 and visibles[0] in newSelection:

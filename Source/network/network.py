@@ -27,7 +27,7 @@ class Network:
         Networks are containers for all :class:`objects <Network.Object.Object>` that exist in a neural circuit. 
         """
         
-        self.graph = XDiGraph(multiedges = True, )
+        self.graph = XDiGraph()
         self.objects = []
         self.idDict = {}   # TODO: weak ref dict?
         self.displays = []
@@ -382,8 +382,38 @@ class Network:
         return self.objectsOfClass(Muscle)
     
     
-    def _objectChanged(self):
+    def _updateGraph(self, objectToUpdate = None):
+        if objectToUpdate is None:
+            # Rebuild the entire graph.
+            self.graph.clear()
+            for objectToUpdate in self.objects:
+                self._updateGraph(objectToUpdate)
+        else:
+            objectId = objectToUpdate.networkId
+            
+            # Remove the object if it was there before.  This will also delete any edges from the node.
+            if objectId in self.graph:
+                self.graph.delete_node(objectId)
+            
+            # (Re-)Add the object to the graph.
+            self.graph.add_node(objectId)
+            
+            # Add the connections to other objects already in the graph.
+            # (Each connection to an object not in the graph will be added when that object is added.)
+            inputIds = set([objectInput.networkId for objectInput in objectToUpdate.inputs(recurse = False)])
+            outputIds = set([objectOutput.networkId for objectOutput in objectToUpdate.outputs(recurse = False)])
+            unknownIds = set([objectInput.networkId for objectInput in objectToUpdate.connections(recurse = False)]).difference(inputIds).difference(outputIds)
+            for inputId in inputIds.union(unknownIds):
+                if inputId in self.graph: # TODO: and not self.graph.has_edge(inputId, objectId)?
+                    self.graph.add_edge(inputId, objectId)
+            for outputId in outputIds.union(unknownIds):
+                if outputId in self.graph: # TODO: and not self.graph.has_edge(objectId, outputId)?
+                    self.graph.add_edge(objectId, outputId)
+        
+    
+    def _objectChanged(self, sender):
         if not self._loadingFromXML and not self._modified:
+            self._updateGraph(sender)
             self._modified = True
             dispatcher.send(('set', 'modified'), self)
     
@@ -416,35 +446,10 @@ class Network:
         if objectToAdd.networkId > self._nextUniqueId:
             self._nextUniqueId = objectToAdd.networkId
         
-        # Update the NetworkX graph representation of the network.
-        if isinstance(objectToAdd, Arborization):
-            if objectToAdd.sendsOutput == None or objectToAdd.sendsOutput:
-                self.graph.add_edge(objectToAdd.neurite.neuron().networkId, objectToAdd.region.networkId, objectToAdd)
-            if objectToAdd.receivesInput == None or objectToAdd.receivesInput:
-                self.graph.add_edge(objectToAdd.region.networkId, objectToAdd.neurite.neuron().networkId, objectToAdd)
-        elif isinstance(objectToAdd, Synapse):
-            for postSynapticNeurite in objectToAdd.postSynapticNeurites:
-                self.graph.add_edge(objectToAdd.preSynapticNeurite.neuron().networkId, postSynapticNeurite.neuron().networkId, objectToAdd)
-        elif isinstance(objectToAdd, GapJunction):
-            neurite1, neurite2 = objectToAdd.neurites()
-            self.graph.add_edge(neurite1.neuron().networkId, neurite2.neuron().networkId, objectToAdd)
-            self.graph.add_edge(neurite2.neuron().networkId, neurite1.neuron().networkId, objectToAdd)
-        elif isinstance(objectToAdd, Pathway):
-            if objectToAdd.region1Projects == None or objectToAdd.region1Projects:
-                self.graph.add_edge(objectToAdd.region1.networkId, objectToAdd.region2.networkId, objectToAdd)
-            if objectToAdd.region2Projects == None or objectToAdd.region2Projects:
-                self.graph.add_edge(objectToAdd.region2.networkId, objectToAdd.region1.networkId, objectToAdd)
-        elif isinstance(objectToAdd, Innervation):
-            self.graph.add_edge(objectToAdd.neurite.neuron().networkId, objectToAdd.muscle.networkId, objectToAdd)
-        elif isinstance(objectToAdd, Stimulus):
-            self.graph.add_node(objectToAdd.networkId)
-            self.graph.add_edge(objectToAdd.networkId, objectToAdd.target.networkId, objectToAdd)
-        elif isinstance(objectToAdd, Neurite):
-            pass    # TODO: are neurites nodes or edges or either?
-        elif isinstance(objectToAdd, Region) or isinstance(objectToAdd, Neuron) or isinstance(objectToAdd, Muscle):
-            self.graph.add_node(objectToAdd.networkId)
+        # Update the NetworkX graph representation of the object and its connections.
+        self._updateGraph(objectToAdd)
         
-        # Watch for any changes to the object so we can update our dirty state.
+        # Watch for any changes to the object so we can update our dirty state and the graph.
         dispatcher.connect(self._objectChanged, dispatcher.Any, objectToAdd)
         
         # Let anyone who cares know that the network was changed.
@@ -492,11 +497,6 @@ class Network:
                 # Keep the NetworkX graph in sync.
                 if objectToRemove.networkId in self.graph:
                     self.graph.delete_node(objectToRemove.networkId)
-                else:
-                    for edge in self.graph.edges_iter():
-                        if edge[2] == objectToRemove:
-                            self.graph.delete_edge(edge[0], edge[1], edge[2])
-                            break
             
             # Let anyone who cares know that the network was changed.
             dispatcher.send('deletion', self, affectedObjects = objectsToRemove)
@@ -540,7 +540,7 @@ class Network:
                     display.selectObjects(selection)
     
     
-    def addAttribute(self, name = None, type = None, value = None):
+    def addAttribute(self, name = None, type = None, value = None): # pylint: disable-msg=W0622
         """
         Add a user-defined attribute to this network.
         
