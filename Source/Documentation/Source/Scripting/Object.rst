@@ -6,22 +6,22 @@
 Network objects
 ===============
 
-.. class:: Network.Object.Object
+.. class:: network.object.Object
 
-The Object class is the base class for every object in a :class:`network <Network.Network.Network>`.  Object's can have names, abbreviations and/or descriptions.  Any number of :ref:`user-defined attributes <user-defined-attributes>` or :ref:`external stimuli <stimuli>` can be added to an object.  The :ref:`connectivity <connectivity>` of objects can also be investigated.
+The Object class is the base class for every object in a :class:`network <network.network.Network>`.  Object's can have names, abbreviations and/or descriptions.  Any number of :ref:`user-defined attributes <user-defined-attributes>` or :ref:`external stimuli <stimuli>` can be added to an object.  The :ref:`connectivity <connectivity>` of objects can also be investigated.
 
 The sub-classes of Object are:
 
-* :class:`Arborization <Network.Arborization.Arborization>`
-* :class:`GapJunction <Network.GapJunction.GapJunction>`
-* :class:`Innervation <Network.Innervation.Innervation>`
-* :class:`Muscle <Network.Muscle.Muscle>`
-* :class:`Neurite <Network.Neurite.Neurite>`
-* :class:`Neuron <Network.Neuron.Neuron>`
-* :class:`Pathway <Network.Pathway.Pathway>`
-* :class:`Region <Network.Region.Region>`
-* :class:`Stimulus <Network.Stimulus.Stimulus>`
-* :class:`Synapse <Network.Synapse.Synapse>`
+* :class:`Arborization <network.arborization.Arborization>`
+* :class:`GapJunction <network.gap_junction.GapJunction>`
+* :class:`Innervation <network.innervation.Innervation>`
+* :class:`Muscle <network.muscle.Muscle>`
+* :class:`Neurite <network.neurite.Neurite>`
+* :class:`Neuron <network.neuron.Neuron>`
+* :class:`Pathway <network.pathway.Pathway>`
+* :class:`Region <network.region.Region>`
+* :class:`Stimulus <network.stimulus.Stimulus>`
+* :class:`Synapse <network.synapse.Synapse>`
 
 .. _connectivity:
 
@@ -30,10 +30,10 @@ Connectivity
 
 There are a variety of methods for investigating the connections to and from objects.
 
-.. automethod:: Network.Object.Object.connections
-.. automethod:: Network.Object.Object.inputs
-.. automethod:: Network.Object.Object.outputs
-.. automethod:: Network.Object.Object.shortestPathTo
+.. automethod:: network.object.Object.connections
+.. automethod:: network.object.Object.inputs
+.. automethod:: network.object.Object.outputs
+.. automethod:: network.object.Object.shortestPathTo
 
 
 .. _stimuli:
@@ -41,9 +41,9 @@ There are a variety of methods for investigating the connections to and from obj
 External Stimulation
 --------------------
 
-Inputs from outside of the network are represented with :class:`Stimuli <Network.Stimulus.Stimulus>` objects.
+Inputs from outside of the network are represented with :class:`Stimuli <network.stimulus.Stimulus>` objects.
 
-.. automethod:: Network.neuro_object.NeuroObject.stimulate
+.. automethod:: network.neuro_object.NeuroObject.stimulate
 
 
 .. _user-defined-attributes:
@@ -53,9 +53,9 @@ User-Defined Attributes
 
 Each object in a network can have any number of user-defined attributes.  Each attribute has a name, a type and a value.
 
-.. automethod:: Network.Object.Object.addAttribute
-.. automethod:: Network.Object.Object.getAttribute
-.. automethod:: Network.Object.Object.getAttributes
+.. automethod:: network.object.Object.addAttribute
+.. automethod:: network.object.Object.getAttribute
+.. automethod:: network.object.Object.getAttributes
 
 
 .. _visualization:
@@ -65,4 +65,4 @@ Visualization
 
 Each object provides a default set of visualization parameters.  These parameters are used when auto-visualization is enabled (the default) otherwise the parameters can be queried, modified if desired and then used to manually visualize the object.
 
-.. automethod:: Network.Object.Object.defaultVisualizationParams
+.. automethod:: network.object.Object.defaultVisualizationParams

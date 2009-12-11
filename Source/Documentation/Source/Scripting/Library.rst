@@ -6,4 +6,4 @@
 Library
 =======
 
-.. class:: Library.Library.Library
+.. class:: library.library.Library

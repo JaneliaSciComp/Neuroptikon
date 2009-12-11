@@ -1,4 +1,4 @@
-from Object import Object
+from object import Object
 
 
 class NeuroObject(Object):
@@ -62,8 +62,8 @@ class NeuroObject(Object):
         Returns the stimulus object that is created.
         """
         
-        from Stimulus import Stimulus
-        from Library.Modality import Modality
+        from stimulus import Stimulus
+        from library.modality import Modality
         
         if modality != None and not isinstance(modality, Modality):
             raise TypeError, 'The modality argument passed to stimulate() must be a value obtained from the library or None.'

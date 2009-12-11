@@ -6,13 +6,13 @@
 Gap Junctions
 =============
 
-.. class:: Network.GapJunction.GapJunction
+.. class:: network.gap_junction.GapJunction
 
-GapJunction objects represent a gap junction between two :class:`neurites <Network.Neurite.Neurite>` in a :class:`network <Network.Network.Network>`.
+GapJunction objects represent a gap junction between two :class:`neurites <network.neurite.Neurite>` in a :class:`network <network.network.Network>`.
 
-Instances of this class are created by using the gapJunctionWith method of :meth:`Neuron <Network.Neuron.Neuron.gapJunctionWith>` and :meth:`Neurite <Network.Neurite.Neurite.gapJunctionWith>` objects.
+Instances of this class are created by using the gapJunctionWith method of :meth:`Neuron <network.neuron.Neuron.gapJunctionWith>` and :meth:`Neurite <network.neurite.Neurite.gapJunctionWith>` objects.
 
 >>> neuron1.gapJunctionWith(neuron2)
 
-.. automethod:: Network.GapJunction.GapJunction.neurites
+.. automethod:: network.gap_junction.GapJunction.neurites
  

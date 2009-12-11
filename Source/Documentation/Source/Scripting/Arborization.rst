@@ -6,11 +6,11 @@
 Arborizations
 =============
 
-.. class:: Network.Arborization.Arborization
+.. class:: network.arborization.Arborization
 
-Arborizations represent a :class:`neurite's <Network.Neurite.Neurite>` arborization within a :class:`region <Network.Region.Region>`.
+Arborizations represent a :class:`neurite's <network.neurite.Neurite>` arborization within a :class:`region <network.region.Region>`.
 
-You create an arborization by messaging a :meth:`neuron <Network.Neuron.Neuron.arborize>` or :meth:`neurite <Network.Neurite.Neurite.arborize>`:
+You create an arborization by messaging a :meth:`neuron <network.neuron.Neuron.arborize>` or :meth:`neurite <network.neurite.Neurite.arborize>`:
 
 >>> neuron1 = network.createNeuron()
 >>> region1 = network.createRegion()
@@ -18,8 +18,8 @@ You create an arborization by messaging a :meth:`neuron <Network.Neuron.Neuron.a
 
 .. attribute:: Arborization.neurite
 	
-	The :class:`neurite <Network.Neurite.Neurite>` from which this arborization extends.
+	The :class:`neurite <network.neurite.Neurite>` from which this arborization extends.
 	
 .. attribute:: Arborization.region
 	
-	The :class:`region <Network.Region.Region>` being arborized.
+	The :class:`region <network.region.Region>` being arborized.

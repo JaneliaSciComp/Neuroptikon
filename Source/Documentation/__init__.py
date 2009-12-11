@@ -2,7 +2,7 @@
 
 __version__ = "1.0.0"
 
-import Neuroptikon
+import neuroptikon
 
 import wx
 import os.path, sys, urllib
@@ -11,10 +11,10 @@ _sharedFrame = None
 
 
 def baseURL():
-    if Neuroptikon.runningFromSource:
-        basePath = os.path.join(Neuroptikon.rootDir, 'Documentation', 'build', 'Documentation')
+    if neuroptikon.runningFromSource:
+        basePath = os.path.join(neuroptikon.rootDir, 'Documentation', 'build', 'Documentation')
     else:
-        basePath = os.path.join(Neuroptikon.rootDir, 'Documentation')
+        basePath = os.path.join(neuroptikon.rootDir, 'Documentation')
     
     return 'file:' + urllib.pathname2url(basePath) + '/'
 
@@ -24,8 +24,8 @@ def showPage(page):
 
     # Try to open an embedded WebKit-based help browser. 
     try:
-        import DocumentationFrame
-        DocumentationFrame.showPage(pageURL)
+        import documentation_frame
+        documentation_frame.showPage(pageURL)
     except:
         raise
         # Fall back to using the user's default browser outside of Neuroptikon.

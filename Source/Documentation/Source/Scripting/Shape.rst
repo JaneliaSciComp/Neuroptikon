@@ -6,5 +6,5 @@
 Shapes
 ======
 
-.. autoclass:: Display.Shape.Shape
+.. autoclass:: display.shape.Shape
    :members:

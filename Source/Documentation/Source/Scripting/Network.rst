@@ -6,47 +6,47 @@
 Networks
 ========
 
-.. class:: Network.Network.Network
+.. class:: network.network.Network
 	
-Networks are containers for all :class:`objects <Network.Object.Object>` that exist in a neural circuit. 
+Networks are containers for all :class:`objects <network.object.Object>` that exist in a neural circuit. 
 
 .. _adding-objects:
 
 Adding objects to the network
 -----------------------------
 
-.. automethod:: Network.Network.Network.createMuscle
-.. automethod:: Network.Network.Network.createNeuron
-.. automethod:: Network.Network.Network.createRegion
+.. automethod:: network.network.Network.createMuscle
+.. automethod:: network.network.Network.createNeuron
+.. automethod:: network.network.Network.createRegion
 
 .. _finding-objects:
 
 Finding objects in the network
 ------------------------------
 
-.. automethod:: Network.Network.Network.findMuscle
-.. automethod:: Network.Network.Network.findNeuron
-.. automethod:: Network.Network.Network.findRegion
-.. automethod:: Network.Network.Network.findStimulus
+.. automethod:: network.network.Network.findMuscle
+.. automethod:: network.network.Network.findNeuron
+.. automethod:: network.network.Network.findRegion
+.. automethod:: network.network.Network.findStimulus
 
-.. automethod:: Network.Network.Network.arborizations
-.. automethod:: Network.Network.Network.gapJunctions
-.. automethod:: Network.Network.Network.innervations
-.. automethod:: Network.Network.Network.muscles
-.. automethod:: Network.Network.Network.neurites
-.. automethod:: Network.Network.Network.neurons
-.. automethod:: Network.Network.Network.pathways
-.. automethod:: Network.Network.Network.regions
-.. automethod:: Network.Network.Network.stimuli
-.. automethod:: Network.Network.Network.synapses
+.. automethod:: network.network.Network.arborizations
+.. automethod:: network.network.Network.gapJunctions
+.. automethod:: network.network.Network.innervations
+.. automethod:: network.network.Network.muscles
+.. automethod:: network.network.Network.neurites
+.. automethod:: network.network.Network.neurons
+.. automethod:: network.network.Network.pathways
+.. automethod:: network.network.Network.regions
+.. automethod:: network.network.Network.stimuli
+.. automethod:: network.network.Network.synapses
 
 .. _removing-objects:
 
 Removing objects from the network
 ---------------------------------
 
-.. automethod:: Network.Network.Network.removeObject
-.. automethod:: Network.Network.Network.removeAllObjects
+.. automethod:: network.network.Network.removeObject
+.. automethod:: network.network.Network.removeAllObjects
 
 .. _user-defined-network-attributes:
 
@@ -55,9 +55,9 @@ User-Defined Attributes
 
 Networks can have any number of user-defined attributes.  Each attribute has a name, a type and a value.
 
-.. automethod:: Network.Network.Network.addAttribute
-.. automethod:: Network.Network.Network.getAttribute
-.. automethod:: Network.Network.Network.getAttributes
+.. automethod:: network.network.Network.addAttribute
+.. automethod:: network.network.Network.getAttribute
+.. automethod:: network.network.Network.getAttributes
 
 .. _save-state:
 
@@ -66,5 +66,5 @@ Managing the network's save state
 
 Networks keep track of changes made to them relative to the last time they were saved.
 
-.. automethod:: Network.Network.Network.setModified
-.. automethod:: Network.Network.Network.isModified
+.. automethod:: network.network.Network.setModified
+.. automethod:: network.network.Network.isModified

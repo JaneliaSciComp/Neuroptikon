@@ -6,30 +6,30 @@
 Neurons
 =======
 
-.. class:: Network.Neuron.Neuron
+.. class:: network.neuron.Neuron
 
-Neurons represent individual neural cells in the :class:`network <Network.Network.Network>`.
+Neurons represent individual neural cells in the :class:`network <network.network.Network>`.
 
 You create a neuron by messaging the network:
 
 >>> neuron1 = network.createNeuron(...)
 
-.. automethod:: Network.Neuron.Neuron.extendNeurite
-.. automethod:: Network.Neuron.Neuron.neurites
+.. automethod:: network.neuron.Neuron.extendNeurite
+.. automethod:: network.neuron.Neuron.neurites
 
-.. automethod:: Network.Neuron.Neuron.arborize
-.. automethod:: Network.Neuron.Neuron.gapJunctionWith
-.. automethod:: Network.Neuron.Neuron.innervate
-.. automethod:: Network.Neuron.Neuron.synapseOn
+.. automethod:: network.neuron.Neuron.arborize
+.. automethod:: network.neuron.Neuron.gapJunctionWith
+.. automethod:: network.neuron.Neuron.innervate
+.. automethod:: network.neuron.Neuron.synapseOn
 
-.. automethod:: Network.Neuron.Neuron.arborizations
-.. automethod:: Network.Neuron.Neuron.gapJunctions
-.. automethod:: Network.Neuron.Neuron.innervations
-.. automethod:: Network.Neuron.Neuron.synapses
+.. automethod:: network.neuron.Neuron.arborizations
+.. automethod:: network.neuron.Neuron.gapJunctions
+.. automethod:: network.neuron.Neuron.innervations
+.. automethod:: network.neuron.Neuron.synapses
 
-.. automethod:: Network.Neuron.Neuron.connections
-.. automethod:: Network.Neuron.Neuron.inputs
-.. automethod:: Network.Neuron.Neuron.outputs
+.. automethod:: network.neuron.Neuron.connections
+.. automethod:: network.neuron.Neuron.inputs
+.. automethod:: network.neuron.Neuron.outputs
 
-.. automethod:: Network.Neuron.Neuron.setHasFunction
-.. automethod:: Network.Neuron.Neuron.hasFunction
+.. automethod:: network.neuron.Neuron.setHasFunction
+.. automethod:: network.neuron.Neuron.hasFunction

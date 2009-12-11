@@ -6,33 +6,33 @@
 Neurites
 ========
 
-.. class:: Network.Neurite.Neurite
+.. class:: network.neurite.Neurite
 
-Neurites represent cellular projections from the soma or other neurites of a :class:`neuron <Network.Neuron.Neuron>`.
+Neurites represent cellular projections from the soma or other neurites of a :class:`neuron <network.neuron.Neuron>`.
 
-You create a neurite by messaging a :meth:`neuron <Network.Neuron.Neuron.extendNeurite>` or :meth:`neurite <Network.Neurite.Neurite.extendNeurite>`:
+You create a neurite by messaging a :meth:`neuron <network.neuron.Neuron.extendNeurite>` or :meth:`neurite <network.neurite.Neurite.extendNeurite>`:
 
 >>> neurite1 = neuron.extendNeurite(...)
 >>> neurite2 = neurite1.extendNeurite(...)
 
-.. automethod:: Network.Neurite.Neurite.neuron
+.. automethod:: network.neurite.Neurite.neuron
 
-.. automethod:: Network.Neurite.Neurite.extendNeurite
-.. automethod:: Network.Neurite.Neurite.neurites
+.. automethod:: network.neurite.Neurite.extendNeurite
+.. automethod:: network.neurite.Neurite.neurites
 
-.. automethod:: Network.Neurite.Neurite.arborize
-.. automethod:: Network.Neurite.Neurite.gapJunctionWith
-.. automethod:: Network.Neurite.Neurite.innervate
-.. automethod:: Network.Neurite.Neurite.synapseOn
+.. automethod:: network.neurite.Neurite.arborize
+.. automethod:: network.neurite.Neurite.gapJunctionWith
+.. automethod:: network.neurite.Neurite.innervate
+.. automethod:: network.neurite.Neurite.synapseOn
 
-.. automethod:: Network.Neurite.Neurite.arborizations
-.. automethod:: Network.Neurite.Neurite.gapJunctions
-.. automethod:: Network.Neurite.Neurite.innervations
-.. automethod:: Network.Neurite.Neurite.synapses
+.. automethod:: network.neurite.Neurite.arborizations
+.. automethod:: network.neurite.Neurite.gapJunctions
+.. automethod:: network.neurite.Neurite.innervations
+.. automethod:: network.neurite.Neurite.synapses
 
-.. automethod:: Network.Neurite.Neurite.connections
-.. automethod:: Network.Neurite.Neurite.inputs
-.. automethod:: Network.Neurite.Neurite.outputs
+.. automethod:: network.neurite.Neurite.connections
+.. automethod:: network.neurite.Neurite.inputs
+.. automethod:: network.neurite.Neurite.outputs
 
-.. automethod:: Network.Neurite.Neurite.setPathway
-.. automethod:: Network.Neurite.Neurite.pathway
+.. automethod:: network.neurite.Neurite.setPathway
+.. automethod:: network.neurite.Neurite.pathway

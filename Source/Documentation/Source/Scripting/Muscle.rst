@@ -6,13 +6,13 @@
 Muscles
 =======
 
-.. class:: Network.Muscle.Muscle
+.. class:: network.muscle.Muscle
 
-Muscle objects represent muscles in the :class:`network <Network.Network.Network>` and can be :class:`innervated <Network.Innervation.Innervation>` by :class:`neurites <Network.Neurite.Neurite>`.
+Muscle objects represent muscles in the :class:`network <network.network.Network>` and can be :class:`innervated <network.innervation.Innervation>` by :class:`neurites <network.neurite.Neurite>`.
 
 Create a muscle by messaging the network:
 
 >>> muscle1 = network.createMuscle()
 >>> neuron1.innervate(muscle1)
 
-.. automethod:: Network.Muscle.Muscle.innervations
+.. automethod:: network.muscle.Muscle.innervations

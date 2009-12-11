@@ -6,5 +6,5 @@
 Layouts
 =======
 
-.. autoclass:: Display.Layout.Layout
+.. autoclass:: display.layout.Layout
    :members:

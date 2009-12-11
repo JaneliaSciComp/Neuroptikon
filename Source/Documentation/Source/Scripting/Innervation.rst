@@ -6,11 +6,11 @@
 Innervations
 ============
 
-.. class:: Network.Innervation.Innervation
+.. class:: network.innervation.Innervation
 
-Innervations represent a :class:`neurite's <Network.Neurite.Neurite>` connection to a :class:`muscle <Network.Muscle.Muscle>`.
+Innervations represent a :class:`neurite's <network.neurite.Neurite>` connection to a :class:`muscle <network.muscle.Muscle>`.
 
-Create an innervation by messaging a :meth:`neuron <Network.Neuron.Neuron.innervate>` or :meth:`neurite <Network.Neurite.Neurite.innervate>`:
+Create an innervation by messaging a :meth:`neuron <network.neuron.Neuron.innervate>` or :meth:`neurite <network.neurite.Neurite.innervate>`:
 
 >>> neuron1 = network.createNeuron()
 >>> muscle1 = network.createMuscle()
@@ -18,8 +18,8 @@ Create an innervation by messaging a :meth:`neuron <Network.Neuron.Neuron.innerv
 
 .. attribute:: Innervation.neurite
 	
-	The :class:`neurite <Network.Neurite.Neurite>` doing the innervating.
+	The :class:`neurite <network.neurite.Neurite>` doing the innervating.
 	
 .. attribute:: Innervation.muscle
 	
-	The :class:`muscle <Network.Muscle.Muscle>` being innervated.
+	The :class:`muscle <network.muscle.Muscle>` being innervated.

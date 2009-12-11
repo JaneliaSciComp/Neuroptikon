@@ -20,7 +20,7 @@ setup_options = dict()
 app_scripts = ['Neuroptikon.py']
 
 resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
-resources += ['Display/FlowShader.vert', 'Display/FlowShader.frag', 'Display/CullFaces.osg']
+resources += ['display/flow_shader.vert', 'display/flow_shader.frag', 'display/cull_faces.osg']
 includes = ['wx', 'xlrd']
 excludes = ['Inspectors', 'Layouts', 'matplotlib', 'scipy', 'Shapes']
 

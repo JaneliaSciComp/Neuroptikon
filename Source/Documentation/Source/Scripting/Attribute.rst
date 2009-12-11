@@ -6,5 +6,5 @@
 Attributes
 ==========
 
-.. autoclass:: Network.Attribute.Attribute
+.. autoclass:: network.attribute.Attribute
    :members:
