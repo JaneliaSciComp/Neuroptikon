@@ -23,7 +23,7 @@ for muscle in network.muscles():
 
 # Set up the visualization
 
-for neuron in display.network.neurons():
+for neuron in network.neurons():
     red = green = blue = 0.5
     if neuron.hasFunction(Neuron.Function.SENSORY):
         red = 1.0
@@ -38,12 +38,12 @@ for neuron in display.network.neurons():
     display.setVisibleOpacity(neuron, 1.0)
 
 # Make all chemical synapses light gray.
-for synapse in display.network.synapses():
+for synapse in network.synapses():
     display.setVisibleColor(synapse, (0.75, 0.75, 0.75))
     display.setVisibleOpacity(synapse, 1.0)
 
 # Make all gap junctions dark green.
-for gapJunction in display.network.gapJunctions():
+for gapJunction in network.gapJunctions():
     display.setVisibleColor(gapJunction, (0.0, 0.75, 0.0))
     display.setVisibleOpacity(gapJunction, 1.0)
 
@@ -51,7 +51,7 @@ for gapJunction in display.network.gapJunctions():
 for muscle in network.muscles():
     display.setVisibleSize(muscle, (.05, .1, .02))
     display.setVisibleOpacity(innervation, 1.0)
-for innervation in display.network.innervations():
+for innervation in network.innervations():
     display.setVisibleOpacity(innervation, 1.0)
 
 # Perform a spectral layout weighted by the 'Count' attribute of the synapses and gap junctions.

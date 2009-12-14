@@ -9,6 +9,20 @@ from math import pi
 if not any(network.muscles()):
     execfile('Muscles.py')
 
+
+# Return the position of the soma using a default value if the attribute is not defined.
+def somaPosition(neuron):
+    somaPosition = neuron.getAttribute('Soma A-P Position')
+    if somaPosition is not None:
+        somaPosition = float(somaPosition.value())
+    else:
+        if neuron.name[0] == 'R':
+            somaPosition = 0.9
+        else:
+            somaPosition = 0.5
+    return somaPosition
+
+
 def sortCluster(neuron1, neuron2):
     if neuron1.hasFunction(Neuron.Function.MOTOR) and neuron1.hasFunction(Neuron.Function.SENSORY):
         key1 = '1' + neuron1.name
@@ -35,28 +49,14 @@ def sortCluster(neuron1, neuron2):
     else:
         return 0
 
-# Load the positions of the soma.
-somaPositions = {}
+# Cluster the soma based on their A-P position and side.
 clusters = {}
-neuronTypesFile = open('NeuronType.txt')
-try:
-    for line in neuronTypesFile:
-        if line[0] != '#':
-            fields = line.split('\t')
-            neuronName = fields[0]
-            somaPosition = fields[1]
-            somaPositions[neuronName] = somaPosition
-            neuron = network.findNeuron(neuronName)
-            if neuron:
-                clusterKey = somaPosition + neuron.getAttribute('Side').value()
-                if clusterKey in clusters:
-                    clusters[clusterKey] += [neuron]
-                else:
-                    clusters[clusterKey] = [neuron]
-except:
-    (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-    print 'Could not load soma positions (' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + ')'
-neuronTypesFile.close()
+for neuron in network.neurons():
+    clusterKey = str(somaPosition(neuron)) + neuron.getAttribute('Side').value()
+    if clusterKey in clusters:
+        clusters[clusterKey] += [neuron]
+    else:
+        clusters[clusterKey] = [neuron]
 
 for cluster in clusters.itervalues():
     cluster.sort(sortCluster)
@@ -68,22 +68,7 @@ display.setShowNeuronNames(True)
 display.setUseGhosts(True)
 display.setDefaultFlowSpread(0.5)
 
-ACh = library.neurotransmitter('ACh')
-GABA = library.neurotransmitter('GABA')
-
-for neuron in display.network.neurons():
-    if neuron.name not in somaPositions:
-        if neuron.name[0] == 'R':
-            somaPositions[neuron.name] = '0.9'
-        else:
-            somaPositions[neuron.name] = '0.5'
-        clusterKey = somaPositions[neuron.name] + neuron.getAttribute('Side').value()
-        if clusterKey in clusters:
-            clusters[clusterKey] += [neuron]
-        else:
-            clusters[clusterKey] = [neuron]
-
-for neuron in display.network.neurons():
+for neuron in network.neurons():
     # Color the soma based on function.
     red = green = blue = 0.5
     if neuron.hasFunction(Neuron.Function.SENSORY):
@@ -96,7 +81,7 @@ for neuron in display.network.neurons():
     display.setLabelColor(neuron, (0.0 if red == 0.5 else red * 0.125, 0.0 if green == 0.5 else green * 0.125, 0.0 if blue == 0.5 else blue * 0.125))
     
     # Position the soma according to their linear distance between head and tail and their left/center/right position.
-    somaX = float(somaPositions[neuron.name]) * 4.0 - 2.0
+    somaX = somaPosition(neuron) * 4.0 - 2.0
     somaY = 0.0
     somaSign = 1.0
     somaSide = neuron.getAttribute('Side')
@@ -107,13 +92,15 @@ for neuron in display.network.neurons():
         elif somaSide.value() == 'R':
             somaY = 0.15
     # Many soma have the exact same X/Y coordinates so we distribute them evenly around the common point.
-    clusterKey = somaPositions[neuron.name] + neuron.getAttribute('Side').value()
+    clusterKey = str(somaPosition(neuron)) + neuron.getAttribute('Side').value()
     cluster = clusters[clusterKey]
     somaY += (len(cluster) - 1) / 2.0 * 0.015 * somaSign - cluster.index(neuron) * 0.015 * somaSign
     display.setVisiblePosition(neuron, (somaX, somaY, -1.0), fixed = True)
 
 # Color the synapses according to excitation/inhibition and weight them according to their connection count.
-for synapse in display.network.synapses():
+ACh = library.neurotransmitter('ACh')
+GABA = library.neurotransmitter('GABA')
+for synapse in network.synapses():
     if ACh in synapse.preSynapticNeurite.neuron().neurotransmitters:
         display.setVisibleColor(synapse, (0.5, 0.5, 0.75))
     elif GABA in synapse.preSynapticNeurite.neuron().neurotransmitters:
@@ -123,11 +110,11 @@ for synapse in display.network.synapses():
     display.setVisibleWeight(synapse, 0.5 if synapse.getAttribute('Count').value() < 5 else 2.0)
 
 # Make all gap junctions black and weight them according to their connection count.
-for gapJunction in display.network.gapJunctions():
+for gapJunction in network.gapJunctions():
     display.setVisibleColor(gapJunction, (0.0, 0.75, 0.0))
     display.setVisibleWeight(gapJunction, 0.5 if gapJunction.getAttribute('Count').value() < 5 else 2.0)
 
-for muscle in display.network.muscles():
+for muscle in network.muscles():
     if not any(display.visiblesForObject(muscle)):
         display.visualizeObject(muscle)
     if muscle.getAttribute('A-P Position'):
@@ -150,7 +137,7 @@ for muscle in display.network.muscles():
         display.setVisiblePosition(muscle, (muscleX, muscleY, -1.0), fixed = True)
         display.setVisibleSize(muscle, (0.01, 0.02, .01))
 
-for innervation in display.network.innervations():
+for innervation in network.innervations():
     if not any(display.visiblesForObject(innervation)):
         display.visualizeObject(innervation)
     display.setVisibleWeight(innervation, 0.5 if innervation.getAttribute('Count').value() < 5.0 else 2.0)
