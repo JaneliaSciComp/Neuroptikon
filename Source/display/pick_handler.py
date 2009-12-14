@@ -37,7 +37,7 @@ class PickHandler(osgGA.GUIEventHandler):
                 elif self._panning or self._display.isPanning():
                     self._display.shiftView(self._lastMouse[0] - eventAdaptor.getX(), self._lastMouse[1] - eventAdaptor.getY())
                     self._panning = True
-                self._lastMouse = (eventAdaptor.getX(), eventAdaptor.getY())
+                    self._lastMouse = (eventAdaptor.getX(), eventAdaptor.getY())
             elif eventtype == eventAdaptor.RELEASE:
                 if self.dragger != None:
                     # Finish the drag.
@@ -54,6 +54,7 @@ class PickHandler(osgGA.GUIEventHandler):
                     self._panning = False
                 elif self._lastMouse == (eventAdaptor.getX(), eventAdaptor.getY()):
                     # Do a pick.
+                    
                     eventWasHandled = self.pick(eventAdaptor.getX(), eventAdaptor.getY(), viewer)
         return eventWasHandled
     
