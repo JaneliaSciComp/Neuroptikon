@@ -89,9 +89,11 @@ finally:
 gapJunctionFile = open('Gap Junction.txt')
 try:
     neuronNames = gapJunctionFile.next().strip().split('\t')
+    count = 0
     for neuron1, gapJunctionCounts in map(None, neuronNames, gapJunctionFile):
-        for neuron2, gapJunctionCount in map(None, neuronNames, gapJunctionCounts.strip().split('\t')):
+        for neuron2, gapJunctionCount in map(None, neuronNames[count:], gapJunctionCounts.strip().split('\t')[count:]):
             if gapJunctionCount.strip() != '0':
                 neurons[neuron1.strip()].gapJunctionWith(neurons[neuron2.strip()]).addAttribute('Count', Attribute.INTEGER_TYPE, int(gapJunctionCount.strip()))
+        count += 1
 finally:
     gapJunctionFile.close()
