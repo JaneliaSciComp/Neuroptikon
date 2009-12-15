@@ -1928,6 +1928,7 @@ class Visible(object):
             self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('flowFrom', self._flowFrom))
             self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('textureScale', (self._size[1] if isinstance(self._shape, UnitShape) else 1.0) / self._staticTextureScale))
             self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('hasTexture', self._staticTexture != None))
+            self._shapeGeode.getOrCreateStateSet().addUniform(osg.Uniform('opacity', self._opacity))
             self._shapeGeode.getOrCreateStateSet().setAttributeAndModes(self.display.flowProgram, osg.StateAttribute.ON)
         elif self._shapeGeode.getOrCreateStateSet().getAttribute(osg.StateAttribute.PROGRAM) is not None:
             self._shapeGeode.getOrCreateStateSet().removeAttribute(osg.StateAttribute.PROGRAM)

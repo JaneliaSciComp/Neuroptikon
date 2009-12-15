@@ -12,6 +12,7 @@ uniform float flowFromSpread;
 uniform bool hasTexture;
 uniform sampler2D textureUnit;
 uniform float textureScale;
+uniform float opacity;
 varying vec3 normal, lightDir, halfVector;
 
 void main()
@@ -32,7 +33,7 @@ void main()
 	  d = tx * ( dl * max ( dot ( normal, lightDir   ), 0.0 ) + al );
 	  s = sl *  pow ( max ( dot ( normal, halfVector ), 0.0 ), sh );
 	}
-	vec4 baseColor = vec4 ( min ( d + s, 1.0) , 1.0 );
+	vec3 baseColor = vec3 ( min ( d + s, 1.0));
 	
 	float texCoord = gl_TexCoord[0].t * textureScale;
 	
@@ -61,11 +62,12 @@ void main()
 		  glowFrom = 1.0 - distanceFromPeakGlow / glowWidth;
 	}
 	
-	vec4  glowColor = vec4(max(flowToColor[0] * glowTo, flowFromColor[0] * glowFrom), 
+	vec3  glowColor = vec3(max(flowToColor[0] * glowTo, flowFromColor[0] * glowFrom), 
 						 max(flowToColor[1] * glowTo, flowFromColor[1] * glowFrom), 
-						 max(flowToColor[2] * glowTo, flowFromColor[2] * glowFrom), 
-						 1.0);
+						 max(flowToColor[2] * glowTo, flowFromColor[2] * glowFrom));
 	float glow = max(flowToColor[3] * glowTo, flowFromColor[3] * glowFrom);
 	
-	gl_FragColor = vec4(glowColor * glow + baseColor * (1.0 - glow));
+	glowColor = glowColor * glow + baseColor * (1.0 - glow);
+	
+	gl_FragColor = vec4(glowColor[0], glowColor[1], glowColor[2], opacity);
 }
