@@ -147,6 +147,8 @@ class NeuroptikonFrame( wx.Frame ):
         self.pasteMenuItem = editMenu.Append(wx.ID_PASTE, gettext('Paste\tCtrl-V'), gettext('Paste the contents of the clipboard'))
         self.Bind(wx.EVT_MENU, self.onPaste, self.pasteMenuItem)
         self.Bind(wx.EVT_MENU, self.onSelectAll, editMenu.Append(wx.ID_SELECTALL, gettext('Select All\tCtrl-A'), gettext('Select all objects in the window')))
+        self.clearMenuItem = editMenu.Append(wx.ID_CLEAR, gettext('Clear\tCtrl-K'), gettext('Clear the contents of the console'))
+        self.Bind(wx.EVT_MENU, self.onClear, self.clearMenuItem)
         editMenu.AppendSeparator()
         self.pasteMenuItem = editMenu.Append(wx.ID_FIND, gettext('Find\tCtrl-F'), gettext('Find objects in the network'))
         self.Bind(wx.EVT_MENU, self.onFind, self.pasteMenuItem)
@@ -350,7 +352,15 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     def onSelectAll(self, event_):
-        self.display.selectAll()
+        if self.FindFocus() == self.display:
+            self.display.selectAll()
+        else:
+            self._console.SelectAll()
+    
+    
+    def onClear(self, event_):
+        self._console.ClearAll()
+        self._console.prompt()
     
     
     def onFind(self, event_):
