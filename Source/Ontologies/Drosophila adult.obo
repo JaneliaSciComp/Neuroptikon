@@ -1,0 +1,1424 @@
+format-version: 1.2
+date: 13:07:2009 16:54
+saved-by: trautmane
+auto-generated-by: OBO-Edit 1.101
+synonymtypedef: ABBREVIATION "abbreviations for prelim annotation anatomical terms" EXACT
+default-namespace: JFRC
+namespace-id-rule: * JFRC:$sequence(10,0000000000,9999999999)$
+name: Drosophila Adult Neuroanatomy
+
+[Term]
+id: JFRC:0000001551
+name: Drosophila melanogaster
+synonym: "D.M." EXACT ABBREVIATION []
+
+[Term]
+id: JFRC:0000001553
+name: larval
+synonym: "L" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001551 ! Drosophila melanogaster
+
+[Term]
+id: JFRC:0000001555
+name: adult
+synonym: "A" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001551 ! Drosophila melanogaster
+
+[Term]
+id: JFRC:0000001557
+name: brain
+def: "\"The supra-esophageal ganglion of the central nervous system, composed of three primitive ganglia known as protocerebrum, deutocerebrum and tritocerebrum. In the context of Drosophila refers to the preoral ganglionic mass of the central nervous system containing the ventral ganglia.\" [FB:gg, ISBN:3110148986]" []
+synonym: "B" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001555 ! adult
+
+[Term]
+id: JFRC:0000001559
+name: Supraoesophagial ganglion
+synonym: "SPG" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001557 ! brain
+
+[Term]
+id: JFRC:0000001561
+name: Pars Intercerebralis
+def: "\"A medial cleft or depression dividing the left and right protocerebrum and containing numerous large and small somata of neurosecretory and neuromodulatory neurons.\" [http://flybrain.uni-freiburg.de/Flybrain/html/terms/terms.html]" []
+synonym: "PI" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001559 ! Supraoesophagial ganglion
+
+[Term]
+id: JFRC:0000001563
+name: ocellus
+def: "\"A simple visual organ of insects, two of which appear on the vertical and one on the frontal plate.\" [ISBN:3110148986]" []
+synonym: "OC" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001559 ! Supraoesophagial ganglion
+
+[Term]
+id: JFRC:0000001565
+name: Optic Lobe
+synonym: "OL" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001559 ! Supraoesophagial ganglion
+
+[Term]
+id: JFRC:0000001567
+name: Retina
+synonym: "RET" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001565 ! Optic Lobe
+
+[Term]
+id: JFRC:0000001569
+name: Lamina
+synonym: "LA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001565 ! Optic Lobe
+
+[Term]
+id: JFRC:0000001571
+name: Lamina proper
+synonym: "LAM" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001569 ! Lamina
+
+[Term]
+id: JFRC:0000001573
+name: Plexiform lamina
+synonym: "PLAM" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001571 ! Lamina proper
+
+[Term]
+id: JFRC:0000001575
+name: Accessory lamina
+synonym: "ALA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001569 ! Lamina
+
+[Term]
+id: JFRC:0000001577
+name: Medulla
+synonym: "ME" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001565 ! Optic Lobe
+
+[Term]
+id: JFRC:0000001579
+name: Medulla proper
+def: "The second optic neuropil, the major processing center for the visual pathway of the compound eye. [http://flybrain.uni-freiburg.de/Flybrain/html/terms/terms.html] subset: cur" []
+synonym: "MED" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001577 ! Medulla
+
+[Term]
+id: JFRC:0000001581
+name: Outer Medulla
+synonym: "OMED" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001579 ! Medulla proper
+
+[Term]
+id: JFRC:0000001583
+name: Medulla Layer1
+synonym: "MED1" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001581 ! Outer Medulla
+
+[Term]
+id: JFRC:0000001585
+name: Medulla Layer2
+synonym: "MED2" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001581 ! Outer Medulla
+
+[Term]
+id: JFRC:0000001587
+name: Medulla Layer3
+synonym: "MED3" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001581 ! Outer Medulla
+
+[Term]
+id: JFRC:0000001589
+name: Medulla Layer4
+synonym: "MED4" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001581 ! Outer Medulla
+
+[Term]
+id: JFRC:0000001591
+name: Medulla Layer5
+synonym: "MED5" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001581 ! Outer Medulla
+
+[Term]
+id: JFRC:0000001593
+name: Medulla Layer6
+synonym: "MED6" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001581 ! Outer Medulla
+
+[Term]
+id: JFRC:0000001595
+name: Serpentine Layer
+synonym: "MED7" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001579 ! Medulla proper
+
+[Term]
+id: JFRC:0000001597
+name: Inner Medulla
+synonym: "IMED" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001579 ! Medulla proper
+
+[Term]
+id: JFRC:0000001599
+name: Medulla Layer8
+synonym: "MED8" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001597 ! Inner Medulla
+
+[Term]
+id: JFRC:0000001601
+name: Medulla Layer9
+synonym: "MED9" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001597 ! Inner Medulla
+
+[Term]
+id: JFRC:0000001603
+name: Medulla Layer10
+synonym: "MED10" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001597 ! Inner Medulla
+
+[Term]
+id: JFRC:0000001605
+name: Dorsal Rim Area
+synonym: "DRA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001579 ! Medulla proper
+
+[Term]
+id: JFRC:0000001607
+name: Accessory Medulla
+synonym: "AME" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001577 ! Medulla
+
+[Term]
+id: JFRC:0000001609
+name: Lobula Complex
+synonym: "LOCX" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001565 ! Optic Lobe
+
+[Term]
+id: JFRC:0000001611
+name: Lobula
+def: "The third optic neuropil. The final site of visual processing in the optic lobe. In holometabolous insects this neuropil is usually divided into a lobula and (posteriorly) a lobula plate. [http://flybrain.uni-freiburg.de/Flybrain/html/terms/terms.html] subset: cur" []
+synonym: "LO" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001609 ! Lobula Complex
+
+[Term]
+id: JFRC:0000001613
+name: Lobula Layer1
+synonym: "LO1" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001611 ! Lobula
+
+[Term]
+id: JFRC:0000001615
+name: Lobula Layer2
+synonym: "LO2" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001611 ! Lobula
+
+[Term]
+id: JFRC:0000001617
+name: Lobula Layer3
+synonym: "LO3" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001611 ! Lobula
+
+[Term]
+id: JFRC:0000001619
+name: Lobula Layer4
+synonym: "LO4" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001611 ! Lobula
+
+[Term]
+id: JFRC:0000001621
+name: Lobula Layer5
+synonym: "LO5" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001611 ! Lobula
+
+[Term]
+id: JFRC:0000001623
+name: Lobula Layer6
+synonym: "LO6" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001611 ! Lobula
+
+[Term]
+id: JFRC:0000001625
+name: Lobula Plate
+synonym: "LOP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001609 ! Lobula Complex
+
+[Term]
+id: JFRC:0000001627
+name: Lobula Plate Layer1
+synonym: "LOP1" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001625 ! Lobula Plate
+
+[Term]
+id: JFRC:0000001629
+name: Lobula Plate Layer2
+synonym: "LOP2" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001625 ! Lobula Plate
+
+[Term]
+id: JFRC:0000001631
+name: Lobula Plate Layer3
+synonym: "LOP3" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001625 ! Lobula Plate
+
+[Term]
+id: JFRC:0000001633
+name: Lobula Plate Layer4
+synonym: "LOP4" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001625 ! Lobula Plate
+
+[Term]
+id: JFRC:0000001635
+name: Mushroom Body
+synonym: "MB" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001559 ! Supraoesophagial ganglion
+
+[Term]
+id: JFRC:0000001637
+name: Mushroom Body Efferences
+synonym: "MBE" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001635 ! Mushroom Body
+
+[Term]
+id: JFRC:0000001639
+name: Mushroom Body Bridge
+synonym: "MBB" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001635 ! Mushroom Body
+
+[Term]
+id: JFRC:0000001641
+name: Calyx
+synonym: "CA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001635 ! Mushroom Body
+
+[Term]
+id: JFRC:0000001643
+name: Medial Calyx
+synonym: "MCA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001641 ! Calyx
+
+[Term]
+id: JFRC:0000001645
+name: Lateral Calyx
+synonym: "LCA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001641 ! Calyx
+
+[Term]
+id: JFRC:0000001647
+name: Accessory Calyx
+synonym: "ACA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001641 ! Calyx
+
+[Term]
+id: JFRC:0000001649
+name: Peduncle
+synonym: "PED" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001635 ! Mushroom Body
+
+[Term]
+id: JFRC:0000001651
+name: Heel
+synonym: "spur" RELATED []
+relationship: part_of JFRC:0000001635 ! Mushroom Body
+
+[Term]
+id: JFRC:0000001653
+name: Vertical Lobes
+synonym: "vertical branch of mushroom body" RELATED []
+synonym: "VL" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001635 ! Mushroom Body
+
+[Term]
+id: JFRC:0000001656
+name: alpha
+relationship: part_of JFRC:0000001653 ! Vertical Lobes
+
+[Term]
+id: JFRC:0000001657
+name: early alpha-lobe neurons (hull)
+def: "AJ: Defined in Lin et al. A Map of Olfactory Representation in the Drosophila Mushroom Body. Cell (2007)" []
+synonym: "EARLY-ALPHA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001656 ! alpha
+
+[Term]
+id: JFRC:0000001659
+name: late alpha-lobe neurons (core)
+def: "AJ: Defined in Lin et al. A Map of Olfactory Representation in the Drosophila Mushroom Body. Cell (2007)" []
+synonym: "LATE-ALPHA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001656 ! alpha
+
+[Term]
+id: JFRC:0000001661
+name: alpha'
+relationship: part_of JFRC:0000001653 ! Vertical Lobes
+
+[Term]
+id: JFRC:0000001662
+name: Medial Lobes
+synonym: "medial branch of mushroom body" RELATED []
+synonym: "ML" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001635 ! Mushroom Body
+
+[Term]
+id: JFRC:0000001665
+name: beta
+relationship: part_of JFRC:0000001662 ! Medial Lobes
+
+[Term]
+id: JFRC:0000001666
+name: early beta-lobe neurons (hull)
+def: "AJ: Defined in Lin et al. A Map of Olfactory Representation in the Drosophila Mushroom Body. Cell (2007)" []
+synonym: "EARLY-BETA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001665 ! beta
+
+[Term]
+id: JFRC:0000001668
+name: late beta-lobe neurons (core)
+def: "AJ: Defined in Lin et al. A Map of Olfactory Representation in the Drosophila Mushroom Body. Cell (2007)" []
+synonym: "LATE-BETA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001665 ! beta
+
+[Term]
+id: JFRC:0000001670
+name: beta'
+relationship: part_of JFRC:0000001662 ! Medial Lobes
+
+[Term]
+id: JFRC:0000001671
+name: gamma
+relationship: part_of JFRC:0000001662 ! Medial Lobes
+
+[Term]
+id: JFRC:0000001672
+name: Central Complex
+synonym: "CCX" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001559 ! Supraoesophagial ganglion
+
+[Term]
+id: JFRC:0000001674
+name: Central body
+synonym: "CB" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001672 ! Central Complex
+
+[Term]
+id: JFRC:0000001676
+name: Fan-shaped Body
+synonym: "FB" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001674 ! Central body
+
+[Term]
+id: JFRC:0000001678
+name: Fan-shaped Body Layer 1
+synonym: "FB1" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001676 ! Fan-shaped Body
+
+[Term]
+id: JFRC:0000001680
+name: Fan-shaped Body Layer 2
+synonym: "FB2" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001676 ! Fan-shaped Body
+
+[Term]
+id: JFRC:0000001682
+name: Fan-shaped Body Layer 3
+synonym: "FB3" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001676 ! Fan-shaped Body
+
+[Term]
+id: JFRC:0000001684
+name: Fan-shaped Body Layer 4
+synonym: "FB4" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001676 ! Fan-shaped Body
+
+[Term]
+id: JFRC:0000001686
+name: Fan-shaped Body Layer 5
+synonym: "FB5" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001676 ! Fan-shaped Body
+
+[Term]
+id: JFRC:0000001688
+name: Fan-shaped Body Layer 6
+synonym: "FB6" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001676 ! Fan-shaped Body
+
+[Term]
+id: JFRC:0000001690
+name: Ellipsoid Body
+synonym: "EB" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001674 ! Central body
+
+[Term]
+id: JFRC:0000001692
+name: first ring
+synonym: "R1" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001690 ! Ellipsoid Body
+
+[Term]
+id: JFRC:0000001694
+name: second ring
+synonym: "R2" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001690 ! Ellipsoid Body
+
+[Term]
+id: JFRC:0000001696
+name: third ring
+synonym: "R3" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001690 ! Ellipsoid Body
+
+[Term]
+id: JFRC:0000001698
+name: fourth ring
+synonym: "R4" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001690 ! Ellipsoid Body
+
+[Term]
+id: JFRC:0000001700
+name: Protocerebral Bridge
+synonym: "PB" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001672 ! Central Complex
+
+[Term]
+id: JFRC:0000001702
+name: pcb glomerulus 1
+synonym: "PCB1" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001700 ! Protocerebral Bridge
+
+[Term]
+id: JFRC:0000001704
+name: pcb glomerulus 2
+synonym: "PCB2" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001700 ! Protocerebral Bridge
+
+[Term]
+id: JFRC:0000001706
+name: pcb glomerulus 3
+synonym: "PCB3" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001700 ! Protocerebral Bridge
+
+[Term]
+id: JFRC:0000001708
+name: pcb glomerulus 4
+synonym: "PCB4" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001700 ! Protocerebral Bridge
+
+[Term]
+id: JFRC:0000001710
+name: pcb glomerulus 5
+synonym: "PCB5" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001700 ! Protocerebral Bridge
+
+[Term]
+id: JFRC:0000001712
+name: pcb glomerulus 6
+synonym: "PCB6" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001700 ! Protocerebral Bridge
+
+[Term]
+id: JFRC:0000001714
+name: pcb glomerulus 7
+synonym: "PCB7" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001700 ! Protocerebral Bridge
+
+[Term]
+id: JFRC:0000001716
+name: pcb glomerulus 8
+synonym: "PCB8" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001700 ! Protocerebral Bridge
+
+[Term]
+id: JFRC:0000001718
+name: Noduli
+synonym: "NO" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001672 ! Central Complex
+
+[Term]
+id: JFRC:0000001720
+name: dorsal subregion of noduli
+synonym: "DNO" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001718 ! Noduli
+
+[Term]
+id: JFRC:0000001722
+name: medial subregion of noduli
+synonym: "MNO" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001718 ! Noduli
+
+[Term]
+id: JFRC:0000001724
+name: ventral subregion of noduli
+synonym: "VNO" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001718 ! Noduli
+
+[Term]
+id: JFRC:0000001726
+name: Lateral Complex
+synonym: "LCX" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001559 ! Supraoesophagial ganglion
+
+[Term]
+id: JFRC:0000001728
+name: Bulb
+synonym: "BU" EXACT ABBREVIATION []
+synonym: "lateral triangle" RELATED []
+relationship: part_of JFRC:0000001726 ! Lateral Complex
+
+[Term]
+id: JFRC:0000001731
+name: Lateral Accessory Lobe
+synonym: "LAL" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001726 ! Lateral Complex
+
+[Term]
+id: JFRC:0000001733
+name: Gall
+synonym: "GA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001731 ! Lateral Accessory Lobe
+
+[Term]
+id: JFRC:0000001735
+name: Ventrolateral Neuropils
+synonym: "VLN" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001559 ! Supraoesophagial ganglion
+
+[Term]
+id: JFRC:0000001737
+name: Optic Tubercle
+synonym: "OTU" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001735 ! Ventrolateral Neuropils
+
+[Term]
+id: JFRC:0000001739
+name: anterior optic tubercle
+synonym: "AOTU" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001737 ! Optic Tubercle
+
+[Term]
+id: JFRC:0000001741
+name: posterior optic tubercle
+synonym: "POTU" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001737 ! Optic Tubercle
+
+[Term]
+id: JFRC:0000001743
+name: Ventrolateral Protocerebrum
+def: "AJ: One of the mayor neuropil areas directly adjacent proximally to the optic lobe, ventral of the mushroom body.The vlp houses a big number of optic glomeruli, which are directly connected to the optic lobe neuropils.described in PMID: 16802334, PMID: 9372130, PMID: 6156764" []
+synonym: "protocerebral lobe" RELATED []
+synonym: "VLP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001735 ! Ventrolateral Neuropils
+
+[Term]
+id: JFRC:0000001746
+name: Inferior Lateral Horn
+def: "AJ: tiny piece of neuropil at the lateral surface of the midbrain between ventro-lateral protocerebrum and lateral horn." []
+synonym: "ILH" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001743 ! Ventrolateral Protocerebrum
+
+[Term]
+id: JFRC:0000001748
+name: Inferior VLP
+synonym: "IVLP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001743 ! Ventrolateral Protocerebrum
+
+[Term]
+id: JFRC:0000001750
+name: Optic Focus
+synonym: "OF" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001743 ! Ventrolateral Protocerebrum
+
+[Term]
+id: JFRC:0000001752
+name: Posterior VLP
+synonym: "PVLP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001743 ! Ventrolateral Protocerebrum
+
+[Term]
+id: JFRC:0000001754
+name: Posteriorlateral Protocerebrum
+synonym: "PLP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001735 ! Ventrolateral Neuropils
+
+[Term]
+id: JFRC:0000001756
+name: Lateral Horn
+synonym: "LH" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001559 ! Supraoesophagial ganglion
+
+[Term]
+id: JFRC:0000001758
+name: Superior Neuropils
+def: "AJ: neuropil regions having their major volume dorsal of the mushroom body peduncles (excluding protocerebral bridge, which is part of central complex)." []
+synonym: "dorsal protocerebrum" RELATED []
+synonym: "SN" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001559 ! Supraoesophagial ganglion
+
+[Term]
+id: JFRC:0000001761
+name: Superior Lateral Protocerebrum
+def: "small, drop-shaped neuropil region between the peripeduncula protocerebrum and the lateral horn. see GMR_10A11_AE." []
+synonym: "dorso-lateral protocerebrum" RELATED []
+synonym: "SLP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001758 ! Superior Neuropils
+
+[Term]
+id: JFRC:0000001764
+name: Inner Superior Lateral Protocerebrum
+def: "obsolete" []
+synonym: "ISLP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001761 ! Superior Lateral Protocerebrum
+
+[Term]
+id: JFRC:0000001766
+name: Outer Superior Lateral Protocerebrum
+def: "obsolete" []
+synonym: "OSLP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001761 ! Superior Lateral Protocerebrum
+
+[Term]
+id: JFRC:0000001768
+name: Superior Intermediate Protocerebrum
+def: "obsolete" []
+synonym: "anterior super-peduncular protocerebrum" RELATED []
+synonym: "SIP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001758 ! Superior Neuropils
+
+[Term]
+id: JFRC:0000001771
+name: Superior Medial Protocerebrum
+synonym: "SMP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001758 ! Superior Neuropils
+
+[Term]
+id: JFRC:0000001773
+name: Posterior Superior Medial Protocerebrum
+synonym: "PSMP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001771 ! Superior Medial Protocerebrum
+
+[Term]
+id: JFRC:0000001775
+name: Anterior Superior Medial Protocerebrum
+synonym: "ASMP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001771 ! Superior Medial Protocerebrum
+
+[Term]
+id: JFRC:0000001777
+name: Inferior Neuropils
+synonym: "IN" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001559 ! Supraoesophagial ganglion
+
+[Term]
+id: JFRC:0000001779
+name: Crepine
+def: "anterior-most part of the anterior superior medial protocerebrum. The FC surronds the mb horizontal lobes" []
+synonym: "CRE" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001777 ! Inferior Neuropils
+
+[Term]
+id: JFRC:0000001781
+name: Rubus
+def: "obsolete" []
+synonym: "medial glomerulus crepine" RELATED []
+synonym: "RU" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001779 ! Crepine
+
+[Term]
+id: JFRC:0000001784
+name: Peripeduncular Protocerebrum
+synonym: "PPP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001777 ! Inferior Neuropils
+
+[Term]
+id: JFRC:0000001786
+name: Capello
+def: "obsolete" []
+synonym: "CAP" EXACT ABBREVIATION []
+synonym: "dorso-peripeduncular protocerebrum" RELATED []
+relationship: part_of JFRC:0000001784 ! Peripeduncular Protocerebrum
+
+[Term]
+id: JFRC:0000001789
+name: Volto
+def: "obsolete" []
+synonym: "ventro-peripeduncular protocerebrum" RELATED []
+synonym: "VOL" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001784 ! Peripeduncular Protocerebrum
+
+[Term]
+id: JFRC:0000001792
+name: Lateral Capello
+synonym: "LCAP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001786 ! Capello
+
+[Term]
+id: JFRC:0000001794
+name: Medial Capello
+synonym: "MCAP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001786 ! Capello
+
+[Term]
+id: JFRC:0000001796
+name: Antler
+synonym: "ATL" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001777 ! Inferior Neuropils
+
+[Term]
+id: JFRC:0000001798
+name: Inferior Bridge
+synonym: "IB" EXACT ABBREVIATION []
+synonym: "posterio-medial protocerebrum" RELATED []
+relationship: part_of JFRC:0000001777 ! Inferior Neuropils
+
+[Term]
+id: JFRC:0000001801
+name: Antennal Lobe
+def: "[FB:FBrf0051437, FB:FBrf0107836, http://flybrain.uni-freiburg.de/Flybrain/html/terms/terms.html]" []
+synonym: "AL" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001559 ! Supraoesophagial ganglion
+
+[Term]
+id: JFRC:0000001803
+name: D
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001804
+name: DA1
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001805
+name: DA2
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001806
+name: DA3
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001807
+name: DA4
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001808
+name: DC1
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001809
+name: DC2
+synonym: "VC4" RELATED []
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001811
+name: DC3
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001812
+name: DL1
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001813
+name: DL2
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001814
+name: DL2v
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001815
+name: DL3
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001816
+name: DL4
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001817
+name: DL5
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001818
+name: DM1
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001819
+name: DM2
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001820
+name: DM3
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001821
+name: DM4
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001822
+name: DM5
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001823
+name: DM6
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001824
+name: DP1
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001825
+name: DP1l
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001826
+name: DP1m
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001827
+name: LD2d
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001828
+name: V
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001829
+name: VA1
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001830
+name: VA1d
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001831
+name: VA1l
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001832
+name: VA1m
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001833
+name: VA2
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001834
+name: VA3
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001835
+name: VA4
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001836
+name: VA5
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001837
+name: VA6
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001838
+name: VA7
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001839
+name: VA7l
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001840
+name: VA7m
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001841
+name: VC1
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001842
+name: VC2
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001843
+name: VC2a
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001844
+name: VC2p
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001845
+name: VC3
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001846
+name: VC3l
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001847
+name: VC3m
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001848
+name: VL1
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001849
+name: VL2
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001850
+name: VM1
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001851
+name: VM2
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001852
+name: VM3
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001853
+name: VM4
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001854
+name: VM5
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001855
+name: VM6
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001856
+name: VM7
+relationship: part_of JFRC:0000001801 ! Antennal Lobe
+
+[Term]
+id: JFRC:0000001857
+name: Ventromedial Neuropils
+synonym: "VMN" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001559 ! Supraoesophagial ganglion
+
+[Term]
+id: JFRC:0000001859
+name: Gorget
+synonym: "GOR" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001857 ! Ventromedial Neuropils
+
+[Term]
+id: JFRC:0000001861
+name: Pauldron
+synonym: "PAU" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001857 ! Ventromedial Neuropils
+
+[Term]
+id: JFRC:0000001863
+name: Cuirass
+synonym: "CUI" EXACT ABBREVIATION []
+synonym: "tunica" RELATED []
+relationship: part_of JFRC:0000001857 ! Ventromedial Neuropils
+
+[Term]
+id: JFRC:0000001866
+name: Superior Posterior Slope
+synonym: "SPS" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001857 ! Ventromedial Neuropils
+
+[Term]
+id: JFRC:0000001868
+name: Inferior Posterior Slope
+synonym: "IPS" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001857 ! Ventromedial Neuropils
+
+[Term]
+id: JFRC:0000001870
+name: Perioesophagial Neuropils
+synonym: "PON" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001559 ! Supraoesophagial ganglion
+
+[Term]
+id: JFRC:0000001872
+name: Wedge
+synonym: "WED" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001870 ! Perioesophagial Neuropils
+
+[Term]
+id: JFRC:0000001874
+name: Saddle
+synonym: "SAD" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001870 ! Perioesophagial Neuropils
+
+[Term]
+id: JFRC:0000001876
+name: Antenno Mechanosensory and Motor Center
+def: "A processing center reached by mechanosensory neurons mainly from the first and second (Johnston's organ) antennal segments. [http://flybrain.uni-freiburg.de/Flybrain/html/terms/terms.html]" []
+synonym: "AMMC" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001874 ! Saddle
+
+[Term]
+id: JFRC:0000001878
+name: Proximal Antennal Nerve
+def: "AJ: the proximal end of the antennnal nerve, feeding into the ammc and the al." []
+synonym: "PAN" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001874 ! Saddle
+
+[Term]
+id: JFRC:0000001880
+name: Flange
+synonym: "FLA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001870 ! Perioesophagial Neuropils
+
+[Term]
+id: JFRC:0000001882
+name: Prow
+synonym: "PRW" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001870 ! Perioesophagial Neuropils
+
+[Term]
+id: JFRC:0000001884
+name: Suboesophageal Ganglion
+synonym: "SOG" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001557 ! brain
+
+[Term]
+id: JFRC:0000001886
+name: gustatory subregion
+synonym: "GUST" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001884 ! Suboesophageal Ganglion
+
+[Term]
+id: JFRC:0000001888
+name: mandibular neuromere
+synonym: "MAND" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001884 ! Suboesophageal Ganglion
+
+[Term]
+id: JFRC:0000001890
+name: maxillar neuromere
+synonym: "MAX" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001884 ! Suboesophageal Ganglion
+
+[Term]
+id: JFRC:0000001892
+name: labilal neuromere
+relationship: part_of JFRC:0000001884 ! Suboesophageal Ganglion
+
+[Term]
+id: JFRC:0000001894
+name: Glia
+relationship: part_of JFRC:0000001557 ! brain
+
+[Term]
+id: JFRC:0000001895
+name: Sheet Glia
+def: "AJ: glia cells wrapping the neuropil. cellbodies are embedded into the sheath glia" []
+synonym: "SHG" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001894 ! Glia
+
+[Term]
+id: JFRC:0000001897
+name: String Glia
+synonym: "STG" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001894 ! Glia
+
+[Term]
+id: JFRC:0000001899
+name: Tracts
+relationship: part_of JFRC:0000001557 ! brain
+
+[Term]
+id: JFRC:0000001900
+name: Great commissure
+synonym: "GC" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001902
+name: Midline Tract
+synonym: "MT" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001904
+name: antennal commissure
+synonym: "ACOM" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001906
+name: anterior optic tract
+def: "AJ: projects from the lobula around the vlp to the optu and into the priximal part of the vlp. described in Otsuna et al. Systematic analysis of the visual projection neurons of Drosophila melanogaster. I. Lobula-specific pathways. J Comp Neurol (2006) vol. 497 (6) pp. 928-58, and Power et al. The brain of Drosophila melanogaster. Journal of Morphology (1943)." []
+synonym: "AOT" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001908
+name: cedille
+def: "AJ: Cedille-shaped tract emerging bilateralsymmetric ventrally from the frontal margins of the fan shaped body (at the level of the eb).From the fb it appears lateran, turns ventran after ~50um, runs through the lateral aLAL, median and then frontran around the base of the al. Its cell bodies are located ventral the al." []
+synonym: "CED" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001910
+name: medial antennocerebral tract
+def: "AJ: Defined in honeybee: Kirschner et al. Dual olfactory pathway in the honeybee, Apis mellifera. J Comp Neurol (2006) vol. 499 (6) pp. 933-52. In Drosophila formerly known as \"inner antennocerebral tract, iACT\"." []
+synonym: "MACT" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000004196 ! antennocerebral tract
+
+[Term]
+id: JFRC:0000001912
+name: mediolateral antennocerebral tract
+def: "AJ: Defined in honeybee: Kirschner et al. Dual olfactory pathway in the honeybee, Apis mellifera. J Comp Neurol (2006) vol. 499 (6) pp. 933-52. In Drosophila formerly known as \"middle antennocerebral tract, mACT\"." []
+synonym: "MLACT" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000004196 ! antennocerebral tract
+
+[Term]
+id: JFRC:0000001914
+name: outer antennocerebral tract
+def: "AJ:Defined in honeybee: Kirschner et al. Dual olfactory pathway in the honeybee, Apis mellifera. J Comp Neurol (2006) vol. 499 (6) pp. 933-52. In Drosophila formerly known as \"outer antennocerebral tract, oACT\". In Apis also known as lateral antennoglomerular tract of Malun et al. Early development of mushroom bodies in the brain of the honeybee Apis mellifera as revealed by BrdU incorporation and ablation experiments. Learn Mem (1998) vol. 5 (1-2) pp. 90-101." []
+synonym: "l-ACT" RELATED []
+synonym: "OACT" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000004196 ! antennocerebral tract
+
+[Term]
+id: JFRC:0000001917
+name: dorso-anterior commissure
+synonym: "DACOM" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001919
+name: dorso-posterior commissure
+synonym: "DPCOM" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001921
+name: eb commissure
+synonym: "EBCOM" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001923
+name: fb commissure
+synonym: "FBCOM" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001925
+name: intercalycal commissure
+synonym: "ICCOM" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001927
+name: labial tract
+def: "AJ: projects from the lobula around the vlp to the optu and into the priximal part of the vlp. described in Otsuna H, Ito K 2006 (PMID: 16802334), and Power 1943." []
+synonym: "LABT" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001929
+name: medio-posterior commissure
+synonym: "MPCOM" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001931
+name: noduli commissure
+synonym: "NOCOM" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001933
+name: sub ellipsoid body commissure
+def: "commissure directly ventral of the eb, connecting small field from the dorsal margin of the LAL contralaterally." []
+synonym: "SEBCOM" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001935
+name: suboesophageal commissure
+synonym: "SOGCOM" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001937
+name: ventro-posterior commissure
+synonym: "VPCOM" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000001939
+name: Cells
+relationship: part_of JFRC:0000001557 ! brain
+
+[Term]
+id: JFRC:0000001940
+name: Giant Fiber
+synonym: "GF" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001939 ! Cells
+
+[Term]
+id: JFRC:0000001942
+name: Olfactory Projection Neurons
+synonym: "OLFPN" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001939 ! Cells
+
+[Term]
+id: JFRC:0000001944
+name: ventral giant somata
+synonym: "VGS" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001939 ! Cells
+
+[Term]
+id: JFRC:0000001946
+name: dorsal cane
+synonym: "DC" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001939 ! Cells
+
+[Term]
+id: JFRC:0000001948
+name: Ventral Nerve Cord
+synonym: "VNC" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001555 ! adult
+
+[Term]
+id: JFRC:0000001950
+name: Anterior VLP
+synonym: "AVLP" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001743 ! Ventrolateral Protocerebrum
+
+[Term]
+id: JFRC:0000002314
+name: all-eb
+synonym: "ALL" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001690 ! Ellipsoid Body
+
+[Term]
+id: JFRC:0000002316
+name: center
+synonym: "CEN" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001690 ! Ellipsoid Body
+
+[Term]
+id: JFRC:0000002318
+name: inner-ring
+synonym: "IRI" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001690 ! Ellipsoid Body
+
+[Term]
+id: JFRC:0000002320
+name: middle-ring
+synonym: "MRI" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001690 ! Ellipsoid Body
+
+[Term]
+id: JFRC:0000002322
+name: outer-ring
+synonym: "ORI" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001690 ! Ellipsoid Body
+
+[Term]
+id: JFRC:0000002324
+name: outer-ring-corona
+synonym: "COR" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001690 ! Ellipsoid Body
+
+[Term]
+id: JFRC:0000002326
+name: eb-small-field
+synonym: "SPO" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001690 ! Ellipsoid Body
+
+[Term]
+id: JFRC:0000002328
+name: surface
+synonym: "SUR" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001690 ! Ellipsoid Body
+
+[Term]
+id: JFRC:0000002330
+name: anterior-bulb
+synonym: "ABU" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001728 ! Bulb
+
+[Term]
+id: JFRC:0000002332
+name: superior-bulb
+synonym: "SBU" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001728 ! Bulb
+
+[Term]
+id: JFRC:0000002334
+name: inferior-bulb
+synonym: "IBU" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001728 ! Bulb
+
+[Term]
+id: JFRC:0000004196
+name: antennocerebral tract
+synonym: "ACT" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000004198
+name: Neck Connective
+synonym: "NC" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001899 ! Tracts
+
+[Term]
+id: JFRC:0000004200
+name: Heisenberg Antler
+synonym: "HA" EXACT ABBREVIATION []
+relationship: part_of JFRC:0000001768 ! Superior Intermediate Protocerebrum
+
+[Typedef]
+id: part_of
+name: part of
+is_transitive: true
+
