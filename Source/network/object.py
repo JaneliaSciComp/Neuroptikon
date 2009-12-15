@@ -148,10 +148,6 @@ class Object(object):
         return image
     
     
-    def __hash__(self):
-        return self.networkId
-    
-    
     def __setattr__(self, name, value):
         """
         Send out a message whenever one of this object's values changes.  This is needed, for example, to allow the GUI to update when an object is modified via the console or a script.
