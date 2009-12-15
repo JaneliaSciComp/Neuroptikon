@@ -42,6 +42,7 @@ class LibraryItem(object):
             self.abbreviation = name
         else:
             self.abbreviation = abbreviation
+        self.synonyms = []
         
         self.frame = None
     

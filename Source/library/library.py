@@ -1,6 +1,7 @@
 from library_item import LibraryItem
 from library_frame import LibraryFrame
 from pydispatch import dispatcher
+from itertools import groupby
 
 class Library(object):
     
@@ -21,12 +22,14 @@ class Library(object):
             dict = {}
             self._library[item.__class__.__name__] = dict
             # Add a method to ourself that returns the full list of items of this class.
-            setattr(self, item.__class__.listProperty(), lambda: sorted(dict.values(), cmp=lambda x,y: cmp(x.name.lower(), y.name.lower())))
+            setattr(self, item.__class__.listProperty(), lambda: sorted([value for value, group in groupby(dict.values())], cmp=lambda x,y: cmp(x.name.lower(), y.name.lower())))
             # Add a method to ourself that performs a lookup of items of this class.
-            setattr(self, item.__class__.lookupProperty(), lambda itemId: dict[itemId] if itemId in dict else None)
+            setattr(self, item.__class__.lookupProperty(), lambda itemId: dict.get(itemId, None))
             self._frame.addItemClass(item.__class__)
         
         dict[item.identifier] = item
+        for synonym in item.synonyms:
+            dict[synonym] = item
         
         dispatcher.send(('addition', item.__class__), self)
     
