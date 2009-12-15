@@ -2,7 +2,7 @@
 This script demonstrates creating nested regions and regions connected to an ontology.
 """
 
-flyBrainOnt = library.ontology('flybrain')
+flyBrainOnt = library.ontology('Drosophila adult')
 
 # Build the network
 

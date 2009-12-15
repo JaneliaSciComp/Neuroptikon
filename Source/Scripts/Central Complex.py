@@ -2,7 +2,7 @@
 This script creates and visualizes the central complex of the D. melanogaster.
 """
 
-flyBrainOnt = library.ontology('flybrain')
+flyBrainOnt = library.ontology('Drosophila adult')
 
 regions={}
 
