@@ -47,8 +47,8 @@ class Network:
         network._loadingFromXML = True
         
         # Load the classes in such an order that any referenced objects are guaranteed to have already been created.
-        for className in ['Region', 'Pathway', 'Neuron', 'Muscle', 'Arborization', 'Innervation', 'GapJunction', 'Synapse', 'Stimulus']:
-            elementModule = getattr(sys.modules['Network'], className)
+        for moduleName, className in [('region', 'Region'), ('pathway', 'Pathway'), ('neuron', 'Neuron'), ('muscle', 'Muscle'), ('arborization', 'Arborization'), ('innervation', 'Innervation'), ('gap_junction', 'GapJunction'), ('synapse', 'Synapse'), ('stimulus', 'Stimulus')]:
+            elementModule = getattr(sys.modules['network'], moduleName)
             elementClass = getattr(elementModule, className)
             for element in xmlElement.findall(className):
                 networkObject = elementClass._fromXMLElement(network, element)
@@ -61,6 +61,8 @@ class Network:
                 network._attributes.append(attribute)
         
         network._loadingFromXML = False
+        
+        network._updateGraph()
         
         return network
     
@@ -412,10 +414,11 @@ class Network:
         
     
     def _objectChanged(self, sender):
-        if not self._loadingFromXML and not self._modified:
+        if not self._loadingFromXML:
             self._updateGraph(sender)
-            self._modified = True
-            dispatcher.send(('set', 'modified'), self)
+            if not self._modified:
+                self._modified = True
+                dispatcher.send(('set', 'modified'), self)
     
     
     def setModified(self, modified):
