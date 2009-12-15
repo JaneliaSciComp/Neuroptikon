@@ -100,7 +100,7 @@ class NeuroptikonApp(wx.App):
         # Load any ontologies in <root>/Ontologies
         try:
             for fileName in os.listdir(neuroptikon.rootDir + os.sep + 'Ontologies'):
-                if fileName != '.svn':
+                if fileName.endswith('.obo'):
                     identifier = os.path.splitext(fileName)[0]
                     ontology = Ontology(identifier)
                     try:
