@@ -1,3 +1,8 @@
+#  Copyright (c) 2010 Howard Hughes Medical Institute.
+#  All rights reserved.
+#  Use is subject to Janelia Farm Research Campus Software Copyright 1.1 license terms.
+#  http://license.janelia.org/license/jfrc_copyright_1_1.html
+
 """
 A script to demonstrate how to use the centrality algorithms built into NetworkX.
 See <http://networkx.lanl.gov/reference/algorithms.centrality.html> for the full list of algorithms and their descriptions.

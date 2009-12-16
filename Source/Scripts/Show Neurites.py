@@ -1,3 +1,8 @@
+#  Copyright (c) 2010 Howard Hughes Medical Institute.
+#  All rights reserved.
+#  Use is subject to Janelia Farm Research Campus Software Copyright 1.1 license terms.
+#  http://license.janelia.org/license/jfrc_copyright_1_1.html
+
 '''
 Visualize any neurites that are not dedicated to a single connection, e.g. those created by the convenience methods like Neuron.synapseOn() or Neurite.arborize().
 

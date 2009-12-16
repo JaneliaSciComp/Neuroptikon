@@ -1,8 +1,13 @@
-'''Inspectors package'''
+#  Copyright (c) 2010 Howard Hughes Medical Institute.
+#  All rights reserved.
+#  Use is subject to Janelia Farm Research Campus Software Copyright 1.1 license terms.
+#  http://license.janelia.org/license/jfrc_copyright_1_1.html
+
+'''
+Inspectors package
+'''
 
 import os, sys
-
-__version__ = "1.0.0"
 
 # Import all packages and modules within this package.
 try:

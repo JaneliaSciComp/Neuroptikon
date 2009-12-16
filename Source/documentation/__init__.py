@@ -1,7 +1,5 @@
 """ Documentation package """
 
-__version__ = "1.0.0"
-
 import neuroptikon
 
 import wx

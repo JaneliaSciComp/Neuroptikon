@@ -1,3 +1,8 @@
+#  Copyright (c) 2010 Howard Hughes Medical Institute.
+#  All rights reserved.
+#  Use is subject to Janelia Farm Research Campus Software Copyright 1.1 license terms.
+#  http://license.janelia.org/license/jfrc_copyright_1_1.html
+
 """
 This script adds all of the muscles and innervations of C. elegans to the current network, also creating the neurons if necessary.
 
