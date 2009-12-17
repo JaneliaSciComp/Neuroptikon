@@ -278,8 +278,23 @@ class PathRoutingLayout(Layout):
         
         # Route each edge starting with the shortest and finishing with the longest.
         edges.sort()
-        edgeCount = 0
+        totalEdgeLength = 0.0
+        penalty = 1.0
         for edgeLength, edge in edges:
+            totalEdgeLength += edgeLength * penalty
+            penalty += 0.1
+        
+        edgeCount = 0
+        edgeLengthRouted = 0.0
+        penalty = 1.0
+        edgeMidPoints = {}
+        for edgeLength, edge in edges:
+            edgeLengthRouted += edgeLength * penalty
+            penalty += 0.1
+            if not display.updateProgress('Routing paths...', edgeLengthRouted / totalEdgeLength):
+                edgeMidPoints.clear()
+                break
+            
             edgeCount += 1
             (pathStart, pathEnd) = edge.pathEndPoints()
             startName = '???' if not pathStart.client or not pathStart.client.abbreviation else pathStart.client.abbreviation
@@ -340,7 +355,7 @@ class PathRoutingLayout(Layout):
                                 break
                         if sameSlope:
                             del path[index]
-                    edge.setPathMidPoints(path)
+                    edgeMidPoints[edge] = path
                     del edgeMap
                     break
                 
@@ -410,7 +425,10 @@ class PathRoutingLayout(Layout):
                 print '\tCould not find route from ' + startName + ' to ' + endName
         
         #nodeMap.show()
-
+        
+        for edge, midPoints in edgeMidPoints.iteritems():
+            edge.setPathMidPoints(midPoints)
+        
 #import pyheapq
 #
 #from heapset import HeapSet

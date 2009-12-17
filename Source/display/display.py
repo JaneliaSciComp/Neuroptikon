@@ -855,8 +855,7 @@ class Display(wx.glcanvas.GLCanvas):
             visible = list(self.selectedVisibles)[0]
             if not visible.positionIsFixed() or not visible.sizeIsFixed():
                 self._addDragger(visible)
-        if not self._suppressRefresh:
-            self.Refresh()
+        self.Refresh()
         if signal[1] not in ('glowColor'):
             self.GetTopLevelParent().setModified(True)
     
@@ -1914,6 +1913,7 @@ class Display(wx.glcanvas.GLCanvas):
         # Update the highlighting, animation and ghosting based on the current selection.
         # TODO: this should all be handled by display rules
         
+        refreshWasSupressed = self._suppressRefresh
         self._suppressRefresh = True
         
         def _highlightObject(networkObject):
@@ -2077,7 +2077,7 @@ class Display(wx.glcanvas.GLCanvas):
             # Don't need to redraw automatically if nothing is animated. 
             self._animationTimer.Stop()
         
-        self._suppressRefresh = False
+        self._suppressRefresh = refreshWasSupressed
     
     
     def _addDragger(self, visible):
@@ -2249,6 +2249,7 @@ class Display(wx.glcanvas.GLCanvas):
         if layout != None and not isinstance(layout, layout_module.Layout) and (not type(layout) == type(self.__class__) or not issubclass(layout, layout_module.Layout)):
             raise TypeError, 'The layout parameter passed to performLayout() should be one of the classes in layouts, an instance of one of the classes or None.'
         
+        self.beginProgress('Laying out the network...')
         if layout == None:
             # Fall back to the last layout used.
             layout = self.lastUsedLayout
@@ -2275,14 +2276,16 @@ class Display(wx.glcanvas.GLCanvas):
                         layout = layoutClass()
                         break
         
+        refreshWasSuppressed = self._suppressRefresh
         self._suppressRefresh = True
         layout.layoutDisplay(self)
         self.lastUsedLayout = layout
-        self._suppressRefresh = False
+        self._suppressRefresh = refreshWasSuppressed
         if self.viewDimensions == 2:
             self.zoomToFit()
         else:
             self.resetView()
+        self.endProgress()
     
     
     def saveViewAsImage(self, path):
@@ -2398,6 +2401,36 @@ class Display(wx.glcanvas.GLCanvas):
             self.defaultFlowFromSpreadUniform.set(self.defaultFlowSpread)
             dispatcher.send(('set', 'defaultFlowSpread'), self)
     
+    
+    def beginProgress(self, message = None, visualDelay = 1.0):
+        """
+        Display a message that a lengthy task has begun.
+        
+        Each call to this method must be balanced by a call to :meth:`endProgress <display.display.Display.endProgress>`.  Any number of :meth:`updateProgress <display.display.Display.updateProgress>` calls can be made in the interim.  Calls to this method can be nested as long as the right number of :meth:`endProgress <display.display.Display.endProgress>` calls are made.
+        
+        The visualDelay argument indicates how many seconds to wait until the progress user interface is shown.  This avoids flashing the interface open and closed for tasks that end up running quickly.
+        """
+        
+        return self.GetTopLevelParent().beginProgress(message, visualDelay)
+    
+    
+    def updateProgress(self, message = None, fractionComplete = None):
+        """
+        Update the message and/or completion fraction during a lengthy task.
+        
+        If the user has pressed the Cancel button then this method will return False and the task should be aborted.
+        """
+        
+        return self.GetTopLevelParent().updateProgress(message, fractionComplete)
+    
+    
+    def endProgress(self):
+        """
+        Indicate that the lengthy task has ended.
+        """
+        
+        return self.GetTopLevelParent().endProgress()
+            
 
 class DisplayDropTarget(wx.PyDropTarget):
     

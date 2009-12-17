@@ -28,6 +28,8 @@ for muscle in network.muscles():
 
 # Set up the visualization
 
+updateProgress('Coloring the network...')
+
 for neuron in network.neurons():
     red = green = blue = 0.5
     if neuron.hasFunction(Neuron.Function.SENSORY):
@@ -60,8 +62,9 @@ for innervation in network.innervations():
     display.setVisibleOpacity(innervation, 1.0)
 
 # Perform a spectral layout weighted by the 'Count' attribute of the synapses and gap junctions.
+updateProgress('Laying out the network...')
 def weightByCount(edgeVisible):
     countAttr = edgeVisible.client.getAttribute('Count')
     return 0 if not countAttr else countAttr.value()
 
-display.performLayout(layouts['Spectral'](weightFunction = weightByCount, scaling = (-40.0, 12.5, 0.25), autoScale = False))
+display.performLayout(layouts['Spectral'](weightFunction = weightByCount, scaling = (40.0, 12.5, 0.25), autoScale = False))

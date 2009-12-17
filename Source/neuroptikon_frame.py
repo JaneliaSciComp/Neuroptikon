@@ -55,6 +55,12 @@ class NeuroptikonFrame( wx.Frame ):
         
         self.finder = None
         
+        self._progressNestingLevel = 0
+        self._progressDialog = None
+        self._progressDisplayTime = None
+        self._progressMessage = None
+        self._progressFractionComplete = None
+        
         self.layoutClasses = {}
         
         self.SetMenuBar(self.menuBar())
@@ -282,15 +288,24 @@ class NeuroptikonFrame( wx.Frame ):
         scriptLocals = neuroptikon.scriptLocals()
         scriptLocals['network'] = self.display.network
         scriptLocals['display'] = self.display
+        scriptLocals['updateProgress'] = self.updateProgress
         if 'DEBUG' in os.environ:
             scriptLocals['profileScript'] = self._profileScript
         return scriptLocals
     
         
     def runScript(self, scriptPath):
-        # TODO: It would be nice to provide progress for long running scripts.  Would need some kind of callback for scripts to indicate how far along they were.
+        scriptName = os.path.basename(scriptPath)
+        
+        self.beginProgress(gettext('Running %s...') % (scriptName))
+        
         if 'DEBUG' in os.environ:
             startTime = datetime.datetime.now()
+        
+        refreshWasSuppressed = self.display._suppressRefresh
+        self.display._suppressRefresh = True
+        self.Freeze()
+        
         prevDir = os.getcwd()
         os.chdir(os.path.dirname(scriptPath))
         if 'DEBUG' in os.environ:
@@ -301,16 +316,22 @@ class NeuroptikonFrame( wx.Frame ):
         scriptLocals['__file__'] = scriptPath   # Let the script know where it is being run from.
         try:
             execfile(os.path.basename(scriptPath), scriptLocals)
-            self.Refresh(False)
         finally:
             os.chdir(prevDir)
             if 'DEBUG' in os.environ:
                 self._console.redirectStdin(False)
                 self._console.redirectStdout(False)
                 self._console.redirectStderr(False)
+        
         if 'DEBUG' in os.environ:
             runTime = datetime.datetime.now() - startTime
-            self._console.writeOut('# Ran ' + os.path.basename(scriptPath) + ' in ' + str(round(runTime.seconds + runTime.microseconds / 1000000.0, 2)) + ' seconds.\n')
+            self._console.writeOut('# Ran ' + scriptName + ' in ' + str(round(runTime.seconds + runTime.microseconds / 1000000.0, 2)) + ' seconds.\n')
+        
+        self.display._suppressRefresh = refreshWasSuppressed
+        
+        self.Thaw()
+        
+        self.endProgress()
     
         
     def _profileScript(self, scriptPath):
@@ -662,4 +683,67 @@ class NeuroptikonFrame( wx.Frame ):
     
     def isModified(self):
         return self._modified
+    
+    
+    def beginProgress(self, message = None, visualDelay = 1.0):
+        """
+        Display a message that a lengthy task has begun.
+        
+        Each call to this method must be balanced by a call to :meth:`endProgress <display.display.Display.endProgress>`.  Any number of :meth:`updateProgress <display.display.Display.updateProgress>` calls can be made in the interim.  Calls to this method can be nested as long as the right number of :meth:`endProgress <display.display.Display.endProgress>` calls are made.
+        
+        The visualDelay argument indicates how many seconds to wait until the progress user interface is shown.  This avoids flashing the interface open and closed for tasks that end up running quickly.
+        """
+        
+        self._progressMessage = message
+        
+        self._progressNestingLevel += 1
+        if self._progressNestingLevel == 1:
+            # Have the UI pop up after visualDelay seconds.
+            self._progressDisplayTime = datetime.datetime.now() + datetime.timedelta(0, visualDelay)
+            wx.CallLater(visualDelay, self._updateProgress)
+    
+    
+    def _updateProgress(self):
+        shouldContinue = True
+        
+        if self._progressNestingLevel > 0:
+            if datetime.datetime.now() > self._progressDisplayTime:
+                if self._progressDialog is None:
+                    self._progressDialog = wx.ProgressDialog(gettext('Neuroptikon'), 'some long text that will make the dialog a nice width', style = wx.PD_APP_MODAL | wx.PD_CAN_ABORT | wx.PD_REMAINING_TIME)
+                    self._progressDialog.ShowModal()
+                
+                if self._progressFractionComplete is None:
+                    shouldContinue = self._progressDialog.Pulse(gettext(self._progressMessage or ''))[0]
+                else:
+                    shouldContinue = self._progressDialog.Update(100.0 * self._progressFractionComplete, gettext(self._progressMessage or ''))[0]
+            
+            # Allow events to be processed while the task is running.
+            wx.GetApp().Dispatch()
+            wx.GetApp().ProcessPendingEvents()
+            
+        return shouldContinue
+    
+    
+    def updateProgress(self, message = None, fractionComplete = None):
+        """
+        Update the message and/or completion fraction during a lengthy task.
+        
+        If the user has pressed the Cancel button then this method will return False and the task should be aborted.
+        """
+        
+        self._progressMessage = message
+        self._progressFractionComplete = fractionComplete
+        return self._updateProgress()
+    
+    
+    def endProgress(self):
+        """
+        Indicate that the lengthy task has ended.
+        """
+        
+        self._progressNestingLevel -= 1
+        
+        if self._progressNestingLevel == 0 and self._progressDialog is not None:
+            self._progressDialog.EndModal(wx.ID_CANCEL)
+            self._progressDialog = None
     

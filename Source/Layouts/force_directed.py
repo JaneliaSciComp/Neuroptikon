@@ -53,8 +53,14 @@ class ForceDirectedLayout(Layout):
         nodeCount = len(positions)
         optimalNodeSep = 1.0 if nodeCount == 0 else sqrt(1.0 / nodeCount)
         
-        for i in range(self.maxIterations, 0, -1):
-            temperature = 0.1 * i / self.maxIterations
+        userCancelled = False
+        
+        for i in range(self.maxIterations):
+            if not display.updateProgress('Laying out the network...', float(i) / self.maxIterations):
+                userCancelled = True
+                break
+            
+            temperature = 0.1 * (self.maxIterations - i) / self.maxIterations
             
             # calculate the displacement for each node
             displacements = {}
@@ -133,13 +139,14 @@ class ForceDirectedLayout(Layout):
             
             #print str(totalDisplacement / nodeCount)
         
-        for node, position in positions.iteritems():
-            if node.parent == None and not node.positionIsFixed():
-                if display.viewDimensions == 2:
-                    position = (position[0], position[1], 0.0)
-                else:
-                    position = (position[0], position[1], position[2])
-                node.setPosition(position)
-        for edge in edges:
-            edge.setPathMidPoints([])
+        if not userCancelled:
+            for node, position in positions.iteritems():
+                if node.parent == None and not node.positionIsFixed():
+                    if display.viewDimensions == 2:
+                        position = (position[0], position[1], 0.0)
+                    else:
+                        position = (position[0], position[1], position[2])
+                    node.setPosition(position)
+            for edge in edges:
+                edge.setPathMidPoints([])
     

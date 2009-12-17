@@ -17,6 +17,7 @@ AY_GanglionGroups = {'A': 'anterior ganglion', 'B': 'dorsal ganglion', 'C': 'lat
 neurons = {}
 
 # Load the neurons from the Neurons.txt file.
+updateProgress('Adding neurons...')
 neuronTypesFile = open('Neurons.txt')
 try:
     for line in neuronTypesFile:
@@ -78,6 +79,7 @@ finally:
     
 # Load the chemical synapses from an adjacency matrix in the Chemical.txt file.
 # It is assumed that the first line of the file indicates the neuron name for each column (and thus for each row as well).
+updateProgress('Adding synapses...')
 synapseFile = open('Chemical.txt')
 try:
     neuronNames = synapseFile.next().strip().split('\t')
@@ -91,6 +93,7 @@ finally:
     
 # Load the gap junctions from an adjacency matrix in the Gap Junction.txt file.
 # It is assumed that the first line of the file indicates the neuron name for each column (and thus for each row as well).
+updateProgress('Adding gap junctions...')
 gapJunctionFile = open('Gap Junction.txt')
 try:
     neuronNames = gapJunctionFile.next().strip().split('\t')
@@ -102,3 +105,4 @@ try:
         count += 1
 finally:
     gapJunctionFile.close()
+
