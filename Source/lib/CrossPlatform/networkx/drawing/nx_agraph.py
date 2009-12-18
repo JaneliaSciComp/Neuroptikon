@@ -1,12 +1,20 @@
 """
+***************
+Graphviz AGraph
+***************
+
 Interface to pygraphviz AGraph class.
 
-Usage 
+Examples
+--------
+>>> G=nx.complete_graph(5)
+>>> A=nx.to_agraph(G)
+>>> H=nx.from_agraph(A)
 
- >>> from networkx import *
- >>> G=complete_graph(5)
- >>> A=to_agraph(G)
- >>> H=from_agraph(A)
+See Also
+--------
+Pygraphviz: http://networkx.lanl.gov/pygraphviz
+
 
 """
 __author__ = """Aric Hagberg (hagberg@lanl.gov)"""
@@ -16,48 +24,69 @@ __author__ = """Aric Hagberg (hagberg@lanl.gov)"""
 #    Pieter Swart <swart@lanl.gov>
 #    Distributed under the terms of the GNU Lesser General Public License
 #    http://www.gnu.org/copyleft/lesser.html
+
+__all__ = ['from_agraph', 'to_agraph', 
+           'write_dot', 'read_dot', 
+           'graphviz_layout',
+           'pygraphviz_layout']
+
 import os
 import sys
-from networkx.utils import _get_fh
+import networkx
+from networkx.utils import _get_fh,is_string_like
+
+
 try:
-    import pygraphviz
-except ImportError:
-    raise
+    from peak.util.imports import lazyModule
+except:
+    from networkx.util.imports import lazyModule
+
+pygraphviz=lazyModule('pygraphviz')
+
 
 def from_agraph(A,create_using=None):
-    """Return a NetworkX XGraph or XDiGraph from a pygraphviz graph.
+    """Return a NetworkX Graph or DiGraph from a PyGraphviz graph.
 
-    >>> X=from_agraph(A)
+    Parameters
+    ----------
+    A : PyGraphviz AGraph
+      A graph created with PyGraphviz
+      
+    create_using : NetworkX graph class instance      
+      The output is created using the given graph class instance
 
-    The XGraph X will have a dictionary X.graph_attr containing
+    Examples
+    --------
+    >>> K5=nx.complete_graph(5)
+    >>> A=nx.to_agraph(K5)
+    >>> G=nx.from_agraph(A)
+    >>> G=nx.from_agraph(A)
+
+
+    Notes
+    -----
+    The Graph G will have a dictionary G.graph_attr containing
     the default graphviz attributes for graphs, nodes and edges.
 
-    Default node attributes will be in the dictionary X.node_attr
+    Default node attributes will be in the dictionary G.node_attr
     which is keyed by node.
 
-    Edge attributes will be returned as edge data in the graph X.
-
-    If you want a Graph with no attributes attached instead of an XGraph
-    with attributes use
-
-    >>> G=Graph(X)
+    Edge attributes will be returned as edge data in G.  With
+    edge_attr=False the edge data will be the Graphviz edge weight
+    attribute or the value 1 if no edge weight attribute is found.
 
     """
-    import networkx
-    if A.is_strict():
-        multiedges=False
-        selfloops=False
-    else:
-        multiedges=True
-        selfloops=True
-        
     if create_using is None:        
-        if A.is_undirected():
-            create_using=networkx.XGraph(multiedges=multiedges,
-                                         selfloops=selfloops)
+        if A.is_directed():
+            if A.is_strict():
+                create_using=networkx.DiGraph()
+            else:
+                create_using=networkx.MultiDiGraph()
         else:
-            create_using=networkx.XDiGraph(multiedges=multiedges,
-                                           selfloops=selfloops)
+            if A.is_strict():
+                create_using=networkx.Graph()
+            else:
+                create_using=networkx.MultiGraph()
 
     # assign defaults        
     N=networkx.empty_graph(0,create_using)
@@ -65,146 +94,95 @@ def from_agraph(A,create_using=None):
     node_attr={}
     # add nodes, attributes to N.node_attr
     for n in A.nodes():
-        N.add_node(n)
-        node_attr[n]=n.attr
+        N.add_node(str(n),**dict(n.attr))
 
-    # add edges, attributes attached to edge
+    # add edges, assign edge data as dictionary of attributes
     for e in A.edges():
-        if len(e)==2:
-            u,v=e
-        else:
-            u,v,k=e
-        if hasattr(N,'allow_multiedges')==True: # XGraph
-            attr=dict((k,v) for k,v in e.attr.items() if v!='')
-            N.add_edge(u,v,attr)
-        else: # Graph
-            N.add_edge(u,v)
+        u,v=str(e[0]),str(e[1])
+        attr=dict(e.attr)
+        if e.key is not None:
+            attr.update(key=e.key)
+        N.add_edge(u,v,attr)
         
     # add default attributes for graph, nodes, and edges       
     # hang them on N.graph_attr
-    if hasattr(N,'allow_multiedges')==True: # XGraph
-        N.graph_attr={}
-        N.graph_attr['graph']=A.graph_attr
-        N.graph_attr['node']=A.node_attr
-        N.graph_attr['edge']=A.edge_attr
-        N.node_attr=node_attr
-
+    N.graph['graph']=A.graph_attr
+    N.graph['node']=A.node_attr
+    N.graph['edge']=A.edge_attr
     return N        
 
-def to_agraph(N, graph_attr=None, node_attr=None, strict=True):
+def to_agraph(N):
     """Return a pygraphviz graph from a NetworkX graph N.
 
-    If N is a Graph or DiGraph, graphviz attributes can
-    be supplied through the arguments
+    Parameters
+    ----------
+    N : NetworkX graph
+      A graph created with NetworkX
+      
+    Examples
+    --------
+    >>> K5=nx.complete_graph(5)
+    >>> A=nx.to_agraph(K5)
 
-    graph_attr:  dictionary with default attributes for graph, nodes, and edges
-                 keyed by 'graph', 'node', and 'edge' to attribute dictionaries
-
-    node_attr: dictionary keyed by node to node attribute dictionary
-
-    If N is an XGraph or XDiGraph an attempt will be made first
+    Notes
+    -----
+    If N has an dict N.graph_attr an attempt will be made first
     to copy properties attached to the graph (see from_agraph)
     and then updated with the calling arguments if any.
 
     """
     directed=N.is_directed()
-    if hasattr(N,'allow_multiedges'):
-        if N.multiedges:
-            strict=False
-    if hasattr(N,'allow_selfloops'):
-        if N.selfloops:
-            strict=False
+    strict=N.number_of_selfloops()==0 and not N.is_multigraph() 
     A=pygraphviz.AGraph(name=N.name,strict=strict,directed=directed)
 
     # default graph attributes            
-    try:             
-        A.graph_attr.update(N.graph_attr['graph'])
-    except:
-        pass
-    try:
-        A.graph_attr.update(graph_attr['graph'])
-    except:
-        pass
-    # default node attributes            
-    try:        
-        A.node_attr.update(N.graph_attr['node'])
-    except:
-        pass
-    try:
-        A.node_attr.update(graph_attr['node'])
-    except:
-        pass
-    # default edge attributes            
-    try:        
-        A.edge_attr.update(N.graph_attr['edge'])
-    except:
-        pass
-    try:
-        A.edge_attr.update(graph_attr['edge'])
-    except:
-        pass
+    A.graph_attr.update(N.graph.get('graph',{}))
+    A.node_attr.update(N.graph.get('node',{}))
+    A.edge_attr.update(N.graph.get('edge',{}))
 
     # add nodes
-#    import pdb; pdb.set_trace()
-    for n in N.nodes_iter():
+    for n,nodedata in N.nodes(data=True):
         A.add_node(n)
         node=pygraphviz.Node(A,n)
-        # try node attributes attached to graph
-        try:
-            if n in N.node_attr:
-                node.attr.update(N.node_attr[n])
-        except:
-            pass
-        # update with attributes from calling parameters
-        try:
-            if n in node_attr:
-                node.attr.update(node_attr[n])
-        except:
-            pass
+        node.attr.update(nodedata)
 
     # loop over edges
-    for e in N.edges_iter():
-        if len(e)==2:
-            (u,v)=e
-            d=None
-        else:
-            (u,v,d)=e
 
-        if d is None: 
-            # no data, just add edge
-            A.add_edge(u,v)
-        else: 
-            if hasattr(d,"__getitem__"):
-                # edge data is dictionary-like, treat it as attributes
-                # check for user assigned key
-                if 'key' in d:
-                    key=d['key']
-                    del d['key']
-                else:
-                    key=str(d)
-                data=d
-            else:
-                # edge data is some other object
-                key=str(d)
-                data={'data':key}
-            A.add_edge(u,v,key=key,**data)
-            edge=pygraphviz.Edge(A,u,v,key)
+    if N.is_multigraph():
+        for u,v,key,edgedata in N.edges_iter(data=True):
+            A.add_edge(u,v,key=key,**edgedata)
+    else:
+        for u,v,edgedata in N.edges_iter(data=True):
+            A.add_edge(u,v,**edgedata)
+
 
     return A
 
 def write_dot(G,path):
     """Write NetworkX graph G to Graphviz dot format on path.
 
-    Path can be a string or a file handle.
+    Parameters
+    ----------
+    G : graph
+       A networkx graph
+    path : filename
+       Filename or file handle to write.  
+
     """
     A=to_agraph(G)
     A.write(path)
     return
 
 def read_dot(path,create_using=None):
-    """Return a NetworkX XGraph or XdiGraph from a dot file on path.
+    """Return a NetworkX graph from a dot file on path.
 
-    Path can be a string or a file handle.
+    Parameters
+    ----------
+    path : file or string
+       File name or file handle to read.
+    create_using : Graph container, optional       
+       Use specified Graph container to build graph.  The default is
+       nx.Graph().
 
     """
     A=pygraphviz.AGraph(file=path)
@@ -212,35 +190,65 @@ def read_dot(path,create_using=None):
 
 
 def graphviz_layout(G,prog='neato',root=None, args=''):
-    """
-    Create layout using graphviz.
-    Returns a dictionary of positions keyed by node.
+    """Create node positions for G using Graphviz.
 
-    >>> from networkx import *
-    >>> G=petersen_graph()
-    >>> pos=graphviz_layout(G)
-    >>> pos=graphviz_layout(G,prog='dot')
+    Parameters
+    ----------
+    G : NetworkX graph
+      A graph created with NetworkX
+    prog : string
+      Name of Graphviz layout program 
+    root : string, optional
+      Root node for twopi layout
+    args : string, optional
+      Extra arguments to Graphviz layout program
+
+    Returns : dictionary      
+      Dictionary of x,y, positions keyed by node.
+
+    Examples
+    --------
+    >>> G=nx.petersen_graph()
+    >>> pos=nx.graphviz_layout(G)
+    >>> pos=nx.graphviz_layout(G,prog='dot')
     
+    Notes
+    -----
     This is a wrapper for pygraphviz_layout.
 
     """
     return pygraphviz_layout(G,prog=prog,root=root,args=args)
 
 def pygraphviz_layout(G,prog='neato',root=None, args=''):
-    """
-    Create layout using pygraphviz and graphviz.
-    Returns a dictionary of positions keyed by node.
+    """Create node positions for G using Graphviz.
 
-    >>> from networkx import *
-    >>> G=petersen_graph()
-    >>> pos=pygraphviz_layout(G)
-    >>> pos=pygraphviz_layout(G,prog='dot')
+    Parameters
+    ----------
+    G : NetworkX graph
+      A graph created with NetworkX
+    prog : string
+      Name of Graphviz layout program 
+    root : string, optional
+      Root node for twopi layout
+    args : string, optional
+      Extra arguments to Graphviz layout program
+
+    Returns : dictionary      
+      Dictionary of x,y, positions keyed by node.
+
+    Examples
+    --------
+    >>> G=nx.petersen_graph()
+    >>> pos=nx.graphviz_layout(G)
+    >>> pos=nx.graphviz_layout(G,prog='dot')
     
     """
     A=to_agraph(G)
+    if root is not None:
+        args+="-Groot=%s"%root
     A.layout(prog=prog,args=args)
     node_pos={}
-    for n in G.nodes():
+    for n in G:
         node=pygraphviz.Node(A,n)
         try:
             xx,yy=node.attr["pos"].split(',')
@@ -249,25 +257,4 @@ def pygraphviz_layout(G,prog='neato',root=None, args=''):
             print "no position for node",n
             node_pos[n]=(0.0,0.0)
     return node_pos
-
-
-def _test_suite():
-    import doctest
-    suite = doctest.DocFileSuite('tests/drawing/nx_agraph.txt',package='networkx')
-    return suite
-
-
-
-
-if __name__ == "__main__":
-    import os
-    import sys
-    import unittest
-    if sys.version_info[:2] < (2, 4):
-        print "Python version 2.4 or later required for tests (%d.%d detected)." %  sys.version_info[:2]
-        sys.exit(-1)
-    # directory of networkx package (relative to this)
-    nxbase=sys.path[0]+os.sep+os.pardir
-    sys.path.insert(0,nxbase) # prepend to search path
-    unittest.TextTestRunner().run(_test_suite())
 

@@ -2,14 +2,28 @@
 Generate graphs with a given degree sequence or expected degree sequence.
 
 """
-#    Copyright (C) 2004-2006 by 
+#    Copyright (C) 2004-2009 by 
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
 #    Distributed under the terms of the GNU Lesser General Public License
 #    http://www.gnu.org/copyleft/lesser.html
 
-__author__ = """Aric Hagberg (hagberg@lanl.gov)\nPieter Swart (swart@lanl.gov)\nDan Schult (dschult@colgate.edu)"""
+__author__ = """Aric Hagberg (hagberg@lanl.gov)\nPieter Swart (swart@lanl.gov)\nDan Schult (dschult@colgate.edu)\nJoel Miller (joel.c.miller.research@gmail.com)"""
+
+
+__all__ = ['configuration_model',
+           'expected_degree_graph',
+           'havel_hakimi_graph',
+           'degree_sequence_tree',
+           'random_clustered_graph',
+           'is_valid_degree_sequence',
+           'create_degree_sequence',
+           'double_edge_swap',
+           'connected_double_edge_swap',
+           'li_smax_graph',
+           's_metric']
+
 
 import random
 import networkx
@@ -21,52 +35,68 @@ import heapq
 #---------------------------------------------------------------------------
 
 def configuration_model(deg_sequence,seed=None):
-    """Return a random pseudograph with the given degree sequence.
+    """Return a random graph with the given degree sequence.
 
-      - `deg_sequence`: degree sequence, a list of integers with each entry
-                        corresponding to the degree of a node (need not be
-                        sorted). A non-graphical degree sequence (i.e. one
-                        not realizable by some simple graph) will raise an
-                        Exception.
-      - `seed`: seed for random number generator (default=None)
+    The configuration model generates a random pseudograph (graph with
+    parallel edges and self loops) by randomly assigning edges to
+    match the given degree sequence.
 
+    Parameters
+    ----------
+    deg_sequence :  list of integers 
+        Each list entry corresponds to the degree of a node.
+    seed : hashable object (default=None)
+        Seed for random number generator.   
 
-    >>> z=create_degree_sequence(100,powerlaw_sequence)
-    >>> G=configuration_model(z)
+    Returns
+    -------
+    G : MultiGraph
+        A graph with the specified degree sequence.
+        Nodes are labeled starting at 0 with an index
+        corresponding to the position in deg_sequence.
 
-    The pseudograph G is a networkx.XGraph that allows multiple (parallel) edges
-    between nodes and edges that connect nodes to themseves (self loops).
+    Raises
+    ------
+    NetworkXError
+        If the degree sequence does not have an even sum.
 
-    To remove self-loops:
-
-    >>> G.ban_selfloops()
+    See Also
+    --------
+    is_valid_degree_sequence
     
+    Notes
+    -----
+    As described by Newman [1]_.
+
+    A non-graphical degree sequence (not realizable by some simple
+    graph) is allowed since this function returns graphs with self
+    loops and parallel edges.  An exception is raised if the degree
+    sequence does not have an even sum.
+
+    This configuration model construction process can lead to
+    duplicate edges and loops.  You can remove the self-loops and
+    parallel edges (see below) which will likely result in a graph
+    that doesn't have the exact degree sequence specified.  This
+    "finite-size effect" decreases as the size of the graph increases.
+
+    References
+    ----------
+    .. [1] M.E.J. Newman, "The structure and function
+           of complex networks", SIAM REVIEW 45-2, pp 167-256, 2003.
+        
+    Examples
+    --------
+    >>> from networkx.utils import powerlaw_sequence
+    >>> z=nx.create_degree_sequence(100,powerlaw_sequence)
+    >>> G=nx.configuration_model(z)
+
     To remove parallel edges:
 
-    >>> G.ban_multiedges()
+    >>> G=nx.Graph(G)
 
-    Steps:
-
-     - Check if deg_sequence is a valid degree sequence.
-     - Create N nodes with stubs for attaching edges
-     - Randomly select two available stubs and connect them with an edge.
-
-    As described by Newman [newman-2003-structure].
+    To remove self loops:
     
-    Nodes are labeled 1,.., len(deg_sequence),
-    corresponding to their position in deg_sequence.
-
-    This process can lead to duplicate edges and loops, and therefore
-    returns a pseudograph type.  You can remove the self-loops and
-    parallel edges (see above) with the likely result of
-    not getting the exat degree sequence specified.
-    This "finite-size effect" decreases as the size of the graph increases.
-
-    References:
-    
-    [newman-2003-structure]  M.E.J. Newman, "The structure and function
-    of complex networks", SIAM REVIEW 45-2, pp 167-256, 2003.
-        
+    >>> G.remove_edges_from(G.selfloop_edges())
     """
     if not sum(deg_sequence)%2 ==0:
         raise networkx.NetworkXError, 'Invalid degree sequence'
@@ -76,11 +106,9 @@ def configuration_model(deg_sequence,seed=None):
 
     # start with empty N-node graph
     N=len(deg_sequence)
-#    G=networkx.empty_graph(N,create_using=networkx.Graph()) # no multiedges or selfloops
 
     # allow multiedges and selfloops
-    G=networkx.empty_graph(N,create_using=networkx.XGraph(multiedges=True, \
-                                                          selfloops=True))
+    G=networkx.empty_graph(N,create_using=networkx.MultiGraph())
 
     if N==0 or max(deg_sequence)==0: # done if no edges
         return G 
@@ -91,7 +119,7 @@ def configuration_model(deg_sequence,seed=None):
     # i.e., node 1 has degree=3 and is repeated 3 times, etc.
     stublist=[]
     for n in G:
-        for i in range(deg_sequence[n-1]):
+        for i in range(deg_sequence[n]):
             stublist.append(n)
 
     # shuffle stublist and assign pairs by removing 2 elements at a time      
@@ -113,11 +141,8 @@ def expected_degree_graph(w, seed=None):
        - `seed`: seed for random number generator (default=None)
 
     >>> z=[10 for i in range(100)]
-    >>> G=expected_degree_graph(z)
+    >>> G=nx.expected_degree_graph(z)
 
-    To remove self-loops:
-
-    >>> G.ban_selfloops()
 
     Reference::
 
@@ -136,7 +161,7 @@ def expected_degree_graph(w, seed=None):
 
     n = len(w)
     # allow self loops
-    G=networkx.empty_graph(n,create_using=networkx.XGraph(selfloops=True))
+    G=networkx.empty_graph(n,create_using=networkx.Graph())
     G.name="random_expected_degree_graph"
 
     if n==0 or max(w)==0: # done if no edges
@@ -217,6 +242,100 @@ def havel_hakimi_graph(deg_sequence):
     G.name="havel_hakimi_graph %d nodes %d edges"%(G.order(),G.size())
     return G
 
+def random_clustered_graph(joint_degree_sequence, seed = None):
+    """Generate a random graph with the given joint degree and triangle
+    degree sequence.
+	
+    This uses a configuration model-like approach to generate a
+    random pseudograph (graph with parallel edges and self loops) by
+    randomly assigning edges to match the given indepdenent edge 
+    and triangle degree sequence.
+
+    Parameters 
+    ---------- 
+    joint_degree_sequence : list of integer pairs
+        Each list entry corresponds to the independent edge degree and
+        triangle degree of a node.
+
+    Returns
+    -------
+    G : MultiGraph
+        A graph with the specified degree sequence. Nodes are labeled
+        starting at 0 with an index corresponding to the position in
+        deg_sequence.
+	
+    Raises
+    ------
+    NetworkXError
+        If the independent edge degree sequence sum is not even
+        or the triangle degree sequence sum is not divisible by 3.
+
+    Notes
+    -----
+    As described by Miller [1] (see also Newman [2] for an equivalent
+    description).
+	
+    A non-graphical degree sequence (not realizable by some simple
+    graph) is allowed since this function returns graphs with self
+    loops and parallel edges.  An exception is raised if the
+    independent degree sequence does not have an even sum or the
+    triangle degree sequence sum is not divisible by 3.
+	
+    This configuration model-like construction process can lead to
+    duplicate edges and loops.  You can remove the self-loops and
+    parallel edges (see below) which will likely result in a graph
+    that doesn't have the exact degree sequence specified.  This
+    "finite-size effect" decreases as the size of the graph increases.
+
+    References
+    ----------
+    .. [1] J. C. Miller "Percolation and Epidemics on Random Clustered Graphs."
+        Physical Review E, Rapid Communication (to appear).
+    .. [2] M.E.J. Newman, "Random clustered networks".
+        Physical Review Letters (to appear).
+	       
+    Examples
+    --------
+    >>> deg_tri=[[1,0],[1,0],[1,0],[2,0],[1,0],[2,1],[0,1],[0,1]]
+    >>> G = nx.random_clustered_graph(deg_tri)
+
+    To remove parallel edges:
+    >>> G=nx.Graph(G)
+	
+    To remove self loops:
+    >>> G.remove_edges_from(G.selfloop_edges())
+"""
+    if not seed is None:
+        random.seed(seed)
+    N = len(joint_degree_sequence)
+    G = networkx.empty_graph(N,create_using=networkx.MultiGraph())
+
+    ilist = []
+    tlist = []
+    for n in G:
+        degrees = joint_degree_sequence[n]
+        for icount in range(degrees[0]):
+            ilist.append(n)
+        for tcount in range(degrees[1]):
+            tlist.append(n)
+
+    if len(ilist)%2 != 0 or len(tlist)%3 != 0:
+        raise networkx.NetworkXError, 'Invalid degree sequence'
+
+    random.shuffle(ilist)
+    random.shuffle(tlist)
+    while ilist:
+        G.add_edge(ilist.pop(),ilist.pop())
+    while tlist:
+        n1 = tlist.pop()
+        n2 = tlist.pop()
+        n3 = tlist.pop()
+        G.add_edges_from([(n1,n2),(n1,n3),(n2,n3)])
+    G.name = "random_clustered %d nodes %d edges"%(G.order(),G.size())
+    return G
+
+
+
 def degree_sequence_tree(deg_sequence):
     """
     Make a tree for the given degree sequence.
@@ -250,7 +369,7 @@ def degree_sequence_tree(deg_sequence):
         
     # in case we added one too many 
     if len(G.degree())>len(deg_sequence): 
-        G.delete_node(0)
+        G.remove_node(0)
     return G
         
 
@@ -323,8 +442,8 @@ def create_degree_sequence(n, sfunction=None, max_tries=50, **kwds):
     For examples of sfunctions that return sequences of random numbers,
     see networkx.Utils.
 
-    >>> from networkx.utils import *
-    >>> seq=create_degree_sequence(10,uniform_sequence)
+    >>> from networkx.utils import uniform_sequence
+    >>> seq=nx.create_degree_sequence(10,uniform_sequence)
 
     """
     tries=0
@@ -377,14 +496,14 @@ def double_edge_swap(G, nswap=1):
         if ui==xi: continue # same source, skip
         u=dk[ui] # convert index to label
         x=dk[xi] 
-        v=random.choice(G[u]) # choose target uniformly from nbrs
-        y=random.choice(G[x]) 
+        v=random.choice(G.neighbors(u)) # choose target uniformly from nbrs
+        y=random.choice(G.neighbors(x)) # Note: dan't use G[u] because choice can't use dict 
         if v==y: continue # same target, skip
-        if (not G.has_edge(u,x)) and (not G.has_edge(v,y)):
+        if (x not in G[u]) and (y not in G[v]):
             G.add_edge(u,x)
             G.add_edge(v,y)
-            G.delete_edge(u,v)
-            G.delete_edge(x,y)
+            G.remove_edge(u,v)
+            G.remove_edge(x,y)
             swapcount+=1
         n+=1
     return swapcount
@@ -444,12 +563,12 @@ def connected_double_edge_swap(G, nswap=1):
             if ui==xi: continue # same source, skip
             u=dk[ui] # convert index to label
             x=dk[xi] 
-            v=random.choice(G[u]) # choose target uniformly from nbrs
-            y=random.choice(G[x]) 
+            v=random.choice(G.neighbors(u)) # choose target uniformly from nbrs
+            y=random.choice(G.neighbors(x)) # Note: dan't use G[u] because choice can't use dict 
             if v==y: continue # same target, skip
             if (not G.has_edge(u,x)) and (not G.has_edge(v,y)):
-                G.delete_edge(u,v)
-                G.delete_edge(x,y)
+                G.remove_edge(u,v)
+                G.remove_edge(x,y)
                 G.add_edge(u,x)
                 G.add_edge(v,y)
                 swapped.append((u,v,x,y))
@@ -463,8 +582,8 @@ def connected_double_edge_swap(G, nswap=1):
                 (u,v,x,y)=swapped.pop()
                 G.add_edge(u,v)
                 G.add_edge(x,y)
-                G.delete_edge(u,x)
-                G.delete_edge(v,y)
+                G.remove_edge(u,x)
+                G.remove_edge(v,y)
                 swapcount-=1
             window = int(math.ceil(float(window)/2))
         assert G.degree() == ideg
@@ -684,23 +803,3 @@ def s_metric(G):
     # this function doesn't belong in this module
     return sum([G.degree(u)*G.degree(v) for (u,v) in G.edges_iter()])
    
-def _test_suite():
-    import doctest
-    suite = doctest.DocFileSuite('tests/generators/degree_seq.txt',
-                                 package='networkx')
-    return suite
-
-
-if __name__ == "__main__":
-    import os
-    import sys
-    import unittest
-    if sys.version_info[:2] < (2, 4):
-        print "Python version 2.4 or later required (%d.%d detected)." \
-              %  sys.version_info[:2]
-        sys.exit(-1)
-    # directory of networkx package (relative to this)
-    nxbase=sys.path[0]+os.sep+os.pardir
-    sys.path.insert(0,nxbase) # prepend to search path
-    unittest.TextTestRunner().run(_test_suite())
-    

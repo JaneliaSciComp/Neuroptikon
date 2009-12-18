@@ -1,31 +1,22 @@
 """
-Read and write NetworkX graphs.
+**********
+Edge Lists
+**********
 
-Note that NetworkX graphs can contain any hashable Python object as
-node (not just integers and strings).  So writing a NetworkX graph
-as a text file may not always be what you want: see write_gpickle
-and gread_gpickle for that case.
-
-This module provides the following :
-
-Edgelist format:
-Useful for connected graphs with or without edge data.
-
-   write_edgelist(G, path)
-   G=read_edgelist(path)
+Read and write NetworkX graphs as edge lists.
 
 
 """
+
 __author__ = """Aric Hagberg (hagberg@lanl.gov)\nDan Schult (dschult@colgate.edu)"""
-__date__ = """"""
-__credits__ = """"""
-__revision__ = ""
-#    Copyright (C) 2004-2007 by 
+#    Copyright (C) 2004-2009 by 
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
 #    Distributed under the terms of the GNU Lesser General Public License
 #    http://www.gnu.org/copyleft/lesser.html
+
+__all__ = ['read_edgelist', 'write_edgelist']
 
 import codecs
 import locale
@@ -38,29 +29,45 @@ import networkx
 
 
 def write_edgelist(G, path, comments="#", delimiter=' '):
-    """Write graph G in edgelist format on file path.
+    """Write graph as a list of edges.
 
-    See read_edgelist for file format details.
+    Parameters
+    ----------
+    G : graph
+       A networkx graph
+    path : file or string
+       File or filename to write.  
+       Filenames ending in .gz or .bz2 will be compressed.
+    comments : string, optional
+       The character used to indicate the start of a comment 
+    delimiter : string, optional
+       The string uses to separate values.  The default is whitespace.
 
-    >>> write_edgelist(G, "file.edgelist")
 
-    path can be a filehandle or a string with the name of the file.
+    Examples
+    --------
+    >>> G=nx.path_graph(4)
+    >>> nx.write_edgelist(G, "test.edgelist")
 
-    >>> fh=open("file.edgelist")
-    >>> write_edgelist(G,fh)
+    >>> fh=open("test.edgelist",'w')
+    >>> nx.write_edgelist(G,fh)
 
-    Filenames ending in .gz or .bz2 will be compressed.
+    >>> nx.write_edgelist(G, "test.edgelist.gz")
 
-    >>> write_edgelist(G, "file.edgelist.gz")
-
+    Notes
+    -----
     The file will use the default text encoding on your system.
     It is possible to write files in other encodings by opening
     the file with the codecs module.  See doc/examples/unicode.py
     for hints.
 
     >>> import codecs
-    >>> fh=codecs.open("file.edgelist",encoding='utf=8') # use utf-8 encoding
-    >>> write_edgelist(G,fh)
+    >>> fh=codecs.open("test.edgelist",'w',encoding='utf=8') # utf-8 encoding
+    >>> nx.write_edgelist(G,fh)
+
+    See Also
+    --------
+    networkx.write_edgelist
 
 
     """
@@ -70,62 +77,73 @@ def write_edgelist(G, path, comments="#", delimiter=' '):
     fh.write("%s\n" % (pargs))
     fh.write(comments+" GMT %s\n" % (time.asctime(time.gmtime())))
     fh.write(comments+" %s\n" % (G.name))
-    for e in G.edges():
-        for n in e:  # handle Graph or XGraph, two- or three-tuple
-            if n is None: continue # don't write data for XGraph None 
-            if is_string_like(n):
-                fh.write(n+delimiter)
-            else:
-                fh.write(str(n)+delimiter)                         
-        fh.write("\n")                     
+
+    def make_str(t):
+        if is_string_like(t): return t
+        return str(t)
+
+    for e in G.edges(data=True):
+        fh.write(delimiter.join(map(make_str,e))+"\n")
+        #if G.multigraph:
+        #    u,v,datalist=e
+        #    for d in datalist:
+        #        fh.write(delimiter.join(map(make_str,(u,v,d)))+"\n")
+        #else:
 
 def read_edgelist(path, comments="#", delimiter=' ',
                   create_using=None, nodetype=None, edgetype=None):
-    """Read graph in edgelist format from path.
+    """Read a graph from a list of edges.
 
-    >>> G=read_edgelist("file.edgelist")
+    Parameters
+    ----------
+    path : file or string
+       File or filename to write.  
+       Filenames ending in .gz or .bz2 will be uncompressed.
+    comments : string, optional
+       The character used to indicate the start of a comment 
+    delimiter : string, optional
+       The string uses to separate values.  The default is whitespace.
+    create_using : Graph container, optional       
+       Use specified Graph container to build graph.  The default is
+       nx.Graph().
+    nodetype : int, float, str, Python type, optional
+       Convert node data from strings to specified type
+    edgetype : int, float, str, Python type, optional
+       Convert edge data from strings to specified type and use as 'weight'
 
-    path can be a filehandle or a string with the name of the file.
+    Returns
+    ----------
+    out : graph
+       A networkx Graph or other type specified with create_using
 
-    >>> fh=open("file.edgelist")
-    >>> G=read_edgelist(fh)
+    Examples
+    --------
+    >>> nx.write_edgelist(nx.path_graph(4), "test.edgelist")
+    >>> G=nx.read_edgelist("test.edgelist")
 
-    Filenames ending in .gz or .bz2 will be compressed.
+    >>> fh=open("test.edgelist")
+    >>> G=nx.read_edgelist(fh)
 
-    >>> G=read_edgelist("file.edgelist.gz")
+    >>> G=nx.read_edgelist("test.edgelist", nodetype=int)
 
-    nodetype is an optional function to convert node strings to nodetype
+    >>> G=nx.read_edgelist("test.edgelist",create_using=nx.DiGraph())
 
-    For example
-
-    >>> G=read_edgelist("file.edgelist", nodetype=int)
-
-    will attempt to convert all nodes to integer type
-
+    Notes
+    -----
     Since nodes must be hashable, the function nodetype must return hashable
     types (e.g. int, float, str, frozenset - or tuples of those, etc.) 
 
-    create_using is an optional networkx graph type, the default is
-    Graph(), a simple undirected graph 
 
-    >>> G=read_edgelist("file.edgelist",create_using=DiGraph())
+    Example edgelist file formats
 
-
-    The comments character (default='#') at the beginning of a
-    line indicates a comment line.
-
-    The entries are separated by delimiter (default=' ').
-    If whitespace is significant in node or edge labels you should use
-    some other delimiter such as a tab or other symbol.  
-
-    Example edgelist file format:: 
+    Without edge data::
 
      # source target
      a b
      a c
      d e
 
-    or for an XGraph() with edge data 
+    With edge data::: 
 
      # source target data
      a b 1
@@ -142,68 +160,33 @@ def read_edgelist(path, comments="#", delimiter=' ',
         except:
             raise TypeError("Input graph is not a networkx graph type")
 
-    # is this a XGraph or XDiGraph?
-    if hasattr(G,'allow_multiedges')==True:
-        xgraph=True
-    else:
-        xgraph=False
-
     fh=_get_fh(path)
 
     for line in fh.readlines():
         line = line[:line.find(comments)].strip()
         if not len(line): continue
-#        if line.startswith("#") or line.startswith("\n"):
-#            continue
-#        line=line.strip() #remove trailing \n 
-        # split line, should have 2 or three items
+        # split line, should have 2 or more
         s=line.split(delimiter)
-        if len(s)==2:
-            (u,v)=s
-            d=None
-        elif len(s)==3:
-            (u,v,d)=s
-        else:
-            raise TypeError("Failed to read line: %s"%line)
-
-        # convert types
-        try:
-            (u,v)=map(nodetype,(u,v))
-        except:
-            raise TypeError("Failed to convert edge (%s, %s) to type %s"\
-                  %(u,v,nodetype))
-        if d is not None and edgetype is not None:
-
+        u=s.pop(0)
+        v=s.pop(0)
+        data=' '.join(s)
+        if nodetype is not None:
             try:
-               d=edgetype(d)
+                u=nodetype(u)
+                v=nodetype(v)
+            except:
+                raise TypeError("Failed to nodes %s,%s to type %s"\
+                          %(u,v,nodetype))
+        if edgetype is not None:
+            try:
+                edgedata={'weight':edgetype(data)}
             except:
                 raise TypeError("Failed to convert edge data (%s) to type %s"\
-                                %(d, edgetype))
-            
-        if xgraph:
-            G.add_edge(u,v,d)  # XGraph or XDiGraph
+                                    %(data, edgetype))
         else:
-            G.add_edge(u,v)    # Graph or DiGraph
-            
+            edgedata=eval(data,{},{})
+        G.add_edge(u,v,**edgedata)  
+#        else:
+#            raise TypeError("Failed to read line: %s"%line)
     return G
 
-
-
-def _test_suite():
-    import doctest
-    suite = doctest.DocFileSuite('tests/readwrite/edgelist.txt',package='networkx')
-    return suite
-
-
-if __name__ == "__main__":
-    import os 
-    import sys
-    import unittest
-    if sys.version_info[:2] < (2, 4):
-        print "Python version 2.4 or later required for tests (%d.%d detected)." %  sys.version_info[:2]
-        sys.exit(-1)
-    # directory of networkx package (relative to this)
-    nxbase=sys.path[0]+os.sep+os.pardir
-    sys.path.insert(0,nxbase) # prepend to search path
-    unittest.TextTestRunner().run(_test_suite())
-    

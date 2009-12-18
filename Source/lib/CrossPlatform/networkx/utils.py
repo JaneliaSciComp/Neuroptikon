@@ -1,26 +1,33 @@
 """
-Utilities for networkx package
+*********
+Utilities
+*********
+
+Helpers for NetworkX.
+
+These are not imported into the base networkx namespace but
+can be accessed, for example, as
+
+>>> import networkx
+>>> networkx.utils.is_string_like('spam')
+True
 
 """
 __author__ = """Aric Hagberg (hagberg@lanl.gov)\nDan Schult(dschult@colgate.edu)"""
-__date__ = "$Date: 2005-06-15 08:30:40 -0600 (Wed, 15 Jun 2005) $"
-__credits__ = """"""
-__revision__ = "$Revision: 1029 $"
-#    Copyright (C) 2004,2005 by 
+#    Copyright (C) 2004-2008 by 
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
 #    Distributed under the terms of the GNU Lesser General Public License
 #    http://www.gnu.org/copyleft/lesser.html
 import random
-import networkx
 
 ### some cookbook stuff
 
 # used in deciding whether something is a bunch of nodes, edges, etc.
 # see G.add_nodes and others in Graph Class in networkx/base.py
 def is_singleton(obj):
-    """ Is string_like or not iterable. """
+    """Is string_like or not iterable."""
     return hasattr(obj,"capitalize") or not hasattr(obj,"__iter__")
 
 def is_string_like(obj): # from John Hunter, types-free version
@@ -35,7 +42,7 @@ def is_string_like(obj): # from John Hunter, types-free version
 
  
 def iterable(obj):
-    """ Return True if obj is iterable with a well-defined len()  """
+    """ Return True if obj is iterable with a well-defined len()"""
     if hasattr(obj,"__iter__"): return True
     try:
         len(obj)
@@ -44,7 +51,7 @@ def iterable(obj):
     return True
 
 def flatten(obj, result=None):
-    """ Return flattened version of (possibly nested) iterable obj. """
+    """ Return flattened version of (possibly nested) iterable object. """
     if not iterable(obj) or is_string_like(obj):
         return obj
     if result is None:
@@ -55,16 +62,6 @@ def flatten(obj, result=None):
         else:
             flatten(item, result)
     return obj.__class__(result)
-
-def iterable_to_string(obj, sep=''):
-    """
-    Return string obtained by concatenating the string representation
-    of each element of an iterable obj, with an optional internal string
-    separator specified.
-    """
-    if not iterable(obj):
-        return str(obj)
-    return sep.join([str(i) for i in obj])
 
 def is_list_of_ints( intlist ):
     """ Return True if list is a list of ints. """
@@ -202,84 +199,6 @@ def scipy_discrete_sequence(n,distribution=False):
     return seq
 
 
-# some helpers for choosing random sequences from distributions
-# uses pygsl: pygsl.sourceforge.org, but not all its functionality.
-# note: gsl's default number generator is the same as Python's
-# (Mersenne Twister)
-
-def gsl_pareto_sequence(n,exponent=1.0,scale=1.0,seed=None):
-    """
-    Return sample sequence of length n from a Pareto distribution.
-
-    """
-    try:
-        import pygsl.rng
-    except ImportError:
-        print "Import error: not able to import pygsl"
-        return
-    rng=pygsl.rng.rng()
-    random._inst = random.Random()
-    if seed is None:
-        seed=random.randint(1,2**32-1)
-    rng.set(seed)
-
-    return rng.pareto(exponent,scale,n)
-
-def gsl_powerlaw_sequence(n,exponent=2.0,scale=1.0,seed=None):
-    """
-    Return sample sequence of length n from a power law distribution.
-
-    """
-    try:
-        import pygsl.rng
-    except ImportError:
-        print "Import error: not able to import pygsl"
-        return
-    rng=pygsl.rng.rng()
-    random._inst = random.Random()
-    if seed is None:
-        seed=random.randint(1,2**32-1)
-    rng.set(seed)
-
-    return rng.pareto(exponent-1,scale,n)
-
-def gsl_poisson_sequence(n,mu=1.0,seed=None):
-    """
-    Return sample sequence of length n from a Poisson distribution.
-
-    """
-    try:
-        import pygsl.rng
-    except ImportError:
-        print "Import error: not able to import pygsl"
-        return
-    rng=pygsl.rng.rng()
-    random._inst = random.Random()
-    if seed is None:
-        seed=random.randint(1,2**32-1)
-    rng.set(seed)
-
-    return rng.poisson(mu,n)
-
-def gsl_uniform_sequence(n,seed=None):
-    """
-    Return sample sequence of length n from a uniform distribution.
-
-    """
-    try:
-        import pygsl.rng
-    except ImportError:
-        print "Import error: not able to import pygsl"
-        return
-    rng=pygsl.rng.rng()
-    random._inst = random.Random()
-    if seed is None:
-        seed=random.randint(1,2**32-1)
-    rng.set(seed)
-
-    return rng.uniform(n)
-
-
 # The same helpers for choosing random sequences from distributions
 # uses Python's random module
 # http://www.python.org/doc/current/lib/module-random.html
@@ -335,7 +254,7 @@ def discrete_sequence(n, distribution=None, cdistribution=None):
     elif distribution is not None:
         cdf=cumulative_distribution(distribution)
     else:
-        raise networkx.NetworkXError, \
+        raise InputError, \
                   "discrete_sequence: distribution or cdistribution missing"
         
 
@@ -346,21 +265,64 @@ def discrete_sequence(n, distribution=None, cdistribution=None):
     seq=[bisect.bisect_left(cdf,s)-1 for s in inputseq]
     return seq
 
-def _test_suite():
-    import doctest
-    suite = doctest.DocFileSuite('tests/utils.txt',package='networkx')
-    return suite
+class UnionFind:
+    """Union-find data structure.
 
-if __name__ == "__main__":
-    import os
-    import sys
-    import unittest
-    if sys.version_info[:2] < (2, 4):
-        print "Python version 2.4 or later required for tests (%d.%d detected)." %  sys.version_info[:2]
-        sys.exit(-1)
-    # directory of networkx package (relative to this)
-    nxbase=sys.path[0]+os.sep+os.pardir
-    sys.path.insert(0,nxbase) # prepend to search path
-    unittest.TextTestRunner().run(_test_suite())
-    
+    Each unionFind instance X maintains a family of disjoint sets of
+    hashable objects, supporting the following two methods:
 
+    - X[item] returns a name for the set containing the given item.
+      Each set is named by an arbitrarily-chosen one of its members; as
+      long as the set remains unchanged it will keep the same name. If
+      the item is not yet part of a set in X, a new singleton set is
+      created for it.
+
+    - X.union(item1, item2, ...) merges the sets containing each item
+      into a single larger set.  If any item is not yet part of a set
+      in X, it is added to X as one of the members of the merged set.
+
+      Union-find data structure. Based on Josiah Carlson's code,
+      http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/215912
+      with significant additional changes by D. Eppstein.
+      http://www.ics.uci.edu/~eppstein/PADS/UnionFind.py
+
+    """
+
+    def __init__(self):
+        """Create a new empty union-find structure."""
+        self.weights = {}
+        self.parents = {}
+
+    def __getitem__(self, object):
+        """Find and return the name of the set containing the object."""
+
+        # check for previously unknown object
+        if object not in self.parents:
+            self.parents[object] = object
+            self.weights[object] = 1
+            return object
+
+        # find path of objects leading to the root
+        path = [object]
+        root = self.parents[object]
+        while root != path[-1]:
+            path.append(root)
+            root = self.parents[root]
+
+        # compress the path and return
+        for ancestor in path:
+            self.parents[ancestor] = root
+        return root
+        
+    def __iter__(self):
+        """Iterate through all items ever found or unioned by this structure."""
+        return iter(self.parents)
+
+    def union(self, *objects):
+        """Find the sets containing the objects and merge them all."""
+        roots = [self[x] for x in objects]
+        heaviest = max([(self.weights[r],r) for r in roots])[1]
+        for r in roots:
+            if r != heaviest:
+                self.weights[heaviest] += self.weights[r]
+                self.parents[r] = heaviest
