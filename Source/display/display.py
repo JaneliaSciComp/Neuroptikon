@@ -1833,7 +1833,7 @@ class Display(wx.glcanvas.GLCanvas):
             pathWasFound = False
             for visible in visibles:
                 for startVisible in self.selectedVisibles:
-                    for pathObject in startVisible.client.shortestPathTo(visible.client):
+                    for pathObject in self.network.shortestPath(startVisible.client, visible.client):
                         for pathVisible in self.visiblesForObject(pathObject):
                             pathWasFound = True
                             newSelection.add(pathVisible)

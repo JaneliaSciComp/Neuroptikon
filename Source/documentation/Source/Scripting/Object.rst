@@ -33,7 +33,6 @@ There are a variety of methods for investigating the connections to and from obj
 .. automethod:: network.object.Object.connections
 .. automethod:: network.object.Object.inputs
 .. automethod:: network.object.Object.outputs
-.. automethod:: network.object.Object.shortestPathTo
 
 
 .. _stimuli:

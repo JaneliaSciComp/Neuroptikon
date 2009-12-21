@@ -3,10 +3,13 @@
 #  Use is subject to Janelia Farm Research Campus Software Copyright 1.1 license terms.
 #  http://license.janelia.org/license/jfrc_copyright_1_1.html
 
-from networkx import XDiGraph
+from networkx import DiGraph, dijkstra_path
 import os.path, sys
 from pydispatch import dispatcher
 import xml.etree.ElementTree as ElementTree
+import inspect, marshal, types
+
+from object import Object
 from region import Region
 from pathway import Pathway
 from neuron import Neuron
@@ -32,7 +35,7 @@ class Network:
         Networks are containers for all :class:`objects <Network.Object.Object>` that exist in a neural circuit. 
         """
         
-        self.graph = XDiGraph()
+        self.graph = DiGraph()
         self.objects = []
         self.idDict = {}   # TODO: weak ref dict?
         self.displays = []
@@ -40,6 +43,7 @@ class Network:
         self._savePath = None
         self._attributes = []
         self._displaysAreSynchronized = True
+        self._weightingFunction = None
         
         self._loadingFromXML = False
         self._modified = False
@@ -60,6 +64,19 @@ class Network:
                 if networkObject is not None:
                     network.addObject(networkObject)
         
+        weightingFunctionElement = xmlElement.find('WeightingFunction')
+        if weightingFunctionElement is not None:
+            funcType = weightingFunctionElement.get('type')
+            funcName = weightingFunctionElement.get('name')
+            if funcType == 'source':
+                exec(weightingFunctionElement.text)
+                network._weightingFunction = eval(funcName)
+            elif funcType == 'marshal':
+                code = marshal.loads(eval(weightingFunctionElement.text))
+                network._weightingFunction = types.FunctionType(code, globals(), funcName or 'weightingFunction')
+            else:
+                raise ValueError, gettext('Unknown weighting function type: %s') % (funcType)
+        
         for element in xmlElement.findall('Attribute'):
             attribute = Attribute._fromXMLElement(network, element)
             if attribute is not None:
@@ -74,14 +91,29 @@ class Network:
     
     def _toXMLElement(self, parentElement):
         networkElement = ElementTree.SubElement(parentElement, 'Network')
+        
         for networkObject in self.objects:
             # Nested regions are handled by their parents and neurites are handled by their neurons.
             if not (isinstance(networkObject, Region) and networkObject.parentRegion is not None) and not isinstance(networkObject, Neurite):
                 objectElement = networkObject._toXMLElement(networkElement)
                 if objectElement is None:
                     pass    # TODO: are there any cases where this is NOT an error?
+        
+        if self._weightingFunction:
+            weightingFunctionElement = ElementTree.SubElement(networkElement, 'WeightingFunction')
+            weightingFunctionElement.set('name', self._weightingFunction.func_name)
+            # First try to get the function source and if that fails then marshal the byte code.
+            try:
+                source = inspect.getsource(self._weightingFunction)
+                weightingFunctionElement.text = source 
+                weightingFunctionElement.set('type', 'source')
+            except IOError:
+                weightingFunctionElement.text = repr(marshal.dumps(self._weightingFunction.func_code))
+                weightingFunctionElement.set('type', 'marshal')
+            
         for attribute in self._attributes:
             attribute._toXMLElement(networkElement)
+        
         return networkElement
     
     
@@ -90,6 +122,18 @@ class Network:
             scriptFile.write(gettext('# Create the network') + '\n\n')
             for attribute in self._attributes:
                 attribute._toScriptFile(scriptFile, scriptRefs)
+        
+        if self._weightingFunction:
+            # First try to get the function source and if that fails then marshal the byte code.
+            scriptFile.write(gettext('# Add the weighting function') + '\n\n')
+            funcName = self._weightingFunction.func_name
+            try:
+                source = inspect.getsource(self._weightingFunction)
+                scriptFile.write(source + '\n\nnetwork.setWeightingFunction(' + funcName + ')\n\n')
+            except IOError:
+                scriptFile.write('import marshal, types\n')
+                scriptFile.write('code = marshal.loads(' + repr(marshal.dumps(self._weightingFunction.func_code)) + ')\n')
+                scriptFile.write('network.setWeightingFunction(types.FunctionType(code, globals(), \'' + funcName + '\'))\n\n')
         
         # Add each network object to the script in an order that guarantees dependent objects will already have been added.
         # Neurites will be added by their neurons, sub-regions by their root region.
@@ -392,30 +436,49 @@ class Network:
     def _updateGraph(self, objectToUpdate = None):
         if objectToUpdate is None:
             # Rebuild the entire graph.
+            objectsToUpdate = self.objects
             self.graph.clear()
-            for objectToUpdate in self.objects:
-                self._updateGraph(objectToUpdate)
         else:
-            objectId = objectToUpdate.networkId
-            
+            # Just rebuild the connections to the one object.
+            objectsToUpdate = [objectToUpdate]
             # Remove the object if it was there before.  This will also delete any edges from the node.
+            objectId = objectToUpdate.networkId
             if objectId in self.graph:
-                self.graph.delete_node(objectId)
+                self.graph.remove_node(objectId)
+        
+        # Maintain a temporary cache of weights so that rebuilding the whole graph doesn't take so long.
+        objectWeights = {}
+        def weightOfObject(weightedObject):
+            if weightedObject.networkId in objectWeights:
+                objectWeight = objectWeights[weightedObject.networkId]
+            else:
+                objectWeight = self.weightOfObject(weightedObject)
+                objectWeights[weightedObject.networkId] = objectWeight
+            return objectWeight
+        
+        for objectToUpdate in objectsToUpdate:
+            objectId = objectToUpdate.networkId
             
             # (Re-)Add the object to the graph.
             self.graph.add_node(objectId)
             
+            # Get the weight of this object.
+            objectWeight = weightOfObject(objectToUpdate)
+            
             # Add the connections to other objects already in the graph.
             # (Each connection to an object not in the graph will be added when that object is added.)
+            # The weight of each edge is the average of the weights of the two objects it connects. 
             inputIds = set([objectInput.networkId for objectInput in objectToUpdate.inputs(recurse = False)])
             outputIds = set([objectOutput.networkId for objectOutput in objectToUpdate.outputs(recurse = False)])
             unknownIds = set([objectInput.networkId for objectInput in objectToUpdate.connections(recurse = False)]).difference(inputIds).difference(outputIds)
             for inputId in inputIds.union(unknownIds):
-                if inputId in self.graph: # TODO: and not self.graph.has_edge(inputId, objectId)?
-                    self.graph.add_edge(inputId, objectId)
+                if inputId in self.graph:
+                    otherWeight = weightOfObject(objectToUpdate)
+                    self.graph.add_edge(inputId, objectId, weight = (objectWeight + otherWeight) / 2.0)
             for outputId in outputIds.union(unknownIds):
-                if outputId in self.graph: # TODO: and not self.graph.has_edge(objectId, outputId)?
-                    self.graph.add_edge(objectId, outputId)
+                if outputId in self.graph:
+                    otherWeight = weightOfObject(objectToUpdate)
+                    self.graph.add_edge(objectId, outputId, weight = (objectWeight + otherWeight) / 2.0)
         
     
     def _objectChanged(self, sender):
@@ -479,6 +542,63 @@ class Network:
         return objects
     
     
+    def setWeightingFunction(self, weightingFunction = None):
+        """
+        Set a function to be used to calculate the weight of objects in the network.
+        
+        The function should accept a single argument (an :class:`object <network.object.Object>` in the network) and return a floating point value indicating the weight of the object.  An object with a higher weight is considered more expensive to traverse.
+        """
+        
+        if weightingFunction is not None and not callable(weightingFunction):
+            raise ValueError, gettext('The function passed to setWeightingFunction must be callable.')
+        
+        if weightingFunction != self._weightingFunction:
+            self._weightingFunction = weightingFunction
+            self._updateGraph()
+            dispatcher.send(('set', 'weightingFunction'), self)
+    
+    
+    def weightingFunction(self):
+        """
+        Return the function being used to calculate the weights of objects in the network.
+        
+        If no function has been set then None will be returned.
+        """
+        
+        return self._weightingFunction
+    
+    
+    def weightOfObject(self, weightedObject):
+        """
+        Return the weight of the indicated object or 1.0 if no weighting function has been set.
+        """
+        
+        return 1.0 if not self._weightingFunction else self._weightingFunction(weightedObject)
+        
+    
+    def shortestPath(self, startObject, endObject):
+        """
+        Return one of the shortest paths through the :class:`network <Network.Network.Network>` from the first object to the second.
+        
+        Returns a list of objects in the path from the first object to the second.  If the second object cannot be reached from the first then an empty list will be returned. 
+        """
+        
+        if not isinstance(startObject, Object) or startObject.network != self or not isinstance(endObject, Object) or endObject.network != self:
+            raise ValueError, 'The objects passed to shortestPath() must be from the same network.'
+        
+        path = []
+        try:
+            nodeList = dijkstra_path(self.graph, startObject.networkId, endObject.networkId)
+        except:
+            nodeList = []
+        for nodeID in nodeList:
+            pathObject = self.objectWithId(nodeID)
+            if pathObject is not startObject:
+                path.append(pathObject)
+        
+        return path
+    
+    
     def removeObject(self, networkObject):
         """
         Remove the indicated object and any dependent objects from the network and any displays.
@@ -504,7 +624,7 @@ class Network:
             
                 # Keep the NetworkX graph in sync.
                 if objectToRemove.networkId in self.graph:
-                    self.graph.delete_node(objectToRemove.networkId)
+                    self.graph.remove_node(objectToRemove.networkId)
             
             # Let anyone who cares know that the network was changed.
             dispatcher.send('deletion', self, affectedObjects = objectsToRemove)

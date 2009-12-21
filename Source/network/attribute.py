@@ -227,6 +227,7 @@ class Attribute(object):
         if value != self._value:
             self._value = value
             dispatcher.send(('set', 'value'), self)
+            dispatcher.send(('set', 'attribute'), self.object, attribute = self)
             from object import Object
             if isinstance(self.object, Object):
                 self.object.network.setModified(True)

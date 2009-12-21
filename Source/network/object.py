@@ -6,7 +6,6 @@
 import neuroptikon
 from pydispatch import dispatcher
 import xml.etree.ElementTree as ElementTree
-from networkx import shortest_path
 from attribute import Attribute
 
     
@@ -204,47 +203,6 @@ class Object(object):
         print '\tConnections: ' + ', '.join([connection.name or connection.defaultName() or '<anonymous %s>' % connection.__class__.displayName().lower() for connection in self.connections()])
         print '\tInputs: ' + ', '.join([input.name or input.defaultName() or '<anonymous %s>' % input.__class__.displayName().lower() for input in self.inputs()])  # pylint: disable-msg=W0622
         print '\tOutputs: ' + ', '.join([output.name or output.defaultName() or '<anonymous %s>' % output.__class__.displayName().lower() for output in self.outputs()])
-    
-    
-    def shortestPathTo(self, otherObject):
-        """
-        Return one of the shortest paths through the :class:`network <Network.Network.Network>` from this object to the other object.
-        
-        The other object must be an object in the same network.
-        
-        Returns a list of objects in the path from this object to the other.  If there is no path from this object to the other then an empty list will be returned. 
-        """
-        
-        if not isinstance(otherObject, Object) or otherObject.network != self.network:
-            raise ValueError, 'The object passed to shortestPathTo() must be an object from the same network.'
-        
-        startNodeIds = []
-        if self.networkId in self.network.graph:
-            startNodeIds.append(self.networkId)
-        else:
-            for startId, endId, edgeObject in self.network.graph.edges():
-                if edgeObject == self:
-                    startNodeIds.append(endId)
-        endNodeIds = []
-        if otherObject.networkId in self.network.graph:
-            endNodeIds.append(otherObject.networkId)
-        else:
-            for startId, endId, edgeObject in self.network.graph.edges():
-                if edgeObject == otherObject:
-                    endNodeIds.append(startId)
-        path = []
-        shortestPathLen = 1000000
-        for startNodeId in startNodeIds:
-            for endNodeId in endNodeIds:
-                nodeList = shortest_path(self.network.graph, startNodeId, endNodeId)
-                if nodeList and len(nodeList) < shortestPathLen:
-                    path = []
-                    for nodeID in nodeList:
-                        pathObject = self.network.objectWithId(nodeID)
-                        if pathObject != self:
-                            path.append(pathObject)
-                    shortestPathLen = len(nodeList)
-        return path
     
     
     def dependentObjects(self):

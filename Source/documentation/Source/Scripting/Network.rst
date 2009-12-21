@@ -40,6 +40,8 @@ Finding objects in the network
 .. automethod:: network.network.Network.stimuli
 .. automethod:: network.network.Network.synapses
 
+.. automethod:: network.network.Network.shortestPath
+
 .. _removing-objects:
 
 Removing objects from the network
@@ -47,6 +49,17 @@ Removing objects from the network
 
 .. automethod:: network.network.Network.removeObject
 .. automethod:: network.network.Network.removeAllObjects
+
+.. _weighting:
+
+Weighting
+---------
+
+There are various algorithms that can be used from the NetworkX library that can take advantage of "weighted" connections between objects in the network, e.g. finding a shortest path.  You can specify a weighting function for each network or let each object be weighted equally.
+
+.. automethod:: network.network.Network.setWeightingFunction
+.. automethod:: network.network.Network.weightingFunction
+.. automethod:: network.network.Network.weightOfObject
 
 .. _user-defined-network-attributes:
 
