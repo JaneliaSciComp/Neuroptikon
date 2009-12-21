@@ -331,6 +331,10 @@ class NeuroptikonFrame( wx.Frame ):
         
         self.Thaw()
         
+        # Put up a new prompt if the script produced any output.
+        if self._console.promptPosEnd != self._console.GetTextLength():
+            self._console.prompt()
+
         self.endProgress()
     
         
