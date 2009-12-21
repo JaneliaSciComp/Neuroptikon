@@ -14,6 +14,13 @@ spanTypes = {'S': 'sort', 'L': 'long'}
 ambiguityCodes = {'MB': 'cell body position ambiguous', 'MTS': 'tail synapses ambiguous and/or sparse connections in the tail', 'MAS': 'anterior body ambiguous and/or sparse connections in the anterior', 'MD': 'dorsal side ambiguous', 'MAD': 'anterior and dorsal side ambiguous', 'MS': 'neurons with sublateral processes not covered by reconstructions', 'RDI': 'dorsal reconstruction incomplete', 'RDM': 'dorsal reconstruction completely missing', 'RVI': 'ventral reconstruction incomplete'}
 AY_GanglionGroups = {'A': 'anterior ganglion', 'B': 'dorsal ganglion', 'C': 'lateral ganglion', 'D': 'ventral ganglion', 'E': 'retrovesicular ganglion', 'F': 'posterolateral ganglion', 'G': 'ventral cord neuron group', 'H': 'pre-anal ganglion', 'J': 'dorsorectal ganglion', 'K': 'lumbar ganglion'}
 
+# Set up a weighting function that uses our custom "Count" attribute
+def weightByCount(networkObject):
+    countAttribute = networkObject.getAttribute('Count')
+    return 1.0 if not countAttribute else 1.0 / countAttribute.value()
+
+network.setWeightingFunction(weightByCount)
+
 neurons = {}
 
 # Load the neurons from the Neurons.txt file.
