@@ -775,6 +775,8 @@ class Visible(object):
             self._shape = shape
             
             if self._shape:
+                if isinstance(shape, PathShape):
+                    shape.setWeight(self._weight)
                 self._shape.setColor(list(self._color) + [self._opacity])
                 self._shapeGeode.addDrawable(self._shape.geometry())
                 if self.childGroup and self._shape.interiorBounds() != None:
