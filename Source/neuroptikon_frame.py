@@ -323,19 +323,18 @@ class NeuroptikonFrame( wx.Frame ):
                 self._console.redirectStdout(False)
                 self._console.redirectStderr(False)
         
-        if 'DEBUG' in os.environ:
-            runTime = datetime.datetime.now() - startTime
-            self._console.writeOut('# Ran ' + scriptName + ' in ' + str(round(runTime.seconds + runTime.microseconds / 1000000.0, 2)) + ' seconds.\n')
-        
-        self.display._suppressRefresh = refreshWasSuppressed
-        
-        self.Thaw()
-        
-        # Put up a new prompt if the script produced any output.
-        if self._console.promptPosEnd != self._console.GetTextLength():
-            self._console.prompt()
-
-        self.endProgress()
+                runTime = datetime.datetime.now() - startTime
+                self._console.writeOut('# Ran ' + scriptName + ' in ' + str(round(runTime.seconds + runTime.microseconds / 1000000.0, 2)) + ' seconds.\n')
+            
+            self.display._suppressRefresh = refreshWasSuppressed
+            
+            self.Thaw()
+            
+            # Put up a new prompt if the script produced any output.
+            if self._console.promptPosEnd != self._console.GetTextLength():
+                self._console.prompt()
+    
+            self.endProgress()
     
         
     def _profileScript(self, scriptPath):
