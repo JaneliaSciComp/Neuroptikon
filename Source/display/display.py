@@ -576,6 +576,17 @@ class Display(wx.glcanvas.GLCanvas):
             self.zoomScale = yZoom
     
     
+    def centerView(self):
+        """
+        Deprecated, use resetView or zoomToFit instead.
+        """
+        
+        if self.viewDimensions == 2:
+            self.zoomToFit()
+        else:
+            self.resetView()
+    
+    
     def resetView(self):
         """
         Reset the view point of the 3D view to the default distance and rotation.
