@@ -8,6 +8,8 @@ import wx
 import wx.py as py
 import os, platform, sys
 import xml.etree.ElementTree as ElementTree
+from datetime import datetime, date, time
+
 from network.network import Network
 from network.neuro_object import NeuroObject
 from network.neuron import Neuron
@@ -220,6 +222,9 @@ class NeuroptikonApp(wx.App):
             scriptLocals['osg'] = osg
             import gc
             scriptLocals['gc'] = gc
+            scriptLocals['datetime'] = datetime
+            scriptLocals['date'] = date
+            scriptLocals['time'] = time
             try:
                 import objgraph
                 scriptLocals['objgraph'] = objgraph

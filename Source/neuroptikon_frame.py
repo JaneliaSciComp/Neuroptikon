@@ -581,7 +581,6 @@ class NeuroptikonFrame( wx.Frame ):
                         scriptRefs[networkObject.networkId] = prefix + defaultName + '\', default = True)'
         
         scriptFile = open(savePath, 'w')
-        scriptFile.write('from datetime import datetime, date, time\n\n')
         
         try:
             # Serialize the network
