@@ -45,7 +45,9 @@ class Network:
         self._displaysAreSynchronized = True
         self._weightingFunction = None
         
-        self._loadingFromXML = False
+        self._bulkLoading = False
+        self._bulkAddObjects = []
+        
         self._modified = False
     
     
@@ -53,7 +55,7 @@ class Network:
     def _fromXMLElement(cls, xmlElement):
         network = cls()
         
-        network._loadingFromXML = True
+        network.setBulkLoading(True)
         
         # Load the classes in such an order that any referenced objects are guaranteed to have already been created.
         for moduleName, className in [('region', 'Region'), ('pathway', 'Pathway'), ('neuron', 'Neuron'), ('muscle', 'Muscle'), ('arborization', 'Arborization'), ('innervation', 'Innervation'), ('gap_junction', 'GapJunction'), ('synapse', 'Synapse'), ('stimulus', 'Stimulus')]:
@@ -82,9 +84,7 @@ class Network:
             if attribute is not None:
                 network._attributes.append(attribute)
         
-        network._loadingFromXML = False
-        
-        network._updateGraph()
+        network.setBulkLoading(False)
         
         return network
     
@@ -145,6 +145,27 @@ class Network:
                     if networkObject._includeInScript(atTopLevel = True):
                         networkObject._toScriptFile(scriptFile, scriptRefs)
    
+   
+    def setBulkLoading(self, bulkLoading):
+        """
+        Indicate whether or not a large quantity of objects are being added to the network.
+        
+        >>> network.setBulkLoading(True)
+        >>> # ... add lots of objects ...
+        >>> network.setBulkLoading(False)
+        
+        If bulk loading is enabled then various actions are delayed to make loading faster.
+        """
+        
+        if bulkLoading != self._bulkLoading:
+            self._bulkLoading = bulkLoading
+            if self._bulkLoading == False:
+                self._updateGraph()
+                if any(self._bulkAddObjects):
+                    dispatcher.send('addition', self, affectedObjects = self._bulkAddObjects)
+                    self._bulkAddObjects = []
+            dispatcher.send(('set', 'bulkLoading'), self)
+            
    
     def setSavePath(self, path):
         if path != self._savePath:
@@ -482,7 +503,7 @@ class Network:
         
     
     def _objectChanged(self, sender):
-        if not self._loadingFromXML:
+        if not self._bulkLoading:
             self._updateGraph(sender)
             if not self._modified:
                 self._modified = True
@@ -518,13 +539,17 @@ class Network:
             self._nextUniqueId = objectToAdd.networkId
         
         # Update the NetworkX graph representation of the object and its connections.
-        self._updateGraph(objectToAdd)
+        if not self._bulkLoading:
+            self._updateGraph(objectToAdd)
         
         # Watch for any changes to the object so we can update our dirty state and the graph.
         dispatcher.connect(self._objectChanged, dispatcher.Any, objectToAdd)
         
         # Let anyone who cares know that the network was changed.
-        dispatcher.send('addition', self, affectedObjects = [objectToAdd])
+        if self._bulkLoading:
+            self._bulkAddObjects += [objectToAdd]
+        else:
+            dispatcher.send('addition', self, affectedObjects = [objectToAdd])
     
     
     def objectWithId(self, objectId):

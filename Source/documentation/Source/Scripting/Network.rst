@@ -18,6 +18,7 @@ Adding objects to the network
 .. automethod:: network.network.Network.createMuscle
 .. automethod:: network.network.Network.createNeuron
 .. automethod:: network.network.Network.createRegion
+.. automethod:: network.network.Network.setBulkLoading
 
 .. _finding-objects:
 

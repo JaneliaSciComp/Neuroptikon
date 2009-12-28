@@ -358,6 +358,9 @@ class NeuroptikonFrame( wx.Frame ):
                 dialog.ShowModal()
         dlg.Destroy()
         self.Show(True)
+        
+        # Turn off bulk loading in case the script forgot to.
+        self.display.network.setBulkLoading(False)
     
     
     def onUndo(self, event_):

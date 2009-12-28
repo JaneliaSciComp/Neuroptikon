@@ -23,6 +23,8 @@ network.setWeightingFunction(weightByCount)
 
 neurons = {}
 
+network.setBulkLoading(True)
+
 # Load the neurons from the Neurons.txt file.
 updateProgress('Adding neurons...')
 neuronTypesFile = open('Neurons.txt')
@@ -113,3 +115,4 @@ try:
 finally:
     gapJunctionFile.close()
 
+network.setBulkLoading(False)
