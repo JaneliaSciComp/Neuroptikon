@@ -19,6 +19,7 @@ Command         Description
 ==============  =============================================================================
 createNetwork   creates a new :class:`network <network.network.Network>`.
 displayNetwork  opens a new visualization for the :class:`network <network.network.Network>`.
+openNetwork     opens a previously saved :class:`network <network.network.Network>` and any of its :class:`displays <display.display.Display>`.
 networks        the list of all existing :class:`networks <network.network.Network>`.
 layouts         a dictionary of known :class:`Layout <display.layout.Layout>` sub-classes keyed by class name.
 library         the global :class:`library <library.library.Library>` object.

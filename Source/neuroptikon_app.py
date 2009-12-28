@@ -203,6 +203,7 @@ class NeuroptikonApp(wx.App):
             shapeClasses[shapeClass.__name__] = shapeClass
         scriptLocals = {'createNetwork': self.createNetwork, 
                         'displayNetwork': self.displayNetwork, 
+                        'openNetwork': self.openNetwork, 
                         'networks': self.networks, 
                         'library': neuroptikon.library, 
                         'Neurotransmitter': Neurotransmitter, 
@@ -278,41 +279,50 @@ class NeuroptikonApp(wx.App):
         return network
     
     
-    def onOpenNetwork(self, event_):
+    def openNetwork(self, filePath):
+        """
+        Open the previously saved network at the indicated path.
+        
+        Any displays will be restored or a default one will be opened.
+        """
+        
         from neuroptikon_frame import NeuroptikonFrame
+        
+        # TODO: raise an existing window if the network is already open
+        
+        try:
+            xmlTree = ElementTree.parse(filePath)
+            
+            # Instantiate the network
+            networkElement = xmlTree.find('Network')
+            network = Network._fromXMLElement(networkElement)
+            if network is None:
+                raise ValueError, gettext('Could not load the network')
+            network.setSavePath(filePath)
+            network.setModified(False)
+            self._networks.add(network)
+            
+            # Instantiate any displays
+            for frameElement in xmlTree.findall('DisplayWindow'):
+                frame = NeuroptikonFrame._fromXMLElement(frameElement, network = network)
+                if frame is None:
+                    raise ValueError, gettext('Could not create one of the displays')
+                frame.Show(True)
+                frame.Raise()
+                self._frames.append(frame)
+            
+            # Create a default display if none were specified in the file.
+            if len(network.displays) == 0:
+                self.displayNetwork(network).zoomToFit()
+        except:
+            raise
+    
+    
+    def onOpenNetwork(self, event_):
         dlg = wx.FileDialog(None, gettext('Choose a saved network to open:'), '', '', '*.xml', wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
+            self.openNetwork(dlg.GetPath())
             
-            # TODO: raise an existing window if the network is already open
-            
-            try:
-                xmlTree = ElementTree.parse(path)
-                
-                # Instantiate the network
-                networkElement = xmlTree.find('Network')
-                network = Network._fromXMLElement(networkElement)
-                if network is None:
-                    raise ValueError, gettext('Could not load the network')
-                network.setSavePath(path)
-                network.setModified(False)
-                self._networks.add(network)
-                
-                # Instantiate any displays
-                for frameElement in xmlTree.findall('DisplayWindow'):
-                    frame = NeuroptikonFrame._fromXMLElement(frameElement, network = network)
-                    if frame is None:
-                        raise ValueError, gettext('Could not create one of the displays')
-                    frame.Show(True)
-                    frame.Raise()
-                    self._frames.append(frame)
-                
-                # Create a default display if none were specified in the file.
-                if len(network.displays) == 0:
-                    self.displayNetwork(network).zoomToFit()
-            except:
-                raise
-    
     
     def networks(self):
         return list(self._networks)
@@ -325,6 +335,10 @@ class NeuroptikonApp(wx.App):
     
     
     def displayNetwork(self, network):
+        """
+        Open a new display for the network.
+        """
+        
         self._networks.add(network)
         from neuroptikon_frame import NeuroptikonFrame
         frame = NeuroptikonFrame(network = network)
