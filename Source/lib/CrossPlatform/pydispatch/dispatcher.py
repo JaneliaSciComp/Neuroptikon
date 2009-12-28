@@ -255,10 +255,7 @@ def getReceivers( sender = Any, signal = Any ):
     to retrieve the actual receiver objects as an iterable
     object.
     """
-    try:
-        return connections[id(sender)][signal]
-    except KeyError:
-        return []
+    return connections.get(id(sender), {}).get(signal, [])
 
 def liveReceivers(receivers):
     """Filter sequence of receivers to get resolved, live receivers
