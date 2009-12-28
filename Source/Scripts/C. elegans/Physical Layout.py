@@ -14,6 +14,7 @@ from math import pi
 if not any(network.muscles()):
     execfile('Muscles.py')
 
+updateProgress('Clustering the neurons...')
 
 # Return the position of the soma using a default value if the attribute is not defined.
 def somaPosition(neuron):
@@ -73,6 +74,8 @@ display.setShowNeuronNames(True)
 display.setUseGhosts(True)
 display.setDefaultFlowSpread(0.5)
 
+updateProgress('Laying out the neurons...')
+
 for neuron in network.neurons():
     # Color the soma based on function.
     red = green = blue = 0.5
@@ -102,6 +105,8 @@ for neuron in network.neurons():
     somaY += (len(cluster) - 1) / 2.0 * 0.015 * somaSign - cluster.index(neuron) * 0.015 * somaSign
     display.setVisiblePosition(neuron, (somaX, somaY, -1.0), fixed = True)
 
+updateProgress('Coloring the synapses...')
+
 # Color the synapses according to excitation/inhibition and weight them according to their connection count.
 ACh = library.neurotransmitter('ACh')
 GABA = library.neurotransmitter('GABA')
@@ -114,10 +119,14 @@ for synapse in network.synapses():
         display.setVisibleColor(synapse, (0.5, 0.5, 0.5))
     display.setVisibleWeight(synapse, 0.5 if synapse.getAttribute('Count').value() < 5 else 2.0)
 
+updateProgress('Coloring the gap junctions...')
+
 # Make all gap junctions black and weight them according to their connection count.
 for gapJunction in network.gapJunctions():
     display.setVisibleColor(gapJunction, (0.0, 0.75, 0.0))
     display.setVisibleWeight(gapJunction, 0.5 if gapJunction.getAttribute('Count').value() < 5 else 2.0)
+
+updateProgress('Laying out the muscles...')
 
 for muscle in network.muscles():
     if not any(display.visiblesForObject(muscle)):
@@ -141,6 +150,8 @@ for muscle in network.muscles():
                 muscleY += 0.025
         display.setVisiblePosition(muscle, (muscleX, muscleY, -1.0), fixed = True)
         display.setVisibleSize(muscle, (0.01, 0.02, .01))
+
+updateProgress('Coloring the innervations...')
 
 for innervation in network.innervations():
     if not any(display.visiblesForObject(innervation)):

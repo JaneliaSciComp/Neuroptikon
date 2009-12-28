@@ -14,6 +14,8 @@ Dataset from "Neuron Connections to Sensory Organs and Body Muscles" section of:
 if not any(network.neurons()):
     execfile('Neurons.py')
 
+updateProgress('Adding muscles...')
+
 muscleData = {
     'MANAL': {'A-P Position': 0.81}, 
     'MDL01': {'A-P Position': 0.06}, 
@@ -122,6 +124,8 @@ for muscleName, properties in muscleData.iteritems():
         muscle.addAttribute('Face', Attribute.STRING_TYPE, muscleName[1])
         muscle.addAttribute('Side', Attribute.STRING_TYPE, muscleName[2])
     muscles[muscleName] = muscle
+
+updateProgress('Adding innervations...')
 
 innervationData = [
     ('ADEL', 'MDL05', 1), 
