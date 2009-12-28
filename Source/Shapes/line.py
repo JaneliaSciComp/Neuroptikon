@@ -3,6 +3,7 @@
 #  Use is subject to Janelia Farm Research Campus Software Copyright 1.1 license terms.
 #  http://license.janelia.org/license/jfrc_copyright_1_1.html
 
+import neuroptikon
 from display.shape import PathShape, Shape
 import osg
 from math import sqrt
@@ -22,7 +23,7 @@ class Line(PathShape):
         
         PathShape.__init__(self, *args, **keywordArgs)
         
-        if wx.Config('Neuroptikon').ReadBool('Smooth Lines'):
+        if neuroptikon.config.ReadBool('Smooth Lines'):
             self.geometry().getOrCreateStateSet().setMode(osg.GL_LINE_SMOOTH, osg.StateAttribute.ON)
             self.geometry().getStateSet().setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
             self.geometry().getStateSet().setMode(osg.GL_BLEND, osg.StateAttribute.ON)

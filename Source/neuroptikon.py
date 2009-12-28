@@ -114,6 +114,7 @@ def loadImage(imageFileName):
     return image
 
 library = None
+config = None
 
 def scriptLocals():
     return {}

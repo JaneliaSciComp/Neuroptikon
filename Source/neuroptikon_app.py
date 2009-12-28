@@ -57,6 +57,8 @@ class NeuroptikonApp(wx.App):
         
         neuroptikon.library = Library()
         self._loadDefaultLibraryItems()
+
+        neuroptikon.config = wx.Config('Neuroptikon')
         
         if platform.system() == 'Darwin':
             wx.MenuBar.MacSetCommonMenuBar(self.menuBar())

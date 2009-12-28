@@ -3,6 +3,7 @@
 #  Use is subject to Janelia Farm Research Campus Software Copyright 1.1 license terms.
 #  http://license.janelia.org/license/jfrc_copyright_1_1.html
 
+import neuroptikon
 import wx, wx.lib.colourselect
 
 
@@ -12,11 +13,10 @@ class Preferences( wx.Frame ):
         wx.Frame.__init__(self, parent, -1, gettext('Preferences'), size = (200,300), pos = (-1,-1))
         
         # Build the UI
-        config = wx.Config('Neuroptikon')
-        backgroundColor = wx.Color(config.ReadFloat('Color/Background/Red', 0.7) * 255, \
-                                   config.ReadFloat('Color/Background/Green', 0.8) * 255, \
-                                   config.ReadFloat('Color/Background/Blue', 0.7) * 255, \
-                                   config.ReadFloat('Color/Background/Alpha', 1.0) * 255)
+        backgroundColor = wx.Color(neuroptikon.config.ReadFloat('Color/Background/Red', 0.7) * 255, \
+                                   neuroptikon.config.ReadFloat('Color/Background/Green', 0.8) * 255, \
+                                   neuroptikon.config.ReadFloat('Color/Background/Blue', 0.7) * 255, \
+                                   neuroptikon.config.ReadFloat('Color/Background/Alpha', 1.0) * 255)
         self.colorPicker = wx.lib.colourselect.ColourSelect(self, -1, "", backgroundColor)    #wx.ColourPickerCtrl(self, -1, backgroundColor)
         self.Bind(wx.lib.colourselect.EVT_COLOURSELECT, self.onColorChanged)
         colorBox = wx.BoxSizer(wx.HORIZONTAL)
@@ -28,7 +28,7 @@ class Preferences( wx.Frame ):
         #smoothLinesBox.Add(wx.StaticText(self, -1, gettext('Smooth Lines:')), 0, wx.EXPAND)
         self._smoothLinesCheckBox = wx.CheckBox(self, wx.ID_ANY, gettext('Smooth Lines'))
         self.Bind(wx.EVT_CHECKBOX, self.onSetSmoothLines, self._smoothLinesCheckBox)
-        self._smoothLinesCheckBox.SetValue(config.ReadBool('Smooth Lines'))
+        self._smoothLinesCheckBox.SetValue(neuroptikon.config.ReadBool('Smooth Lines'))
         smoothLinesBox.Add(self._smoothLinesCheckBox)
         
         # Bundle them together
@@ -44,17 +44,15 @@ class Preferences( wx.Frame ):
     
     def onColorChanged(self, event):
         color = self.colorPicker.GetColour()
-        config = wx.Config('Neuroptikon')
-        config.WriteFloat('Color/Background/Red', color.Red() / 255.0)
-        config.WriteFloat('Color/Background/Green', color.Green() / 255.0)
-        config.WriteFloat('Color/Background/Blue', color.Blue() / 255.0)
-        config.WriteFloat('Color/Background/Alpha', color.Alpha() / 255.0)
+        neuroptikon.config.WriteFloat('Color/Background/Red', color.Red() / 255.0)
+        neuroptikon.config.WriteFloat('Color/Background/Green', color.Green() / 255.0)
+        neuroptikon.config.WriteFloat('Color/Background/Blue', color.Blue() / 255.0)
+        neuroptikon.config.WriteFloat('Color/Background/Alpha', color.Alpha() / 255.0)
     
     
     def onSetSmoothLines(self, event):
         newValue = self._smoothLinesCheckBox.GetValue()
-        config = wx.Config('Neuroptikon')
-        config.WriteBool('Smooth Lines', newValue)
+        neuroptikon.config.WriteBool('Smooth Lines', newValue)
         
     
     def onClose(self, event=None):

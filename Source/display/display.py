@@ -113,11 +113,10 @@ class Display(wx.glcanvas.GLCanvas):
         self._first3DView = True
         
         self.backgroundColor = None
-        config = wx.Config("Neuroptikon")
-        clearColor = (config.ReadFloat("Color/Background/Red", 0.75), \
-                      config.ReadFloat("Color/Background/Green", 0.75), \
-                      config.ReadFloat("Color/Background/Blue", 0.75), \
-                      config.ReadFloat("Color/Background/Alpha", 1.0))
+        clearColor = (neuroptikon.config.ReadFloat("Color/Background/Red", 0.75), \
+                      neuroptikon.config.ReadFloat("Color/Background/Green", 0.75), \
+                      neuroptikon.config.ReadFloat("Color/Background/Blue", 0.75), \
+                      neuroptikon.config.ReadFloat("Color/Background/Alpha", 1.0))
         self.setBackgroundColor(clearColor)
         
         self.Bind(wx.EVT_SIZE, self.onSize)
