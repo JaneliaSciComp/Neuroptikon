@@ -7,7 +7,10 @@ import neuroptikon
 import wx
 import wx.py as py
 import os, platform, sys
-import xml.etree.ElementTree as ElementTree
+try:
+    import xml.etree.cElementTree as ElementTree
+except ImportError:
+    import xml.etree.ElementTree as ElementTree
 from datetime import datetime, date, time
 
 from network.network import Network

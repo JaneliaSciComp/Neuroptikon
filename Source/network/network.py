@@ -6,7 +6,10 @@
 from networkx import DiGraph, dijkstra_path
 import os.path, sys
 from pydispatch import dispatcher
-import xml.etree.ElementTree as ElementTree
+try:
+    import xml.etree.cElementTree as ElementTree
+except ImportError:
+    import xml.etree.ElementTree as ElementTree
 import inspect, marshal, types
 
 from object import Object

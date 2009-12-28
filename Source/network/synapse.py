@@ -5,7 +5,10 @@
 
 import neuroptikon
 from neuro_object import NeuroObject
-import xml.etree.ElementTree as ElementTree
+try:
+    import xml.etree.cElementTree as ElementTree
+except ImportError:
+    import xml.etree.ElementTree as ElementTree
 
 
 class Synapse(NeuroObject):

@@ -7,7 +7,10 @@ import neuroptikon
 import wx, wx.py
 from pydispatch import dispatcher
 import datetime, os, platform, sys, traceback
-import xml.etree.ElementTree as ElementTree
+try:
+    import xml.etree.cElementTree as ElementTree
+except ImportError:
+    import xml.etree.ElementTree as ElementTree
 import display, display.display
 from network.network import Network
 from search.finder import Finder

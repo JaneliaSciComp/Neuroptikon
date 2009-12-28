@@ -19,7 +19,10 @@ from library.texture import Texture
 from pydispatch import dispatcher
 import os.path, random, sys
 from math import atan2, sqrt
-import xml.etree.ElementTree as ElementTree
+try:
+    import xml.etree.cElementTree as ElementTree
+except ImportError:
+    import xml.etree.ElementTree as ElementTree
 
 
 class Visible(object):

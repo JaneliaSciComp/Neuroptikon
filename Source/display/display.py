@@ -11,7 +11,10 @@ from pydispatch import dispatcher
 import osg, osgDB, osgGA, osgManipulator, osgViewer
 from math import log, pi
 import os.path, platform, sys, cPickle
-import xml.etree.ElementTree as ElementTree
+try:
+    import xml.etree.cElementTree as ElementTree
+except ImportError:
+    import xml.etree.ElementTree as ElementTree
 
 from pick_handler import PickHandler
 from dragger_cull_callback import DraggerCullCallback

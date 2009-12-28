@@ -4,7 +4,10 @@
 #  http://license.janelia.org/license/jfrc_copyright_1_1.html
 
 from pydispatch import dispatcher
-import xml.etree.ElementTree as ElementTree
+try:
+    import xml.etree.cElementTree as ElementTree
+except ImportError:
+    import xml.etree.ElementTree as ElementTree
 from datetime import datetime, date, time
 import copy
 
