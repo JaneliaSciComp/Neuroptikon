@@ -11,8 +11,8 @@ __author__ = """Aric Hagberg (hagberg@lanl.gov)\nPieter Swart (swart@lanl.gov)\n
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 #
 
 # Exception handling
@@ -23,4 +23,10 @@ class NetworkXException(Exception):
 
 class NetworkXError(NetworkXException):
     """Exception for a serious error in NetworkX"""
+
+class NetworkXPointlessConcept(NetworkXException):
+    """Harary, F. and Read, R. "Is the Null Graph a Pointless Concept?" 
+In Graphs and Combinatorics Conference, George Washington University.
+New York: Springer-Verlag, 1973.
+"""
 

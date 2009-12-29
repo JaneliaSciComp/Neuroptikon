@@ -8,8 +8,8 @@ ___revision__ = ""
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 
 __all__ = ['topological_sort', 
            'topological_sort_recursive',
@@ -50,12 +50,21 @@ def topological_sort(G,nbunch=None):
     If G is not a directed acyclic graph (DAG) no topological sort exists
     and the Python keyword None is returned.
 
-    This algorithm is based on a description and proof at
-    http://www2.toki.or.id/book/AlgDesignManual/book/book2/node70.htm
+    This algorithm is based on a description and proof in
+    The Algorithm Design Manual [1]_ .
 
     See also
     --------
     is_directed_acyclic_graph()
+
+    References
+    ----------
+    .. [1] Skiena, S. S. The Algorithm Design Manual  (Springer-Verlag, 1998). 
+        http://www.amazon.com/exec/obidos/ASIN/0387948600/ref=ase_thealgorithmrepo/
+
+
+
+
 
     """
     # nonrecursive version

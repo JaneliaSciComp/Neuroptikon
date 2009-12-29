@@ -16,8 +16,8 @@ __author__ = """\n""".join(['Aric Hagberg (hagberg@lanl.gov)',
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 #
 __docformat__ = "restructuredtext en"
 
@@ -375,7 +375,7 @@ class Graph(object):
                     "The attr_dict argument must be a dictionary.")
         if n not in self.adj:
             self.adj[n] = {}
-            self.node[n] = attr
+            self.node[n] = attr_dict
         else: # update attr even if node already exists            
             self.node[n].update(attr_dict)
 
@@ -834,7 +834,7 @@ class Graph(object):
             if u != v:  # self-loop needs only one entry removed
                 del self.adj[v][u]   
         except KeyError: 
-            raise NetworkXError("The edge %s-%s not in graph"%(u,v))
+            raise NetworkXError("The edge %s-%s is not in the graph"%(u,v))
 
 
 

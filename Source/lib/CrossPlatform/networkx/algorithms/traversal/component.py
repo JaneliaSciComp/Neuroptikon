@@ -7,8 +7,8 @@ __authors__ = """Eben Kenah\nAric Hagberg (hagberg@lanl.gov)"""
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 
 __all__ = ['number_connected_components', 'connected_components',
            'is_connected', 'connected_component_subgraphs',
@@ -65,6 +65,11 @@ def is_connected(G):
         raise networkx.NetworkXError,\
               """Not allowed for directed graph G.
               Use UG=G.to_undirected() to create an undirected graph."""
+
+    if len(G)==0:
+        raise networkx.NetworkXPointlessConcept(
+            """Connectivity is undefined for the null graph.""")
+
     return len(single_source_shortest_path(G, G.nodes_iter().next()))==len(G)
 
 
@@ -258,5 +263,10 @@ def is_strongly_connected(G):
         raise networkx.NetworkXError,\
               """Not allowed for undirected graph G.
               See is_connected() for connectivity test."""
+
+    if len(G)==0:
+        raise networkx.NetworkXPointlessConcept(
+            """Connectivity is undefined for the null graph.""")
+
     return len(strongly_connected_components(G)[0])==len(G)
 

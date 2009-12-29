@@ -6,8 +6,8 @@ __author__ = """Aric Hagberg (hagberg@lanl.gov)\nPieter Swart (swart@lanl.gov)\n
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 #
 
 __all__=[]
@@ -262,7 +262,7 @@ def weights_to_creation_sequence(weights,threshold=1,with_labels=False,compact=F
 
 
 # Manipulating NetworkX.Graphs in context of threshold graphs
-def threshold_graph(creation_sequence):
+def threshold_graph(creation_sequence, create_using=None):
     """
     Create a threshold graph from the creation sequence or compact
     creation_sequence.
@@ -291,7 +291,14 @@ def threshold_graph(creation_sequence):
         print "not a valid creation sequence type"
         return None
         
-    G=networkx.Graph()
+    if create_using is None:
+        G = networkx.Graph()
+    elif create_using.is_directed():
+        raise networkx.NetworkXError("Directed Graph not supported")
+    else:
+        G = create_using
+        G.clear()
+
     G.name="Threshold Graph"
 
     # add nodes and edges
@@ -301,7 +308,7 @@ def threshold_graph(creation_sequence):
         (v,node_type)=ci.pop(0)
         if node_type=='d': # dominating type, connect to all existing nodes
             for u in G.nodes(): 
-                G.add_edge(v,u) # will silently ignore self loop
+                G.add_edge(v,u) 
         G.add_node(v)
     return G
 
@@ -323,13 +330,13 @@ def find_alternating_4_cycle(G):
 
 
 
-def find_threshold_graph(G):
+def find_threshold_graph(G, create_using=None):
     """
     Return a threshold subgraph that is close to largest in G.
     The threshold graph will contain the largest degree node in G.
     
     """
-    return threshold_graph(find_creation_sequence(G))
+    return threshold_graph(find_creation_sequence(G),create_using)
 
 
 def find_creation_sequence(G):

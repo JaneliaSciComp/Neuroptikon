@@ -6,8 +6,8 @@ Generate graphs with a given degree sequence or expected degree sequence.
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 
 __author__ = """Aric Hagberg (hagberg@lanl.gov)\nPieter Swart (swart@lanl.gov)\nDan Schult (dschult@colgate.edu)\nJoel Miller (joel.c.miller.research@gmail.com)"""
 
@@ -34,7 +34,7 @@ import heapq
 #  Generating Graphs with a given degree sequence
 #---------------------------------------------------------------------------
 
-def configuration_model(deg_sequence,seed=None):
+def configuration_model(deg_sequence,create_using=None,seed=None):
     """Return a random graph with the given degree sequence.
 
     The configuration model generates a random pseudograph (graph with
@@ -45,7 +45,9 @@ def configuration_model(deg_sequence,seed=None):
     ----------
     deg_sequence :  list of integers 
         Each list entry corresponds to the degree of a node.
-    seed : hashable object (default=None)
+    create_using : graph, optional (default MultiGraph)
+       Return graph of this type. The instance will be cleared.
+    seed : hashable object, optional
         Seed for random number generator.   
 
     Returns
@@ -99,7 +101,12 @@ def configuration_model(deg_sequence,seed=None):
     >>> G.remove_edges_from(G.selfloop_edges())
     """
     if not sum(deg_sequence)%2 ==0:
-        raise networkx.NetworkXError, 'Invalid degree sequence'
+        raise networkx.NetworkXError('Invalid degree sequence')
+
+    if create_using is None:
+        create_using = networkx.MultiGraph()
+    elif create_using.is_directed():
+        raise networkx.NetworkXError("Directed Graph not supported")
 
     if not seed is None:
         random.seed(seed)
@@ -108,7 +115,7 @@ def configuration_model(deg_sequence,seed=None):
     N=len(deg_sequence)
 
     # allow multiedges and selfloops
-    G=networkx.empty_graph(N,create_using=networkx.MultiGraph())
+    G=networkx.empty_graph(N,create_using)
 
     if N==0 or max(deg_sequence)==0: # done if no edges
         return G 
@@ -133,35 +140,34 @@ def configuration_model(deg_sequence,seed=None):
     return G
 
 
-def expected_degree_graph(w, seed=None):
+def expected_degree_graph(w, create_using=None, seed=None):
     """Return a random graph G(w) with expected degrees given by w.
 
-    :Parameters:
-       - `w`: a list of expected degrees
-       - `seed`: seed for random number generator (default=None)
+    Parameters
+    ----------
+    w : list 
+        The list of expected degrees.
+    create_using : graph, optional (default Graph)
+        Return graph of this type. The instance will be cleared.
+    seed : hashable object, optional
+        The seed for the random number generator.
 
+    Examples
+    --------
     >>> z=[10 for i in range(100)]
     >>> G=nx.expected_degree_graph(z)
 
-
-    Reference::
-
-      @Article{connected-components-2002,
-        author =	{Fan Chung and L. Lu},
-        title = 	{Connected components in random graphs
-        with given expected degree sequences},
-        journal = 	{Ann. Combinatorics},
-        year = 		{2002},
-        volume = 	{6},
-        pages = 	{125-145},
-        }
-
-
+    References
+    ----------
+    .. [1] Fan Chung and L. Lu,
+        Connected components in random graphs with given expected
+        degree sequences, Ann. Combinatorics, 6, pp. 125-145, 2002.
 	"""
-
     n = len(w)
     # allow self loops
-    G=networkx.empty_graph(n,create_using=networkx.Graph())
+    if create_using is not None and create_using.is_directed():
+        raise networkx.NetworkXError("Directed Graph not supported")
+    G=networkx.empty_graph(n,create_using)
     G.name="random_expected_degree_graph"
 
     if n==0 or max(w)==0: # done if no edges
@@ -171,9 +177,9 @@ def expected_degree_graph(w, seed=None):
     rho = 1.0 / float(d) # Vol(G)
     for i in xrange(n):
         if (w[i])**2 > d:
-            raise networkx.NetworkXError,\
+            raise networkx.NetworkXError(\
                   "NetworkXError w[i]**2 must be <= sum(w)\
-                  for all i, w[%d] = %f, sum(w) = %f" % (i,w[i],d)
+                  for all i, w[%d] = %f, sum(w) = %f" % (i,w[i],d))
 
     if seed is not None:
         random.seed(seed)
@@ -185,15 +191,26 @@ def expected_degree_graph(w, seed=None):
     return G 
 
 
-def havel_hakimi_graph(deg_sequence):
+def havel_hakimi_graph(deg_sequence,create_using=None):
     """Return a simple graph with given degree sequence, constructed using the
     Havel-Hakimi algorithm.
 
-      - `deg_sequence`: degree sequence, a list of integers with each entry
-         corresponding to the degree of a node (need not be sorted).
-         A non-graphical degree sequence (not sorted).
-         A non-graphical degree sequence (i.e. one
-         not realizable by some simple graph) raises an Exception.    
+    Parameters
+    ----------
+    deg_sequence: list of integers
+        Each integer corresponds to the degree of a node (need not be sorted).
+    create_using : graph, optional (default Graph)
+        Return graph of this type. The instance will be cleared.
+        Multigraphs and directed graphs are not allowed.
+
+    Raises
+    ------
+    NetworkXException
+        For a non-graphical degree sequence (i.e. one
+        not realizable by some simple graph).
+
+    Notes
+    -----
 
     The Havel-Hakimi algorithm constructs a simple graph by
     successively connecting the node of highest degree to other nodes
@@ -205,18 +222,21 @@ def havel_hakimi_graph(deg_sequence):
     See Theorem 1.4 in [chartrand-graphs-1996].
     This algorithm is also used in the function is_valid_degree_sequence.
 
-    References:
-
-    [chartrand-graphs-1996] G. Chartrand and L. Lesniak, "Graphs and Digraphs",
-                            Chapman and Hall/CRC, 1996.
-
+    References
+    ----------
+    .. [1] G. Chartrand and L. Lesniak, "Graphs and Digraphs",
+           Chapman and Hall/CRC, 1996.
     """
     if not is_valid_degree_sequence(deg_sequence):
-        raise networkx.NetworkXError, 'Invalid degree sequence'
-
+        raise networkx.NetworkXError('Invalid degree sequence')
+    if create_using is not None:
+        if create_using.is_directed():
+            raise networkx.NetworkXError("Directed Graph not supported")
+        if create_using.is_multigraph():
+            raise networkx.NetworkXError("Havel-Hakimi requires simple graph")
 
     N=len(deg_sequence)
-    G=networkx.empty_graph(N) # always return a simple graph
+    G=networkx.empty_graph(N,create_using) 
 
     if N==0 or max(deg_sequence)==0: # done if no edges
         return G 
@@ -242,7 +262,7 @@ def havel_hakimi_graph(deg_sequence):
     G.name="havel_hakimi_graph %d nodes %d edges"%(G.order(),G.size())
     return G
 
-def random_clustered_graph(joint_degree_sequence, seed = None):
+def random_clustered_graph(joint_degree_sequence, create_using=None, seed=None):
     """Generate a random graph with the given joint degree and triangle
     degree sequence.
 	
@@ -256,6 +276,10 @@ def random_clustered_graph(joint_degree_sequence, seed = None):
     joint_degree_sequence : list of integer pairs
         Each list entry corresponds to the independent edge degree and
         triangle degree of a node.
+    create_using : graph, optional (default MultiGraph)
+        Return graph of this type. The instance will be cleared.
+    seed : hashable object, optional
+        The seed for the random number generator.
 
     Returns
     -------
@@ -304,11 +328,18 @@ def random_clustered_graph(joint_degree_sequence, seed = None):
 	
     To remove self loops:
     >>> G.remove_edges_from(G.selfloop_edges())
-"""
+
+    """
+    if create_using is None:
+        create_using = networkx.MultiGraph()
+    elif create_using.is_directed():
+        raise networkx.NetworkXError("Directed Graph not supported")
+
     if not seed is None:
         random.seed(seed)
+
     N = len(joint_degree_sequence)
-    G = networkx.empty_graph(N,create_using=networkx.MultiGraph())
+    G = networkx.empty_graph(N,create_using)
 
     ilist = []
     tlist = []
@@ -320,7 +351,7 @@ def random_clustered_graph(joint_degree_sequence, seed = None):
             tlist.append(n)
 
     if len(ilist)%2 != 0 or len(tlist)%3 != 0:
-        raise networkx.NetworkXError, 'Invalid degree sequence'
+        raise networkx.NetworkXError('Invalid degree sequence')
 
     random.shuffle(ilist)
     random.shuffle(tlist)
@@ -336,7 +367,7 @@ def random_clustered_graph(joint_degree_sequence, seed = None):
 
 
 
-def degree_sequence_tree(deg_sequence):
+def degree_sequence_tree(deg_sequence,create_using=None):
     """
     Make a tree for the given degree sequence.
 
@@ -346,18 +377,22 @@ def degree_sequence_tree(deg_sequence):
     """
 
     if not len(deg_sequence)-sum(deg_sequence)/2.0 == 1.0:
-        raise networkx.NetworkXError,"Degree sequence invalid"
+        raise networkx.NetworkXError("Degree sequence invalid")
+    if create_using is not None and create_using.is_directed():
+        raise networkx.NetworkXError("Directed Graph not supported")
 
-    G=empty_graph(0)
     # single node tree
     if len(deg_sequence)==1:
+        G=empty_graph(0,create_using)
         return G
-    deg=[s for s in deg_sequence if s>1] # all degrees greater than 1
+
+    # all degrees greater than 1
+    deg=[s for s in deg_sequence if s>1] 
     deg.sort(reverse=True)
 
     # make path graph as backbone
     n=len(deg)+2
-    G=networkx.path_graph(n)
+    G=networkx.path_graph(n,create_using)
     last=n
 
     # add the leaves
@@ -382,14 +417,13 @@ def is_valid_degree_sequence(deg_sequence):
          A non-graphical degree sequence (i.e. one not realizable by some
          simple graph) will raise an exception.
                         
-    See Theorem 1.4 in [chartrand-graphs-1996]. This algorithm is also used
+    See Theorem 1.4 in [1]_. This algorithm is also used
     in havel_hakimi_graph()
 
-    References:
-
-    [chartrand-graphs-1996] G. Chartrand and L. Lesniak, "Graphs and Digraphs",
-                            Chapman and Hall/CRC, 1996.
-
+    References
+    ----------
+    .. [1] G. Chartrand and L. Lesniak, "Graphs and Digraphs",
+           Chapman and Hall/CRC, 1996.
     """
     # some simple tests 
     if deg_sequence==[]:
@@ -429,12 +463,18 @@ def create_degree_sequence(n, sfunction=None, max_tries=50, **kwds):
     """ Attempt to create a valid degree sequence of length n using
     specified function sfunction(n,**kwds).
 
-      - `n`: length of degree sequence = number of nodes
-      - `sfunction`: a function, called as "sfunction(n,**kwds)",
-         that returns a list of n real or integer values.
-      - `max_tries`: max number of attempts at creating valid degree
-         sequence.
+    Parameters
+    ----------
+    n : int
+        Length of degree sequence = number of nodes
+    sfunction: function
+        Function which returns a list of n real or integer values.
+        Called as "sfunction(n,**kwds)".
+    max_tries: int
+        Max number of attempts at creating valid degree sequence.
 
+    Notes
+    -----
     Repeatedly create a degree sequence by calling sfunction(n,**kwds)
     until achieving a valid degree sequence. If unsuccessful after
     max_tries attempts, raise an exception.
@@ -442,9 +482,10 @@ def create_degree_sequence(n, sfunction=None, max_tries=50, **kwds):
     For examples of sfunctions that return sequences of random numbers,
     see networkx.Utils.
 
+    Examples
+    --------
     >>> from networkx.utils import uniform_sequence
     >>> seq=nx.create_degree_sequence(10,uniform_sequence)
-
     """
     tries=0
     max_deg=n
@@ -456,8 +497,8 @@ def create_degree_sequence(n, sfunction=None, max_tries=50, **kwds):
         if is_valid_degree_sequence(seq):
             return seq
         tries+=1
-    raise networkx.NetworkXError, \
-          "Exceeded max (%d) attempts at a valid sequence."%max_tries
+    raise networkx.NetworkXError(\
+          "Exceeded max (%d) attempts at a valid sequence."%max_tries)
 
 def double_edge_swap(G, nswap=1):
     """Attempt nswap double-edge swaps on the graph G.
@@ -486,8 +527,7 @@ def double_edge_swap(G, nswap=1):
     dk=deg.keys() # key labels 
     cdf=networkx.utils.cumulative_distribution(deg.values())  # cdf of degree
     if len(cdf)<4:
-        raise networkx.NetworkXError, \
-          "Graph has less than four nodes."
+        raise networkx.NetworkXError("Graph has less than four nodes.")
     while n < nswap:
 #        if random.random() < 0.5: continue # trick to avoid periodicities?
         # pick two randon edges without creating edge list
@@ -514,6 +554,8 @@ def connected_double_edge_swap(G, nswap=1):
     Returns count of successful swaps.  Enforces connectivity.
     The graph G is modified in place.
 
+    Notes
+    -----
     A double-edge swap removes two randomly choseen edges u-v and x-y
     and creates the new edges u-x and v-y::
 
@@ -527,17 +569,12 @@ def connected_double_edge_swap(G, nswap=1):
 
     The initial graph G must be connected and the resulting graph is connected.
 
-    Reference::
-
-     @misc{gkantsidis-03-markov,
-      author = "C. Gkantsidis and M. Mihail and E. Zegura",
-      title = "The Markov chain simulation method for generating connected
-               power law random graphs",
-      year = "2003",
-      url = "http://citeseer.ist.psu.edu/gkantsidis03markov.html"
-     }
-
-
+    References
+    ----------
+    .. [1] C. Gkantsidis and M. Mihail and E. Zegura,
+           The Markov chain simulation method for generating connected
+           power law random graphs, 2003.
+           http://citeseer.ist.psu.edu/gkantsidis03markov.html
     """
     import math
     if not networkx.is_connected(G):
@@ -550,8 +587,7 @@ def connected_double_edge_swap(G, nswap=1):
     ideg=G.degree()
     cdf=networkx.utils.cumulative_distribution(G.degree()) 
     if len(cdf)<4:
-        raise networkx.NetworkXError, \
-          "Graph has less than four nodes."
+        raise networkx.NetworkXError("Graph has less than four nodes.")
     window=1
     while n < nswap:
         wcount=0
@@ -591,7 +627,7 @@ def connected_double_edge_swap(G, nswap=1):
 
 
 
-def li_smax_graph(degree_seq):
+def li_smax_graph(degree_seq, create_using=None):
     """Generates a graph based with a given degree sequence and maximizing
     the s-metric.  Experimental implementation.
 
@@ -656,13 +692,16 @@ def li_smax_graph(degree_seq):
     Several optimizations are included in this code and it may be hard to read.
     Commented code to come.
     """
-    
     if not is_valid_degree_sequence(degree_seq):
-        raise networkx.NetworkXError, 'Invalid degree sequence'
+        raise networkx.NetworkXError('Invalid degree sequence')
+    if create_using is not None and create_using.is_directed():
+        raise networkx.NetworkXError("Directed Graph not supported")
+
     degree_seq.sort() # make sure it's sorted
     degree_seq.reverse()
     degrees_left = degree_seq[:]
-    A_graph = networkx.Graph()
+
+    A_graph = empty_graph(0,create_using)
     A_graph.add_node(0)
     a_list = [False]*len(degree_seq)
     b_set = set(range(1,len(degree_seq)))
@@ -738,7 +777,8 @@ def li_smax_graph(degree_seq):
                 #print "removing because tree condition    "
                 continue
             elif db < 2*bsize -wa:
-                raise networkx.NetworkXError, "THIS SHOULD NOT HAPPEN! - not graphable"
+                raise networkx.NetworkXError(\
+                        "THIS SHOULD NOT HAPPEN!-not graphable")
                 continue
             elif wa == 2 and bsize > 0:
                 #print "removing because disconnected  cluster"
@@ -765,40 +805,48 @@ def li_smax_graph(degree_seq):
                                         -degrees_left[j], (i,j)])
     return A_graph 
 
-def connected_smax_graph(degree_seq):
+def connected_smax_graph(degree_seq, create_using=None):
     """
     Not implemented.
     """
     # incomplete implementation
     
     if not is_valid_degree_sequence(degree_seq):
-        raise networkx.NetworkXError, 'Invalid degree sequence'
+        raise networkx.NetworkXError('Invalid degree sequence')
+    if create_using is not None and create_using.is_directed():
+        raise networkx.NetworkXError("Directed Graph not supported")
    
     # build dictionary of node id and degree, sorted by degree, largest first
     degree_seq.sort() 
     degree_seq.reverse()
     ddict=dict(zip(xrange(len(degree_seq)),degree_seq))
 
-    G=empty_graph(1) # start with single node
+    G=empty_graph(1,create_using) # start with single node
 
     return False
 
 def s_metric(G):
-    """
-    Return the "s-Metric" of graph G:
-    the sum of the product deg(u)*deg(v) for every edge u-v in G
-    
-    Reference::
+    """Return the s-metric of graph.
 
-     @unpublished{li-2005,
-      author = {Lun Li and David Alderson and
-               John C. Doyle and Walter Willinger},
-      title = {Towards a Theory of Scale-Free Graphs:
-               Definition, Properties, and  Implications (Extended Version)},
-      url = {http://arxiv.org/abs/cond-mat/0501169},
-      year = {2005}
-      }
+    The s-metric is defined as the sum of the products deg(u)*deg(v)
+    for every edge (u,v) in G.
 
+    Parameters
+    ----------
+    G : graph
+        The graph used to compute the s-metric.
+
+    Returns
+    -------       
+    s : float
+        The s-metric of the graph.
+
+    References
+    ----------
+    .. [1] Lun Li, David Alderson, John C. Doyle, and Walter Willinger,
+           Towards a Theory of Scale-Free Graphs:
+           Definition, Properties, and  Implications (Extended Version), 2005.
+           http://arxiv.org/abs/cond-mat/0501169
     """
     # this function doesn't belong in this module
     return sum([G.degree(u)*G.degree(v) for (u,v) in G.edges_iter()])

@@ -8,8 +8,8 @@ __author__ = """\n""".join(['Aric Hagberg (hagberg@lanl.gov)',
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 #
 
 from networkx.classes.graph import Graph
@@ -352,20 +352,21 @@ class MultiGraph(Graph):
 
 
     def remove_edge(self, u, v, key=None):
-        """Remove the edge between u and v.
+        """Remove an edge between u and v.  
 
         Parameters
         ----------
         u,v: nodes 
-            Remove edge or edges between nodes u and v.
-        key : hashable identifier, optional (default= None)
-            Used to distinguish multiedges between a pair of nodes.  
-            If None, remove all edges between u and v.
+            Remove an edge between nodes u and v.
+        key : hashable identifier, optional (default=None)
+            Used to distinguish multiple edges between a pair of nodes.  
+            If None remove a single (abritrary) edge between u and v.
 
         Raises
         ------
         NetworkXError
-            If there is not an edge between u and v.
+            If there is not an edge between u and v, or
+            if there is no edge with the specified key.
 
         See Also
         --------
@@ -373,28 +374,45 @@ class MultiGraph(Graph):
 
         Examples
         --------
-        >>> G = nx.MultiGraph()   # or MultiDiGraph, etc
+        >>> G = nx.MultiGraph()  
         >>> G.add_path([0,1,2,3])
         >>> G.remove_edge(0,1)
         >>> e = (1,2)
         >>> G.remove_edge(*e) # unpacks e from an edge tuple
-        >>> G.remove_edge(2,3,key=0) # identify an individual edge with key
+
+        For multiple edges
+
+        >>> G = nx.MultiGraph()   # or MultiDiGraph, etc
+        >>> G.add_edges_from([(1,2),(1,2),(1,2)])
+        >>> G.remove_edge(1,2) # remove a single (arbitrary) edge
+        
+        For edges with keys
+
+        >>> G = nx.MultiGraph()   # or MultiDiGraph, etc        
+        >>> G.add_edge(1,2,key='first')
+        >>> G.add_edge(1,2,key='second')
+        >>> G.remove_edge(1,2,key='second')
+
         """
-        if key is None: 
-            super(MultiGraph, self).remove_edge(u,v)
+        try:
+            d=self.adj[u][v]
+        except (KeyError):
+            raise NetworkXError(
+                "The edge %s-%s is not in the graph."%(u,v))
+        # remove the edge with specified data
+        if key is None:
+            d.popitem() 
         else:
             try:
-                d=self.adj[u][v]
-                # remove the edge with specified data
                 del d[key]
-                if len(d)==0: 
-                    # remove the key entries if last edge
-                    del self.adj[u][v]
-                    if u!=v:  # check for selfloop 
-                        del self.adj[v][u]
-            except (KeyError,ValueError): 
+            except (KeyError):
                 raise NetworkXError(
-                    "The edge %s-%s with key %s not in the graph."%(u,v,key))
+                "The edge %s-%s with key %s is not in the graph."%(u,v,key))
+        if len(d)==0: 
+            # remove the key entries if last edge
+            del self.adj[u][v]
+            if u!=v:  # check for selfloop 
+                del self.adj[v][u]
 
 
     def remove_edges_from(self, ebunch):
@@ -419,29 +437,40 @@ class MultiGraph(Graph):
 
         Examples
         --------
-        >>> G = nx.Graph()   # or DiGraph, MultiGraph, MultiDiGraph, etc
+        >>> G = nx.MultiGraph() # or MultiDiGraph
         >>> G.add_path([0,1,2,3])
         >>> ebunch=[(1,2),(2,3)]
         >>> G.remove_edges_from(ebunch) 
+
+        Removing multiple copies of edges
+
+        >>> G = nx.MultiGraph() 
+        >>> G.add_edges_from([(1,2),(1,2),(1,2)])
+        >>> G.remove_edges_from([(1,2),(1,2)])
+        >>> print G.edges()
+        [(1, 2)]
+        >>> G.remove_edges_from([(1,2),(1,2)]) # silently ignore extra copy
+        >>> print G.edges() # now empty graph
+        []
         """
         for e in ebunch:
-            u,v = e[:2]
-            if u in self.adj and v in self.adj[u]:
-                try:
-                    key=e[2]
-                except IndexError:
-                    key=None
-                self.remove_edge(u,v,key=key)
+            try:
+                self.remove_edge(*e)
+            except NetworkXError:
+                pass
 
 
     def has_edge(self, u, v, key=None):
-        """Return True if the edge (u,v) is in the graph.
+        """Return True if the graph has an edge between nodes u and v.
 
         Parameters
         ----------
         u,v : nodes
             Nodes can be, for example, strings or numbers. 
-            Nodes must be hashable (and not None) Python objects.
+
+        key : hashable identifier, optional (default=None)
+            If specified return True only if the edge with 
+            key is found.
             
         Returns
         -------
@@ -450,25 +479,31 @@ class MultiGraph(Graph):
 
         Examples
         --------
-        Can be called either using two nodes u,v or edge tuple (u,v)
+        Can be called either using two nodes u,v, an edge tuple (u,v),
+        or an edge tuple (u,v,key).
 
-        >>> G = nx.Graph()   # or DiGraph, MultiGraph, MultiDiGraph, etc
+        >>> G = nx.MultiGraph()   # or MultiDiGraph
         >>> G.add_path([0,1,2,3])
         >>> G.has_edge(0,1)  # using two nodes
         True
         >>> e = (0,1)
         >>> G.has_edge(*e)  #  e is a 2-tuple (u,v)
         True
-        >>> e = (0,1,{'weight':7})
-        >>> G.has_edge(*e[:2])  # e is a 3-tuple (u,v,data_dictionary)
+        >>> G.add_edge(0,1,key='a')
+        >>> G.has_edge(0,1,key='a')  # specify key 
+        True
+        >>> e=(0,1,'a')
+        >>> G.has_edge(*e) # e is a 3-tuple (u,v,'a')
         True
 
-        The following syntax are all equivalent: 
+        The following syntax are equivalent: 
         
         >>> G.has_edge(0,1)
         True
         >>> 1 in G[0]  # though this gives KeyError if 0 not in G
         True
+
+
         
         """
         try:
@@ -492,6 +527,8 @@ class MultiGraph(Graph):
             through once.
         data : bool, optional (default=False)
             Return two tuples (u,v) (False) or three-tuples (u,v,data) (True).
+        keys : bool, optional (default=False)
+            Return two tuples (u,v) (False) or three-tuples (u,v,key) (True).
 
         Returns
         --------
@@ -509,12 +546,16 @@ class MultiGraph(Graph):
 
         Examples
         --------
-        >>> G = nx.Graph()   # or DiGraph, MultiGraph, MultiDiGraph, etc
+        >>> G = nx.MultiGraph()  # or MultiDiGraph
         >>> G.add_path([0,1,2,3])
         >>> G.edges()
         [(0, 1), (1, 2), (2, 3)]
         >>> G.edges(data=True) # default edge data is {} (empty dictionary)
         [(0, 1, {}), (1, 2, {}), (2, 3, {})]
+        >>> G.edges(keys=True) # default keys are integers
+        [(0, 1, 0), (1, 2, 0), (2, 3, 0)]
+        >>> G.edges(data=True,keys=True) # default keys are integers
+        [(0, 1, 0, {}), (1, 2, 0, {}), (2, 3, 0, {})]
         >>> G.edges([0,3])
         [(0, 1), (3, 2)]
         >>> G.edges(0)
@@ -554,12 +595,16 @@ class MultiGraph(Graph):
 
         Examples
         --------
-        >>> G = nx.Graph()   # or MultiGraph, etc
+        >>> G = nx.MultiGraph()   # or MultiDiGraph
         >>> G.add_path([0,1,2,3])
         >>> [e for e in G.edges_iter()]
         [(0, 1), (1, 2), (2, 3)]
         >>> list(G.edges_iter(data=True)) # default data is {} (empty dict)
         [(0, 1, {}), (1, 2, {}), (2, 3, {})]
+        >>> list(G.edges(keys=True)) # default keys are integers
+        [(0, 1, 0), (1, 2, 0), (2, 3, 0)]
+        >>> list(G.edges(data=True,keys=True)) # default keys are integers
+        [(0, 1, 0, {}), (1, 2, 0, {}), (2, 3, 0, {})]
         >>> list(G.edges_iter([0,3]))
         [(0, 1), (3, 2)]
         >>> list(G.edges_iter(0))
@@ -603,6 +648,8 @@ class MultiGraph(Graph):
         u,v : nodes
         default:  any Python object (default=None)           
             Value to return if the edge (u,v) is not found.  
+        key : hashable identifier, optional (default=None)
+            Return data only for the edge with specified key.
             
         Returns
         -------
@@ -613,23 +660,23 @@ class MultiGraph(Graph):
         -----
         It is faster to use G[u][v][key].
 
-        >>> G = nx.MultiGraph()
-        >>> G.add_path([0,1,2,3])
-        >>> G[0][1][0]
-        {}
+        >>> G = nx.MultiGraph() # or MultiDiGraph
+        >>> G.add_edge(0,1,key='a',weight=7)
+        >>> G[0][1]['a']  # key='a'
+        {'weight': 7}
 
         Warning: Assigning G[u][v][key] corrupts the graph data structure.
         But it is safe to assign attributes to that dictionary,
 
-        >>> G[0][1][0]['weight'] = 7
-        >>> G[0][1][0]['weight']
-        7
-        >>> G[1][0][0]['weight']
-        7
+        >>> G[0][1]['a']['weight'] = 10
+        >>> G[0][1]['a']['weight']
+        10
+        >>> G[1][0]['a']['weight']
+        10
 
         Examples
         --------
-        >>> G = nx.MultiGraph()
+        >>> G = nx.MultiGraph() # or MultiDiGraph
         >>> G.add_path([0,1,2,3])
         >>> G.get_edge_data(0,1) 
         {0: {}}
@@ -752,7 +799,7 @@ class MultiGraph(Graph):
         return G
 
 
-    def selfloop_edges(self, data=False):
+    def selfloop_edges(self, data=False, keys=False):
         """Return a list of selfloop edges.
 
         A selfloop edge has the same node at both ends.
@@ -762,6 +809,8 @@ class MultiGraph(Graph):
         data : bool, optional (default=False)
             Return selfloop edges as two tuples (u,v) (data=False)
             or three-tuples (u,v,data) (data=True)
+        keys : bool, optional (default=False)
+            If True, return edge keys with each edge.
 
         Returns
         -------
@@ -774,20 +823,35 @@ class MultiGraph(Graph):
 
         Examples
         --------
-        >>> G = nx.Graph()   # or DiGraph, MultiGraph, MultiDiGraph, etc
+        >>> G = nx.MultiGraph()   # or MultiDiGraph
         >>> G.add_edge(1,1)
         >>> G.add_edge(1,2)
         >>> G.selfloop_edges()
         [(1, 1)]
         >>> G.selfloop_edges(data=True)
         [(1, 1, {})]
+        >>> G.selfloop_edges(keys=True)
+        [(1, 1, 0)]
+        >>> G.selfloop_edges(keys=True, data=True)
+        [(1, 1, 0, {})]
         """
         if data:
-            return [ (n,n,d) 
-                     for n,nbrs in self.adj.iteritems() 
-                     if n in nbrs for d in nbrs[n].values()]
+            if keys:
+                return [ (n,n,k,d) 
+                         for n,nbrs in self.adj.iteritems() 
+                         if n in nbrs for k,d in nbrs[n].items()]
+            else:
+                return [ (n,n,d) 
+                         for n,nbrs in self.adj.iteritems() 
+                         if n in nbrs for d in nbrs[n].values()]
         else:
-            return [ (n,n)
+            if keys:
+                return [ (n,n,k)
+                     for n,nbrs in self.adj.iteritems() 
+                     if n in nbrs for k in nbrs[n].keys()]
+
+            else:
+                return [ (n,n)
                      for n,nbrs in self.adj.iteritems() 
                      if n in nbrs for d in nbrs[n].values()]
 

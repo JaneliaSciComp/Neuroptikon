@@ -10,8 +10,8 @@ __author__ = """\n""".join(['Aric Hagberg (hagberg@lanl.gov)',
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 #
 
 from networkx.classes.graph import Graph  # for doctests
@@ -220,7 +220,7 @@ class MultiDiGraph(MultiGraph,DiGraph):
         --------
         The following all add the edge e=(1,2) to graph G:
         
-        >>> G = nx.Graph()   # or DiGraph, MultiGraph, MultiDiGraph, etc
+        >>> G = nx.MultiDiGraph()
         >>> e = (1,2)
         >>> G.add_edge(1, 2)           # explicit two-node form
         >>> G.add_edge(*e)             # single edge as tuple of two nodes
@@ -272,20 +272,21 @@ class MultiDiGraph(MultiGraph,DiGraph):
             self.pred[v][u] = keydict
 
     def remove_edge(self, u, v, key=None):
-        """Remove the edge between u and v.
+        """Remove an edge between u and v.  
 
         Parameters
         ----------
         u,v: nodes 
-            Remove edge or edges between nodes u and v.
-        key : hashable identifier, optional (default= None)
-            Used to distinguish multiedges between a pair of nodes.  
-            If None, remove all edges between u and v.
+            Remove an edge between nodes u and v.
+        key : hashable identifier, optional (default=None)
+            Used to distinguish multiple edges between a pair of nodes.  
+            If None remove a single (abritrary) edge between u and v.
 
         Raises
         ------
         NetworkXError
-            If there is not an edge between u and v.
+            If there is not an edge between u and v, or
+            if there is no edge with the specified key.
 
         See Also
         --------
@@ -293,27 +294,44 @@ class MultiDiGraph(MultiGraph,DiGraph):
 
         Examples
         --------
-        >>> G = nx.MultiGraph()   # or MultiDiGraph, etc
+        >>> G = nx.MultiDiGraph()  
         >>> G.add_path([0,1,2,3])
         >>> G.remove_edge(0,1)
         >>> e = (1,2)
         >>> G.remove_edge(*e) # unpacks e from an edge tuple
-        >>> G.remove_edge(2,3,key=0) # identify an individual edge with key
+
+        For multiple edges
+
+        >>> G = nx.MultiDiGraph()  
+        >>> G.add_edges_from([(1,2),(1,2),(1,2)])
+        >>> G.remove_edge(1,2) # remove a single (arbitrary) edge
+        
+        For edges with keys
+
+        >>> G = nx.MultiDiGraph()   
+        >>> G.add_edge(1,2,key='first')
+        >>> G.add_edge(1,2,key='second')
+        >>> G.remove_edge(1,2,key='second')
+
         """
+        try:
+            d=self.adj[u][v]
+        except (KeyError):
+            raise NetworkXError(
+                "The edge %s-%s is not in the graph."%(u,v))
+        # remove the edge with specified data
         if key is None:
-            super(MultiDiGraph,self).remove_edge(u,v)
+            d.popitem()
         else:
             try:
-                d=self.adj[u][v]
-                # remove the edge with specified key
                 del d[key]
-                if len(d)==0:
-                    # remove the key entries if last edge
-                    del self.succ[u][v]
-                    del self.pred[v][u]
-            except (KeyError,ValueError):
+            except (KeyError):
                 raise NetworkXError(
-                    "The edge %s-%s with key %s is not in the graph"%(u,v,key))
+                "The edge %s-%s with key %s is not in the graph."%(u,v,key))
+        if len(d)==0: 
+            # remove the key entries if last edge
+            del self.succ[u][v]
+            del self.pred[v][u]
 
 
     def edges_iter(self, nbunch=None, data=False, keys=False):
@@ -347,7 +365,7 @@ class MultiDiGraph(MultiGraph,DiGraph):
 
         Examples
         --------
-        >>> G = nx.DiGraph()   # or MultiDiGraph, etc
+        >>> G = nx.MultiDiGraph()  
         >>> G.add_path([0,1,2,3])
         >>> [e for e in G.edges_iter()]
         [(0, 1), (1, 2), (2, 3)]
@@ -451,7 +469,7 @@ class MultiDiGraph(MultiGraph,DiGraph):
 
         Examples
         --------
-        >>> G = nx.Graph()   # or DiGraph, MultiGraph, MultiDiGraph, etc
+        >>> G = nx.MultiDiGraph() 
         >>> G.add_path([0,1,2,3])
         >>> list(G.degree_iter(0)) # node 0 with degree 1
         [(0, 1)]
@@ -491,6 +509,37 @@ class MultiDiGraph(MultiGraph,DiGraph):
 
 
     def in_degree_iter(self, nbunch=None, weighted=False):
+        """Return an iterator for (node, in-degree). 
+
+        The node in-degree is the number of edges pointing in to the node.
+
+        Parameters
+        ----------
+        nbunch : iterable container, optional (default=all nodes)
+            A container of nodes.  The container will be iterated
+            through once.    
+        weighted : bool, optional (default=False)
+           If True return the sum of edge weights adjacent to the node.  
+
+        Returns
+        -------
+        nd_iter : an iterator 
+            The iterator returns two-tuples of (node, in-degree).
+        
+        See Also
+        --------
+        degree, in_degree, out_degree, out_degree_iter
+
+        Examples
+        --------
+        >>> G = nx.MultiDiGraph()  
+        >>> G.add_path([0,1,2,3])
+        >>> list(G.in_degree_iter(0)) # node 0 with degree 0
+        [(0, 0)]
+        >>> list(G.in_degree_iter([0,1]))
+        [(0, 0), (1, 1)]
+
+        """
         if nbunch is None:
             nodes_nbrs=self.pred.iteritems()
         else:
@@ -509,6 +558,37 @@ class MultiDiGraph(MultiGraph,DiGraph):
 
 
     def out_degree_iter(self, nbunch=None, weighted=False):
+        """Return an iterator for (node, out-degree). 
+
+        The node out-degree is the number of edges pointing out of the node.
+
+        Parameters
+        ----------
+        nbunch : iterable container, optional (default=all nodes)
+            A container of nodes.  The container will be iterated
+            through once.    
+        weighted : bool, optional (default=False)
+           If True return the sum of edge weights adjacent to the node.  
+
+        Returns
+        -------
+        nd_iter : an iterator 
+            The iterator returns two-tuples of (node, out-degree).
+        
+        See Also
+        --------
+        degree, in_degree, out_degree, in_degree_iter
+
+        Examples
+        --------
+        >>> G = nx.MultiDiGraph()
+        >>> G.add_path([0,1,2,3])
+        >>> list(G.out_degree_iter(0)) # node 0 with degree 1
+        [(0, 1)]
+        >>> list(G.out_degree_iter([0,1]))
+        [(0, 1), (1, 1)]
+
+        """
         if nbunch is None:
             nodes_nbrs=self.succ.iteritems()
         else:
@@ -562,7 +642,7 @@ class MultiDiGraph(MultiGraph,DiGraph):
 
         If already directed, return a (deep) copy
 
-        >>> G = nx.DiGraph()   # or MultiDiGraph, etc
+        >>> G = nx.MultiDiGraph()   
         >>> G.add_path([0,1])
         >>> H = G.to_directed()
         >>> H.edges()

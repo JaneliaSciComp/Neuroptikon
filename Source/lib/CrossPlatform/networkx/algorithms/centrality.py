@@ -6,8 +6,8 @@ Centrality measures.
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 __author__ = """Aric Hagberg (hagberg@lanl.gov)\nPieter Swart (swart@lanl.gov)\nSasha Gutfraind (ag362@cornell.edu)"""
 
 __all__ = ['betweenness_centrality',
@@ -18,6 +18,8 @@ __all__ = ['betweenness_centrality',
            'edge_betweenness',
            'edge_load',
            'degree_centrality',
+           'in_degree_centrality',
+           'out_degree_centrality',
            'closeness_centrality',
            'eigenvector_centrality']
 
@@ -30,7 +32,7 @@ from networkx.algorithms.traversal.path import predecessor, \
 import networkx
 
 
-def brandes_betweenness_centrality(G,normalized=True,weighted_edges=False, progress_callback = None):
+def brandes_betweenness_centrality(G,normalized=True,weighted_edges=False):
     """Compute betweenness centrality for nodes.
 
     Betweenness centrality of a node is the fraction of all shortest 
@@ -68,11 +70,7 @@ def brandes_betweenness_centrality(G,normalized=True,weighted_edges=False, progr
 
 """
     betweenness=dict.fromkeys(G,0.0) # b[v]=0 for v in G
-    count = 0
     for s in G:
-        if callable(progress_callback):
-            if not progress_callback(fraction_complete = float(count) / len(betweenness)):
-                return {}
         S=[]
         P={}
         for v in G:
@@ -109,7 +107,7 @@ def brandes_betweenness_centrality(G,normalized=True,weighted_edges=False, progr
                 S.append(v)
                 D[v] = dist
                 for w,edgedata in G[v].iteritems():
-                    vw_dist = D[v] + edgedata['weight']
+                    vw_dist = D[v] + edgedata.get('weight',1)
                     if w not in D and (w not in seen or vw_dist < seen[w]):
                         seen[w] = vw_dist
                         push(Q,(vw_dist,v,w))
@@ -128,9 +126,7 @@ def brandes_betweenness_centrality(G,normalized=True,weighted_edges=False, progr
                           (float(sigma[v])/float(sigma[w]))*(1.0+delta[w])
             if w != s:
                 betweenness[w]=betweenness[w]+delta[w]
-        
-        count += 1
-    
+                    
     # normalize
     if normalized:
         order=len(betweenness)
@@ -455,7 +451,7 @@ def _brandes_betweenness_helper(G,root,weighted_edges):
             S.append(v)
             D[v] = dist
             for w,edgedata in G[v].iteritems(): 
-                vw_dist = D[v] + edgedata['weight']
+                vw_dist = D[v] + edgedata.get('weight',1)
                 if w not in D and (w not in seen or vw_dist < seen[w]):
                     seen[w] = vw_dist
                     sigma[w] = 0
@@ -513,6 +509,19 @@ def _edge_betweenness(G,source,nodes,cutoff=False):
     return between
 
 
+def _degree_centrality(degree,degree_iter,G,v=None):
+    """Internal function to consolidate *-degree centrality functions."""
+    if v is not None:
+        d = G.__getattribute__(degree)
+        return d(v)/(G.order()-1.0)
+    centrality={}
+    s=1.0/(G.order()-1.0)
+    d_iter = G.__getattribute__(degree_iter)
+    for n,deg in d_iter():
+        centrality[n]=deg*s
+    return centrality
+ 
+
 def degree_centrality(G,v=None):
     """Compute the degree centrality for nodes.
 
@@ -542,13 +551,61 @@ def degree_centrality(G,v=None):
     in the graph G.  That is, G.degree(v)/(G.order()-1).
 
     """
-    if v is not None:
-        return G.degree(v)/(G.order()-1.0)
-    degree_centrality={}
-    s=1.0/(G.order()-1.0)
-    for n,deg in G.degree_iter():
-        degree_centrality[n]=deg*s
-    return degree_centrality
+    return _degree_centrality('degree', 'degree_iter', G, v)
+
+
+def in_degree_centrality(G,v=None):
+    """Compute the in-degree centrality for nodes.
+
+    The in-degree centrality for a node v is the fraction of nodes its 
+    incoming edges are connected to.
+
+    Parameters
+    ----------
+    G : graph
+        A NetworkX graph
+
+    v : node, optional
+        Return only the value for node `v'.
+
+    Returns
+    -------
+    nodes : dictionary
+        Dictionary of nodes with in-degree centrality as values.
+
+    See Also
+    --------
+    degree_centrality(), out_degree_centrality()
+
+    """
+    return _degree_centrality('in_degree', 'in_degree_iter', G, v)
+
+
+def out_degree_centrality(G,v=None):
+    """Compute the out-degree centrality for nodes.
+
+    The out-degree centrality for a node v is the fraction of nodes its 
+    outgoing edges are connected to.
+
+    Parameters
+    ----------
+    G : graph
+        A NetworkX graph
+
+    v : node, optional
+        Return only the value for node `v'.
+
+    Returns
+    -------
+    nodes : dictionary
+        Dictionary of nodes with out-degree centrality as values.
+
+    See Also
+    --------
+    degree_centrality(), in_degree_centrality()
+
+    """
+    return _degree_centrality('out_degree', 'out_degree_iter', G, v)
 
 
 def closeness_centrality(G,v=None,weighted_edges=False):
@@ -679,7 +736,7 @@ def eigenvector_centrality(G,max_iter=100,tol=1.0e-6,nstart=None):
         # do the multiplication y=Ax
         for n in x:
             for nbr in G[n]:
-                x[n]+=xlast[nbr]*G[n][nbr]['weight']
+                x[n]+=xlast[nbr]*G[n][nbr].get('weight',1)
         # normalize vector
         s=1.0/sum(x.values())
         for n in x: x[n]*=s

@@ -3,8 +3,8 @@
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 #    NetworkX:http://networkx.lanl.gov/ 
 __author__ = """Aric Hagberg (hagberg@lanl.gov)"""
 import networkx
@@ -12,10 +12,8 @@ from networkx.exception import NetworkXError
 __all__ = ['hits','hits_numpy','hits_scipy','authority_matrix','hub_matrix']
 
 def hits(G,max_iter=100,tol=1.0e-8,nstart=None):
-    """Return hubs and authorities values.
+    """Return HITS hubs and authorities values for nodes.
 
-    Uses the HITS algorithm.
-    
     Parameters
     -----------
     G : graph
@@ -32,7 +30,7 @@ def hits(G,max_iter=100,tol=1.0e-8,nstart=None):
 
     Returns
     -------
-    (hubs,authorities) : two-duple of dictionaries
+    (hubs,authorities) : two-tuple of dictionaries
        Two dictionaries keyed by node containing the hub and authority
        values.
 

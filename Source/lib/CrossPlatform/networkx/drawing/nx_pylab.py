@@ -16,8 +16,8 @@ __author__ = """Aric Hagberg (hagberg@lanl.gov)"""
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 
 __all__ = ['draw',
            'draw_networkx',
@@ -49,12 +49,9 @@ def draw(G, pos=None, ax=None, hold=None, **kwds):
 
     Usage:
 
-    >>> from networkx import *
-    >>> G=dodecahedral_graph()
-    >>> draw(G)
-    >>> pos=graphviz_layout(G)
-    >>> draw(G,pos)
-    >>> draw(G,pos=spring_layout(G))
+    >>> G=nx.dodecahedral_graph()
+    >>> nx.draw(G)
+    >>> nx.draw(G,pos=nx.spring_layout(G))
 
     Also see doc/examples/draw_*
 
@@ -91,12 +88,12 @@ def draw(G, pos=None, ax=None, hold=None, **kwds):
     A good alternative is to use
 
     >>> import pylab as P
-    >>> import networkx as NX
-    >>> G=NX.dodecahedral_graph()
+    >>> import networkx as nx
+    >>> G=nx.dodecahedral_graph()
 
     and then use
 
-    >>> NX.draw(G)  # networkx draw()
+    >>> nx.draw(G)  # networkx draw()
 
     and
     >>> P.draw()    # pylab draw()
@@ -141,12 +138,9 @@ def draw_networkx(G, pos, with_labels=True, **kwds):
 
     Usage:
 
-    >>> from networkx import *
-    >>> import pylab as P
-    >>> ax=P.subplot(111)
-    >>> G=dodecahedral_graph()
-    >>> pos=spring_layout(G)
-    >>> draw_networkx(G,pos,ax=ax)
+    >>> G=nx.dodecahedral_graph()
+    >>> pos=nx.spring_layout(G)
+    >>> nx.draw_networkx(G,pos)
 
     This is same as 'draw' but the node positions *must* be
     specified in the variable pos.
@@ -239,6 +233,7 @@ def draw_networkx_nodes(G, pos,
                                alpha=alpha,
                                linewidths=linewidths)
                                
+    pylab.axes(ax)
     pylab.sci(node_collection)
     node_collection.set_zorder(2)            
     return node_collection
@@ -345,6 +340,10 @@ def draw_networkx_edges(G, pos,
                                      transOffset = ax.transData,             
                                      )
 
+
+    edge_collection.set_zorder(1) # edges go behind nodes            
+    ax.add_collection(edge_collection)
+
     # Note: there was a bug in mpl regarding the handling of alpha values for
     # each line in a LineCollection.  It was fixed in matplotlib in r7184 and
     # r7189 (June 6 2009).  We should then not set the alpha value globally,
@@ -355,9 +354,11 @@ def draw_networkx_edges(G, pos,
 
     # need 0.87.7 or greater for edge colormaps
     mpl_version=matplotlib.__version__
-    if mpl_version.endswith('svn'):
+    if mpl_version.endswith('.svn'):
+        mpl_version=matplotlib.__version__[0:-4]
+    elif mpl_version.endswith('svn'):
         mpl_version=matplotlib.__version__[0:-3]
-    if mpl_version.endswith('pre'):
+    elif mpl_version.endswith('pre'):
         mpl_version=matplotlib.__version__[0:-3]
     if map(int,mpl_version.split('.'))>=[0,87,7]:
         if edge_colors is None:
@@ -368,6 +369,7 @@ def draw_networkx_edges(G, pos,
                 edge_collection.set_clim(edge_vmin, edge_vmax)
             else:
                 edge_collection.autoscale()
+            pylab.axes(ax)
             pylab.sci(edge_collection)
 
 #    else:
@@ -416,6 +418,10 @@ def draw_networkx_edges(G, pos,
                                 transOffset = ax.transData,             
                                 )
         
+        arrow_collection.set_zorder(1) # edges go behind nodes            
+        ax.add_collection(arrow_collection)
+
+
     # update view        
     minx = numpy.amin(numpy.ravel(edge_pos[:,:,0]))
     maxx = numpy.amax(numpy.ravel(edge_pos[:,:,0]))
@@ -429,11 +435,7 @@ def draw_networkx_edges(G, pos,
     ax.update_datalim( corners)
     ax.autoscale_view()
 
-    edge_collection.set_zorder(1) # edges go behind nodes            
-    ax.add_collection(edge_collection)
-    if arrow_collection:
-        arrow_collection.set_zorder(1) # edges go behind nodes            
-        ax.add_collection(arrow_collection)
+#    if arrow_collection:
 
     return edge_collection
 

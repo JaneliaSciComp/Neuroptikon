@@ -30,18 +30,12 @@ __author__ = """Aric Hagberg (hagberg@lanl.gov)\nDan Schult (dschult@colgate.edu
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 
 __all__ = ['read_multiline_adjlist', 'write_multiline_adjlist',
            'read_adjlist', 'write_adjlist']
 
-import cPickle 
-import codecs
-import locale
-import string
-import sys
-import time
 
 from networkx.utils import is_string_like,_get_fh
 import networkx
@@ -78,8 +72,11 @@ def write_multiline_adjlist(G, path, delimiter=' ', comments='#'):
     >>> nx.write_multiline_adjlist(G,fh)
 
     """
+    import sys
+    import time
+
     fh=_get_fh(path,mode='w')        
-    pargs=comments+" "+string.join(sys.argv,' ')
+    pargs=comments+" ".join(sys.argv)
     fh.write("%s\n" % (pargs))
     fh.write(comments+" GMT %s\n" % (time.asctime(time.gmtime())))
     fh.write(comments+" %s\n" % (G.name))
@@ -200,7 +197,7 @@ def read_multiline_adjlist(path, comments="#", delimiter=' ',
      d 1
      e
 
-     Wiht edge data::
+     With edge data::
 
      # source target for XGraph or XDiGraph with edge data
      a 2
@@ -218,6 +215,12 @@ def read_multiline_adjlist(path, comments="#", delimiter=' ',
     >>> fh=codecs.open("test.adjlist",'r',encoding='utf=8') # utf-8 encoding
     >>> G=nx.read_multiline_adjlist(fh)
     """
+    try:
+        from ast import literal_eval 
+    except:
+        literal_eval=eval
+        pass # use potentially unsafe built-in eval 
+
     if create_using is None:
         G=networkx.Graph()
     else:
@@ -230,10 +233,12 @@ def read_multiline_adjlist(path, comments="#", delimiter=' ',
     inp=_get_fh(path)        
 
     for line in inp:
-        line = line[:line.find(comments)].strip()
+        p=line.find(comments)
+        if p>=0:
+            line = line[:line.find(comments)]
         if not line: continue
         try:
-            (u,deg)=line.split(delimiter)
+            (u,deg)=line.strip().split(delimiter)
             deg=int(deg)
         except:
             raise TypeError("Failed to read node and degree on line (%s)"%line)
@@ -251,9 +256,11 @@ def read_multiline_adjlist(path, comments="#", delimiter=' ',
                 except StopIteration:
                     msg = "Failed to find neighbor for node (%s)" % (u,)
                     raise TypeError(msg)
-                line = line[:line.find(comments)].strip()
+                p=line.find(comments)
+                if p>=0:
+                    line = line[:line.find(comments)]
                 if line: break
-            vlist=line.split(delimiter)
+            vlist=line.strip().split(delimiter)
             numb=len(vlist)
             if numb<1:
                 continue # isolated node
@@ -273,11 +280,12 @@ def read_multiline_adjlist(path, comments="#", delimiter=' ',
                     raise TypeError("Failed to convert edge data (%s) to type %s"\
                                     %(data, edgetype))
             else:
-                edgedata=eval(data,{},{})
-
+                try: # try to evaluate 
+                    edgedata=literal_eval(data)
+                except:
+                    edgedata={}
             G.add_edge(u,v,**edgedata)  
-#            else:
-#                raise TypeError("Failed to read line: %s"%vlist)
+
     return G
 
 
@@ -314,8 +322,10 @@ def write_adjlist(G, path, comments="#", delimiter=' '):
     Does not handle edge data. 
     Use 'write_edgelist' or 'write_multiline_adjlist'
     """
+    import sys
+    import time
     fh=_get_fh(path,mode='w')        
-    pargs=comments+" "+string.join(sys.argv,' ')
+    pargs=comments+" ".join(sys.argv)
     fh.write("%s\n" % (pargs))
     fh.write(comments+" GMT %s\n" % (time.asctime(time.gmtime())))
     fh.write(comments+" %s\n" % (G.name))
@@ -406,12 +416,11 @@ def read_adjlist(path, comments="#", delimiter=' ',
     fh=_get_fh(path)        
 
     for line in fh.readlines():
-        line = line[:line.find(comments)].strip()
+        p=line.find(comments)
+        if p>=0:
+            line = line[:line.find(comments)]
         if not len(line): continue
-#        if line.startswith("#") or line.startswith("\n"):
-#            continue
-#        line=line.strip() #remove trailing \n 
-        vlist=line.split(delimiter)
+        vlist=line.strip().split(delimiter)
         u=vlist.pop(0)
         # convert types
         if nodetype is not None:

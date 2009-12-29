@@ -11,7 +11,7 @@ See Also
 --------
 Pydot: http://www.dkbza.org/pydot.html
 Graphviz:	   http://www.research.att.com/sw/tools/graphviz/
-DOT Language:   http://www.research.att.com/~erg/graphviz/info/lang.html
+DOT Language:  http://www.graphviz.org/doc/info/lang.html
 
 
 """
@@ -20,8 +20,8 @@ __author__ = """Aric Hagberg (hagberg@lanl.gov)"""
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 
 __all__ = ['write_dot', 'read_dot', 'graphviz_layout', 'pydot_layout',
            'to_pydot', 'from_pydot']
@@ -30,19 +30,17 @@ import sys
 from networkx.utils import _get_fh
 import networkx
 
-try:
-    from peak.util.imports import lazyModule
-except:
-    from networkx.util.imports import lazyModule
-
-pydot=lazyModule('pydot')
-
 
 def write_dot(G,path):
     """Write NetworkX graph G to Graphviz dot format on path.
 
     Path can be a string or a file handle.
     """
+    try:
+        import pydot
+    except ImportError:
+        raise ImportError, \
+          "write_dot() requires pydot http://dkbza.org/pydot.html/"
     fh=_get_fh(path,'w')
     P=to_pydot(G)
     fh.write(P.to_string())
@@ -55,6 +53,12 @@ def read_dot(path):
     Path can be a string or a file handle.
 
     """
+    try:
+        import pydot
+    except ImportError:
+        raise ImportError, \
+          "read_dot() requires pydot http://dkbza.org/pydot.html/"
+
     fh=_get_fh(path,'r')
     data=fh.read()        
     P=pydot.graph_from_dot_data(data)
@@ -147,6 +151,12 @@ def to_pydot(N, strict=True):
     -----
 
     """
+    try:
+        import pydot
+    except ImportError:
+        raise ImportError, \
+          "to_pydot() requires pydot http://dkbza.org/pydot.html/"
+
     # set Graphviz graph type
     if N.is_directed():
         graph_type='digraph'
@@ -157,17 +167,20 @@ def to_pydot(N, strict=True):
     P = pydot.Dot(graph_type=graph_type,strict=strict)
 
     for n,nodedata in N.nodes_iter(data=True):
-        p=pydot.Node(str(n),**nodedata)
+        str_nodedata=dict((k,str(v)) for k,v in nodedata.iteritems())
+        p=pydot.Node(str(n),**str_nodedata)
         P.add_node(p)
 
     if N.is_multigraph():
         for u,v,key,edgedata in N.edges_iter(data=True,keys=True):
-            edge=pydot.Edge(str(u),str(v),key=key,**edgedata)
+            str_edgedata=dict((k,str(v)) for k,v in edgedata.iteritems())
+            edge=pydot.Edge(str(u),str(v),key=str(key),**str_edgedata)
             P.add_edge(edge)
         
     else:
         for u,v,edgedata in N.edges_iter(data=True):
-            edge=pydot.Edge(str(u),str(v),**edgedata)
+            str_edgedata=dict((k,str(v)) for k,v in edgedata.iteritems())
+            edge=pydot.Edge(str(u),str(v),**str_edgedata)
             P.add_edge(edge)
 
     try:
@@ -230,6 +243,12 @@ def pydot_layout(G,prog='neato',root=None, **kwds):
     >>> pos=nx.pydot_layout(G,prog='dot')
     
     """
+    try:
+        import pydot
+    except ImportError:
+        raise ImportError, \
+          "pydot_layout() requires pydot http://dkbza.org/pydot.html/"
+
     P=to_pydot(G)
     if root is not None :
         P.set("root",str(root))
@@ -249,7 +268,7 @@ def pydot_layout(G,prog='neato',root=None, **kwds):
 
     node_pos={}
     for n in G.nodes():
-        node=Q.get_node(str(n))
+        node=Q.get_node(pydot.Node(n).get_name())
         pos=node.get_pos()[1:-1] # strip leading and trailing double quotes
         if pos != None:
             xx,yy=pos.split(",")

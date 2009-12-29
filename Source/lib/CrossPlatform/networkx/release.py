@@ -4,8 +4,8 @@
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 
 
 import os
@@ -30,12 +30,16 @@ Do not add this file to the repository.
 """
 
 __version__ = '%(version)s'
-__revision__ = '%(revision)s'
+__revision__ = %(revision)s
 __date__ = '%(date)s'
 
 '''
+    if revision is not None:
+        rev = "'%s'" % (revision,)
+    else:
+        rev = revision
     subs = {'version': version,
-            'revision': revision,
+            'revision': rev,
             'date': date}
     fh.write(text % subs)
     fh.close()
@@ -59,13 +63,13 @@ def get_svn_revision():
 
 
 name = 'networkx'
-version = '1.0rc1'
+version = '1.0'
 
 # Declare current release as a development release.
 # Change to False before tagging a release; then change back.
-dev = False
-revision = None
+dev = True 
 
+revision = None
 if dev:
     version += '.dev'   
     revision = get_svn_revision()
@@ -80,20 +84,22 @@ NetworkX is a Python package for the creation, manipulation, and
 study of the structure, dynamics, and functions of complex networks.  
 
 """
-license = 'LGPL'
+license = 'BSD'
 authors = {'Hagberg' : ('Aric Hagberg','hagberg@lanl.gov'),
            'Schult' : ('Dan Schult','dschult@colgate.edu'),
            'Swart' : ('Pieter Swart','swart@lanl.gov')
            }
+maintainer = "NetworkX Developers",
+maintainer_email = "networkx-discuss@googlegroups.com",
 url = 'http://networkx.lanl.gov/'
 download_url="http://networkx.lanl.gov/download/networkx"
-platforms = ['Linux','Mac OSX','Windows XP/2000/NT']
+platforms = ['Linux','Mac OSX','Windows','Unix']
 keywords = ['Networks', 'Graph Theory', 'Mathematics', 'network', 'graph', 'discrete mathematics', 'math']
 classifiers = [
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)',
+        'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Software Development :: Libraries :: Python Modules',

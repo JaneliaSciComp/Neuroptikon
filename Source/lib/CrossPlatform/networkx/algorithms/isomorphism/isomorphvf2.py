@@ -128,8 +128,8 @@ In general, this problem is NP-Complete.
 """
 
 #    Copyright (C) 2007-2009 by the NetworkX maintainers
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 
 #    This work was originally coded by Christopher Ellison
 #    as part of the Computational Mechanics Python (CMPy) project.
@@ -138,7 +138,7 @@ In general, this problem is NP-Complete.
 
 import sys
 
-__date__ = "$Date: 2009-05-03 20:16:44 -0600 (Sun, 03 May 2009) $"
+__date__ = "$Date: 2009-08-25 23:54:18 -0400 (Tue, 25 Aug 2009) $"
 
 #__doc__ += sources#.replace('\n', '\n'+indent)
 

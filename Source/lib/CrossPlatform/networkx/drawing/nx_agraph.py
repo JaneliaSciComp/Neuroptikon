@@ -22,8 +22,8 @@ __author__ = """Aric Hagberg (hagberg@lanl.gov)"""
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 
 __all__ = ['from_agraph', 'to_agraph', 
            'write_dot', 'read_dot', 
@@ -34,15 +34,6 @@ import os
 import sys
 import networkx
 from networkx.utils import _get_fh,is_string_like
-
-
-try:
-    from peak.util.imports import lazyModule
-except:
-    from networkx.util.imports import lazyModule
-
-pygraphviz=lazyModule('pygraphviz')
-
 
 def from_agraph(A,create_using=None):
     """Return a NetworkX Graph or DiGraph from a PyGraphviz graph.
@@ -100,15 +91,21 @@ def from_agraph(A,create_using=None):
     for e in A.edges():
         u,v=str(e[0]),str(e[1])
         attr=dict(e.attr)
-        if e.key is not None:
-            attr.update(key=e.key)
-        N.add_edge(u,v,attr)
+        if N.is_multigraph():
+            if e.key is not None:
+                attr[key]=e.key
+            N.add_edge(u,v,**attr)
+        else:
+            if e.key is not None:
+                N.add_edge(u,v,e.key,**attr)
+            else:
+                N.add_edge(u,v,**attr)
         
     # add default attributes for graph, nodes, and edges       
     # hang them on N.graph_attr
-    N.graph['graph']=A.graph_attr
-    N.graph['node']=A.node_attr
-    N.graph['edge']=A.edge_attr
+    N.graph['graph']=dict(A.graph_attr)
+    N.graph['node']=dict(A.node_attr)
+    N.graph['edge']=dict(A.edge_attr)
     return N        
 
 def to_agraph(N):
@@ -131,6 +128,11 @@ def to_agraph(N):
     and then updated with the calling arguments if any.
 
     """
+    try:
+        import pygraphviz
+    except ImportError:
+        raise ImportError, \
+          "to_agraph() requires pygraphviz: http://networkx.lanl.gov/pygraphviz"
     directed=N.is_directed()
     strict=N.number_of_selfloops()==0 and not N.is_multigraph() 
     A=pygraphviz.AGraph(name=N.name,strict=strict,directed=directed)
@@ -142,18 +144,18 @@ def to_agraph(N):
 
     # add nodes
     for n,nodedata in N.nodes(data=True):
-        A.add_node(n)
-        node=pygraphviz.Node(A,n)
-        node.attr.update(nodedata)
+        A.add_node(n,**nodedata)
 
     # loop over edges
 
     if N.is_multigraph():
-        for u,v,key,edgedata in N.edges_iter(data=True):
-            A.add_edge(u,v,key=key,**edgedata)
+        for u,v,key,edgedata in N.edges_iter(data=True,keys=True):
+            str_edgedata=dict((k,str(v)) for k,v in edgedata.iteritems())
+            A.add_edge(u,v,key=str(key),**str_edgedata)
     else:
         for u,v,edgedata in N.edges_iter(data=True):
-            A.add_edge(u,v,**edgedata)
+            str_edgedata=dict((k,str(v)) for k,v in edgedata.iteritems())
+            A.add_edge(u,v,**str_edgedata)
 
 
     return A
@@ -169,6 +171,12 @@ def write_dot(G,path):
        Filename or file handle to write.  
 
     """
+    try:
+        import pygraphviz
+    except ImportError:
+        raise ImportError, \
+          "write_dot() requires pygraphviz: http://networkx.lanl.gov/pygraphviz"
+
     A=to_agraph(G)
     A.write(path)
     return
@@ -185,6 +193,11 @@ def read_dot(path,create_using=None):
        nx.Graph().
 
     """
+    try:
+        import pygraphviz
+    except ImportError:
+        raise ImportError, \
+          "read_dot() requires pygraphviz: http://networkx.lanl.gov/pygraphviz"
     A=pygraphviz.AGraph(file=path)
     return from_agraph(A)
 
@@ -243,6 +256,11 @@ def pygraphviz_layout(G,prog='neato',root=None, args=''):
     >>> pos=nx.graphviz_layout(G,prog='dot')
     
     """
+    try:
+        import pygraphviz
+    except ImportError:
+        raise ImportError, \
+          "pygraphviz_layout() requires pygraphviz: http://networkx.lanl.gov/pygraphviz"
     A=to_agraph(G)
     if root is not None:
         args+="-Groot=%s"%root

@@ -7,8 +7,8 @@ __author__ = """Aric Hagberg (hagberg@lanl.gov)"""
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 
 __all__ = ['average_shortest_path_length',
            'shortest_path', 'shortest_path_length',
@@ -231,7 +231,8 @@ def _bidirectional_pred_succ(G, source, target):
     if source is None or target is None:
         raise NetworkXException(\
             "Bidirectional shortest path called without source or target")
-    if target == source:  return ({1:None},{1:None},1)
+    if target == source:
+        return ({target:None},{source:None},source)
 
     # handle either directed or undirected
     if G.is_directed():

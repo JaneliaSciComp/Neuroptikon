@@ -25,15 +25,15 @@ Using
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 #
 # Add platform dependent shared library path to sys.path
 #
 import sys
 if sys.version_info[:2] < (2, 4):
-    print "Python version 2.4 or later is required for NetworkX (%d.%d detected)." %  sys.version_info[:2]
-    sys.exit(-1)
+    raise ImportError("Python version 2.4 or later is required for NetworkX (%d.%d detected)." %  sys.version_info[:2])
+
 del sys
 
 # Release data
@@ -63,7 +63,7 @@ __author__   = '%s <%s>\n%s <%s>\n%s <%s>' % \
                 release.authors['Swart'] )
 __license__  = release.license
 
-from exception import  NetworkXException, NetworkXError
+from exception import  *
 
 from algorithms import *
 from classes import *
@@ -84,5 +84,4 @@ import generators
 import linalg
 import operators
 import readwrite
-import util
 

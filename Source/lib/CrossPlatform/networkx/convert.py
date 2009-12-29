@@ -41,8 +41,8 @@ __author__ = """Aric Hagberg (hagberg@lanl.gov)"""
 #    Aric Hagberg <hagberg@lanl.gov>
 #    Dan Schult <dschult@colgate.edu>
 #    Pieter Swart <swart@lanl.gov>
-#    Distributed under the terms of the GNU Lesser General Public License
-#    http://www.gnu.org/copyleft/lesser.html
+#    All rights reserved.
+#    BSD license.
 
 
 __all__ = ['from_whatever', 
@@ -53,19 +53,10 @@ __all__ = ['from_whatever',
            'from_scipy_sparse_matrix', 'to_scipy_sparse_matrix']
 
 import networkx
-
-try:
-    from peak.util.imports import lazyModule
-except:
-    from networkx.util.imports import lazyModule
-
-numpy=lazyModule('numpy')
-scipy=lazyModule('scipy')
-sparse=lazyModule('scipy.sparse')
+import warnings
 
 def _prep_create_using(create_using):
-    """
-    Return a graph object ready to be populated.
+    """Return a graph object ready to be populated.
 
     If create_using is None return the default (just networkx.Graph())
     If create_using.clear() works, assume it returns a graph object.
@@ -81,7 +72,6 @@ def _prep_create_using(create_using):
         except:
             raise TypeError("Input graph is not a networkx graph type")
     return G
-
 
 def from_whatever(thing,create_using=None,multigraph_input=False):
     """Make a NetworkX graph from an known type.
@@ -162,36 +152,37 @@ def from_whatever(thing,create_using=None,multigraph_input=False):
                   "Input is not a valid edge list"
 
     # numpy matrix or ndarray 
-#    try:
-#        import numpy
-    if isinstance(thing,numpy.core.defmatrix.matrix) or \
-           isinstance(thing,numpy.ndarray):
-        try:
-            return from_numpy_matrix(thing,create_using=create_using)
-        except:
-            raise networkx.NetworkXError,\
+    try:
+        import numpy
+        if isinstance(thing,numpy.core.defmatrix.matrix) or \
+               isinstance(thing,numpy.ndarray):
+            try:
+                return from_numpy_matrix(thing,create_using=create_using)
+            except:
+                raise networkx.NetworkXError,\
                   "Input is not a correct numpy matrix or array."
-#    except ImportError:
-#        pass # fail silently
+    except ImportError:
+        warnings.warn('numpy not found, skipping conversion test.',
+                      ImportWarning)
 
     # scipy sparse matrix - any format
-#    try:
-#        import scipy
-    if hasattr(thing,"format"):
-        try:
-            return from_scipy_sparse_matrix(thing,create_using=create_using)
-        except:
-            raise networkx.NetworkXError, \
-                  "Input is not a correct scipy sparse matrix type."
-#    except ImportError:
-#        pass # fail silently
+    try:
+        import scipy
+        if hasattr(thing,"format"):
+            try:
+                return from_scipy_sparse_matrix(thing,create_using=create_using)
+            except:
+                raise networkx.NetworkXError, \
+                      "Input is not a correct scipy sparse matrix type."
+    except ImportError:
+        warnings.warn('scipy not found, skipping conversion test.',
+                      ImportWarning)
 
 
     raise networkx.NetworkXError, \
           "Input is not a known data type for conversion."
 
     return 
-
 
 def to_dict_of_lists(G,nodelist=None):
     """Return adjacency representation of graph as a dictionary of lists
@@ -415,65 +406,83 @@ def from_edgelist(edgelist,create_using=None):
     G.add_edges_from(edgelist)
     return G                         
 
-
-def to_numpy_matrix(G,nodelist=None,dtype=None):
-    """Return the graph adjacency matrix as a numpy matrix. 
+def to_numpy_matrix(G,nodelist=None,dtype=None,order=None):
+    """Return the graph adjacency matrix as a NumPy matrix.
 
     Parameters
     ----------
     G : graph
-       A NetworkX graph 
+        The NetworkX graph used to construct the NumPy matrix.
 
     nodelist : list, optional       
-       Use the order of nodes in nodelist for the rows.
-       All nodes must appear in nodelist or a KeyError is raised.
-       If nodelist is None, the ordering is produced by G.nodes()
+       The rows and columns are ordered according to the nodes in `nodelist`.
+       If `nodelist` is None, then the ordering is produced by G.nodes().
 
-    dtype : numpy type
-       Data type for matrix entries.  Default is 4 byte float (single).
+    dtype : NumPy data-type, optional
+        A valid NumPy dtype used to initialize the array. If None, then the
+        NumPy default is used.
+
+    order : {'C', 'F'}, optional
+        Whether to store multidimensional data in C- or Fortran-contiguous
+        (row- or column-wise) order in memory. If None, then the NumPy default 
+        is used.
+
+    Returns
+    -------
+    M : NumPy matrix
+       Graph adjacency matrix.
 
     Notes
     -----
-    When no weights are specified the value of the entry A[u,v] is 1
-    if there is an edge u-v and 0 otherwise.
+    The matrix entries are populated using the 'weight' edge attribute. When
+    an edge does not have the 'weight' attribute, the value of the entry is 1.
+    For multiple edges, the values of the entries are the sums of the edge
+    attributes for each edge.
 
-    Multiple edges and edge data are both ignored for MultiGraph/MultiDiGraph.
+    When `nodelist` does not contain every node in `G`, the matrix is built 
+    from the subgraph of `G` that is induced by the nodes in `nodelist`.
+    
+    Examples
+    --------
+    >>> G = nx.MultiDiGraph()
+    >>> G.add_edge(0,1,weight=2)
+    >>> G.add_edge(1,0)
+    >>> G.add_edge(2,2,weight=3)
+    >>> G.add_edge(2,2)
+    >>> nx.to_numpy_matrix(G, nodelist=[0,1,2])
+    matrix([[ 0.,  2.,  0.],
+            [ 1.,  0.,  0.],
+            [ 0.,  0.,  4.]])
 
     """
-#    try:
-#        import numpy
-#    except ImportError:
-#        raise ImportError, \
-#              "Import Error: not able to import numpy: http://numpy.scipy.org "
-
-    if dtype is None:
-        dtype=numpy.float32
+    try:
+        import numpy as np
+    except ImportError:
+        raise ImportError, \
+          "to_numpy_matrix() requires numpy: http://scipy.org/ "
 
     if nodelist is None:
-        nodelist=G.nodes()
-    nlen=len(nodelist)    
-    index=dict(zip(nodelist,range(nlen)))# dict mapping vertex name to position
-    A = numpy.asmatrix(numpy.zeros((nlen,nlen),dtype=dtype))
-    for n,nbrdict in G.adjacency_iter():
-        if n in index:
-            for nbr,data in nbrdict.iteritems():
-                if nbr in index:
-                    A[index[n],index[nbr]]=data.get('weight',1)
-    return A
+        nodelist = G.nodes()
 
-#     if G.is_multigraph():
-#         for n,nbrdict in G.adjacency_iter():
-#             if n in index:
-#                 for nbr,data in nbrdict.iteritems():
-#                     if nbr in index:
-#                         A[index[n],index[nbr]]=data
-#     else: # ignore edge data
-#         for n,nbrdict in G.adjacency_iter():
-#             if n in index:
-#                 for nbr in nbrdict:
-#                     if nbr in index:
-#                         A[index[n],index[nbr]]=1
-#     return A            
+    nodeset = set(nodelist)
+    if len(nodelist) != len(nodeset):
+        msg = "Ambiguous ordering: `nodelist` contained duplicates."
+        raise networkx.NetworkXError(msg)
+
+    nlen=len(nodelist)
+    undirected = not G.is_directed()
+    index=dict(zip(nodelist,range(nlen)))
+    M = np.zeros((nlen,nlen), dtype=dtype, order=order)
+
+    for u,v,attrs in G.edges_iter(data=True):
+        if (u in nodeset) and (v in nodeset):
+            i,j = index[u],index[v]
+            M[i,j] += attrs.get('weight', 1)
+            if undirected:
+                M[j,i] = M[i,j]
+
+    M = np.asmatrix(M)
+    return M
 
 def from_numpy_matrix(A,create_using=None):
     """Return a graph from numpy matrix adjacency list. 
@@ -494,11 +503,12 @@ def from_numpy_matrix(A,create_using=None):
 
     """
     # This should never fail if you have created a numpy matrix with numpy...  
-#    try:
-#        import numpy
-#    except ImportError:
-#        raise ImportError, \
-#              "Import Error: not able to import numpy: http://numpy.scipy.org "
+    try:
+        import numpy as np
+    except ImportError:
+        raise ImportError, \
+          "from_numpy_matrix() requires numpy: http://scipy.org/ "
+
 
     G=_prep_create_using(create_using)
 
@@ -511,77 +521,86 @@ def from_numpy_matrix(A,create_using=None):
     G.add_nodes_from(range(nx)) # make sure we get isolated nodes
 
     # get a list of edges
-    x,y=numpy.asarray(A).nonzero()         
+    x,y=np.asarray(A).nonzero()         
     G.add_edges_from( ((u,v,{'weight':A[u,v]}) for (u,v) in zip(x,y)) )
     return G
 
 
 def to_scipy_sparse_matrix(G,nodelist=None,dtype=None):
-    """Return the graph adjacency matrix as a scipy sparse matrix.
+    """Return the graph adjacency matrix as a SciPy sparse matrix.
 
     Parameters
     ----------
     G : graph
-       A NetworkX graph 
+        The NetworkX graph used to construct the NumPy matrix.
 
     nodelist : list, optional       
-       Use the order of nodes in nodelist for the rows.
-       All nodes must appear in nodelist or a KeyError is raised.
-       If nodelist is None, the ordering is produced by G.nodes()
+       The rows and columns are ordered according to the nodes in `nodelist`.
+       If `nodelist` is None, then the ordering is produced by G.nodes().
 
-    dtype : numpy type
-       Data type for matrix entries.  Default is 4 byte float (single).
+    dtype : NumPy data-type, optional
+        A valid NumPy dtype used to initialize the array. If None, then the
+        NumPy default is used.
 
-    Examples
-    --------
-    >>> G=nx.path_graph(4)
-    >>> A=nx.to_scipy_sparse_matrix(G)
-    >>> C=A.tocsr() # convert to compressed row storage
+    Returns
+    -------
+    M : SciPy sparse matrix
+       Graph adjacency matrix.
 
     Notes
     -----
-    Uses lil_matrix format.  To convert to other formats see
-    scipy.sparse documentation.
+    The matrix entries are populated using the 'weight' edge attribute. When
+    an edge does not have the 'weight' attribute, the value of the entry is 1.
+    For multiple edges, the values of the entries are the sums of the edge
+    attributes for each edge.
 
-    If G.weighted is True and G is not a multigraph, the edgedata
-    is assumed to be numeric and becomes the value of A[u.v].
-    Otherwise A[u,v] is 1 if an edge u-v exists and 0 otherwise.
+    When `nodelist` does not contain every node in `G`, the matrix is built 
+    from the subgraph of `G` that is induced by the nodes in `nodelist`.
+    
+    Uses lil_matrix format.  To convert to other formats see the documentation
+    for scipy.sparse.
+
+    Examples
+    --------
+    >>> G = nx.MultiDiGraph()
+    >>> G.add_edge(0,1,weight=2)
+    >>> G.add_edge(1,0)
+    >>> G.add_edge(2,2,weight=3)
+    >>> G.add_edge(2,2)
+    >>> S = nx.to_scipy_sparse_matrix(G, nodelist=[0,1,2])
+    >>> S.todense()
+    matrix([[ 0.,  2.,  0.],
+            [ 1.,  0.,  0.],
+            [ 0.,  0.,  4.]])
+
     """
-#    try:
-#        from scipy import sparse
-#    except ImportError:
-#        raise ImportError, \
-#              """Import Error: not able to import scipy sparse:
-#              see http://scipy.org""" 
-    if dtype is None:
-        dtype=scipy.float32
+    try:
+        from scipy import sparse
+    except ImportError:
+        raise ImportError, \
+          "to_scipy_sparse_matrix() requires scipy: http://scipy.org/ "
 
     if nodelist is None:
-        nodelist=G.nodes()
-    nlen=len(nodelist)    
-    index=dict(zip(nodelist,range(nlen)))# dict mapping vertex name to position
-    A = sparse.lil_matrix((nlen,nlen),dtype=dtype)
-    for n,nbrdict in G.adjacency_iter():
-        if n in index:
-            for nbr,data in nbrdict.iteritems():
-                if nbr in index:
-                    A[index[n],index[nbr]]=data.get('weight',1)
-    return A
+        nodelist = G.nodes()
 
-#     if G.weighted and not G.multigraph:
-#         for n,nbrdict in G.adjacency_iter():
-#             if n in index:
-#                 for nbr,data in nbrdict.iteritems():
-#                     if nbr in index:
-#                         A[index[n],index[nbr]]=data
-#     else: # ignore edge data
-#         for n,nbrdict in G.adjacency_iter():
-#             if n in index:
-#                 for nbr in nbrdict:
-#                     if nbr in index:
-#                         A[index[n],index[nbr]]=1
-#     return A            
+    nodeset = set(nodelist)
+    if len(nodelist) != len(nodeset):
+        msg = "Ambiguous ordering: `nodelist` contained duplicates."
+        raise networkx.NetworkXError(msg)
 
+    nlen=len(nodelist)
+    undirected = not G.is_directed()
+    index=dict(zip(nodelist,range(nlen)))
+    M = sparse.lil_matrix((nlen,nlen), dtype=dtype)
+
+    for u,v,attrs in G.edges_iter(data=True):
+        if (u in nodeset) and (v in nodeset):
+            i,j = index[u],index[v]
+            M[i,j] += attrs.get('weight', 1)
+            if undirected:
+                M[j,i] = M[i,j]
+
+    return M
 
 def from_scipy_sparse_matrix(A,create_using=None):
     """Return a graph from scipy sparse matrix adjacency list. 
@@ -601,7 +620,6 @@ def from_scipy_sparse_matrix(A,create_using=None):
     >>> G=nx.from_scipy_sparse_matrix(A)
 
     """
-
     G=_prep_create_using(create_using)
 
     # convert all formats to lil - not the most efficient way       
