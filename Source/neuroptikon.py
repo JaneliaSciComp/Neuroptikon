@@ -57,7 +57,13 @@ else:
         raise SystemExit
 
     sys.path.insert(0, commonLibPath)
+    for eggPath in os.listdir(commonLibPath):
+        if eggPath.endswith('.egg'):
+            sys.path.insert(0, os.path.join(commonLibPath, eggPath))
     sys.path.insert(0, platformLibPath)
+    for eggPath in os.listdir(platformLibPath):
+        if eggPath.endswith('.egg'):
+            sys.path.insert(0, os.path.join(platformLibPath, eggPath))
 
 # TODO: figure out if it's worth building and packaging psyco
 #    try:
