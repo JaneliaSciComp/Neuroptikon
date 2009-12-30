@@ -284,16 +284,12 @@ region2.projectToRegion(region1, bidirectional = True)
 # Create a display
 
 display.setBackgroundColor((0.7215, 0.7686, 0.8, 1.0))
-display.setDefaultFlowColor((0.0, 0.0, 0.0))
+display.setDefaultFlowColor((1.0, 1.0, 1.0))
 display.setDefaultFlowSpacing(0.05)
 display.setDefaultFlowSpeed(0.05)
-display.setDefaultFlowSpread(0.1)
+display.setDefaultFlowSpread(0.5)
 display.setViewDimensions(2)
 display.setShowRegionNames(True)
-display.setShowNeuronNames(False)
-display.setShowFlow(False)
-display.setUseGhosts(True)
-display.setUseMouseOverSelecting(False)
 
 display.setVisiblePosition(region1, (0.0, 0.0, 0.0), fixed = True)
 display.setVisibleSize(region1, (0.05, 0.02, 0.1))
@@ -465,9 +461,5 @@ display.setLabel(region60, 'P')
 display.setVisibleColor(region60, (0.7215, 0.7215, 0.7215))
 display.setLabel(region61, 'Other')
 display.setVisibleColor(region61, (0.7215, 0.7215, 0.7215))
-
-for pathway in network.pathways():
-    display.setVisibleColor(pathway, (1.0, 1.0, 1.0))
-    display.setVisibleWeight(pathway, 1.0)
 
 display.zoomToFit()
