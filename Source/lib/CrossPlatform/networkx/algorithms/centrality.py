@@ -32,7 +32,7 @@ from networkx.algorithms.traversal.path import predecessor, \
 import networkx
 
 
-def brandes_betweenness_centrality(G,normalized=True,weighted_edges=False):
+def brandes_betweenness_centrality(G,normalized=True,weighted_edges=False, progress_callback = None):
     """Compute betweenness centrality for nodes.
 
     Betweenness centrality of a node is the fraction of all shortest 
@@ -70,7 +70,11 @@ def brandes_betweenness_centrality(G,normalized=True,weighted_edges=False):
 
 """
     betweenness=dict.fromkeys(G,0.0) # b[v]=0 for v in G
+    count = 0
     for s in G:
+        if callable(progress_callback):
+            if not progress_callback(fraction_complete = float(count) / len(betweenness)):
+                return {}
         S=[]
         P={}
         for v in G:
@@ -126,7 +130,9 @@ def brandes_betweenness_centrality(G,normalized=True,weighted_edges=False):
                           (float(sigma[v])/float(sigma[w]))*(1.0+delta[w])
             if w != s:
                 betweenness[w]=betweenness[w]+delta[w]
-                    
+        
+        count += 1
+    
     # normalize
     if normalized:
         order=len(betweenness)
@@ -143,7 +149,8 @@ betweenness_centrality=brandes_betweenness_centrality
 
 def newman_betweenness_centrality(G,v=None,cutoff=None,
                            normalized=True,
-                           weighted_edges=False):
+                           weighted_edges=False,
+                           progress_callback=None):
     """Compute load centrality for nodes.
 
     The load centrality of a node is the fraction of all shortest 
@@ -195,13 +202,18 @@ def newman_betweenness_centrality(G,v=None,cutoff=None,
         return betweenness
     else:
         betweenness={}.fromkeys(G,0.0) 
+        count = 0.0
         for source in betweenness: 
+            if callable(progress_callback):
+                if not progress_callback(fraction_complete = count / len(G)):
+                    return {}
             ubetween=_node_betweenness(G,source,
                                        cutoff=cutoff,
                                        normalized=False,
                                        weighted_edges=weighted_edges)
             for vk in ubetween:
                 betweenness[vk]+=ubetween[vk]
+            count += 1.0
         if normalized:
             order=len(betweenness)
             if order <=2:
@@ -608,7 +620,7 @@ def out_degree_centrality(G,v=None):
     return _degree_centrality('out_degree', 'out_degree_iter', G, v)
 
 
-def closeness_centrality(G,v=None,weighted_edges=False):
+def closeness_centrality(G,v=None,weighted_edges=False, progress_callback = None):
     """Compute closeness centrality for nodes.
 
     Closeness centrality at a node is 1/average distance to all 
@@ -653,6 +665,9 @@ def closeness_centrality(G,v=None,weighted_edges=False):
     if v is None:
         closeness_centrality={}
         for n in G:
+            if callable(progress_callback):
+                if not progress_callback(fraction_complete = float(len(closeness_centrality)) / len(G)):
+                    return {}
             sp=path_length(G,n)
             totsp=sum(sp.values())
             if totsp > 0.0 and len(G) > 1:
