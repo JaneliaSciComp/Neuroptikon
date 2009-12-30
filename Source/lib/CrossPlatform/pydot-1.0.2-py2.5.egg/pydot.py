@@ -1760,11 +1760,17 @@ class Dot(Graph):
             f = file( os.path.join( tmp_dir, os.path.basename(img) ), 'wb' )
             f.write(f_data)
             f.close()
-
-        p = subprocess.Popen(
-            (self.progs[prog], '-T'+format, tmp_name),
-            cwd=tmp_dir,
-            stderr=subprocess.PIPE, stdout=subprocess.PIPE, creationflags = 0x8000000)
+        
+        if os.sys.platform == 'win32':
+            p = subprocess.Popen(
+                (self.progs[prog], '-T'+format, tmp_name),
+                cwd=tmp_dir,
+                stderr=subprocess.PIPE, stdout=subprocess.PIPE, creationflags = 0x8000000)
+        else:
+            p = subprocess.Popen(
+                (self.progs[prog], '-T'+format, tmp_name),
+                cwd=tmp_dir,
+                stderr=subprocess.PIPE, stdout=subprocess.PIPE)
             
         stderr = p.stderr
         stdout = p.stdout
