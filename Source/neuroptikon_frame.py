@@ -63,6 +63,9 @@ class NeuroptikonFrame( wx.Frame ):
         self._progressDisplayTime = None
         self._progressMessage = None
         self._progressFractionComplete = None
+        self._progressShouldContinue = True
+        self._progressLastUpdate = datetime.datetime.now()
+        self._progressUpdateDelta = datetime.timedelta(0, 0, 100000)    # Don't update the GUI more than 10 times a second.
         
         self.layoutClasses = {}
         
@@ -706,14 +709,14 @@ class NeuroptikonFrame( wx.Frame ):
         
         self._progressNestingLevel += 1
         if self._progressNestingLevel == 1:
+            self._progressShouldContinue = True
+            
             # Have the UI pop up after visualDelay seconds.
             self._progressDisplayTime = datetime.datetime.now() + datetime.timedelta(0, visualDelay)
             wx.CallLater(visualDelay, self._updateProgress)
     
     
     def _updateProgress(self):
-        shouldContinue = True
-        
         if self._progressNestingLevel > 0:
             if datetime.datetime.now() > self._progressDisplayTime:
                 if self._progressDialog is None:
@@ -721,15 +724,17 @@ class NeuroptikonFrame( wx.Frame ):
                     self._progressDialog.ShowModal()
                 
                 if self._progressFractionComplete is None:
-                    shouldContinue = self._progressDialog.Pulse(gettext(self._progressMessage or ''))[0]
+                    if not self._progressDialog.Pulse(gettext(self._progressMessage or ''))[0]:
+                        self._progressShouldContinue = False
                 else:
-                    shouldContinue = self._progressDialog.Update(100.0 * self._progressFractionComplete, gettext(self._progressMessage or ''))[0]
+                    if not self._progressDialog.Update(100.0 * self._progressFractionComplete, gettext(self._progressMessage or ''))[0]:
+                        self._progressShouldContinue = False
+            
+            self._progressLastUpdate = datetime.datetime.now()
             
             # Allow events to be processed while the task is running.
             wx.GetApp().Dispatch()
             wx.GetApp().ProcessPendingEvents()
-            
-        return shouldContinue
     
     
     def updateProgress(self, message = None, fractionComplete = None):
@@ -739,9 +744,14 @@ class NeuroptikonFrame( wx.Frame ):
         If the user has pressed the Cancel button then this method will return False and the task should be aborted.
         """
         
-        self._progressMessage = message
-        self._progressFractionComplete = fractionComplete
-        return self._updateProgress()
+        # Throttle GUI updates to avoid a performance hit.
+        if datetime.datetime.now() - self._progressLastUpdate > self._progressUpdateDelta:
+            if message is not None:
+                self._progressMessage = message
+            self._progressFractionComplete = fractionComplete
+            self._updateProgress()
+        
+        return self._progressShouldContinue
     
     
     def endProgress(self):
