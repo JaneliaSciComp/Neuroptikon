@@ -99,6 +99,14 @@ class NeuroptikonFrame( wx.Frame ):
     def _fromXMLElement(cls, xmlElement, network = None):
         frame = NeuroptikonFrame()
         
+        # Restore any console history.
+        commandHistoryElement = xmlElement.find('CommandHistory')
+        if commandHistoryElement is not None:
+            history = []
+            for commandElement in commandHistoryElement.findall('Command'):
+                history += [commandElement.text]
+            frame._console.history = history
+        
         # TODO: set frame position and size
         
         # Populate the display (can't use the _fromXMLElement pattern here because it doesn't seem possible to re-parent a wx.GLCanvas.
@@ -119,10 +127,20 @@ class NeuroptikonFrame( wx.Frame ):
     
     def _toXMLElement(self, parentElement):
         frameElement = ElementTree.SubElement(parentElement, 'DisplayWindow')
+        
+        # Save the display.
         displayElement = self.display._toXMLElement(frameElement)
         if displayElement is None:
             raise ValueError, gettext('Could not save display')
+        
+        # Save the console history.
+        if len(self._console.history) > 0:
+            commandHistoryElement = ElementTree.SubElement(frameElement, 'CommandHistory')
+            for command in self._console.history:
+                ElementTree.SubElement(commandHistoryElement, 'Command').text = command
+                
         # TODO: save frame position and size
+        
         return frameElement
     
     
@@ -339,8 +357,9 @@ class NeuroptikonFrame( wx.Frame ):
             # Put up a new prompt if the script produced any output.
             if self._console.promptPosEnd != self._console.GetTextLength():
                 self._console.prompt()
-    
-            self.endProgress()
+            
+            while self._progressNestingLevel > 0:
+                self.endProgress()
     
         
     def _profileScript(self, scriptPath):

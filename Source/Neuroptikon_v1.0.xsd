@@ -197,9 +197,16 @@ http://license.janelia.org/license/jfrc_copyright_1_1.html
 		</xs:complexContent>
 	</xs:complexType>
 	
+	<xs:complexType name="CommandHistory">
+		<xs:sequence>
+			<xs:element name="Command" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+		</xs:sequence>
+	</xs:complexType>
+	
 	<xs:complexType name="DisplayWindow">
 		<xs:sequence>
 			<xs:element name="Display" type="Display"/>
+			<xs:element name="CommandHistory" type="CommandHistory" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="x" type="xs:nonNegativeInteger"/>
 		<xs:attribute name="y" type="xs:nonNegativeInteger"/>
