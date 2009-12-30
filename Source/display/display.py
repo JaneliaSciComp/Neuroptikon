@@ -442,8 +442,10 @@ class Display(wx.glcanvas.GLCanvas):
                     self.trackball.setByMatrix(self._previousTrackballMatrix)
                     #self.trackball.setCenter(self._previousTrackballCenter)
             
-            if any(self.selectedVisibles):
-                self._addDragger(list(self.selectedVisibles)[0])
+            if len(self.selectedVisibles) == 1:
+                visible = list(self.selectedVisibles)[0]
+                if visible._isDraggable():
+                    self._addDragger(visible)
             
             self.Refresh()
             dispatcher.send(('set', 'viewDimensions'), self)
@@ -866,7 +868,7 @@ class Display(wx.glcanvas.GLCanvas):
         if signal[1] in ('positionIsFixed', 'sizeIsFixed') and any(self.selectedVisibles):
             self._clearDragger()
             visible = list(self.selectedVisibles)[0]
-            if not visible.positionIsFixed() or not visible.sizeIsFixed():
+            if visible._isDraggable():
                 self._addDragger(visible)
         self.Refresh()
         if signal[1] not in ('glowColor'):
