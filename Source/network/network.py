@@ -663,11 +663,15 @@ class Network:
         Remove all objects from the network and any displays.
         """
         
+        removedObjects = list(self.objects)
         for networkObject in self.objects:
             networkObject.network = None
         self.objects = []
         self.idDict = {}
         self.graph.clear()
+        
+        # Let anyone who cares know that the network was changed.
+        dispatcher.send('deletion', self, affectedObjects = removedObjects)
     
     
     def addDisplay(self, display):
