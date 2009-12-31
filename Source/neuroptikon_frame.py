@@ -739,8 +739,9 @@ class NeuroptikonFrame( wx.Frame ):
         if self._progressNestingLevel > 0:
             if datetime.datetime.now() > self._progressDisplayTime:
                 if self._progressDialog is None:
-                    self._progressDialog = wx.ProgressDialog(gettext('Neuroptikon'), 'some long text that will make the dialog a nice width', style = wx.PD_APP_MODAL | wx.PD_CAN_ABORT | wx.PD_REMAINING_TIME)
-                    self._progressDialog.ShowModal()
+                    self._progressDialog = wx.ProgressDialog(gettext('Neuroptikon'), 'some long text that will make the dialog a nice width', parent = self, style = wx.PD_APP_MODAL | wx.PD_CAN_ABORT | wx.PD_REMAINING_TIME)
+                    if platform.system() == 'Darwin':
+                        self._progressDialog.ShowModal()
                 
                 if self._progressFractionComplete is None:
                     if not self._progressDialog.Pulse(gettext(self._progressMessage or ''))[0]:
