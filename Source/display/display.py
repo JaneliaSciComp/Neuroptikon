@@ -2265,42 +2265,49 @@ class Display(wx.glcanvas.GLCanvas):
             raise TypeError, 'The layout parameter passed to performLayout() should be one of the classes in layouts, an instance of one of the classes or None.'
         
         self.beginProgress('Laying out the network...')
-        if layout == None:
-            # Fall back to the last layout used.
-            layout = self.lastUsedLayout
-        else:
-            # If a layout class was passed in then create a default instance.
-            if isinstance(layout, type(self.__class__)):
-                layout = layout()
-            
-            if not layout.__class__.canLayoutDisplay(self):
-                raise ValueError, gettext('The supplied layout cannot be used.')
-        
-        if layout == None or not layout.__class__.canLayoutDisplay(self):   # pylint: disable-msg=E1103
-            layouts = neuroptikon.scriptLocals()['layouts']
-            if 'Graphviz' in layouts:
-                layout = layouts['Graphviz']()
-            elif 'Force Directed' in layouts:
-                layout = layouts['Force Directed']()
-            elif 'Spectral' in layouts:
-                layout = layouts['Spectral']()
+        try:
+            if layout == None:
+                # Fall back to the last layout used.
+                layout = self.lastUsedLayout
             else:
-                # Pick the first layout class capable of laying out the display.
-                for layoutClass in layouts.itervalues():
-                    if layoutClass.canLayoutDisplay(self):
-                        layout = layoutClass()
-                        break
-        
-        refreshWasSuppressed = self._suppressRefresh
-        self._suppressRefresh = True
-        layout.layoutDisplay(self)
-        self.lastUsedLayout = layout
-        self._suppressRefresh = refreshWasSuppressed
-        if self.viewDimensions == 2:
-            self.zoomToFit()
-        else:
-            self.resetView()
-        self.endProgress()
+                # If a layout class was passed in then create a default instance.
+                if isinstance(layout, type(self.__class__)):
+                    layout = layout()
+                
+                if not layout.__class__.canLayoutDisplay(self):
+                    raise ValueError, gettext('The supplied layout cannot be used.')
+            
+            if layout == None or not layout.__class__.canLayoutDisplay(self):   # pylint: disable-msg=E1103
+                layouts = neuroptikon.scriptLocals()['layouts']
+                if 'Graphviz' in layouts:
+                    layout = layouts['Graphviz']()
+                elif 'Force Directed' in layouts:
+                    layout = layouts['Force Directed']()
+                elif 'Spectral' in layouts:
+                    layout = layouts['Spectral']()
+                else:
+                    # Pick the first layout class capable of laying out the display.
+                    for layoutClass in layouts.itervalues():
+                        if layoutClass.canLayoutDisplay(self):
+                            layout = layoutClass()
+                            break
+            
+            refreshWasSuppressed = self._suppressRefresh
+            self._suppressRefresh = True
+            layout.layoutDisplay(self)
+            self.lastUsedLayout = layout
+        except:
+            (exceptionType, exceptionValue) = sys.exc_info()[0:2]
+            dialog = wx.MessageDialog(self, str(exceptionValue) + ' (' + exceptionType.__name__ + ')', gettext('An error occurred while performing the layout:'), style = wx.ICON_ERROR | wx.OK)
+            dialog.ShowModal()
+            dialog.Destroy()
+        finally:
+            self._suppressRefresh = refreshWasSuppressed
+            if self.viewDimensions == 2:
+                self.zoomToFit()
+            else:
+                self.resetView()
+            self.endProgress()
     
     
     def saveViewAsImage(self, path):
