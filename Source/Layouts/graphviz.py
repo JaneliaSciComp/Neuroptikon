@@ -8,64 +8,23 @@ from display.layout import Layout
 import os, stat, sys
 
 
-# Make sure all the graphviz pieces can be found and used.
+# Try to import pygraphviz or pydot, preferring the former.
 try:
-    fdpPath = neuroptikon.platformLibPath + os.sep + 'fdp'
-    if os.access(fdpPath, os.F_OK):
-        # Make sure graphviz's binaries can find the graphviz plug-ins.
-        os.environ['GVBINDIR'] = neuroptikon.platformLibPath + os.sep + 'graphviz'
-
-        # Make sure our custom build of graphviz's binaries can be found.
-        os.environ['PATH'] = neuroptikon.platformLibPath + os.pathsep + os.environ['PATH']
-
-        # Make sure fdp is executable.
-        if os.stat(fdpPath).st_mode & stat.S_IXUSR == 0:
-            os.chmod(fdpPath, os.stat(fdpPath).st_mode | stat.S_IXUSR)
-except:
-    (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-    print 'Could not configure graphviz (' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + ')'
-
-try:
+    # Uncomment the following line to test the pydot code path when pygraphviz is installed.
+    #raise ImportError
+    
     import pygraphviz
+    
+    # Graphviz emits warnings whenever a node's label won't fit inside the node which pygraphviz then raises.  The warnings end up littering the console which is a pain.
+    # Add a filter so we don't have to see these warnings but will still see others.
+    import warnings
+    warnings.filterwarnings("ignore", ".*size too small for label.*")
 except ImportError:
     pygraphviz = None
     try:
         import pydot
     except ImportError:
         pydot = None
-
-# On Windows pydot 1.0.2 doesn't work right out of the box.  Two changes are required to pydot.py:
-# 1. Add an additional argument to the subprocess.Popen call in Dot.create to keep a command window from flashing every time layout occurs:
-#        creationflags = 0x8000000
-# 2. To allow pydot to find the graphviz executables when no "SOFTWARE/ATT/Graphviz" registry entry exists replace the existing "Method 1" code in find_graphviz() with the following:
-#        # Get the GraphViz install path from the registry
-#        
-#        try:
-#            import winreg
-#        except:
-#            try:
-#                import _winreg as winreg
-#            except:
-#                winreg = None
-#        
-#        if winreg is not None:
-#            hkey = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
-#            
-#            try:
-#                gvkey = winreg.OpenKey(hkey, "SOFTWARE\\ATT\\Graphviz", 0, winreg.KEY_READ)
-#                
-#                if gvkey is not None:
-#                    path = winreg.QueryValueEx(gvkey, "InstallPath")[0]
-#                    
-#                    if path is not None:
-#                        progs = __find_executables(path + os.sep + "bin")
-#                        if progs is not None :
-#                            #print "Used Windows registry"
-#                            return progs
-#            except:
-#                pass
-#            finally:
-#                winreg.CloseKey(hkey)
 
 
 class GraphvizLayout(Layout):
@@ -77,7 +36,15 @@ class GraphvizLayout(Layout):
     
     @classmethod
     def shouldBeRegistered(cls):
-        return pygraphviz is not None or pydot is not None
+        # Check if Graphviz's fdp binary is available. 
+        if pygraphviz is not None:
+            try:
+                pygraphviz.AGraph()._which('fdp')
+                return True
+            except:
+                return False
+        if pydot is not None:
+            return (pydot.find_graphviz() or {}).get('fdp', '') != ''
     
     
     @classmethod
