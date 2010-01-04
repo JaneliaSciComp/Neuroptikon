@@ -5,6 +5,7 @@
 
 import osg, osgGA, osgManipulator, osgUtil, osgViewer
 
+import display
 from shape import UnitShape
 
 
@@ -39,10 +40,11 @@ class PickHandler(osgGA.GUIEventHandler):
                     eventWasHandled = self.dragger.handle(self.pointerInfo, eventAdaptor, actionAdaptor)
                     if eventWasHandled:
                         self._display._visibleWasDragged()
-                elif self._panning or self._display.isPanning():
-                    self._display.shiftView(self._lastMouse[0] - eventAdaptor.getX(), self._lastMouse[1] - eventAdaptor.getY())
+                elif self._panning or self._display.navigationMode() == display.PANNING_MODE:
+                    self._display.shiftView(eventAdaptor.getX() - self._lastMouse[0], eventAdaptor.getY() - self._lastMouse[1])
                     self._panning = True
                     self._lastMouse = (eventAdaptor.getX(), eventAdaptor.getY())
+                    eventWasHandled = True
             elif eventtype == eventAdaptor.RELEASE:
                 if self.dragger != None:
                     # Finish the drag.

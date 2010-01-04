@@ -11,7 +11,7 @@ try:
     import xml.etree.cElementTree as ElementTree
 except ImportError:
     import xml.etree.ElementTree as ElementTree
-import display, display.display
+import display.display, display.layout
 from network.network import Network
 from search.finder import Finder
 
@@ -231,6 +231,11 @@ class NeuroptikonFrame( wx.Frame ):
         self.zoomOutMenuItem = viewMenu.Append(wx.ID_ZOOM_OUT, gettext('Zoom Out\tCtrl--'), gettext('Make objects appear smaller'))
         self.Bind(wx.EVT_MENU, self.onZoomOut, self.zoomOutMenuItem)
         viewMenu.AppendSeparator()  # -----------------
+        self.panMenuItem = viewMenu.Append(wx.NewId(), gettext('Pan\tCtrl-Shift-1'), gettext('Dragging the mouse moves the display side to side'))
+        self.Bind(wx.EVT_MENU, self.onPan, self.panMenuItem)
+        self.rotateMenuItem = viewMenu.Append(wx.NewId(), gettext('Rotate\tCtrl-Shift-2'), gettext('Dragging the mouse rotates the display'))
+        self.Bind(wx.EVT_MENU, self.onRotate, self.rotateMenuItem)
+        viewMenu.AppendSeparator()  # -----------------
         self.Bind(wx.EVT_MENU, self.display.onSaveView, viewMenu.Append(wx.NewId(), gettext('Save View as...'), gettext('Save the current view to a file')))
         menuBar.Insert(menuBar.GetMenuCount() - 1, viewMenu, gettext('&View'))
         
@@ -250,6 +255,9 @@ class NeuroptikonFrame( wx.Frame ):
         toolBar.AddLabelTool(self.zoomToSelectionMenuItem.GetId(), gettext('Zoom To Selection'), self.loadBitmap("ZoomToSelection.png"))
         toolBar.AddLabelTool(self.zoomInMenuItem.GetId(), gettext('Zoom In'), self.loadBitmap("ZoomIn.png"))
         toolBar.AddLabelTool(self.zoomOutMenuItem.GetId(), gettext('Zoom Out'), self.loadBitmap("ZoomOut.png"))
+        toolBar.AddSeparator()
+        toolBar.AddCheckLabelTool(self.panMenuItem.GetId(), gettext('Pan'), self.loadBitmap("Pan.png"))
+        toolBar.AddCheckLabelTool(self.rotateMenuItem.GetId(), gettext('Rotate'), self.loadBitmap("Rotate.png"))
         toolBar.AddSeparator()
         toolBar.AddCheckLabelTool(self.highlightOnlyWithinSelectionItem.GetId(), gettext('Highlight Only Within Selection'), self.loadBitmap("HighlightOnlyWithinSelectionOff.png"), shortHelp = gettext('Only highlight connections to other selected objects'))
         toolBar.Realize()
@@ -293,6 +301,11 @@ class NeuroptikonFrame( wx.Frame ):
             event.Enable(self.display.viewDimensions == 2 and any(self.display.selection()))
         elif eventId == self.zoomOutMenuItem.GetId():
             event.Enable(self.display.viewDimensions == 3 or self.display.orthoZoom > 0)
+        elif eventId == self.panMenuItem.GetId():
+            event.Check(self.display.navigationMode() == display.display.PANNING_MODE)
+        elif eventId == self.rotateMenuItem.GetId():
+            event.Check(self.display.navigationMode() == display.display.ROTATING_MODE)
+            event.Enable(self.display.viewDimensions == 3)
     
     
     def onDisplayChangedHighlightOnlyWithinSelection(self):
@@ -482,6 +495,14 @@ class NeuroptikonFrame( wx.Frame ):
     
     def onZoomOut(self, event_):
         self.display.zoomOut()
+    
+    
+    def onPan(self, event_):
+        self.display.setNavigationMode(display.display.PANNING_MODE)
+    
+    
+    def onRotate(self, event_):
+        self.display.setNavigationMode(display.display.ROTATING_MODE)
     
     
     def onCloseWindow(self, event):
@@ -741,6 +762,7 @@ class NeuroptikonFrame( wx.Frame ):
                 if self._progressDialog is None:
                     self._progressDialog = wx.ProgressDialog(gettext('Neuroptikon'), 'some long text that will make the dialog a nice width', parent = self, style = wx.PD_APP_MODAL | wx.PD_CAN_ABORT | wx.PD_REMAINING_TIME)
                     if platform.system() == 'Darwin':
+                        # Workaround a wx bug: http://trac.wxwidgets.org/ticket/4795
                         self._progressDialog.ShowModal()
                 
                 if self._progressFractionComplete is None:

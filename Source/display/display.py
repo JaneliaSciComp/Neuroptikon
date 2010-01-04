@@ -33,6 +33,14 @@ from shape import Shape
 from library.texture import Texture
 
 
+# Navigation modes
+
+PANNING_MODE = 0
+ROTATING_MODE = 1
+# TODO: DRAG_SELECTING_MODE = 2
+# TODO: other modes?
+
+
 class Display(wx.glcanvas.GLCanvas):
     
     def __init__(self, parent, network = None, wxId = wx.ID_ANY):
@@ -79,6 +87,8 @@ class Display(wx.glcanvas.GLCanvas):
         self.visiblesMax = [100, 100, 100]
         self.visiblesCenter = [0, 0, 0]
         self.visiblesSize = [200, 200, 200]
+        
+        self._navigationMode = PANNING_MODE
         
         self.orthoCenter = (0, 0)
         self.orthoViewPlane = 'xy'
@@ -421,6 +431,7 @@ class Display(wx.glcanvas.GLCanvas):
             self._clearDragger()
             
             if self.viewDimensions == 2:
+                self.setNavigationMode(PANNING_MODE)
                 self._previousTrackballMatrix = self.trackball.getMatrix()
                 self._previousTrackballCenter = self.trackball.getCenter()
                 self.viewer.setCameraManipulator(None)
@@ -705,27 +716,44 @@ class Display(wx.glcanvas.GLCanvas):
         self.Refresh()
     
     
-    def isPanning(self):
-        # TODO: support other 2D modes (drag selecting, others?)
-        # TODO: support panning in 3D
-        
-        return self.viewDimensions == 2
+    def setNavigationMode(self, mode):
+        if mode != self._navigationMode:
+            self._navigationMode = mode
+    
+    
+    def navigationMode(self):
+        return self._navigationMode
     
     
     def shiftView(self, dx, dy):
-        if self.orthoZoom > 0:
-            # At least on the Mac the scroll bars don't update if set directly.  Instead, queue the update to happen after all current events have cleared.
+        if self.viewDimensions == 3:
+            self._shiftView(dx, dy)
+        elif self.orthoZoom > 0:
+            # At least on the Mac the scroll bars don't update if set immediately.  Instead, queue the update to happen after all current events have cleared.
             wx.CallAfter(self._shiftView, dx, dy)
-    
+            
     
     def _shiftView(self, dx, dy):
-        # Convert screen coordinates to world coordinates.
         width, height = self.GetClientSize()
-        dx = dx / (width - 20.0) * width
-        dy = dy / (height - 20.0) * height
-        zoom = 2.0 ** (self.orthoZoom / 10.0)
-        self.orthoCenter = (self.orthoCenter[0] + dx * self.zoomScale / zoom, self.orthoCenter[1] + dy * self.zoomScale / zoom)
-        self._resetView()
+        if self.viewDimensions == 2:
+            # Convert screen coordinates to world coordinates.
+            dx = -dx / (width - 20.0) * width
+            dy = -dy / (height - 20.0) * height
+            zoom = 2.0 ** (self.orthoZoom / 10.0)
+            self.orthoCenter = (self.orthoCenter[0] + dx * self.zoomScale / zoom, self.orthoCenter[1] + dy * self.zoomScale / zoom)
+            self._resetView()
+        else:
+            # Mimic the panning code from OSG's trackball manipulator (in TrackballManipulator::calcMovement()).
+            # It expects dx and dy to be normalized (-1.0 ... 1.0).
+            dx /= width / 2.0
+            dy /= height / 2.0
+            scale = -0.3 * self.trackball.getDistance()
+            rotation = osg.Matrixd()
+            rotation.makeRotate(self.trackball.getRotation())
+            shiftVector = osg.Vec3d(dx * scale, dy * scale, 0.0)
+            center = self.trackball.getCenter()
+            center += rotation.preMult(shiftVector)
+            self.trackball.setCenter(center)
         self.Refresh()
    
    
