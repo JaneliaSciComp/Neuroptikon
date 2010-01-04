@@ -162,7 +162,7 @@ class NeuroptikonFrame( wx.Frame ):
         if image is None or not image.IsOk():
             image = wx.EmptyImage(32, 32)
         if platform.system() == 'Windows':
-            image.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH)
+            image.Rescale(16, 15, wx.IMAGE_QUALITY_HIGH)
         return image.ConvertToBitmap()
     
     
