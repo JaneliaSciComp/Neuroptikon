@@ -89,6 +89,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.visiblesSize = [200, 200, 200]
         
         self._navigationMode = PANNING_MODE
+        self._previous3DNavMode = ROTATING_MODE
         
         self.orthoCenter = (0, 0)
         self.orthoViewPlane = 'xy'
@@ -431,12 +432,14 @@ class Display(wx.glcanvas.GLCanvas):
             self._clearDragger()
             
             if self.viewDimensions == 2:
+                self._previous3DNavMode = self._navigationMode
                 self.setNavigationMode(PANNING_MODE)
                 self._previousTrackballMatrix = self.trackball.getMatrix()
                 self._previousTrackballCenter = self.trackball.getCenter()
                 self.viewer.setCameraManipulator(None)
                 self._resetView()
             elif self.viewDimensions == 3:
+                self.setNavigationMode(self._previous3DNavMode)
                 # Hide the scroll bars before we get the size of the viewport.
                 self.SetScrollbar(wx.HORIZONTAL, 0, width, width, True)
                 self.SetScrollbar(wx.VERTICAL, 0, height, height, True)
