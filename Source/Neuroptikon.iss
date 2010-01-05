@@ -41,6 +41,7 @@ Name: "{group}\Neuroptikon"; Filename: "{app}\Neuroptikon.exe"
 Name: "{group}\Sample Scripts"; Filename: "{app}\Scripts"
 Name: "{group}\Uninstall Neuroptikon"; Filename: "{uninstallexe}"
 Name: "{commondesktop}\Neuroptikon"; Filename: "{app}\Neuroptikon.exe"; Tasks: desktopicon
+Name: "{commondesktop}\Neuroptikon Sample Scripts"; Filename: "{app}\Scripts";
 
 [Run]
 Filename: "{app}\Neuroptikon.exe"; Description: "{cm:LaunchProgram,Neuroptikon}"; Flags: nowait postinstall skipifsilent
