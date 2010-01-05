@@ -302,7 +302,9 @@ class NeuroptikonFrame( wx.Frame ):
         elif eventId == self.zoomOutMenuItem.GetId():
             event.Enable(self.display.viewDimensions == 3 or self.display.orthoZoom > 0)
         elif eventId == self.panMenuItem.GetId():
-            event.Check(self.display.navigationMode() == display.display.PANNING_MODE)
+            canPan = self.display.viewDimensions == 3 or self.display.orthoZoom > 0
+            event.Check(canPan and self.display.navigationMode() == display.display.PANNING_MODE)
+            event.Enable(canPan)
         elif eventId == self.rotateMenuItem.GetId():
             event.Check(self.display.navigationMode() == display.display.ROTATING_MODE)
             event.Enable(self.display.viewDimensions == 3)
