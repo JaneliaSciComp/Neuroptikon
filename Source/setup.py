@@ -22,7 +22,7 @@ app_version = __version__.version
 
 setup_options = dict()
 
-app_scripts = ['Neuroptikon.py']
+app_scripts = ['neuroptikon.py']
 
 resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
 resources += ['display/flow_shader.vert', 'display/flow_shader.frag', 'display/cull_faces.osg']
@@ -36,14 +36,14 @@ if sys.platform == 'darwin':
     wxversion.select('2.8')
 
 # Purge and then rebuild the documentation with Sphinx
-if os.path.exists('Documentation/build'):
-    shutil.rmtree('Documentation/build')
+if os.path.exists('documentation/build'):
+    shutil.rmtree('documentation/build')
 try:
     from sphinx import main
 except ImportError:
     print 'You must have sphinx installed and in the Python path to build the Neuroptikon package.  See <http://sphinx.pocoo.org/>.'
     sys.exit(1)
-result = main(['-q', '-b', 'html', 'Documentation/Source', 'Documentation/build/Documentation'])
+result = main(['-q', '-b', 'html', 'documentation/Source', 'documentation/build/Documentation'])
 if result != 0:
     sys.exit(result)
 
@@ -78,7 +78,7 @@ if sys.platform == 'darwin':
     
     resources += ['../Artwork/Neuroptikon.icns']
     resources += ['lib/Darwin/osgdb_freetype.so', 'lib/Darwin/osgdb_osg.so', 'lib/Darwin/osgdb_qt.so']
-    resources += ['Documentation/build/Documentation']
+    resources += ['documentation/build/Documentation']
     py2app_options['resources'] = ','.join(resources)
     
     py2app_options['argv_emulation'] = True
@@ -167,7 +167,7 @@ if sys.platform == 'darwin':
         shutil.rmtree(scriptsDir)
     shutil.copytree('Scripts', scriptsDir)
 elif sys.platform == 'win32':
-    shutil.copytree(os.path.join('Documentation/build/Documentation'), os.path.join(dist_dir, 'Documentation'))
+    shutil.copytree(os.path.join('documentation/build/Documentation'), os.path.join(dist_dir, 'Documentation'))
 
 
 # Strip out any .pyc or .pyo files.
