@@ -60,8 +60,7 @@ class Muscle(NeuroObject):
     
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
-        shapeClasses = neuroptikon.scriptLocals()['shapes']
-        params['shape'] = shapeClasses['Capsule']
+        params['shape'] = 'Capsule'
         params['size'] = (.05, .1, .02)
         params['color'] = (0.75, 0.5, 0.5)
         try:

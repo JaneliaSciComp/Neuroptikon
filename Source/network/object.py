@@ -304,8 +304,7 @@ class Object(object):
         params['weight'] = 1.0
         params['label'] = None
         params['texture'] = None
-        shapeClasses = neuroptikon.scriptLocals()['shapes']
-        params['shape'] = shapeClasses['Box']
+        params['shape'] = 'Box'
        
         return params
         

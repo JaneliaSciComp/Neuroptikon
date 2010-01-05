@@ -117,8 +117,7 @@ class Synapse(NeuroObject):
     
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
-        shapeClasses = neuroptikon.scriptLocals()['shapes']
-        params['shape'] = shapeClasses['Line']
+        params['shape'] = 'Line'
         params['color'] = (1.0, 0.0, 0.0) if self.activation == 'inhibitory' else (0.0, 0.0, 1.0)
         if any(self.postSynapticNeurites):
             params['pathEndPoints'] = (self.preSynapticNeurite.neuron(), self.postSynapticNeurites[0].neuron())

@@ -1011,7 +1011,13 @@ class Display(wx.glcanvas.GLCanvas):
         if 'color' in params:
             visible.setColor(params['color'])
         if 'shape' in params:
-            visible.setShape(params['shape'])
+            if isinstance(params['shape'], str):
+                shape = neuroptikon.shapeClass(params['shape'])()
+            elif isinstance(params['shape'], type(self.__class__)):
+                shape = params['shape']()
+            else:
+                shape = params['shape']
+            visible.setShape(shape)
         if 'opacity' in params:
             visible.setOpacity(params['opacity'])
             if isinstance(networkObject, Stimulus):
@@ -1546,21 +1552,12 @@ class Display(wx.glcanvas.GLCanvas):
         The shape parameter should be one of the classes in the shapes dictionary, an instance of one of the classes or None.
         """
         
-        # Code to support pre-0.9.4 scripts.
         if isinstance(shape, str):
-            shapes = neuroptikon.scriptLocals()['shapes']
-            if shape == 'ball':
-                shape = shapes['Ball']()
-            elif shape == 'box':
-                shape = shapes['Box']()
-            elif shape == 'capsule':
-                shape = shapes['Capsule']()
-            elif shape == 'cone':
-                shape = shapes['Cone']()
-            elif shape == 'tube':
-                shape = shapes['Cylinder']()
-            else:
-                raise ValueError, '\'' + shape + '\' is an unknown shape name.'
+            # Mapping for pre-0.9.4 scripts.
+            shapeNameMap = {'ball': 'Ball', 'box': 'Box', 'capsule': 'Capsule', 'cone': 'Cone', 'tube': 'Cylinder'}
+            if shape in shapeNameMap:
+                shape = shapeNameMap[shape]
+            shape = neuroptikon.shapeClass(shape) 
         
         if not isinstance(networkObject, Object) or networkObject.network != self.network:
             raise TypeError, 'The object argument passed to setVisibleShape() must be an object from the network being visualized by this display.'

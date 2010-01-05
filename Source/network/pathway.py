@@ -223,8 +223,7 @@ class Pathway(NeuroObject):
     
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
-        shapeClasses = neuroptikon.scriptLocals()['shapes']
-        params['shape'] = shapeClasses['Line']
+        params['shape'] = 'Line'
         params['color'] = (0.0, 0.0, 0.0)
         params['pathEndPoints'] = (self.region1, self.region2)
         params['flowTo'] = self.region1Projects

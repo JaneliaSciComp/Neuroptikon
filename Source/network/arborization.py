@@ -119,8 +119,7 @@ class Arborization(NeuroObject):
     
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
-        shapeClasses = neuroptikon.scriptLocals()['shapes']
-        params['shape'] = shapeClasses['Line']
+        params['shape'] = 'Line'
         params['color'] = (0.0, 0.0, 0.0)
         params['pathEndPoints'] = (self.neurite.neuron(), self.region)
         params['flowTo'] = self.sendsOutput

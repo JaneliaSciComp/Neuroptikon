@@ -409,8 +409,7 @@ class Neuron(NeuroObject):
     
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
-        shapeClasses = neuroptikon.scriptLocals()['shapes']
-        params['shape'] = shapeClasses['Ball']
+        params['shape'] = 'Ball'
         params['size'] = (.01, .01, .01)
         params['sizeIsAbsolute'] = True
         if self.region:

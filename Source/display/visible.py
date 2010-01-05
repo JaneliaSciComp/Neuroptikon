@@ -248,8 +248,7 @@ class Visible(object):
             if shapeClassName == None:
                 visible.setShape(None)
             else:
-                shapes = neuroptikon.scriptLocals()['shapes']
-                shape = shapes[shapeClassName](**shapeAttrs)
+                shape = neuroptikon.shapeClass(shapeClassName)(**shapeAttrs)
                 visible.setShape(shape)
             
             colorElement = appearanceElement.find('Color')
@@ -533,6 +532,12 @@ class Visible(object):
         # texture       path          node or path
         
         defaultParams = self.client.defaultVisualizationParams()
+        if 'shape' in defaultParams:
+            # Create a default shape instance if a string or class is the default value.
+            if isinstance(defaultParams['shape'], str):
+                defaultParams['shape'] = neuroptikon.shapeClass(defaultParams['shape'])()
+            elif isinstance(defaultParams['shape'], type(self.__class__)):
+                defaultParams['shape'] = defaultParams['shape']()
         params = {}
         
         if isinstance(self.client, Stimulus):

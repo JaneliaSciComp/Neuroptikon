@@ -8,6 +8,7 @@ import wx, wx.lib.colourselect
 from pydispatch import dispatcher
 from inspection.inspector import Inspector
 from network.object_list import ObjectList
+import display.shape
 
 
 class AppearanceInspector(Inspector):
@@ -41,10 +42,9 @@ class AppearanceInspector(Inspector):
             
             # Add a pop-up for choosing the shape.
             self._shapeChoice = wx.Choice(self._window, wx.ID_ANY)
-            shapes = neuroptikon.scriptLocals()['shapes']
-            for shapeKey in sorted(shapes.keys()):
-                shapeClass = shapes[shapeKey]
-                self._shapeChoice.Append(shapeClass.name(), shapeClass)
+            shapeClasses = [(shapeClass.__name__, shapeClass) for shapeClass in display.shape.shapeClasses()]
+            for shapeName, shapeClass in sorted(shapeClasses):
+                self._shapeChoice.Append(shapeName, shapeClass)
             self._shapeChoice.Append(gettext('None'), None)
             self._multipleShapesId = wx.NOT_FOUND
             gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Shape:')), 0)

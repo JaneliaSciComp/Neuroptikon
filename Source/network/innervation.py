@@ -85,8 +85,7 @@ class Innervation(NeuroObject):
     
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
-        shapeClasses = neuroptikon.scriptLocals()['shapes']
-        params['shape'] = shapeClasses['Line']
+        params['shape'] = 'Line'
         params['color'] = (0.55, 0.35, 0.25)
         params['pathEndPoints'] = (self.neurite.neuron(), self.muscle)
         params['flowTo'] = True

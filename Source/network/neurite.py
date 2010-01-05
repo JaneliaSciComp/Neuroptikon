@@ -452,6 +452,5 @@ class Neurite(NeuroObject):
     
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
-        shapeClasses = neuroptikon.scriptLocals()['shapes']
-        params['shape'] = shapeClasses['Line']
+        params['shape'] = 'Line'
         return params

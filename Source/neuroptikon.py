@@ -119,6 +119,15 @@ def loadImage(imageFileName):
         image = None
     return image
 
+def shapeClass(shapeName):
+    import display.shape
+    
+    for shapeClass in display.shape.shapeClasses():
+        if shapeClass.__name__ == shapeName:
+            return shapeClass
+    
+    return None
+    
 library = None
 config = None
 

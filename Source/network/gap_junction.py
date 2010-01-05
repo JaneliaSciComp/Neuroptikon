@@ -104,8 +104,7 @@ class GapJunction(NeuroObject):
     
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
-        shapeClasses = neuroptikon.scriptLocals()['shapes']
-        params['shape'] = shapeClasses['Line']
+        params['shape'] = 'Line'
         params['color'] = (.65, 0.75, 0.4)
         params['pathEndPoints'] = tuple([neurite.neuron() for neurite in self.neurites()])
         params['flowTo'] = True

@@ -79,8 +79,7 @@ class Stimulus(NeuroObject):
     
     def defaultVisualizationParams(self):
         params = NeuroObject.defaultVisualizationParams(self)
-        shapeClasses = neuroptikon.scriptLocals()['shapes']
-        params['shape'] = shapeClasses['Cone']
+        params['shape'] = 'Cone'
         params['size'] = (.02, .02, .02) # so the label is in front (hacky...)
         params['color'] = (0.5, 0.5, 0.5)
         params['label'] = self.abbreviation or self.name
