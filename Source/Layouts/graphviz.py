@@ -86,9 +86,9 @@ class GraphvizLayout(Layout):
             graph = pydot.graph_from_dot_data(graphData)
         
         # Get the bounding box of the entire graph so we can center it in the display.
-        # The 'bb' attribute doesn't seem to be exposed by pygraphviz so we have to hack it out of the text dump.
+        # The 'bb' attribute doesn't seem to be exposed by pydot or pygraphviz so we have to hack it out of the text dump.
         import re
-        matches = re.search('bb="([0-9,]+)"', graphData)
+        matches = re.search('bb="([0-9,.]+)"', graphData)
         bbx1, bby1, bbx2, bby2 = matches.group(1).split(',')
         width, height = (float(bbx2) - float(bbx1), float(bby2) - float(bby1))
         if width > height:
