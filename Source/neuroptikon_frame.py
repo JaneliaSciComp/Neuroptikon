@@ -389,14 +389,19 @@ class NeuroptikonFrame( wx.Frame ):
     def onRunScript(self, event_):
         dlg = wx.FileDialog(None, 'Choose a script to run', './Scripts', '', '*.py', wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
+            scriptPath = dlg.GetPath()
+        else:
+            scriptPath = None
+        dlg.Destroy()
+        self.Update()   # Cosmetic tweak to make sure the file dialog gets fully erased before the script runs.
+        if scriptPath is not None:
             try:
-                self.runScript(dlg.GetPath())
+                self.runScript(scriptPath)
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                 frames = traceback.extract_tb(exceptionTraceback)[2:]
                 dialog = wx.MessageDialog(self, str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + '\n\nTraceback:\n' + ''.join(traceback.format_list(frames)), gettext('An error occurred while running the script:'), style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
-        dlg.Destroy()
         self.Show(True)
         
         # Turn off bulk loading in case the script forgot to.
@@ -775,10 +780,6 @@ class NeuroptikonFrame( wx.Frame ):
                         self._progressShouldContinue = False
             
             self._progressLastUpdate = datetime.datetime.now()
-            
-            # Allow events to be processed while the task is running.
-            wx.GetApp().Dispatch()
-            wx.GetApp().ProcessPendingEvents()
     
     
     def updateProgress(self, message = None, fractionComplete = None):
@@ -794,6 +795,9 @@ class NeuroptikonFrame( wx.Frame ):
                 self._progressMessage = message
             self._progressFractionComplete = fractionComplete
             self._updateProgress()
+        
+        # Allow events to be processed while the task is running.
+        wx.Yield()
         
         return self._progressShouldContinue
     
