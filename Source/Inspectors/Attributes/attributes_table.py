@@ -135,6 +135,7 @@ class AttributesTable(wx.grid.PyGridTableBase):
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                 dialog = wx.MessageDialog(self.gridRef().GetTopLevelParent(), str(exceptionValue) + ' (' + exceptionType.__name__ + ')', gettext('Could not set the value of the attribute:'), style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
+                dialog.Destroy()
     
     
     def CanSetValueAs(self, row, col, type):

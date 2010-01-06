@@ -2369,6 +2369,7 @@ class Display(wx.glcanvas.GLCanvas):
             if not savePath.endswith('.' + extension):
                 savePath += '.' + extension
             self.saveViewAsImage(savePath)
+        fileDialog.Destroy()
     
     
     def setDefaultFlowColor(self, color):
