@@ -19,6 +19,7 @@ try:
     # Add a filter so we don't have to see these warnings but will still see others.
     import warnings
     warnings.filterwarnings("ignore", ".*size too small for label.*")
+    warnings.filterwarnings("ignore", ".*Unhandled adjust option vpsc.*")
 except ImportError:
     pygraphviz = None
     try:
