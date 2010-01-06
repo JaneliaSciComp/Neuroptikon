@@ -162,7 +162,7 @@ def generate_dendogram(graph) :
     status_list = list()
     one_level(current_graph, status)
     new_mod = __modularity(status)
-    print >> sys.stderr, 'modularity found : ' + str(new_mod)
+    #print >> sys.stderr, 'modularity found : ' + str(new_mod)
     partition = renumber(status.node2com)
     status_list.append(partition)
     mod = new_mod
