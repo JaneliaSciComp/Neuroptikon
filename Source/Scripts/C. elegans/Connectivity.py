@@ -9,9 +9,7 @@ This script visualizes the connectivity of the C. elegans nervous system.
 
 display.setViewDimensions(3)
 display.setShowNeuronNames(True)
-display.setUseGhosts(True)
-display.setDefaultFlowColor((1.0, 1.0, 1.0))
-display.setDefaultFlowSpread(0.5)
+display.setLabelsFloatOnTop(True)   # in case the user switches to 2D
 
 # Load the base network.
 if not any(network.neurons()):
