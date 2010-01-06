@@ -19,18 +19,17 @@ if platform.system() == 'Darwin':
     import ctypes
     carbon = ctypes.CDLL('/System/Library/Carbon.framework/Carbon')
 
-
-class NeuroptikonFrame( wx.Frame ):
+class NeuroptikonFrame(wx.Frame):
     def __init__(self, network = None, wxId = wx.ID_ANY):
         if network is None:
             title = Network().name()
         else:
             title = network.name()
-        wx.Frame.__init__(self, None, wxId, title, size=(800,600), style=wx.DEFAULT_FRAME_STYLE|wx.FULL_REPAINT_ON_RESIZE)
+        wx.Frame.__init__(self, None, wxId, title, size = (800, 600), style = wx.DEFAULT_FRAME_STYLE | wx.FULL_REPAINT_ON_RESIZE)
         
         self.Bind(wx.EVT_ACTIVATE, self.onActivate)
         self.Bind(wx.EVT_UPDATE_UI, self.onUpdateUI)
-        self.Bind(wx.EVT_CLOSE, self.onCloseWindow)
+        self.Bind(wx.EVT_CLOSE, self.onClose)
         
         self.splitter = wx.SplitterWindow(self, wx.ID_ANY, style = wx.SP_LIVE_UPDATE)
         self.splitter.SetMinimumPaneSize(20)
@@ -44,7 +43,7 @@ class NeuroptikonFrame( wx.Frame ):
         dispatcher.connect(self.displayDidChange, dispatcher.Any, self.display)
         
         self._scriptLocals = self.scriptLocals()
-        self._console = wx.py.shell.Shell(self.splitter, wx.ID_ANY, locals = self._scriptLocals, introText=gettext('Welcome to Neuroptikon.'))
+        self._console = wx.py.shell.Shell(self.splitter, wx.ID_ANY, locals = self._scriptLocals, introText = gettext('Welcome to Neuroptikon.'))
         self._console.autoCompleteIncludeSingle = False
         self._console.autoCompleteIncludeDouble = False
         
@@ -402,6 +401,7 @@ class NeuroptikonFrame( wx.Frame ):
                 frames = traceback.extract_tb(exceptionTraceback)[2:]
                 dialog = wx.MessageDialog(self, str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + '\n\nTraceback:\n' + ''.join(traceback.format_list(frames)), gettext('An error occurred while running the script:'), style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
+                dialog.Destroy()
         self.Show(True)
         
         # Turn off bulk loading in case the script forgot to.
@@ -442,7 +442,7 @@ class NeuroptikonFrame( wx.Frame ):
     
     def onFind(self, event_):
         if self.finder is None:
-            self.finder = Finder(self, -1, gettext('Finder'), pos=(-1,-1))
+            self.finder = Finder(self, -1, gettext('Finder'), pos = (-1, -1))
         
         if self.finder.ShowModal() == wx.ID_OK:
             self.display.selectObjectsMatching(self.finder.predicate)
@@ -513,6 +513,10 @@ class NeuroptikonFrame( wx.Frame ):
     
     
     def onCloseWindow(self, event):
+        self.Close()
+    
+    
+    def onClose(self, event):
         doClose = True
         
         if self._modified:
@@ -545,15 +549,15 @@ class NeuroptikonFrame( wx.Frame ):
             event.Veto()
     
     
-    def indentXMLElement(self, element, level=0):
-        i = "\n" + level*"\t"
+    def indentXMLElement(self, element, level = 0):
+        i = "\n" + level * "\t"
         if len(element):
             if not element.text or not element.text.strip():
                 element.text = i + "\t"
             if not element.tail or not element.tail.strip():
                 element.tail = i
             for element in element:
-                self.indentXMLElement(element, level+1)
+                self.indentXMLElement(element, level + 1)
             if not element.tail or not element.tail.strip():
                 element.tail = i
         else:
@@ -670,6 +674,7 @@ class NeuroptikonFrame( wx.Frame ):
                 if not savePath.endswith('.xml'):
                     savePath += '.xml'
                 network.setSavePath(savePath)
+            dlg.Destroy()
         
         if network.savePath() is not None:
             try:
@@ -682,6 +687,7 @@ class NeuroptikonFrame( wx.Frame ):
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                 dialog = wx.MessageDialog(self, str(exceptionValue) + ' (' + exceptionType.__name__ + ')', gettext('The file could not be saved.'), style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
+                dialog.Destroy()
         
         return success
     
@@ -722,6 +728,8 @@ class NeuroptikonFrame( wx.Frame ):
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                 dialog = wx.MessageDialog(self, exceptionType.__name__ + ": " + str(exceptionValue), gettext('The file could not be saved.'), style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
+                dialog.Destroy()
+        fileDialog.Destroy()
     
     
     def setModified(self, modified):
@@ -811,5 +819,6 @@ class NeuroptikonFrame( wx.Frame ):
         
         if self._progressNestingLevel == 0 and self._progressDialog is not None:
             self._progressDialog.EndModal(wx.ID_CANCEL)
+            self._progressDialog.Destroy()
             self._progressDialog = None
     

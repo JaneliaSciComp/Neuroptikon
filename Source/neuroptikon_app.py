@@ -158,23 +158,23 @@ class NeuroptikonApp(wx.App):
         self.Bind(wx.EVT_MENU, self.onOpenNetwork, fileMenu.Append(wx.ID_OPEN, gettext('Open Network...\tCtrl-O'), gettext('Open a previously saved network')))
         closeItem = fileMenu.Append(wx.ID_CLOSE, gettext('Close Network\tCtrl-W'), gettext('Close the current network window'))
         if frame:
-            self.Bind(wx.EVT_MENU, frame.onCloseWindow, closeItem)
+            frame.Bind(wx.EVT_MENU, frame.onCloseWindow, closeItem)
         else:
             closeItem.Enable(False)
         saveItem = fileMenu.Append(wx.ID_SAVE, gettext('Save Network...\tCtrl-S'), gettext('Save the current network'))
         if frame:
-            self.Bind(wx.EVT_MENU, frame.onSaveNetwork, saveItem)
+            frame.Bind(wx.EVT_MENU, frame.onSaveNetwork, saveItem)
         else:
             saveItem.Enable(False)
         saveAsItem = fileMenu.Append(wx.ID_SAVEAS, gettext('Save As...\tCtrl-Shift-S'), gettext('Save to a new file'))
         if frame:
-            self.Bind(wx.EVT_MENU, frame.onSaveNetworkAs, saveAsItem)
+            frame.Bind(wx.EVT_MENU, frame.onSaveNetworkAs, saveAsItem)
         else:
             saveAsItem.Enable(False)
         fileMenu.AppendSeparator()
         runScriptItem = fileMenu.Append(wx.NewId(), gettext('Run Script...\tCtrl-R'), gettext('Run a console script file'))
         if frame:
-            self.Bind(wx.EVT_MENU, frame.onRunScript, runScriptItem)
+            frame.Bind(wx.EVT_MENU, frame.onRunScript, runScriptItem)
         else:
             runScriptItem.Enable(False)
         self.Bind(wx.EVT_MENU, self.onBrowseLibrary, fileMenu.Append(wx.NewId(), gettext('Browse the Library\tCtrl-Alt-L'), gettext('Open the Library window')))
@@ -253,6 +253,7 @@ class NeuroptikonApp(wx.App):
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                 dialog = wx.MessageDialog(self, str(exceptionValue) + ' (' + exceptionType.__name__ + ')', gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
                 dialog.ShowModal()
+                dialog.Destroy()
             os.chdir(prevDir)
         dlg.Destroy()
     
@@ -325,6 +326,7 @@ class NeuroptikonApp(wx.App):
         dlg = wx.FileDialog(None, gettext('Choose a saved network to open:'), '', '', '*.xml', wx.OPEN)
         if dlg.ShowModal() == wx.ID_OK:
             self.openNetwork(dlg.GetPath())
+        dlg.Destroy()
             
     
     def networks(self):
