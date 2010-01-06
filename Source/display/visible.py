@@ -218,7 +218,7 @@ class Visible(object):
                     if textElement != None:
                         visible.setLabel(textElement.text or '')
                     if colorElement != None:
-                        visible.setLabelColor((float(colorElement.get('r')), float(colorElement.get('g')), float(colorElement.get('b')), float(colorElement.get('a') or '1.0')))
+                        visible.setLabelColor((float(colorElement.get('r')), float(colorElement.get('g')), float(colorElement.get('b'))))
                     if positionElement != None:
                         visible.setLabelPosition((float(positionElement.get('x')), float(positionElement.get('y')), float(positionElement.get('z'))))
                 else:
