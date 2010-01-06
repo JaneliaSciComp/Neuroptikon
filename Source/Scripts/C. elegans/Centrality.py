@@ -38,9 +38,9 @@ def progressCallback(fraction_complete = None):
     return updateProgress('Calculating centrality...', fraction_complete)
 
 # Compute the centrality of each node in the graph. (uncomment one of the following)
-centralities = networkx.degree_centrality(simplifiedGraph)
+#centralities = networkx.degree_centrality(simplifiedGraph)
 #centralities = networkx.closeness_centrality(simplifiedGraph, weighted_edges = True, progress_callback = progressCallback)
-#centralities = networkx.betweenness_centrality(simplifiedGraph, weighted_edges = True, progress_callback = progressCallback)
+centralities = networkx.betweenness_centrality(simplifiedGraph, weighted_edges = True, progress_callback = progressCallback)
 #centralities = networkx.load_centrality(simplifiedGraph, weighted_edges = True, progress_callback = progressCallback)
 
 if any(centralities):
