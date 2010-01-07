@@ -26,7 +26,8 @@ app_scripts = ['neuroptikon.py']
 
 resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
 resources += ['display/flow_shader.vert', 'display/flow_shader.frag', 'display/cull_faces.osg']
-includes = ['community', 'wx', 'xlrd']
+includes = ['community']
+packages = ['wx', 'xlrd']
 excludes = ['Inspectors', 'Layouts', 'matplotlib', 'pygraphviz', 'scipy', 'Shapes']
 
 sys.path += ['lib/CrossPlatform', 'lib/' + platform.system()]
@@ -73,7 +74,8 @@ if sys.platform == 'darwin':
     
     excludes += ['aetools', 'StdSuites.AppleScript_Suite']
     
-    py2app_options['packages'] = includes
+    py2app_options['packages'] = packages
+    py2app_options['includes'] = includes
     py2app_options['excludes'] = excludes
     
     resources += ['../Artwork/Neuroptikon.icns']
@@ -114,7 +116,8 @@ elif sys.platform == 'win32':
         shutil.rmtree(dist_dir)
     py2exe_options['dist_dir'] = dist_dir
     
-    py2exe_options['packages'] = includes
+    py2app_options['packages'] = packages
+    py2app_options['includes'] = includes
     py2exe_options['excludes'] = excludes + ['numarray', 'pyxml', 'Tkinter', '_tkinter']
     
     # py2exe doesn't support 'resources' so we have to add each file individually.
