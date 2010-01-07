@@ -116,8 +116,8 @@ elif sys.platform == 'win32':
         shutil.rmtree(dist_dir)
     py2exe_options['dist_dir'] = dist_dir
     
-    py2app_options['packages'] = packages
-    py2app_options['includes'] = includes
+    py2exe_options['packages'] = packages
+    py2exe_options['includes'] = includes
     py2exe_options['excludes'] = excludes + ['numarray', 'pyxml', 'Tkinter', '_tkinter']
     
     # py2exe doesn't support 'resources' so we have to add each file individually.
