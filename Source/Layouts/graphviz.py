@@ -78,6 +78,7 @@ class GraphvizLayout(Layout):
             else:
                 graph.add_edge(pydot.Edge(str(pathStart.displayId), str(pathEnd.displayId), tooltip = str(edgeVisible.displayId)))
         
+        # TODO: do the graph layout on a separate thread
         if pygraphviz is not None:
             #print mainGraph.to_string()
             graph.layout(prog='fdp')
