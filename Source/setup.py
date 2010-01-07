@@ -26,7 +26,7 @@ app_scripts = ['neuroptikon.py']
 
 resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
 resources += ['display/flow_shader.vert', 'display/flow_shader.frag', 'display/cull_faces.osg']
-includes = ['wx', 'xlrd']
+includes = ['community', 'wx', 'xlrd']
 excludes = ['Inspectors', 'Layouts', 'matplotlib', 'pygraphviz', 'scipy', 'Shapes']
 
 sys.path += ['lib/CrossPlatform', 'lib/' + platform.system()]
