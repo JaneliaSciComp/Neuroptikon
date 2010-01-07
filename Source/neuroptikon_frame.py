@@ -818,7 +818,9 @@ class NeuroptikonFrame(wx.Frame):
         self._progressNestingLevel -= 1
         
         if self._progressNestingLevel == 0 and self._progressDialog is not None:
-            self._progressDialog.EndModal(wx.ID_CANCEL)
+            if platform.system() == 'Darwin':
+                # Workaround a wx bug: http://trac.wxwidgets.org/ticket/4795
+                self._progressDialog.EndModal(wx.ID_CANCEL)
             self._progressDialog.Destroy()
             self._progressDialog = None
     
