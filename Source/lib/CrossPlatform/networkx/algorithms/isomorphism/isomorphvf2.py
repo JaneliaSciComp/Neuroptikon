@@ -138,7 +138,7 @@ In general, this problem is NP-Complete.
 
 import sys
 
-__date__ = "$Date: 2009-08-25 23:54:18 -0400 (Tue, 25 Aug 2009) $"
+__date__ = "$Date: 2009-08-25 21:54:18 -0600 (Tue, 25 Aug 2009) $"
 
 #__doc__ += sources#.replace('\n', '\n'+indent)
 
