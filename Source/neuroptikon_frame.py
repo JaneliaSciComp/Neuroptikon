@@ -798,10 +798,10 @@ class NeuroptikonFrame(wx.Frame):
         """
         
         # Throttle GUI updates to avoid a performance hit.
+        if message is not None:
+            self._progressMessage = message
+        self._progressFractionComplete = fractionComplete
         if datetime.datetime.now() - self._progressLastUpdate > self._progressUpdateDelta:
-            if message is not None:
-                self._progressMessage = message
-            self._progressFractionComplete = fractionComplete
             self._updateProgress()
         
         # Allow events to be processed while the task is running.
