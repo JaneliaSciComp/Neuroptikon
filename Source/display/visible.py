@@ -1965,7 +1965,8 @@ class Visible(object):
         
         if self._pathStart == self._pathEnd:
             # Special case for paths with the same start and end point.  Create a loop via temporary mid-points so the path is visible (and not zero-length).
-            # Once mid-points become editable in the GUI the temporary mid-points should become permanent once modified by the user.
+            # Once mid-points become editable in the GUI then the temporary mid-points should become permanent once modified by the user.
+            # TODO: handle multiple self-connections.
             center = path[0]
             size = self._pathStart.worldSize()
             halfSize = (size[0] / 2.0, size[1] / 2.0, size[2] / 2.0)
@@ -1975,6 +1976,39 @@ class Visible(object):
             path += [(center[0] + halfSize[0] + pad1, center[1], center[2]), (center[0] + halfSize[0] + pad2, center[1], center[2]), (center[0] + halfSize[0] + pad2, center[1] + halfSize[1] + pad2, center[2]), (center[0], center[1] + halfSize[1] + pad2, center[2]), (center[0], center[1] + halfSize[1] + pad1, center[2]), center]
         else:
             path += [self._pathEnd.worldPosition()]
+        
+        # Check for parallel paths if there are no mid-points. 
+        if len(path) == 2:
+            parallelPaths = [self]
+            myEndPoints = set(self.pathEndPoints())
+            for otherPath in self._pathStart.connectedPaths:
+                if otherPath is not self and not any(otherPath.pathMidPoints()) and myEndPoints == set(otherPath.pathEndPoints()):
+                    parallelPaths += [otherPath]
+            if len(parallelPaths) > 1:
+                spacing = min(self._pathStart.worldSize() + self._pathEnd.worldSize()) / len(parallelPaths)
+                flip = id(self._pathStart) > id(self._pathEnd)
+                if flip:
+                    startPoint = self._pathStart.worldPosition()
+                    endPoint = self._pathEnd.worldPosition()
+                else:                    
+                    startPoint = self._pathEnd.worldPosition()
+                    endPoint = self._pathStart.worldPosition()
+                midPoint = ((startPoint[0] + endPoint[0]) / 2.0, (startPoint[1] + endPoint[1]) / 2.0, (startPoint[2] + endPoint[2]) / 2.0)
+                offsetVec = (endPoint[1] - startPoint[1], endPoint[0] - startPoint[0])
+                offsetMag = sqrt(offsetVec[0] ** 2 + offsetVec[1] ** 2)
+                unitOffsetVec = (offsetVec[0] / offsetMag, offsetVec[1] / offsetMag)
+                nearPoint = (midPoint[0] - unitOffsetVec[1] * spacing, midPoint[1] - unitOffsetVec[0] * spacing, 0.0)   # TODO: handle Z?
+                farPoint = (midPoint[0] + unitOffsetVec[1] * spacing, midPoint[1] + unitOffsetVec[0] * spacing, 0.0)   # TODO: handle Z?
+                spacingBase = (len(parallelPaths) - 1) / -2.0
+                pathIds = [id(parallelPath) for parallelPath in parallelPaths]
+                pathIds.sort()
+                pathIndex = pathIds.index(id(self))
+                nearMidPoint = (nearPoint[0] + unitOffsetVec[0] * spacing * (spacingBase + pathIndex), nearPoint[1] + unitOffsetVec[1] * spacing * (spacingBase + pathIndex), 0.0)
+                farMidPoint = (farPoint[0] + unitOffsetVec[0] * spacing * (spacingBase + pathIndex), farPoint[1] + unitOffsetVec[1] * spacing * (spacingBase + pathIndex), 0.0)
+                if flip:
+                    path = [path[0], nearMidPoint, farMidPoint, path[1]]
+                else:
+                    path = [path[0], farMidPoint, nearMidPoint, path[1]]
         
         if self._pathStart.shape() and self._pathStart.opacity() > 0.0:
             # Try to find the point where the path intersects the shape.
