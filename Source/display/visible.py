@@ -18,7 +18,7 @@ from library.texture import Texture
 
 from pydispatch import dispatcher
 import os.path, random, sys
-from math import atan2, sqrt
+from math import atan2, pi, sqrt
 try:
     import xml.etree.cElementTree as ElementTree
 except ImportError:
@@ -150,7 +150,7 @@ class Visible(object):
         if self.client is None:
             return gettext('anonymous proxy')
         else:
-            return gettext('proxy of %s') % (self.client.name or gettext('<unnamed %s>') % (self.client.__class__.displayName()))
+            return gettext('proxy of %s') % (self.client.name or self.client.defaultName() or gettext('<unnamed %s>') % (self.client.__class__.displayName()))
     
     
     @classmethod
@@ -1957,11 +1957,22 @@ class Visible(object):
         if self._animateFlow != animate:
             self._animateFlow = animate
             self._updateFlowAnimation()
-        
-        
+    
+    
+    def parallelPaths(self):
+        parallelPaths = []
+        myEndPoints = set(self.pathEndPoints())
+        for otherPath in self._pathStart.connectedPaths:
+            if otherPath is not self and not any(otherPath.pathMidPoints()) and myEndPoints == set(otherPath.pathEndPoints()):
+                parallelPaths += [otherPath]
+        return parallelPaths
+    
+    
     def _updatePath(self):
         path = list(self._pathMidPoints)
         path.insert(0, self._pathStart.worldPosition())
+        
+        parallelPaths = self.parallelPaths()
         
         if self._pathStart == self._pathEnd:
             # Special case for paths with the same start and end point.  Create a loop via temporary mid-points so the path is visible (and not zero-length).
@@ -1977,38 +1988,44 @@ class Visible(object):
         else:
             path += [self._pathEnd.worldPosition()]
         
-        # Check for parallel paths if there are no mid-points. 
-        if len(path) == 2:
-            parallelPaths = [self]
-            myEndPoints = set(self.pathEndPoints())
-            for otherPath in self._pathStart.connectedPaths:
-                if otherPath is not self and not any(otherPath.pathMidPoints()) and myEndPoints == set(otherPath.pathEndPoints()):
-                    parallelPaths += [otherPath]
-            if len(parallelPaths) > 1:
-                spacing = min(self._pathStart.worldSize() + self._pathEnd.worldSize()) / len(parallelPaths)
-                flip = id(self._pathStart) > id(self._pathEnd)
-                if flip:
-                    startPoint = self._pathStart.worldPosition()
-                    endPoint = self._pathEnd.worldPosition()
-                else:                    
-                    startPoint = self._pathEnd.worldPosition()
-                    endPoint = self._pathStart.worldPosition()
-                midPoint = ((startPoint[0] + endPoint[0]) / 2.0, (startPoint[1] + endPoint[1]) / 2.0, (startPoint[2] + endPoint[2]) / 2.0)
-                offsetVec = (endPoint[1] - startPoint[1], endPoint[0] - startPoint[0])
-                offsetMag = sqrt(offsetVec[0] ** 2 + offsetVec[1] ** 2)
-                unitOffsetVec = (offsetVec[0] / offsetMag, offsetVec[1] / offsetMag)
-                nearPoint = (midPoint[0] - unitOffsetVec[1] * spacing, midPoint[1] - unitOffsetVec[0] * spacing, 0.0)   # TODO: handle Z?
-                farPoint = (midPoint[0] + unitOffsetVec[1] * spacing, midPoint[1] + unitOffsetVec[0] * spacing, 0.0)   # TODO: handle Z?
-                spacingBase = (len(parallelPaths) - 1) / -2.0
-                pathIds = [id(parallelPath) for parallelPath in parallelPaths]
-                pathIds.sort()
-                pathIndex = pathIds.index(id(self))
-                nearMidPoint = (nearPoint[0] + unitOffsetVec[0] * spacing * (spacingBase + pathIndex), nearPoint[1] + unitOffsetVec[1] * spacing * (spacingBase + pathIndex), 0.0)
-                farMidPoint = (farPoint[0] + unitOffsetVec[0] * spacing * (spacingBase + pathIndex), farPoint[1] + unitOffsetVec[1] * spacing * (spacingBase + pathIndex), 0.0)
-                if flip:
-                    path = [path[0], nearMidPoint, farMidPoint, path[1]]
-                else:
-                    path = [path[0], farMidPoint, nearMidPoint, path[1]]
+        # Make sure parallel paths (with no mid-points) are not drawn right on top of each other.
+        if len(path) == 2 and len(parallelPaths) > 0:
+            # Since each parallel path renders itself we need to have a reliable order to the paths.  For now just sorting by each path's id(). 
+            pathIds = [id(parallelPath) for parallelPath in parallelPaths] + [id(self)]
+            pathIds.sort()
+            pathIndex = pathIds.index(id(self))
+            
+            # Calculate the path vector going from the end with the lowest id() to the highest.
+            flip = id(self._pathStart) > id(self._pathEnd)
+            if flip:
+                startVec = osg.Vec3d(*self._pathEnd.worldPosition())
+                endVec = osg.Vec3d(*self._pathStart.worldPosition())
+            else:                    
+                startVec = osg.Vec3d(*self._pathStart.worldPosition())
+                endVec = osg.Vec3d(*self._pathEnd.worldPosition())
+            pathVec = endVec - startVec
+            
+            # Get a normal to the path.
+            if pathVec.x() != 0.0 and pathVec.y() != 0.0:
+                otherVec = osg.Vec3d(0.0, 0.0, 1.0)
+            else:
+                otherVec = osg.Vec3d(1.0, 1.0, 0.0)
+            normal = pathVec ^ otherVec
+            normal.normalize()
+            
+            # Rotate the normal based on this path's order in the path list.
+            quat = osg.Quat(2.0 * pi / (len(parallelPaths) + 1) * pathIndex, pathVec)
+            spacing = min(self._pathStart.worldSize() + self._pathEnd.worldSize()) * 0.3
+            offsetVec = quat * (normal * spacing)
+            
+            # Add two points along the path so the lines will be parallel visually.
+            # TODO: This works fine in 3D but will start to have problems in 2D with more than three parallel edges.
+            nearPoint = startVec * 0.4 + endVec * 0.6 + offsetVec
+            farPoint = startVec * 0.6 + endVec * 0.4 + offsetVec
+            if flip:
+                path = [path[0], (nearPoint.x(), nearPoint.y(), nearPoint.z()), (farPoint.x(), farPoint.y(), farPoint.z()), path[1]]
+            else:
+                path = [path[0], (farPoint.x(), farPoint.y(), farPoint.z()), (nearPoint.x(), nearPoint.y(), nearPoint.z()), path[1]]
         
         if self._pathStart.shape() and self._pathStart.opacity() > 0.0:
             # Try to find the point where the path intersects the shape.
@@ -2131,6 +2148,9 @@ class Visible(object):
             
             if self._pathStart and self._pathEnd:
                 self._updatePath()
+                
+                for parallelPath in self.parallelPaths():
+                    parallelPath._updatePath()
             else:
                 self._updateTransform()
             
