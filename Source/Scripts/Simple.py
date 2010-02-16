@@ -22,6 +22,7 @@ neuron2.arborize(regionA, True, False)
 neuron2.arborize(regionB, True, False)
 
 neuron1.synapseOn(neuron2)
+neuron2.synapseOn(neuron1)
 
 neuron3 = network.createNeuron(name = '3', functions = [Neuron.Function.INTERNEURON])
 neuron3.gapJunctionWith(neuron1)
