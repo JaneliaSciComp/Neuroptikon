@@ -54,7 +54,7 @@ class Stimulus(NeuroObject):
         return stimulusElement
     
     
-    def _creationScriptCommand(self, scriptRefs):
+    def _creationScriptMethod(self, scriptRefs):
         return scriptRefs[self.target.networkId] + '.stimulate'
     
     
@@ -77,14 +77,18 @@ class Stimulus(NeuroObject):
         self.target.stimuli.remove(self)
     
     
-    def defaultVisualizationParams(self):
-        params = NeuroObject.defaultVisualizationParams(self)
+    @classmethod
+    def _defaultVisualizationParams(cls):
+        params = NeuroObject._defaultVisualizationParams()
         params['shape'] = 'Cone'
         params['size'] = (.02, .02, .02) # so the label is in front (hacky...)
         params['color'] = (0.5, 0.5, 0.5)
-        params['label'] = self.abbreviation or self.name
         params['weight'] = 5.0
         params['pathIsFixed'] = True
         return params
     
     
+    def defaultVisualizationParams(self):
+        params = self.__class__._defaultVisualizationParams()
+        params['label'] = self.abbreviation or self.name
+        return params

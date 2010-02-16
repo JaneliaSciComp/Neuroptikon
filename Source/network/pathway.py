@@ -44,7 +44,7 @@ class PathwayTerminus(object):
     
 class Pathway(NeuroObject):
     
-    def __init__(self, region1, region2, region1Projects = None, region1Activation = None, region2Projects = None, region2Activation = None, *args, **keywords):
+    def __init__(self, region1 , region2, region1Projects = None, region1Activation = None, region2Projects = None, region2Activation = None, *args, **keywords):
         """
         Pathways connect pairs of :class:`regions <Network.Region.Region>`.  They consist of bundles of :class:`neurites <Network.Neurite.Neurite>` which can be optionally specified.
         
@@ -138,7 +138,7 @@ class Pathway(NeuroObject):
         return any(self._neurites) or NeuroObject._needsScriptRef(self)
         
         
-    def _creationScriptCommand(self, scriptRefs):
+    def _creationScriptMethod(self, scriptRefs):
         return scriptRefs[self.region1.networkId] + '.projectToRegion'
     
     
@@ -221,10 +221,17 @@ class Pathway(NeuroObject):
         self.region2.pathways.remove(self)
     
     
-    def defaultVisualizationParams(self):
-        params = NeuroObject.defaultVisualizationParams(self)
+    @classmethod
+    def _defaultVisualizationParams(cls):
+        params = NeuroObject._defaultVisualizationParams()
         params['shape'] = 'Line'
         params['color'] = (0.0, 0.0, 0.0)
+        params['pathIsFixed'] = None
+        return params
+    
+    
+    def defaultVisualizationParams(self):
+        params = self.__class__._defaultVisualizationParams()
         params['pathEndPoints'] = (self.region1, self.region2)
         params['flowTo'] = self.region1Projects
         params['flowFrom'] = self.region2Projects

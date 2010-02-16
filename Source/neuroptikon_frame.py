@@ -154,6 +154,8 @@ class NeuroptikonFrame(wx.Frame):
             scriptFile.write(displayRef + ' = displayNetwork(network)\n')
         
         self.display._toScriptFile(scriptFile, networkScriptRefs, displayRef)
+        
+        return displayRef
     
     
     def loadBitmap(self, fileName):
@@ -327,6 +329,7 @@ class NeuroptikonFrame(wx.Frame):
         scriptLocals['network'] = self.display.network
         scriptLocals['display'] = self.display
         scriptLocals['updateProgress'] = self.updateProgress
+        scriptLocals['showMessage'] = self.showMessage
         if 'DEBUG' in os.environ:
             scriptLocals['profileScript'] = self._profileScript
         return scriptLocals
@@ -650,11 +653,18 @@ class NeuroptikonFrame(wx.Frame):
                             scriptFile.write(scriptRefs[display] + '.autoVisualize = False\n')
                     scriptFile.write('\n')
                 network._toScriptFile(scriptFile, scriptRefs)
+            else:
+                scriptFile.write('anyOrphans = False\n')
             
             if saveDisplays:
                 # Serialize the display(s)
                 for display in network.displays:
-                    display.GetTopLevelParent()._toScriptFile(scriptFile, scriptRefs)
+                    displayRef = display.GetTopLevelParent()._toScriptFile(scriptFile, scriptRefs)
+                    if not saveNetwork:
+                        scriptFile.write('\nfor visibles in ' + displayRef + '.visibles.itervalues():\n    for visible in visibles:\n        if visible.isOrphan():\n            anyOrphans = True\n')
+                
+                if not saveNetwork:
+                    scriptFile.write('\nif anyOrphans:\n    showMessage(\'Some objects from the original network could not be found.\', \'The orphaned objects have been highlighted in red.\', isError = True)\n\n')
             else:
                 scriptFile.write('\n# Reveal the default visualization\ndisplay.zoomToFit()\n')
         except:
@@ -824,3 +834,17 @@ class NeuroptikonFrame(wx.Frame):
             self._progressDialog.Destroy()
             self._progressDialog = None
     
+    
+    def showMessage(self, message, subMessage = None, isError = False):
+        """
+        Display a display-specific message to the user.
+        """
+        
+        self.Thaw()
+        if platform.system() == 'Windows':
+            dialog = wx.MessageDialog(None, 'Neuroptikon', (message + '\n\n' + subMessage if message else subMessage or ''), style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
+        else:
+            dialog = wx.MessageDialog(None, subMessage, message or '', style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
+        dialog.ShowModal()
+        dialog.Destroy()
+        self.Freeze()

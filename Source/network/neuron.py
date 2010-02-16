@@ -6,6 +6,11 @@
 import neuroptikon
 from neuro_object import NeuroObject
 from neurite import Neurite
+from arborization import Arborization
+from gap_junction import GapJunction
+from innervation import Innervation
+from stimulus import Stimulus
+from synapse import Synapse
 try:
     import xml.etree.cElementTree as ElementTree
 except ImportError:
@@ -91,6 +96,48 @@ class Neuron(NeuroObject):
         if self.region is not None:
             self.region.neurons.append(self)
     
+    
+    def defaultName(self):
+        # Try to build a name based on connections.
+        # TODO: should send/received be ignored, i.e. should the connector always be '- '?
+        connections = []
+        for connection in self.connections():
+            sends = receives = False
+            if isinstance(connection, Arborization):
+                otherName = connection.region.name
+                sends = connection.sendsOutput
+                receives = connection.receivesInput
+            elif isinstance(connection, GapJunction):
+                neurons = [neurite.neuron() for neurite in connection.neurites()]
+                neurons.remove(self)
+                otherName = neurons[0].name
+                sends = receives = True
+            elif isinstance(connection, Innervation):
+                otherName = connection.muscle.name
+                sends = True
+            elif isinstance(connection, Stimulus):
+                otherName = connection.name
+                receives = True
+            elif isinstance(connection, Synapse):
+                if connection.preSynapticNeurite.neuron() == self:
+                    # TODO: check if other neuron names are nameless
+                    otherName = ', '.join([neurite.neuron().name for neurite in connection.postSynapticNeurites])
+                    sends = True
+                else: 
+                    otherName = connection.preSynapticNeurite.neuron().name
+                    receives = True
+            if otherName is None:
+                return None
+            if sends and receives:
+                connector = '<->'
+            elif sends:
+                connector = '->'
+            elif receives:
+                connector = '<-'
+            else:
+                connector = '-'
+            connections += [connector + otherName]
+        return 'Neuron ' + ' & '.join(connections)
     
     @classmethod
     def _fromXMLElement(cls, network, xmlElement):
@@ -328,6 +375,8 @@ class Neuron(NeuroObject):
         if recurse:
             for neurite in self._neurites:
                 connections += neurite.connections()
+            while self in connections:
+                connections.remove(self)
         else:
             connections += self._neurites
         return connections
@@ -407,11 +456,17 @@ class Neuron(NeuroObject):
         return function in self._functions
     
     
-    def defaultVisualizationParams(self):
-        params = NeuroObject.defaultVisualizationParams(self)
+    @classmethod
+    def _defaultVisualizationParams(cls):
+        params = NeuroObject._defaultVisualizationParams()
         params['shape'] = 'Ball'
         params['size'] = (.01, .01, .01)
         params['sizeIsAbsolute'] = True
+        return params
+    
+    
+    def defaultVisualizationParams(self):
+        params = self.__class__._defaultVisualizationParams()
         if self.region:
             params['parent'] = self.region
         return params

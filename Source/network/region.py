@@ -205,9 +205,15 @@ class Region(NeuroObject):
             self.parentRegion.subRegions.remove(self)
     
     
-    def defaultVisualizationParams(self):
-        params = NeuroObject.defaultVisualizationParams(self)
+    @classmethod
+    def _defaultVisualizationParams(cls):
+        params = NeuroObject._defaultVisualizationParams()
         params['size'] = (0.1, 0.1, 0.1)
+        return params
+    
+    
+    def defaultVisualizationParams(self):
+        params = self.__class__._defaultVisualizationParams()
         if self.parentRegion:
             params['parent'] = self.parentRegion
         if any(self.subRegions) or any(self.neurons):

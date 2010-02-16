@@ -50,7 +50,9 @@ class Visible(object):
     def __init__(self, display, client):
         self.display = display
         self.displayId = display._generateUniqueId() # a unique identifier within the display
+        
         self.client = client
+        self._orphanClass = None # Object subclass if client used to be non-None but display-only script couldn't find the client
         
         self._glowColor = None
         self._glowNode = None
@@ -155,8 +157,13 @@ class Visible(object):
     
     @classmethod
     def _fromXMLElement(cls, xmlElement, display):
-        client = display.network.objectWithId(xmlElement.get('objectId'))
+        orphanClass = xmlElement.get('orphanClass', None)
+        if orphanClass:
+            client = None
+        else:
+            client = display.network.objectWithId(xmlElement.get('objectId'))
         visible = Visible(display, client)
+        visible._orphanClass = orphanClass
         visible.displayId = int(xmlElement.get('id'))
         visible._shapeGeode.setName(str(visible.displayId))
         if visible._textGeode:
@@ -374,7 +381,9 @@ class Visible(object):
     def _toXMLElement(self, parentElement):
         visibleElement = ElementTree.SubElement(parentElement, 'Visible')
         visibleElement.set('id', str(self.displayId))
-        if self.client is not None:
+        if self._orphanClass:
+            visibleElement.set('orphanClass', self._orphanClass)
+        elif self.client is not None:
             visibleElement.set('objectId', str(self.client.networkId))
         
         # Add a comment to the XML to make it easier to figure out the client of the visible.
@@ -508,6 +517,32 @@ class Visible(object):
         return visibleElement
     
     
+    def _scriptParamsToKeywordArgs(self, params, scriptRefs):
+        keywordArgs = []
+        for key, value in params.iteritems():
+            if key == 'pathEndPoints':
+                pathStart, pathEnd = value
+                if isinstance(pathStart, Object):
+                    startRef = scriptRefs[pathStart.networkId]
+                else:
+                    startRef = ('visible' + str(pathStart.displayId)) if not pathStart.client else scriptRefs[pathStart.client.networkId]
+                if isinstance(pathEnd, Object):
+                    endRef = scriptRefs[pathEnd.networkId]
+                else:
+                    endRef = ('visible' + str(pathEnd.displayId)) if not pathEnd.client else scriptRefs[pathEnd.client.networkId]
+                valueText = '(' + startRef + ', ' + endRef + ')'
+            elif isinstance(value, Object):
+                valueText = scriptRefs[value.networkId]
+            elif isinstance(value, Visible):
+                valueText = ('visible' + str(value.displayId)) if not value.client else scriptRefs[value.client.networkId]
+            elif isinstance(value, Texture):
+                valueText = 'library.texture(%s)' % (repr(value.identifier))
+            else:
+                valueText = repr(value)
+            keywordArgs += ['%s = %s' % (key, valueText)]
+        return ', '.join(keywordArgs)
+    
+        
     def _toScriptFile(self, scriptFile, scriptRefs, displayRef):
         # The stimulus visibles make this complicated because there are two visibles per stimulus object (a node and an path) and some attributes come from one visible and some from the other.
         # This is worked around by tweaking the value of self as the attributes are queried.  The attributes are grouped as follows to simplify the switching:
@@ -531,7 +566,7 @@ class Visible(object):
         # opacity       path          node or path
         # texture       path          node or path
         
-        defaultParams = self.client.defaultVisualizationParams()
+        defaultParams = self.client.defaultVisualizationParams() if self.client else Object._defaultVisualizationParams
         if 'shape' in defaultParams:
             # Create a default shape instance if a string or class is the default value.
             if isinstance(defaultParams['shape'], str):
@@ -562,8 +597,10 @@ class Visible(object):
                     params['arrangedAxis'] = self.arrangedAxis
                 if self.arrangedSpacing is not None:
                     params['arrangedSpacing'] = self.arrangedSpacing
-            if self.parent is not None and self.arrangedWeight != 1.0:
-                params['arrangedWeight'] = self.arrangedWeight
+            if self.parent is not None:
+                params['parent'] = self.parent.client or self.parent
+                if self.arrangedWeight != 1.0:
+                    params['arrangedWeight'] = self.arrangedWeight
         
         # Stimuli label and position are always taken from the node visible.
         if isinstance(self.client, Stimulus):
@@ -609,7 +646,9 @@ class Visible(object):
                     params['flowFromSpeed'] = self.flowFromSpeed()
                 if self.flowFromSpread() != None:
                     params['flowFromSpread'] = self.flowFromSpread()
-            if not isinstance(self.client, Stimulus):
+            if isinstance(self.client, Stimulus):
+                params['target'] = self._pathEnd.client or self._pathEnd
+            else:
                 params['pathEndPoints'] = (self._pathStart.client or self._pathStart, self._pathEnd.client or self._pathEnd)
                 if self._pathMidPoints != []:
                     params['pathMidPoints'] = self._pathMidPoints
@@ -619,11 +658,25 @@ class Visible(object):
         params['color'] = self.color()
         params['opacity'] = self.opacity()
         params['texture'] = self._staticTexture
-
+        
+        orphanDefaults = self.client.__class__._defaultVisualizationParams() if self.client else Object._defaultVisualizationParams
+        if 'shape' in orphanDefaults:
+            # Create a default shape instance if a string or class is the default value.
+            if isinstance(orphanDefaults['shape'], str):
+                orphanDefaults['shape'] = neuroptikon.shapeClass(orphanDefaults['shape'])()
+            elif isinstance(orphanDefaults['shape'], type(self.__class__)):
+                orphanDefaults['shape'] = orphanDefaults['shape']()
+        orphanParams = params.copy()
+        
         # Strip out values that are the same as the default.
         for key in params.keys():
             if key in defaultParams and params[key] == defaultParams[key]:
                 del params[key]
+        
+        # Get the default params that are different than a generic instance of the client's class.
+        for key in orphanParams.keys():
+            if key != 'target' and ((key in orphanDefaults and orphanParams[key] == orphanDefaults[key]) or (key in params and orphanParams[key] == params[key])):
+                del orphanParams[key]
         
         if self.client:
             scriptRef = scriptRefs[self.client.networkId]
@@ -631,9 +684,24 @@ class Visible(object):
             scriptRef = 'visible' + str(self.displayId)
         if self.client and not isinstance(self.client, Neurite) and self.display.autoVisualize:
             # Change the existing visualization of the object.
-            if '(' in scriptRef and len(params) > 1:
-                scriptFile.write('object = ' + scriptRef + '\n')
-                scriptRef = 'object'
+            if '(' in scriptRef:
+                # Create a local variable in the script for the object, e.g. "region1" instead of "network.createRegion(...)".
+                # Add an "or ..." clause to the creation command in case it returns None that calls display.visualizeObject() to create an "orphaned" object.
+                # Orphan class, label and path end points parameters will be passed to allow a reasonable approximation of the original visible to be created.  
+                newScriptRef = self.client._createScriptRef(scriptRefs)   # also updates scriptRefs
+                scriptFragment = '\n' + newScriptRef + ' = ' + scriptRef + ' or ' + displayRef + '.visualizeObject(orphanClass = ' + self.client.__class__.__name__
+                # If a label is not going to be set then set one for the orphan. 
+                if 'label' not in params:
+                    label = self._label
+                    if label is None and ((isinstance(self.client, Region) and self.display.showRegionNames()) or (isinstance(self.client, Neuron) and self.display.showNeuronNames())):
+                        label = self.client.abbreviation or self.client.name
+                    if label is not None:
+                        orphanParams['label'] = label
+                if any(orphanParams):
+                    scriptFragment += ', ' + self._scriptParamsToKeywordArgs(orphanParams, scriptRefs)
+                scriptFragment += ')\n'
+                scriptFile.write(scriptFragment)
+                scriptRef = newScriptRef
             if 'position' in params:
                 scriptFile.write('%s.setVisiblePosition(%s, (%s)' % (displayRef, scriptRef, ', '.join([str(dim) for dim in params['position']])))
                 if 'positionIsFixed' in params:
@@ -660,10 +728,7 @@ class Visible(object):
                 if params['shape'] == None:
                     scriptFile.write('%s.setVisibleShape(%s, None)\n' % (displayRef, scriptRef))
                 else:
-                    scriptFile.write('%s.setVisibleShape(%s, shapes[\'%s\'](' % (displayRef, scriptRef, self.shape().__class__.__name__))
-                    for attributeName, attributeValue in self._shape.persistentAttributes().iteritems():
-                        scriptFile.write(attributeName + ' = ' + repr(attributeValue) + ', ')
-                    scriptFile.write('))\n')
+                    scriptFile.write('%s.setVisibleShape(%s, shapes[\'%s\'](%s))\n' % (displayRef, scriptRef, self.shape().__class__.__name__, self._scriptParamsToKeywordArgs(self._shape.persistentAttributes(), scriptRefs)))
             if 'color' in params:
                 scriptFile.write('%s.setVisibleColor(%s, (%s))\n' % (displayRef, scriptRef, ', '.join([str(component) for component in params['color']])))
             if 'opacity' in params:
@@ -726,21 +791,12 @@ class Visible(object):
         else:
             # Manually visualize the object.
             if self.client:
-                scriptFile.write('%s.visualizeObject(%s' % (displayRef, scriptRef))
+                newScriptRef = self.client._createScriptRef(scriptRefs)   # also updates scriptRefs
+                scriptFile.write('\n%s = %s\n' % (newScriptRef, scriptRef))
+                scriptFile.write('%s.visualizeObject(%s, orphan = (%s is None)' % (displayRef, scriptRef, scriptRef))
             else:
                 scriptFile.write('%s = %s.visualizeObject(None' % (scriptRef, displayRef))
-            for key, value in params.iteritems():
-                if key == 'pathEndPoints':
-                    startRef = ('visible' + str(self._pathStart.displayId)) if not self._pathStart.client else scriptRefs[self._pathStart.client.networkId]
-                    endRef = ('visible' + str(self._pathEnd.displayId)) if not self._pathEnd.client else scriptRefs[self._pathEnd.client.networkId]
-                    valueText = '(' + startRef + ', ' + endRef + ')'
-                elif isinstance(value, str):
-                    valueText = '\'' + value.replace('\\', '\\\\').replace('\'', '\\\'') + '\''
-                elif isinstance(value, Texture):
-                    valueText = 'library.texture(\'%s\')' % (value.identifier.replace('\\', '\\\\').replace('\'', '\\\''))
-                else:
-                    valueText = str(value)
-                scriptFile.write(', %s = %s' % (key, valueText))
+            scriptFile.write(', ' + self._scriptParamsToKeywordArgs(params, scriptRefs))
             scriptFile.write(')\n')
                 
         
@@ -774,9 +830,6 @@ class Visible(object):
         
         if self._shape != shape:
             # Clean up any existing shape
-            glowColor = self._glowColor
-            if self._glowNode is not None:
-                self.setGlowColor(None)
             if self._shape:
                 self._shapeGeode.removeDrawable(self._shape.geometry())
                 
@@ -795,9 +848,6 @@ class Visible(object):
             
             for child in self.children:
                 dispatcher.send(('set', 'position'), child)
-            
-            # Recreate the glow shape if needed
-            self.setGlowColor(glowColor)
             
             dispatcher.send(('set', 'shape'), self)
             
@@ -1084,6 +1134,7 @@ class Visible(object):
                                        osg.Matrixd.translate(osg.Vec3d(self.position()[0], self.position()[1], self.position()[2])))
         else:
             self.sgNode.setMatrix(osg.Matrixd.identity())
+        self._updateGlow()
     
     
     def position(self):
@@ -1299,6 +1350,7 @@ class Visible(object):
             self._weight = weight
             if isinstance(self._shape, PathShape):
                 self._shape.setWeight(weight)
+                self._updateGlow()
             elif self.isPath():
                 self._updatePath()
             dispatcher.send(('set', 'weight'), self)
@@ -2015,7 +2067,7 @@ class Visible(object):
             
             # Rotate the normal based on this path's order in the path list.
             quat = osg.Quat(2.0 * pi / (len(parallelPaths) + 1) * pathIndex, pathVec)
-            spacing = min(self._pathStart.worldSize() + self._pathEnd.worldSize()) * 0.3
+            spacing = min([min(self._pathStart.worldSize()), min(self._pathEnd.worldSize())]) * 0.3
             offsetVec = quat * (normal * spacing)
             
             # Add two points along the path so the lines will be parallel visually.
@@ -2074,6 +2126,7 @@ class Visible(object):
             self.setPosition(position)
             self.setSize(size)
             self.setRotation(rotation)
+            self._updateGlow()
         else:
             minBound = (1e300, 1e300, 1e300)
             maxBound = (-1e300, -1e300, -1e300)
@@ -2227,57 +2280,81 @@ class Visible(object):
         return self._pathIsFixed
     
     
+    def _updateGlow(self):
+        # Remove any previous glow.
+        if self._glowNode is not None:
+            self.sgNode.removeChild(self._glowNode)
+            self._glowNode = None
+            self._glowNodeMaterial = None
+            self._glowShape = None
+        
+        # Add a new glow if we have a glow color and a non-empty shape.
+        w, h, d = self.size()
+        if (self._glowColor is not None or self.isOrphan()) and self._shape is not None and (not isinstance(self._shape, UnitShape) or w > 0.0 or h > 0.0 or d > 0.0):
+            # TODO: use a shader effect to produce the glow rather than additional geometry
+            glowGeode = osg.Geode()
+            glowGeode.setName(str(self.displayId))
+            glowColor = self._glowColor or (0.5, 0.0, 0.0 ,0.2)
+            if isinstance(self._shape, UnitShape):
+                # Add a scaled version of the shape using the same geometry.
+                self._glowNode = osg.MatrixTransform(osg.Matrixd.scale(osg.Vec3((w * 1.05) / w, (h * 1.05) / h, (d * 1.05) / d)))
+                glowGeode.addDrawable(self._shape.geometry())
+                stateSet1 = self._glowNode.getOrCreateStateSet()
+                stateSet1.clear()
+                self._glowNodeMaterial = osg.Material()
+                colorVec = osg.Vec4(*glowColor)
+                self._glowNodeMaterial.setDiffuse(osg.Material.FRONT_AND_BACK, colorVec)
+                self._glowNodeMaterial.setEmission(osg.Material.FRONT_AND_BACK, colorVec)
+                self._glowNodeMaterial.setAlpha(osg.Material.FRONT_AND_BACK, glowColor[3])
+                stateSet1.setAttribute(self._glowNodeMaterial)
+            elif isinstance(self._shape, PathShape):
+                # Add a copy of the shape with a larger width.
+                self._glowNode = osg.MatrixTransform(osg.Matrixd.identity())
+                self._glowShape = self._shape.__class__(**self._shape.persistentAttributes())
+                self._glowShape.setPoints(self._shape.points())
+                self._glowShape.setWeight(self._shape.weight() + 4.0)
+                glowGeode.addDrawable(self._glowShape.geometry())
+                stateSet1 = self._glowNode.getOrCreateStateSet()
+                stateSet1.clear()
+                self._glowShape.setColor(glowColor)
+            self._glowNode.addChild(glowGeode)
+            self.sgNode.addChild(self._glowNode)
+            if glowColor[3] == 1:
+                # Opaque glow.
+                stateSet1.setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
+                stateSet1.setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
+            else:
+                # Transparent glow.
+                stateSet1.setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+                # Place more deeply nested regions in lower render bins so they are rendered before the containing visible.
+                # Each nesting depth needs four render bins: two for the front and back face of the shape and one for the glow shape.
+                # This assumes a maximum nesting depth of 10.
+                sceneDepth = len(self.ancestors())
+                stateSet1.setRenderBinDetails(40 - sceneDepth * 2, 'DepthSortedBin')
+    
+    
     def setGlowColor(self, color):
         if color != self._glowColor:
-            if self._shape is not None:
-                # TODO: use a shader effect to produce the glow rather than additional geometry
-                w, h, d = self.size()
-                if color is None or (isinstance(self._shape, UnitShape) and (w == 0.0 or h == 0.0 or d == 0.0)):
-                    if self._glowNode is not None:
-                        self.sgNode.removeChild(self._glowNode)
-                        self._glowNode = None
-                        self._glowNodeMaterial = None
-                        self._glowShape = None
-                else:
-                    if self._glowNode is None:
-                        glowGeode = osg.Geode()
-                        glowGeode.setName(str(self.displayId))
-                        if isinstance(self._shape, UnitShape):
-                            self._glowNode = osg.MatrixTransform(osg.Matrixd.scale(osg.Vec3((w * 1.01) / w, (h * 1.01) / h, (d * 1.01) / d)))
-                            glowGeode.addDrawable(self._shape.geometry())
-                            stateSet1 = self._glowNode.getOrCreateStateSet()
-                            stateSet1.clear()
-                            self._glowNodeMaterial = osg.Material()
-                            stateSet1.setAttribute(self._glowNodeMaterial)
-                        elif isinstance(self._shape, PathShape):
-                            self._glowNode = osg.MatrixTransform(osg.Matrixd.identity())
-                            self._glowShape = self._shape.__class__(**self._shape.persistentAttributes())
-                            self._glowShape.setPoints(self._shape.points())
-                            self._glowShape.setWeight(self._shape.weight() + 4.0)
-                            glowGeode.addDrawable(self._glowShape.geometry())
-                            stateSet1 = self._glowNode.getOrCreateStateSet()
-                            stateSet1.clear()
-                        self._glowNode.addChild(glowGeode)
-                        self.sgNode.addChild(self._glowNode)
-                    else:
-                        stateSet1 = self._glowNode.getOrCreateStateSet()
-                    if isinstance(self._shape, UnitShape):
-                        colorVec = osg.Vec4(color[0], color[1], color[2], color[3])
-                        self._glowNodeMaterial.setDiffuse(osg.Material.FRONT_AND_BACK, colorVec)
-                        self._glowNodeMaterial.setEmission(osg.Material.FRONT_AND_BACK, colorVec)
-                        self._glowNodeMaterial.setAlpha(osg.Material.FRONT_AND_BACK, color[3])
-                    else:
-                        self._glowShape.setColor(color)
-                    if color[3] == 1:
-                        stateSet1.setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
-                        stateSet1.setMode(osg.GL_BLEND, osg.StateAttribute.OFF)
-                    else:
-                        stateSet1.setMode(osg.GL_BLEND, osg.StateAttribute.ON)
-                        # Place more deeply nested regions in lower render bins so they are rendered before the containing visible.
-                        # Each nesting depth needs four render bins: two for the front and back face of the shape and one for the glow shape.
-                        # This assumes a maximum nesting depth of 10.
-                        sceneDepth = len(self.ancestors())
-                        stateSet1.setRenderBinDetails(40 - sceneDepth * 2, 'DepthSortedBin')
-                
             self._glowColor = color
+            self._updateGlow()
             dispatcher.send(('set', 'glowColor'), self)
+    
+    
+    def setOrphanClass(self, orphanClass):
+        if orphanClass != self._orphanClass:
+            self._orphanClass = orphanClass
+            
+            self._updateGlow()
+            
+                # Add a scaled version of the shape using the same geometry.
+            dispatcher.send(('set', 'orphanClass'), self)
+            dispatcher.send(('set', 'isOrphan'), self)
+    
+    
+    def orphanClass(self):
+        return self._orphanClass
+    
+    
+    def isOrphan(self):
+        return self._orphanClass is not None
+    

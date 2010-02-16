@@ -19,7 +19,7 @@ class Line(PathShape):
     
     def __init__(self, *args, **keywordArgs):
         self._pathPoints = []
-        self._weight = 1.0
+        self._weight = 1.01 # so setting to 1.0 triggers a geometry update, bit of a hack
         
         PathShape.__init__(self, *args, **keywordArgs)
         

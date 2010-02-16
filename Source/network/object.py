@@ -97,7 +97,7 @@ class Object(object):
         return scriptRefs[self.networkId]
     
     
-    def _creationScriptCommand(self, scriptRefs):   # pylint: disable-msg=W0613
+    def _creationScriptMethod(self, scriptRefs):   # pylint: disable-msg=W0613
         return 'network.create' + self.__class__.__name__
     
     
@@ -117,16 +117,21 @@ class Object(object):
         return list(self._attributes)
     
     
+    def _creationScriptCommand(self, scriptRefs):
+        command = self._creationScriptMethod(scriptRefs) + '('
+        args, keywords = self._creationScriptParams(scriptRefs)
+        for keyword, value in keywords.iteritems():
+            args.append(keyword + ' = ' + value)
+        command += ', '.join(args) + ')'
+        return command
+    
+    
     def _toScriptFile(self, scriptFile, scriptRefs):
         if self._includeInScript():
             if self._needsScriptRef():
                 scriptFile.write(self._createScriptRef(scriptRefs) + ' = ')
             
-            scriptFile.write(self._creationScriptCommand(scriptRefs) + '(')
-            args, keywords = self._creationScriptParams(scriptRefs)
-            for keyword, value in keywords.iteritems():
-                args.append(keyword + ' = ' + value)
-            scriptFile.write(', '.join(args) + ')\n')
+            scriptFile.write(self._creationScriptCommand(scriptRefs) + '\n')
             
             for child in self._creationScriptChildren():
                 child._toScriptFile(scriptFile, scriptRefs)
@@ -292,9 +297,10 @@ class Object(object):
         dispatcher.send(('set', 'attributes'), self)
     
     
-    def defaultVisualizationParams(self):
+    @classmethod
+    def _defaultVisualizationParams(cls):
         """
-        Return a dictionary containing the default visualization parameters for this object.
+        Return a dictionary containing the default visualization parameters for this class of object.
         """
         
         # TODO: replace this with a display rule.
@@ -307,4 +313,12 @@ class Object(object):
         params['shape'] = 'Box'
        
         return params
+    
+    
+    def defaultVisualizationParams(self):
+        """
+        Return a dictionary containing the default visualization parameters for this object.
+        """
+        
+        return self.__class__._defaultVisualizationParams()
         

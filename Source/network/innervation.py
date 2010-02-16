@@ -52,7 +52,7 @@ class Innervation(NeuroObject):
         return innervationElement
     
     
-    def _creationScriptCommand(self, scriptRefs):
+    def _creationScriptMethod(self, scriptRefs):
         if self.neurite.networkId in scriptRefs:
             command = scriptRefs[self.neurite.networkId]
         else:
@@ -83,11 +83,18 @@ class Innervation(NeuroObject):
         self.muscle._innervations.remove(self)
     
     
-    def defaultVisualizationParams(self):
-        params = NeuroObject.defaultVisualizationParams(self)
+    @classmethod
+    def _defaultVisualizationParams(cls):
+        params = NeuroObject._defaultVisualizationParams()
         params['shape'] = 'Line'
         params['color'] = (0.55, 0.35, 0.25)
-        params['pathEndPoints'] = (self.neurite.neuron(), self.muscle)
+        params['pathIsFixed'] = None
         params['flowTo'] = True
+        return params
+    
+    
+    def defaultVisualizationParams(self):
+        params = self.__class__._defaultVisualizationParams()
+        params['pathEndPoints'] = (self.neurite.neuron(), self.muscle)
         return params
     

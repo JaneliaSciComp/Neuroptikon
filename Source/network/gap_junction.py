@@ -56,7 +56,7 @@ class GapJunction(NeuroObject):
         return gapJunctionElement
     
     
-    def _creationScriptCommand(self, scriptRefs):
+    def _creationScriptMethod(self, scriptRefs):
         neurite1 = list(self._neurites)[0]
         if neurite1.networkId not in scriptRefs:
             neurite1 = neurite1.root
@@ -102,12 +102,19 @@ class GapJunction(NeuroObject):
             neurite._gapJunctions.remove(self)
     
     
-    def defaultVisualizationParams(self):
-        params = NeuroObject.defaultVisualizationParams(self)
+    @classmethod
+    def _defaultVisualizationParams(cls):
+        params = NeuroObject._defaultVisualizationParams()
         params['shape'] = 'Line'
         params['color'] = (.65, 0.75, 0.4)
-        params['pathEndPoints'] = tuple([neurite.neuron() for neurite in self.neurites()])
+        params['pathIsFixed'] = None
         params['flowTo'] = True
         params['flowFrom'] = True
+        return params
+    
+    
+    def defaultVisualizationParams(self):
+        params = self.__class__._defaultVisualizationParams()
+        params['pathEndPoints'] = tuple([neurite.neuron() for neurite in self.neurites()])
         return params
     

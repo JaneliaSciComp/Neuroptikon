@@ -58,8 +58,9 @@ class Muscle(NeuroObject):
         return NeuroObject.dependentObjects(self) + self.innervations()
     
     
-    def defaultVisualizationParams(self):
-        params = NeuroObject.defaultVisualizationParams(self)
+    @classmethod
+    def _defaultVisualizationParams(cls):
+        params = NeuroObject._defaultVisualizationParams()
         params['shape'] = 'Capsule'
         params['size'] = (.05, .1, .02)
         params['color'] = (0.75, 0.5, 0.5)
@@ -68,5 +69,10 @@ class Muscle(NeuroObject):
         except:
             pass
         params['textureScale'] = 20.0
+        return params
+    
+    
+    def defaultVisualizationParams(self):
+        params = self.__class__._defaultVisualizationParams()
         params['label'] = self.abbreviation or self.name
         return params

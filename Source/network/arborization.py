@@ -72,7 +72,7 @@ class Arborization(NeuroObject):
         return arborizationElement
     
     
-    def _creationScriptCommand(self, scriptRefs):
+    def _creationScriptMethod(self, scriptRefs):
         if self.neurite.networkId in scriptRefs:
             command = scriptRefs[self.neurite.networkId]
         else:
@@ -117,10 +117,17 @@ class Arborization(NeuroObject):
         self.region.arborizations.remove(self)
     
     
-    def defaultVisualizationParams(self):
-        params = NeuroObject.defaultVisualizationParams(self)
+    @classmethod
+    def _defaultVisualizationParams(cls):
+        params = NeuroObject._defaultVisualizationParams()
         params['shape'] = 'Line'
         params['color'] = (0.0, 0.0, 0.0)
+        params['pathIsFixed'] = None
+        return params
+    
+    
+    def defaultVisualizationParams(self):
+        params = self.__class__._defaultVisualizationParams()
         params['pathEndPoints'] = (self.neurite.neuron(), self.region)
         params['flowTo'] = self.sendsOutput
         params['flowFrom'] = self.receivesInput

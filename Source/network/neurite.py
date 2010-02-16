@@ -128,7 +128,7 @@ class Neurite(NeuroObject):
         return scriptRefs[self.networkId]
     
     
-    def _creationScriptCommand(self, scriptRefs):
+    def _creationScriptMethod(self, scriptRefs):
         return scriptRefs[self.root.networkId] + '.extendNeurite'
     
     
@@ -450,7 +450,8 @@ class Neurite(NeuroObject):
             self._pathway.removeNeurite(self)
     
     
-    def defaultVisualizationParams(self):
-        params = NeuroObject.defaultVisualizationParams(self)
+    @classmethod
+    def _defaultVisualizationParams(cls):
+        params = NeuroObject._defaultVisualizationParams()
         params['shape'] = 'Line'
         return params

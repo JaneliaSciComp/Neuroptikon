@@ -75,7 +75,7 @@ class Synapse(NeuroObject):
         return synapseElement
     
     
-    def _creationScriptCommand(self, scriptRefs):
+    def _creationScriptMethod(self, scriptRefs):
         if self.preSynapticNeurite.networkId in scriptRefs:
             return scriptRefs[self.preSynapticNeurite.networkId]+ '.synapseOn'
         else:
@@ -115,12 +115,20 @@ class Synapse(NeuroObject):
             neurite._synapses.remove(self)
     
     
-    def defaultVisualizationParams(self):
-        params = NeuroObject.defaultVisualizationParams(self)
+    @classmethod
+    def _defaultVisualizationParams(cls):
+        params = NeuroObject._defaultVisualizationParams()
         params['shape'] = 'Line'
+        params['color'] = (0.0, 0.0, 1.0)
+        return params
+    
+    
+    def defaultVisualizationParams(self):
+        params = self.__class__._defaultVisualizationParams()
         params['color'] = (1.0, 0.0, 0.0) if self.activation == 'inhibitory' else (0.0, 0.0, 1.0)
         if any(self.postSynapticNeurites):
             params['pathEndPoints'] = (self.preSynapticNeurite.neuron(), self.postSynapticNeurites[0].neuron())
+            params['pathIsFixed'] = None
             params['flowTo'] = True
         return params
     

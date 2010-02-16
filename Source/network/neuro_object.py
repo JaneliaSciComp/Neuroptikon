@@ -79,7 +79,8 @@ class NeuroObject(Object):
         return stimulus
     
     
-    def defaultVisualizationParams(self):
-        params = Object.defaultVisualizationParams(self)
+    @classmethod
+    def _defaultVisualizationParams(cls):
+        params = Object._defaultVisualizationParams()
         params['color'] = (0.9, 0.85, 0.75)
         return params

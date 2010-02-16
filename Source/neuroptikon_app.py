@@ -14,6 +14,7 @@ except ImportError:
 from datetime import datetime, date, time
 
 from network.network import Network
+from network.object import Object
 from network.neuro_object import NeuroObject
 from network.neuron import Neuron
 from network.attribute import Attribute
@@ -217,7 +218,9 @@ class NeuroptikonApp(wx.App):
                         'NeuralFunction': Neuron.Function,    # DEPRECATED: remove soon...
                         'Attribute': Attribute, 
                         'layouts': layoutClasses, 
-                        'shapes': shapeClasses}
+                        'shapes': shapeClasses, 
+                        'Object': Object, 
+                        'showMessage': self.showMessage}
         for objectClass in NeuroObject.__subclasses__(): # pylint: disable-msg=E1101
             scriptLocals[objectClass.__name__] = objectClass
         if 'DEBUG' in os.environ:
@@ -327,7 +330,7 @@ class NeuroptikonApp(wx.App):
         if dlg.ShowModal() == wx.ID_OK:
             self.openNetwork(dlg.GetPath())
         dlg.Destroy()
-            
+    
     
     def networks(self):
         return list(self._networks)
@@ -396,4 +399,17 @@ class NeuroptikonApp(wx.App):
         info.SetDescription(gettext('Neural ciruit visualization'))
         info.SetCopyright(gettext('Copyright \xa9 2009 - Howard Hughes Medical Institute'))
         wx.AboutBox(info)
+    
+    
+    def showMessage(self, message, subMessage = None, isError = False):
+        """
+        Display a message to the user.
+        """
+        
+        if platform.system() == 'Windows':
+            dialog = wx.MessageDialog(None, 'Neuroptikon', (message + '\n\n' + subMessage if message else subMessage or ''), style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
+        else:
+            dialog = wx.MessageDialog(None, subMessage, message or '', style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
+        dialog.ShowModal()
+        dialog.Destroy()
     
