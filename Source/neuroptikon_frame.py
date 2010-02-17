@@ -143,7 +143,7 @@ class NeuroptikonFrame(wx.Frame):
         return frameElement
     
     
-    def _toScriptFile(self, scriptFile, networkScriptRefs):
+    def _toScriptFile(self, scriptFile, networkScriptRefs, savingNetwork):
         scriptFile.write('\n' + gettext('# Create a display') + '\n\n')
 
         displayNum = self.display.network.displays.index(self.display)
@@ -153,7 +153,7 @@ class NeuroptikonFrame(wx.Frame):
             displayRef = 'display' + str(displayNum)
             scriptFile.write(displayRef + ' = displayNetwork(network)\n')
         
-        self.display._toScriptFile(scriptFile, networkScriptRefs, displayRef)
+        self.display._toScriptFile(scriptFile, networkScriptRefs, displayRef, savingNetwork)
         
         return displayRef
     
@@ -659,7 +659,7 @@ class NeuroptikonFrame(wx.Frame):
             if saveDisplays:
                 # Serialize the display(s)
                 for display in network.displays:
-                    displayRef = display.GetTopLevelParent()._toScriptFile(scriptFile, scriptRefs)
+                    displayRef = display.GetTopLevelParent()._toScriptFile(scriptFile, scriptRefs, saveNetwork)
                     if not saveNetwork:
                         scriptFile.write('\nfor visibles in ' + displayRef + '.visibles.itervalues():\n    for visible in visibles:\n        if visible.isOrphan():\n            anyOrphans = True\n')
                 

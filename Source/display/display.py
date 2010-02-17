@@ -365,7 +365,7 @@ class Display(wx.glcanvas.GLCanvas):
         return displayElement
     
     
-    def _toScriptFile(self, scriptFile, scriptRefs, displayRef):
+    def _toScriptFile(self, scriptFile, scriptRefs, displayRef, savingNetwork):
         scriptFile.write(displayRef + '.setBackgroundColor((' + ', '.join([str(component) for component in self.backgroundColor]) + '))\n')
         scriptFile.write(displayRef + '.setDefaultFlowColor(' + str(self.defaultFlowColor) + ')\n')
         scriptFile.write(displayRef + '.setDefaultFlowSpacing(' + str(self.defaultFlowSpacing) + ')\n')
@@ -386,12 +386,12 @@ class Display(wx.glcanvas.GLCanvas):
         for visibles in self.visibles.itervalues():
             for visible in visibles:
                 if not visible.isPath() and visible.parent is None and not isinstance(visible.client, Stimulus):
-                    visible._toScriptFile(scriptFile, scriptRefs, displayRef)
+                    visible._toScriptFile(scriptFile, scriptRefs, displayRef, savingNetwork)
         # Next visualize all of the connections between the nodes.
         for visibles in self.visibles.itervalues():
             for visible in visibles:
                 if visible.isPath():
-                    visible._toScriptFile(scriptFile, scriptRefs, displayRef)
+                    visible._toScriptFile(scriptFile, scriptRefs, displayRef, savingNetwork)
         
         objectRefs = []
         visibleIds = []

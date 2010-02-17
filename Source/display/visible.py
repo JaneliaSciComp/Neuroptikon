@@ -543,7 +543,7 @@ class Visible(object):
         return ', '.join(keywordArgs)
     
         
-    def _toScriptFile(self, scriptFile, scriptRefs, displayRef):
+    def _toScriptFile(self, scriptFile, scriptRefs, displayRef, savingNetwork):
         # The stimulus visibles make this complicated because there are two visibles per stimulus object (a node and an path) and some attributes come from one visible and some from the other.
         # This is worked around by tweaking the value of self as the attributes are queried.  The attributes are grouped as follows to simplify the switching:
         # Attribute     Stimulus      Non-Stimulus
@@ -659,24 +659,26 @@ class Visible(object):
         params['opacity'] = self.opacity()
         params['texture'] = self._staticTexture
         
-        orphanDefaults = self.client.__class__._defaultVisualizationParams() if self.client else Object._defaultVisualizationParams
-        if 'shape' in orphanDefaults:
-            # Create a default shape instance if a string or class is the default value.
-            if isinstance(orphanDefaults['shape'], str):
-                orphanDefaults['shape'] = neuroptikon.shapeClass(orphanDefaults['shape'])()
-            elif isinstance(orphanDefaults['shape'], type(self.__class__)):
-                orphanDefaults['shape'] = orphanDefaults['shape']()
-        orphanParams = params.copy()
+        if not savingNetwork:
+            orphanDefaults = self.client.__class__._defaultVisualizationParams() if self.client else Object._defaultVisualizationParams
+            if 'shape' in orphanDefaults:
+                # Create a default shape instance if a string or class is the default value.
+                if isinstance(orphanDefaults['shape'], str):
+                    orphanDefaults['shape'] = neuroptikon.shapeClass(orphanDefaults['shape'])()
+                elif isinstance(orphanDefaults['shape'], type(self.__class__)):
+                    orphanDefaults['shape'] = orphanDefaults['shape']()
+            orphanParams = params.copy()
         
         # Strip out values that are the same as the default.
         for key in params.keys():
             if key in defaultParams and params[key] == defaultParams[key]:
                 del params[key]
         
-        # Get the default params that are different than a generic instance of the client's class.
-        for key in orphanParams.keys():
-            if key != 'target' and ((key in orphanDefaults and orphanParams[key] == orphanDefaults[key]) or (key in params and orphanParams[key] == params[key])):
-                del orphanParams[key]
+        if not savingNetwork:
+            # Get the default params that are different than a generic instance of the client's class.
+            for key in orphanParams.keys():
+                if key != 'target' and ((key in orphanDefaults and orphanParams[key] == orphanDefaults[key]) or (key in params and orphanParams[key] == params[key])):
+                    del orphanParams[key]
         
         if self.client:
             scriptRef = scriptRefs[self.client.networkId]
@@ -686,20 +688,22 @@ class Visible(object):
             # Change the existing visualization of the object.
             if '(' in scriptRef:
                 # Create a local variable in the script for the object, e.g. "region1" instead of "network.createRegion(...)".
-                # Add an "or ..." clause to the creation command in case it returns None that calls display.visualizeObject() to create an "orphaned" object.
-                # Orphan class, label and path end points parameters will be passed to allow a reasonable approximation of the original visible to be created.  
                 newScriptRef = self.client._createScriptRef(scriptRefs)   # also updates scriptRefs
-                scriptFragment = '\n' + newScriptRef + ' = ' + scriptRef + ' or ' + displayRef + '.visualizeObject(orphanClass = ' + self.client.__class__.__name__
-                # If a label is not going to be set then set one for the orphan. 
-                if 'label' not in params:
-                    label = self._label
-                    if label is None and ((isinstance(self.client, Region) and self.display.showRegionNames()) or (isinstance(self.client, Neuron) and self.display.showNeuronNames())):
-                        label = self.client.abbreviation or self.client.name
-                    if label is not None:
-                        orphanParams['label'] = label
-                if any(orphanParams):
-                    scriptFragment += ', ' + self._scriptParamsToKeywordArgs(orphanParams, scriptRefs)
-                scriptFragment += ')\n'
+                scriptFragment = '\n' + newScriptRef + ' = ' + scriptRef
+                if not savingNetwork:
+                    # Add an "or ..." clause to the creation command in case it returns None that calls display.visualizeObject() to create an "orphaned" object.
+                    # Orphan class, label and path end points parameters will be passed to allow a reasonable approximation of the original visible to be created.  
+                    scriptFragment += ' or ' + displayRef + '.visualizeObject(orphanClass = ' + self.client.__class__.__name__
+                    # If a label is not going to be set then set one for the orphan. 
+                    if 'label' not in params:
+                        label = self._label
+                        if label is None and ((isinstance(self.client, Region) and self.display.showRegionNames()) or (isinstance(self.client, Neuron) and self.display.showNeuronNames())):
+                            label = self.client.abbreviation or self.client.name
+                        if label is not None:
+                            orphanParams['label'] = label
+                    if any(orphanParams):
+                        scriptFragment += ', ' + self._scriptParamsToKeywordArgs(orphanParams, scriptRefs)
+                    scriptFragment += ')\n'
                 scriptFile.write(scriptFragment)
                 scriptRef = newScriptRef
             if 'position' in params:
