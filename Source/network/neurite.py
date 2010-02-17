@@ -106,7 +106,8 @@ class Neurite(NeuroObject):
         # If this neurite is just a dummy neurite used to support a simple arborization, innervation, gap junction or synapse then it does not need to be created.
         from neuron import Neuron
         connections = self.connections()
-        if not self._needsScriptRef() and isinstance(self.root, Neuron) and len(connections) == 1:
+        if not self._needsScriptRef() and isinstance(self.root, Neuron) and len(connections) == 2:
+            connections.remove(self.root)
             if isinstance(connections[0], (Arborization, Innervation, GapJunction, Synapse)):
                 return False
         
@@ -114,7 +115,7 @@ class Neurite(NeuroObject):
     
     
     def _needsScriptRef(self):
-        return self._pathway is not None or isinstance(self.root, Neurite) or len(self.connections()) > 1 or any(self._neurites) or NeuroObject._needsScriptRef(self)
+        return self._pathway is not None or isinstance(self.root, Neurite) or len(self.connections()) > 2 or any(self._neurites) or NeuroObject._needsScriptRef(self)
     
     
     def _createScriptRef(self, scriptRefs):
