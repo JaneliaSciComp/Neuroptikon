@@ -382,7 +382,7 @@ class Visible(object):
         visibleElement = ElementTree.SubElement(parentElement, 'Visible')
         visibleElement.set('id', str(self.displayId))
         if self._orphanClass:
-            visibleElement.set('orphanClass', self._orphanClass)
+            visibleElement.set('orphanClass', self._orphanClass.__name__)
         elif self.client is not None:
             visibleElement.set('objectId', str(self.client.networkId))
         
