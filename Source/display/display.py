@@ -2094,7 +2094,7 @@ class Display(wx.glcanvas.GLCanvas):
                     for connection in networkObject.connections():
                         if isinstance(connection, Stimulus):
                             _highlightObject(connection)
-                        if isinstance(networkObject, Neuron) or isinstance(networkObject, Neurite):
+                        elif isinstance(networkObject, Neuron) or isinstance(networkObject, Neurite):
                             connectionHighlighted = False
                             objectNeurites = set()
                             
@@ -2151,10 +2151,6 @@ class Display(wx.glcanvas.GLCanvas):
                                 _highlightObject(connection.neurite)
                         else:
                             _highlightObject(connection)
-                            # Highlight the other end(s) of the connection if appropriate.
-                            for endPoint in connection.connections():
-                                if endPoint != networkObject and (singleSelection or endPoint in selectedObjects):
-                                    _highlightObject(endPoint)
                     if singleSelection:
                         if isinstance(networkObject, Neuron):
                             for neurite in networkObject.neurites():
