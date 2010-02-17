@@ -589,6 +589,9 @@ class Display(wx.glcanvas.GLCanvas):
             self.visiblesCenter = ((self.visiblesMin[0] + self.visiblesMax[0]) / 2.0, (self.visiblesMin[1] + self.visiblesMax[1]) / 2.0, (self.visiblesMin[2] + self.visiblesMax[2]) / 2.0)
             self.visiblesSize = (self.visiblesMax[0] - self.visiblesMin[0], self.visiblesMax[1] - self.visiblesMin[1], self.visiblesMax[2] - self.visiblesMin[2])
             self._recomputeBounds = False
+            for visibles in self.visibles.itervalues():
+                for visible in visibles:
+                    visible._updateGlow()
             
         width, height = self.GetClientSize()
         xZoom = self.visiblesSize[self.orthoXPlane] / (width - 10.0)
