@@ -2300,8 +2300,12 @@ class Visible(object):
             glowGeode.setName(str(self.displayId))
             glowColor = self._glowColor or (0.5, 0.0, 0.0 ,0.2)
             if isinstance(self._shape, UnitShape):
-                # Add a scaled version of the shape using the same geometry.
-                self._glowNode = osg.MatrixTransform(osg.Matrixd.scale(osg.Vec3((w * 1.05) / w, (h * 1.05) / h, (d * 1.05) / d)))
+                # Add a scaled copy of the shape using the same geometry.
+                # The copy is scaled up so that it is a fixed amount larger in each dimension.
+                # The amount is 0.5% of the average width/height/depth of the whole display.
+                w, h, d = self.worldSize()
+                glowSize = (self.display.visiblesSize[0] + self.display.visiblesSize[1] + self.display.visiblesSize[2]) / 3.0 * 0.005
+                self._glowNode = osg.MatrixTransform(osg.Matrixd.scale(osg.Vec3((w + glowSize) / w, (h + glowSize) / h, (d + glowSize) / d)))
                 glowGeode.addDrawable(self._shape.geometry())
                 stateSet1 = self._glowNode.getOrCreateStateSet()
                 stateSet1.clear()
@@ -2316,7 +2320,7 @@ class Visible(object):
                 self._glowNode = osg.MatrixTransform(osg.Matrixd.identity())
                 self._glowShape = self._shape.__class__(**self._shape.persistentAttributes())
                 self._glowShape.setPoints(self._shape.points())
-                self._glowShape.setWeight(self._shape.weight() + 4.0)
+                self._glowShape.setWeight(self._shape.weight() + 8.0)
                 glowGeode.addDrawable(self._glowShape.geometry())
                 stateSet1 = self._glowNode.getOrCreateStateSet()
                 stateSet1.clear()
