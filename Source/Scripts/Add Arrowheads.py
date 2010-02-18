@@ -22,9 +22,10 @@ def addArrowhead(arrowPoint, otherPoint, length = 0.005, width = 0.0025):
 for visible in display.selection():
     if visible.isPath() and hasattr(visible.shape(), 'points'):
         pathPoints = visible.shape().points()
+        pathStart, pathEnd = visible.pathEndPoints()
         
-        if visible.flowTo():
+        if visible.flowTo() and pathEnd.opacity() > 0.0 and pathEnd.shape() != None:
             addArrowhead(pathPoints[-1], pathPoints[-2])
         
-        if visible.flowFrom():
+        if visible.flowFrom() and pathStart.opacity() > 0.0 and pathStart.shape() != None:
             addArrowhead(pathPoints[0], pathPoints[1])
