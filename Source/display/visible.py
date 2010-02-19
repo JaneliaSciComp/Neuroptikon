@@ -2300,9 +2300,8 @@ class Visible(object):
             glowGeode.setName(str(self.displayId))
             glowColor = self._glowColor or (0.5, 0.0, 0.0 ,0.2)
             if isinstance(self._shape, UnitShape):
-                # Add a scaled copy of the shape using the same geometry.
-                # The copy is scaled up so that it is a fixed amount larger in each dimension.
-                # The amount is 0.5% of the average width/height/depth of the whole display.
+                # Add a copy of the shape using the same geometry scaled up so that it is a fixed amount larger in each dimension.
+                # It would be nice to use a fixed screen pixel size but as a best guess we use 0.5% of the average width/height/depth of the whole display.
                 w, h, d = self.worldSize()
                 glowSize = (self.display.visiblesSize[0] + self.display.visiblesSize[1] + self.display.visiblesSize[2]) / 3.0 * 0.005
                 self._glowNode = osg.MatrixTransform(osg.Matrixd.scale(osg.Vec3((w + glowSize) / w, (h + glowSize) / h, (d + glowSize) / d)))
