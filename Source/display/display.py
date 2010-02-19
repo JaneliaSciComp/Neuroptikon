@@ -437,6 +437,7 @@ class Display(wx.glcanvas.GLCanvas):
                 self._previousTrackballMatrix = self.trackball.getMatrix()
                 self._previousTrackballCenter = self.trackball.getCenter()
                 self.viewer.setCameraManipulator(None)
+                self.computeVisiblesBound()
                 self._resetView()
             elif self.viewDimensions == 3:
                 self.setNavigationMode(self._previous3DNavMode)
@@ -589,6 +590,8 @@ class Display(wx.glcanvas.GLCanvas):
             self.visiblesCenter = ((self.visiblesMin[0] + self.visiblesMax[0]) / 2.0, (self.visiblesMin[1] + self.visiblesMax[1]) / 2.0, (self.visiblesMin[2] + self.visiblesMax[2]) / 2.0)
             self.visiblesSize = (self.visiblesMax[0] - self.visiblesMin[0], self.visiblesMax[1] - self.visiblesMin[1], self.visiblesMax[2] - self.visiblesMin[2])
             self._recomputeBounds = False
+            
+            # The size of the glow effect is based on the bounding box of the whole display.
             for visibles in self.visibles.itervalues():
                 for visible in visibles:
                     visible._updateGlow()
