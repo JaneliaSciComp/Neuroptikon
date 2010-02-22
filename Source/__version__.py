@@ -5,3 +5,4 @@
 
 version = "0.9.8"
 version_info = (0, 9, 8)
+JIRA_version_id = 10001

@@ -6,7 +6,7 @@
 import neuroptikon
 import wx
 import wx.py as py
-import os, platform, sys
+import os, platform, sys, urllib
 try:
     import xml.etree.cElementTree as ElementTree
 except ImportError:
@@ -28,6 +28,9 @@ from preferences import Preferences
 from inspection.inspector_frame import InspectorFrame
 import display
 import documentation
+from feedback_dialog import FeedbackDialog
+import __version__
+
 
 # The following import is required to allow quitting on Mac OS X when no windows are open.  If osgViewer is imported after the common menu bar is set then the quit event handler is overwritten.
 import osgViewer
@@ -190,6 +193,8 @@ class NeuroptikonApp(wx.App):
         self.Bind(wx.EVT_MENU, self.onShowDocumentation, helpMenu.Append(self._dataMgmtDocSetId, gettext('Data Management'), gettext('Show the documentation on managing Neuroptikon data')))
         self.Bind(wx.EVT_MENU, self.onShowDocumentation, helpMenu.Append(self._scriptingDocSetId, gettext('Scripting Interface'), gettext('Show the documentation on scripting Neuroptikon')))
         self.Bind(wx.EVT_MENU, self.onShowDocumentation, helpMenu.Append(self._uiDocSetId, gettext('User Interface'), gettext('Show the documentation on interacting with Neuroptikon')))
+        helpMenu.AppendSeparator()
+        self.Bind(wx.EVT_MENU, self.onSendFeedback, helpMenu.Append(wx.NewId(), gettext('Report Bug or Enhancement'), gettext('Report a bug or request a new feature')))
         if platform.system() != 'Darwin':
             helpMenu.AppendSeparator()
         self.Bind(wx.EVT_MENU, self.onAboutNeuroptikon, helpMenu.Append(wx.ID_ABOUT, gettext('About Neuroptikon'), gettext('Information about this program')))
@@ -389,10 +394,39 @@ class NeuroptikonApp(wx.App):
             page = 'UserInterface/index.html'
         
         documentation.showPage(page)
+    
+    
+    def onSendFeedback(self, event_):
+        dlg = FeedbackDialog()
+        if dlg.ShowModal() == wx.ID_OK:
+            queryDict = {'pid': 12345, 'summary': dlg.summary(), 'description': dlg.description(), 'customfield_10101': dlg.contactEmail()}  # TODO: use the real project and 'contact email' IDs
+            if dlg.isBugReport():
+                queryDict['issuetype'] = 1
+            elif dlg.isFeatureRequest():
+                queryDict['issuetype'] = 2
+            # task = 3, improvement = 4
+            queryDict['versions'] = __version__.JIRA_version_id
+            url = 'http://feedback.neuroptikon.org/secure/CreateIssueDetails!init.jspa?' + urllib.urlencode(queryDict)
+            socket = None
+            try:
+                socket = urllib.urlopen(url)
+                response = socket.read()
+                dlg2 = wx.MessageDialog(None, response, gettext('The issue was created successfully.'), style = wx.OK)
+                dlg2.ShowModal()
+                dlg2.Destroy()
+            except:
+                (exceptionType_, exceptionValue, exceptionTraceback_) = sys.exc_info()
+                dlg2 = wx.MessageDialog(None, str(exceptionValue), gettext('The issue could not be created.'), style = wx.OK)
+                dlg2.ShowModal()
+                dlg2.Destroy()
+            finally:
+                if socket:
+                    socket.close()
             
+        dlg.Destroy()
+        
     
     def onAboutNeuroptikon(self, event_):
-        import __version__
         info = wx.AboutDialogInfo()
         info.SetName(gettext('Neuroptikon'))
         info.SetVersion(__version__.version)
