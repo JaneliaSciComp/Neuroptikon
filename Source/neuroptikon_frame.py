@@ -402,9 +402,7 @@ class NeuroptikonFrame(wx.Frame):
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                 frames = traceback.extract_tb(exceptionTraceback)[2:]
-                dialog = wx.MessageDialog(self, str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + '\n\nTraceback:\n' + ''.join(traceback.format_list(frames)), gettext('An error occurred while running the script:'), style = wx.ICON_ERROR | wx.OK)
-                dialog.ShowModal()
-                dialog.Destroy()
+                dialog = wx.MessageBox(str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + '\n\nTraceback:\n' + ''.join(traceback.format_list(frames)), gettext('An error occurred while running the script:'), parent = self, style = wx.ICON_ERROR | wx.OK)
         self.Show(True)
         
         # Turn off bulk loading in case the script forgot to.
@@ -529,9 +527,7 @@ class NeuroptikonFrame(wx.Frame):
             else:
                 message = gettext('Your changes will be lost if you don\'t save them.')
                 caption = gettext('Do you want to save the changes you made to "%s"?') % (self.display.network.name())
-            dialog = wx.MessageDialog(self, message, caption, style = wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL)
-            result = dialog.ShowModal()
-            dialog.Destroy()
+            result = wx.MessageBox( message, caption, parent = self, style = wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL)
             if result == wx.ID_YES:
                 doClose = self.onSaveNetwork()
             elif result == wx.ID_CANCEL:
@@ -694,10 +690,8 @@ class NeuroptikonFrame(wx.Frame):
                     display.GetTopLevelParent().setModified(False)
                 success = True
             except:
-                (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-                dialog = wx.MessageDialog(self, str(exceptionValue) + ' (' + exceptionType.__name__ + ')', gettext('The file could not be saved.'), style = wx.ICON_ERROR | wx.OK)
-                dialog.ShowModal()
-                dialog.Destroy()
+                (exceptionType, exceptionValue, exceptionTraceback_) = sys.exc_info()
+                wx.MessageBox(str(exceptionValue) + ' (' + exceptionType.__name__ + ')', gettext('The file could not be saved.'), parent = self, style = wx.ICON_ERROR | wx.OK)
         
         return success
     
@@ -735,10 +729,8 @@ class NeuroptikonFrame(wx.Frame):
                 else:
                     self.saveNetworkAndDisplaysAsScript(savePath, saveNetwork, saveDisplays)
             except:
-                (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-                dialog = wx.MessageDialog(self, exceptionType.__name__ + ": " + str(exceptionValue), gettext('The file could not be saved.'), style = wx.ICON_ERROR | wx.OK)
-                dialog.ShowModal()
-                dialog.Destroy()
+                (exceptionType, exceptionValue, exceptionTraceback_) = sys.exc_info()
+                wx.MessageBox(exceptionType.__name__ + ": " + str(exceptionValue), gettext('The file could not be saved.'), parent = self, style = wx.ICON_ERROR | wx.OK)
         fileDialog.Destroy()
     
     
@@ -842,9 +834,7 @@ class NeuroptikonFrame(wx.Frame):
         
         self.Thaw()
         if platform.system() == 'Windows':
-            dialog = wx.MessageDialog(None, 'Neuroptikon', (message + '\n\n' + subMessage if message else subMessage or ''), style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
+            wx.MessageBox('Neuroptikon', (message + '\n\n' + subMessage if message else subMessage or ''), style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
         else:
-            dialog = wx.MessageDialog(None, subMessage, message or '', style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
-        dialog.ShowModal()
-        dialog.Destroy()
+            wx.MessageBox(subMessage, message or '', style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
         self.Freeze()

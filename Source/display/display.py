@@ -2432,9 +2432,7 @@ class Display(wx.glcanvas.GLCanvas):
             self.lastUsedLayout = layout
         except:
             (exceptionType, exceptionValue) = sys.exc_info()[0:2]
-            dialog = wx.MessageDialog(self, str(exceptionValue) + ' (' + exceptionType.__name__ + ')', gettext('An error occurred while performing the layout:'), style = wx.ICON_ERROR | wx.OK)
-            dialog.ShowModal()
-            dialog.Destroy()
+            wx.MessageBox(str(exceptionValue) + ' (' + exceptionType.__name__ + ')', gettext('An error occurred while performing the layout:'), parent = self, style = wx.ICON_ERROR | wx.OK)
         finally:
             self._suppressRefresh = refreshWasSuppressed
             if self.viewDimensions == 2:

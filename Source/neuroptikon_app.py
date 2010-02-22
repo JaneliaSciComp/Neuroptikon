@@ -259,9 +259,7 @@ class NeuroptikonApp(wx.App):
                 execfile(dlg.GetPath(), self.scriptLocals())
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
-                dialog = wx.MessageDialog(self, str(exceptionValue) + ' (' + exceptionType.__name__ + ')', gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
-                dialog.ShowModal()
-                dialog.Destroy()
+                wx.MessageBox(str(exceptionValue) + ' (' + exceptionType.__name__ + ')', gettext('An error occurred at line %d of the script:') % exceptionTraceback.tb_next.tb_lineno, style = wx.ICON_ERROR | wx.OK)
             os.chdir(prevDir)
         dlg.Destroy()
     
@@ -411,14 +409,10 @@ class NeuroptikonApp(wx.App):
             try:
                 socket = urllib.urlopen(url)
                 response = socket.read()
-                dlg2 = wx.MessageDialog(None, response, gettext('The issue was created successfully.'), style = wx.OK)
-                dlg2.ShowModal()
-                dlg2.Destroy()
+                wx.MessageBox(response, gettext('The issue was created successfully.'))
             except:
                 (exceptionType_, exceptionValue, exceptionTraceback_) = sys.exc_info()
-                dlg2 = wx.MessageDialog(None, str(exceptionValue), gettext('The issue could not be created.'), style = wx.OK)
-                dlg2.ShowModal()
-                dlg2.Destroy()
+                wx.MessageBox(str(exceptionValue), gettext('The issue could not be created.'))
             finally:
                 if socket:
                     socket.close()
@@ -441,9 +435,7 @@ class NeuroptikonApp(wx.App):
         """
         
         if platform.system() == 'Windows':
-            dialog = wx.MessageDialog(None, 'Neuroptikon', (message + '\n\n' + subMessage if message else subMessage or ''), style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
+            wx.MessageBox('Neuroptikon', (message + '\n\n' + subMessage if message else subMessage or ''), style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
         else:
-            dialog = wx.MessageDialog(None, subMessage, message or '', style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
-        dialog.ShowModal()
-        dialog.Destroy()
+            wx.MessageBox(subMessage, message or '', style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
     
