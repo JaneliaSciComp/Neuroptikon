@@ -397,25 +397,30 @@ class NeuroptikonApp(wx.App):
     def onSendFeedback(self, event_):
         dlg = FeedbackDialog()
         if dlg.ShowModal() == wx.ID_OK:
-            queryDict = {'pid': 12345, 'summary': dlg.summary(), 'description': dlg.description(), 'customfield_10101': dlg.contactEmail()}  # TODO: use the real project and 'contact email' IDs
+            queryDict = {'pid': 10000, 'summary': dlg.summary(), 'description': dlg.description(), 'customfield_10000': dlg.contactEmail()}  # TODO: use the real project and 'contact email' IDs
+            if platform.system() == 'Darwin':
+                environment = 'OS: Mac OS X ' + platform.mac_ver()[0] + '\n'
+            elif platform.system() == 'Windows':
+                release, version, csd, ptype = platform.win32_ver()
+                environment = 'OS: Windows ' + release + '  ' + version + ' ' + csd + ' ' + ptype + '\n'
+            else:
+                environment = 'OS: ' + platform.system() + ' ' + platform.version() + '\n'
+            environment += 'Python version: ' + platform.python_version() + '\n'
+            queryDict['environment'] = environment
             if dlg.isBugReport():
                 queryDict['issuetype'] = 1
             elif dlg.isFeatureRequest():
                 queryDict['issuetype'] = 2
             # task = 3, improvement = 4
             queryDict['versions'] = __version__.JIRA_version_id
-            url = 'http://feedback.neuroptikon.org/secure/CreateIssueDetails!init.jspa?' + urllib.urlencode(queryDict)
-            socket = None
-            try:
-                socket = urllib.urlopen(url)
-                response = socket.read()
-                wx.MessageBox(response, gettext('The issue was created successfully.'))
-            except:
-                (exceptionType_, exceptionValue, exceptionTraceback_) = sys.exc_info()
-                wx.MessageBox(str(exceptionValue), gettext('The issue could not be created.'))
-            finally:
-                if socket:
-                    socket.close()
+            url = 'http://www.neuroptikon.org/issues/secure/CreateIssueDetails.jspa?' + urllib.urlencode(queryDict)
+            if not wx.LaunchDefaultBrowser(url):
+                message = gettext('The issue could not be created')
+                resolution = gettext('Please visit http://www.neuroptikon.org/issues/ to send your feedback.')
+                if platform.system() == 'Darwin':
+                    wx.MessageBox(resolution, message)
+                else:
+                    wx.MessageBox(gettext('Send Feedback'), message + '\n\n' + resolution)
             
         dlg.Destroy()
         
@@ -424,8 +429,8 @@ class NeuroptikonApp(wx.App):
         info = wx.AboutDialogInfo()
         info.SetName(gettext('Neuroptikon'))
         info.SetVersion(__version__.version)
-        info.SetDescription(gettext('Neural ciruit visualization'))
-        info.SetCopyright(gettext('Copyright \xa9 2009 - Howard Hughes Medical Institute'))
+        info.SetDescription(gettext('Developed at the \nJanelia Farm Research Campus by:\n\nFrank Midgley\nVivek Jayaraman\nMitya Chklovskii\nDon Olbris'))
+        info.SetCopyright(gettext('Copyright \xa9 2010 - Howard Hughes Medical Institute'))
         wx.AboutBox(info)
     
     
