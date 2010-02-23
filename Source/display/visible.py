@@ -2294,7 +2294,7 @@ class Visible(object):
         
         # Add a new glow if we have a glow color and a non-empty shape.
         w, h, d = self.size()
-        if (self._glowColor is not None or self.isOrphan()) and self._shape is not None and (not isinstance(self._shape, UnitShape) or w > 0.0 or h > 0.0 or d > 0.0):
+        if (self._glowColor is not None or self.isOrphan()) and self._shape is not None and (not isinstance(self._shape, UnitShape) and w > 0.0 and h > 0.0 and d > 0.0):
             # TODO: use a shader effect to produce the glow rather than additional geometry
             glowGeode = osg.Geode()
             glowGeode.setName(str(self.displayId))
