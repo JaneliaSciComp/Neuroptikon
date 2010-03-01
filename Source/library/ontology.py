@@ -8,7 +8,7 @@ import wx
 from library_item import LibraryItem
 from ontology_term import OntologyTerm
 from ontology_frame import OntologyFrame
-import obitools.obo.parser as obo
+import gene_ontology.obo as obo
 
 
 # Term ID mapping from previous 'flybrain' ontology to new 'Drosophila adult' ontology.
@@ -88,12 +88,14 @@ class Ontology(LibraryItem, dict):
     
     def importOBO(self, filePath):
         unresolvedRefs = []
-        for entry in obo.OBOEntryIterator(open(filePath)):
-            if entry.isHeader:
-                if 'name' in entry and len(entry['name']) > 0 and len(entry['name'][0].value) > 0:
-                    self.name = entry['name'][0].value
-            elif entry.stanzaName == 'Term':
-                term = OntologyTerm(self, oboStanza = entry)
+        parser = obo.Parser(open(filePath))
+        if 'name' in parser.headers:
+            name = parser.headers['name']
+            if any(name):
+                self.name = name[0]
+        for stanza in parser: 
+            if stanza.name == 'Term':
+                term = OntologyTerm(self, oboStanza = stanza)
                 self[term.identifier] = term
                 
                 if term.partOf is None:

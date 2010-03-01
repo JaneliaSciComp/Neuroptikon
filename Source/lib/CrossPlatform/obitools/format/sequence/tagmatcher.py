@@ -1,5 +1,0 @@
-from obitools.tagmatcher.parser import tagMatcherParser
-from obitools.tagmatcher.parser import TagMatcherIterator
-from obitools.tagmatcher.parser import formatTagMatcher
-
-tagMatcherIterator=TagMatcherIterator
