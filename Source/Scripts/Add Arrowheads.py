@@ -4,19 +4,35 @@
 #  http://license.janelia.org/license/jfrc_copyright_1_1.html
 
 """
-This script adds arrowheads to the selected paths.
+This script adds arrowheads to the selected paths.  Currently it is only intended for producing printed figures.
 
-You may need to change the length and width parameters depending on the scale of your visualization.  All objects must be laid out in the same Z plane.  The arrowheads are not connected to the paths in any way so they will not move if the paths are moved.
+You may need to change the length and width parameters depending on the scale of your visualization.
+The arrowheads are not connected to the paths in any way so they will not move if the paths are moved.
 """
 
-from math import atan2, cos, pi, sin
-
+from math import atan2, sqrt
+import osg
 
 def addArrowhead(arrowPoint, otherPoint, length = 0.005, width = 0.0025):
-    angle = atan2(otherPoint[1] - arrowPoint[1], otherPoint[0] - arrowPoint[0])
-    # Objects are positioned at their center point so pull the arrowhead back by half its length so it's not sticking into the pointed at object.
-    position = (arrowPoint[0] + cos(angle) * length / 2.0, arrowPoint[1] + sin(angle) * length / 2.0, arrowPoint[2])
-    display.visualizeObject(None, shape = shapes['Cone'], color = visible.color(), position = position, size = (width, length, width), rotation = (0, 0, 1, angle + pi / 2.0))
+    dx = arrowPoint[0] - otherPoint[0]
+    dy = arrowPoint[1] - otherPoint[1]
+    dz = arrowPoint[2] - otherPoint[2]
+    
+    # Determine the position of the midpoint of the arrowhead.
+    mag = sqrt(dx**2.0 + dy**2.0 + dz**2.0)
+    position = (arrowPoint[0] + (otherPoint[0] - arrowPoint[0]) / mag * length / 2.0, \
+                arrowPoint[1] + (otherPoint[1] - arrowPoint[1]) / mag * length / 2.0, \
+                arrowPoint[2] + (otherPoint[2] - arrowPoint[2]) / mag * length / 2.0)
+    
+    # Determine the rotation of the arrowhead.
+    dxz = sqrt(dx**2.0 + dz**2.0)
+    dAngle = atan2(dxz, dy)
+    rotationVec = osg.Vec3f(0, 1, 0) ^ osg.Vec3f(dx, dy, dz)
+    rotationVec.normalize()
+    rotation = (rotationVec.x(), rotationVec.y(), rotationVec.z(), dAngle)
+    
+    # Add the arrowhead to the display.
+    display.visualizeObject(None, shape = shapes['Cone'], color = visible.color(), position = position, size = (width, length, width), rotation = rotation)
     
 
 for visible in display.selection():
