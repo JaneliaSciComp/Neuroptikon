@@ -6,7 +6,7 @@
 import neuroptikon
 import wx
 import wx.py as py
-import os, platform, sys, urllib
+import os, platform, sys, traceback, urllib
 try:
     import xml.etree.cElementTree as ElementTree
 except ImportError:
@@ -76,6 +76,19 @@ class NeuroptikonApp(wx.App):
         self.inspector = InspectorFrame()
         
         self.SetExitOnFrameDelete(False)
+        
+        startupScript = neuroptikon.config.Read('Startup Script', '')
+        try:
+            exec startupScript in self.scriptLocals()
+        except:
+            (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
+            frames = traceback.extract_tb(exceptionTraceback)[1:]
+            message = gettext('An error occurred while running the startup script:')
+            subMessage = str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + '\n\nTraceback:\n' + ''.join(traceback.format_list(frames))
+            if platform.system() == 'Darwin':
+                wx.MessageBox(subMessage, message, style = wx.ICON_ERROR | wx.OK)
+            else:
+                wx.MessageBox(message + '\n\n' + subMessage, 'Neuroptikon', parent = self, style = wx.ICON_ERROR | wx.OK)
         
         # open an empty network by default
         # TODO: pref to re-open last doc?
@@ -397,7 +410,7 @@ class NeuroptikonApp(wx.App):
     def onSendFeedback(self, event_):
         dlg = FeedbackDialog()
         if dlg.ShowModal() == wx.ID_OK:
-            queryDict = {'pid': 10000, 'summary': dlg.summary(), 'description': dlg.description(), 'customfield_10000': dlg.contactEmail()}  # TODO: use the real project and 'contact email' IDs
+            queryDict = {'pid': 10000, 'summary': dlg.summary(), 'description': dlg.description(), 'customfield_10000': dlg.contactEmail()}
             if platform.system() == 'Darwin':
                 environment = 'OS: Mac OS X ' + platform.mac_ver()[0] + '\n'
             elif platform.system() == 'Windows':
