@@ -85,4 +85,6 @@ class SpectralLayout(Layout):
             zOff = (zMax + zMin) / 2.0
             zSize = zMax - zMin if self.autoScale and zMax != zMin else 1.0
             for i in range(n):
-                nodes[i].setPosition(((x[i,0] - xOff) / xSize * self.scaling[0], (y[i,0] - yOff) / ySize * self.scaling[1], (z[i,0] - zOff) / zSize * self.scaling[2]))
+                nodes[i].setPosition((0.0 if xSize == 0 else (x[i,0] - xOff) / xSize * self.scaling[0], \
+                                      0.0 if ySize == 0 else (y[i,0] - yOff) / ySize * self.scaling[1], \
+                                      0.0 if zSize == 0 else (z[i,0] - zOff) / zSize * self.scaling[2]))
