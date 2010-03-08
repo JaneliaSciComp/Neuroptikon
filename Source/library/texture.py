@@ -43,7 +43,11 @@ class Texture(LibraryItem):
             image = osgDB.readImageFile(str(imagePath))
         except:
             image = None
-        if image is not None and image.valid():
+        return self.setImage(image)
+    
+    
+    def setImage(self, image):
+        if isinstance(image, osg.Image) and image.valid():
             self._texture = osg.Texture2D()
             self._texture.setFilter(osg.Texture2D.MIN_FILTER, osg.Texture2D.LINEAR)
             self._texture.setFilter(osg.Texture2D.MAG_FILTER, osg.Texture2D.LINEAR)
@@ -55,6 +59,7 @@ class Texture(LibraryItem):
             self._texture = None
         
         return self._texture is not None
+    
     
     def textureData(self):
         return self._texture
