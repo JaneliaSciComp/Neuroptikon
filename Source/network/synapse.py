@@ -124,10 +124,15 @@ class Synapse(NeuroObject):
     
     
     def defaultVisualizationParams(self):
+        from neurite import Neurite
+        
         params = self.__class__._defaultVisualizationParams()
         params['color'] = (1.0, 0.0, 0.0) if self.activation == 'inhibitory' else (0.0, 0.0, 1.0)
         if any(self.postSynapticNeurites):
-            params['pathEndPoints'] = (self.preSynapticNeurite.neuron(), self.postSynapticNeurites[0].neuron())
+            postSynapticObject = self.postSynapticNeurites[0]
+            if isinstance(postSynapticObject, Neurite):
+                postSynapticObject = postSynapticObject.neuron()
+            params['pathEndPoints'] = (self.preSynapticNeurite.neuron(), postSynapticObject)
             params['pathIsFixed'] = None
             params['flowTo'] = True
         return params

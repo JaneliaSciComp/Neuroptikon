@@ -250,18 +250,13 @@ class Neurite(NeuroObject):
         
         from neuron import Neuron
         
-        otherNeurites = []
         for otherObject in otherObjects:
-            if isinstance(otherObject, Neuron) and otherObject.network == self.network:
-                otherNeurites += [otherObject.extendNeurite()]
-            elif isinstance(otherObject, Neurite) and otherObject.network == self.network:
-                otherNeurites += [otherObject]
-            else:
+            if not isinstance(otherObject, (Neuron, Neurite)) or otherObject.network != self.network:
                 raise ValueError, 'Synapses can only be made with neurons or neurites in the same network.'
-        synapse = Synapse(self.network, self, otherNeurites, activation, *args, **keywordArgs)
+        synapse = Synapse(self.network, self, otherObjects, activation, *args, **keywordArgs)
         self._synapses += [synapse]
-        for otherNeurite in otherNeurites:
-            otherNeurite._synapses += [synapse]
+        for otherObject in otherObjects:
+            otherObject._synapses += [synapse]
         self.network.addObject(synapse)
         return synapse
     

@@ -73,6 +73,7 @@ class Neuron(NeuroObject):
         self.neurotransmitters = []
         self.polarity = None
         self.region = None
+        self._synapses = []
         
         for attrName in localAttrNames:
             if attrName == 'functions':
@@ -175,6 +176,7 @@ class Neuron(NeuroObject):
             raise ValueError, gettext('Region with id "%s" does not exist') % (regionId)
         if neuron.region is not None:
             neuron.region.neurons.append(neuron)
+        neuron._synapses = []
         neuron._neurites = []
         for neuriteElement in xmlElement.findall('Neurite'):
             neurite = Neurite._fromXMLElement(network, neuriteElement)
@@ -310,7 +312,10 @@ class Neuron(NeuroObject):
         If this neuron does not form a synapse with any other neurons then an empty list will be returned.
         """
         
-        synapses = []
+        if includePost:
+            synapses = self._synapses
+        else:
+            synapses = []
         for neurite in self._neurites:
             synapses += neurite.synapses(includePre = includePre, includePost = includePost)
         return synapses
@@ -389,7 +394,7 @@ class Neuron(NeuroObject):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        inputs = NeuroObject.inputs(self, recurse)
+        inputs = NeuroObject.inputs(self, recurse) + self._synapses
         if recurse:
             for neurite in self._neurites:
                 inputs += neurite.inputs()
@@ -415,7 +420,7 @@ class Neuron(NeuroObject):
     
     
     def dependentObjects(self):
-        return NeuroObject.dependentObjects(self) + self.neurites()
+        return NeuroObject.dependentObjects(self) + self._synapses + self.neurites()
     
     
     def disconnectFromNetwork(self):
