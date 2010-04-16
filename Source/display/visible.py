@@ -1615,6 +1615,7 @@ class Visible(object):
     def _dependentVisibleChanged(self):
         if self.isPath():
             self._updatePath()
+            dispatcher.send(('set', 'position'), self)
     
     
     def _positionSizeRotation(self, startPoint, endPoint):
@@ -2293,8 +2294,10 @@ class Visible(object):
             self._glowShape = None
         
         # Add a new glow if we have a glow color and a non-empty shape.
+        shouldGlow = self._glowColor is not None or self.isOrphan()
         w, h, d = self.size()
-        if (self._glowColor is not None or self.isOrphan()) and self._shape is not None and (not isinstance(self._shape, UnitShape) and w > 0.0 and h > 0.0 and d > 0.0):
+        haveNonEmptyShape = self._shape is not None and (not isinstance(self._shape, UnitShape) or (w > 0.0 and h > 0.0 and d > 0.0))
+        if shouldGlow and haveNonEmptyShape:
             # TODO: use a shader effect to produce the glow rather than additional geometry
             glowGeode = osg.Geode()
             glowGeode.setName(str(self.displayId))
