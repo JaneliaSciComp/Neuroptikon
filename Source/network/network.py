@@ -535,6 +535,11 @@ class Network:
         
         # In self.graph edges are actually nodes to support hyperedges.  Convert these to standard edges in the simplified graph.
         # TODO: make this object type independent
+        for arborization in self.arborizations():
+            if arborization.sendsOutput:
+                addEdge(simplifiedGraph, arborization.neurite.neuron(), arborization.region, self.weightOfObject(arborization))
+            if arborization.receivesInput:
+                addEdge(simplifiedGraph, arborization.region, arborization.neurite.neuron(), self.weightOfObject(arborization))
         for synapse in self.synapses():
             for postPartner in synapse.postSynapticPartners:
                 if isinstance(postPartner, Neurite):
