@@ -40,8 +40,10 @@ for visible in display.selection():
         pathPoints = visible.shape().points()
         pathStart, pathEnd = visible.pathEndPoints()
         
+        scale = sqrt(visible.weight())
+        
         if visible.flowTo() and pathEnd.opacity() > 0.0 and pathEnd.shape() != None:
-            addArrowhead(pathPoints[-1], pathPoints[-2])
+            addArrowhead(pathPoints[-1], pathPoints[-2], length = 0.005 * scale, width = 0.0025 * scale)
         
         if visible.flowFrom() and pathStart.opacity() > 0.0 and pathStart.shape() != None:
-            addArrowhead(pathPoints[0], pathPoints[1])
+            addArrowhead(pathPoints[0], pathPoints[1], length = 0.005 * scale, width = 0.0025 * scale)
