@@ -27,7 +27,7 @@ class Box(UnitShape):
         for (v0, v1, v2, v3, normal) in [(0, 1, 3, 2, (-1.0, 0.0, 0.0)), (2, 3, 7, 6, (0.0, 1.0, 0.0)), (6, 7, 5, 4, (1.0, 0.0, 0.0)), (4, 5, 1, 0, (0.0, -1.0, 0.0)), (3, 1, 5, 7, (0.0, 0.0, 1.0)), (0, 2, 6, 4, (0.0, 0.0, -1.0))]:
             vertices += [baseVertices[v0], baseVertices[v1], baseVertices[v2], baseVertices[v3]]
             faceNormals += [normal]
-            texCoords += [(1, 1), (1, 0), (0, 0), (0, 1)]
+            texCoords += [(0, 1), (0, 0), (1, 0), (1, 1)]
             faceSet = Shape.primitiveSetFromList(osg.PrimitiveSet.QUADS, [len(vertices) - 4, len(vertices) - 3, len(vertices) - 2, len(vertices) - 1])
             self.geometry().addPrimitiveSet(faceSet)
         
