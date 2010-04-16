@@ -65,7 +65,10 @@ for neuron in neurons:
     
     # Visualize any chemical synapses that this neuron makes onto other neurons in the visualization.
     for synapse in neuron.synapses(includePost = False):
-        if synapse.postSynapticNeurites[0].neuron() in neurons:
+        partner = synapse.postSynapticPartners[0]
+        if isinstance(partner, Neurite):
+            partner = partner.neuron()
+        if partner in neurons:
             display.visualizeObject(synapse, weight = 2.0)
             if ACh in neuron.neurotransmitters:
                 display.setVisibleColor(synapse, (0.5, 0.5, 1.0))
