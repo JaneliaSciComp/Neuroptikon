@@ -11,37 +11,14 @@ A custom centrality script for the C. elegans network.
 if not any(network.objects):
     execfile('Connectivity.py')
 
-# Create a simplified graph so the calculation doesn't take as long.  Weighted betweenness centrality is nearly an n-cubed algorithm: O(n m + n^2 log n).
-import networkx
-def addEdge(graph, object1, object2, weight):
-    node1 = object1.networkId
-    node2 = object2.networkId
-    if node1 in graph and node2 in graph[node1]:
-        if weight < graph[node1][node2]['weight']:
-            # Use a smaller weight for an existing edge.
-            graph[node1][node2]['weight'] = weight
-    else:
-        # Create a new edge.
-        graph.add_edge(node1, node2, weight = weight)
-simplifiedGraph = networkx.DiGraph()
-for synapse in network.synapses():
-    for neurite in synapse.postSynapticNeurites:
-        addEdge(simplifiedGraph, synapse.preSynapticNeurite.neuron(), neurite.neuron(), network.weightOfObject(synapse))
-for gapJunction in network.gapJunctions():
-    neurites = gapJunction.neurites()
-    addEdge(simplifiedGraph, neurites[0].neuron(), neurites[1].neuron(), network.weightOfObject(gapJunction))
-    addEdge(simplifiedGraph, neurites[1].neuron(), neurites[0].neuron(), network.weightOfObject(gapJunction))
-for innervation in network.innervations():
-    addEdge(simplifiedGraph, innervation.neurite.neuron(), innervation.muscle, network.weightOfObject(innervation))
-
 def progressCallback(fraction_complete = None):
     return updateProgress('Calculating centrality...', fraction_complete)
 
 # Compute the centrality of each node in the graph. (uncomment one of the following)
-#centralities = networkx.degree_centrality(simplifiedGraph)
-#centralities = networkx.closeness_centrality(simplifiedGraph, weighted_edges = True, progress_callback = progressCallback)
-centralities = networkx.betweenness_centrality(simplifiedGraph, weighted_edges = True, progress_callback = progressCallback)
-#centralities = networkx.load_centrality(simplifiedGraph, weighted_edges = True, progress_callback = progressCallback)
+#centralities = networkx.degree_centrality(network.simplifiedGraph())
+#centralities = networkx.closeness_centrality(network.simplifiedGraph(), weighted_edges = True, progress_callback = progressCallback)
+centralities = networkx.betweenness_centrality(network.simplifiedGraph(), weighted_edges = True, progress_callback = progressCallback)
+#centralities = networkx.load_centrality(network.simplifiedGraph(), weighted_edges = True, progress_callback = progressCallback)
 
 if any(centralities):
     # Compute the maximum centrality so we can normalize.
@@ -57,9 +34,9 @@ if any(centralities):
     
     for synapse in network.synapses():
         centrality = objectCentralities[synapse.preSynapticNeurite.neuron()]
-        for neurite in synapse.postSynapticNeurites:
-            centrality += objectCentralities[neurite.neuron()]
-        centrality /= 1 + len(synapse.postSynapticNeurites)
+        for partner in synapse.postSynapticPartners:
+            centrality += objectCentralities[partner if instance(partner, Neuron) else partner.neuron()]
+        centrality /= 1 + len(synapse.postSynapticPartners)
         display.setVisibleOpacity(synapse, centrality)
     
     for gapJunction in network.gapJunctions():

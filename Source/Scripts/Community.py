@@ -10,17 +10,16 @@ Uses the community module bundled with Neuroptikon and written by Thomas Aynaud 
 
 import community
 
-updateProgress(gettext('Finding communities...'))
-dendogram = community.generate_dendogram(network.graph)
+updateProgress(gettext('Finding communities...'), forceDisplay = True)
+dendogram = community.generate_dendogram(network.simplifiedGraph())
 updateProgress(gettext('Finding communities...'))
 partition = community.best_partition(dendogram)
 
 if any(partition):
     updateProgress(gettext('Isolating communities...'))
-    for key, value in partition.iteritems():
-        obj = network.objectWithId(key)
-        for visible in display.visiblesForObject(obj): 
-            if visible.isPath():
+    for visibles in list(display.visibles.itervalues()):
+        for visible in visibles:
+            if visible.isPath() and not isinstance(visible.client, Stimulus):
                 startCommunity, endCommunity = [partition[node.client.networkId] for node in visible.pathEndPoints()]
                 if startCommunity != endCommunity:
                     display.removeVisible(visible)
