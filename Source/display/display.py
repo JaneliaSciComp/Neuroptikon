@@ -210,6 +210,8 @@ class Display(wx.glcanvas.GLCanvas):
         self.lastUsedLayout = None
         
         self._closing = False
+        
+        self._visibleBeingAdded = None
     
     
     def _fromXMLElement(self, xmlElement):
@@ -320,7 +322,7 @@ class Display(wx.glcanvas.GLCanvas):
         colorElement.set('b', str(self.backgroundColor[2]))
         colorElement.set('a', str(self.backgroundColor[3]))
         
-        # Add the deault flow appearance
+        # Add the default flow appearance
         flowAppearanceElement = ElementTree.SubElement(displayElement, 'DefaultFlowAppearance')
         colorElement = ElementTree.SubElement(flowAppearanceElement, 'Color')
         colorElement.set('r', str(self.defaultFlowColor[0]))
@@ -359,8 +361,6 @@ class Display(wx.glcanvas.GLCanvas):
         for visible in self.selectedVisibles:
             selectedVisibleIds.append(str(visible.displayId))
         displayElement.set('selectedVisibleIds', ','.join(selectedVisibleIds))
-        
-        # TODO: it would be nice to save the console command history
         
         return displayElement
     
@@ -822,8 +822,9 @@ class Display(wx.glcanvas.GLCanvas):
             self.graphicsWindow.getEventQueue().mouseButtonRelease(event.GetX(), event.GetY(), event.GetButton())
         elif event.Dragging():
             self.graphicsWindow.getEventQueue().mouseMotion(event.GetX(), event.GetY())
-        elif event.Moving() and self._useMouseOverSelecting and self.hoverSelect:
-            self.hoverSelecting = True
+        elif event.Moving() and ((self._useMouseOverSelecting and self.hoverSelect) or self._visibleBeingAdded is not None):
+            if self._visibleBeingAdded is None:
+                self.hoverSelecting = True
             self.graphicsWindow.getEventQueue().mouseButtonPress(event.GetX(), event.GetY(), wx.MOUSE_BTN_LEFT)
             self.graphicsWindow.getEventQueue().mouseButtonRelease(event.GetX(), event.GetY(), wx.MOUSE_BTN_LEFT)
         self.Refresh()
@@ -1129,7 +1130,13 @@ class Display(wx.glcanvas.GLCanvas):
                 else:
                     pathEndVisibles = [pathEnd]
                 if len(pathStartVisibles) == 1 and len(pathEndVisibles) == 1:
-                    visible.setPathEndPoints(pathStartVisibles[0], pathEndVisibles[0])
+                    pathStartVisible = pathStartVisibles[0]
+#                    if pathStartVisible.isPath():
+#                        pathStartVisible = pathStartVisible._pathEnd
+                    pathEndVisible = pathEndVisibles[0]
+#                    if pathEndVisible.isPath():
+#                        pathEndVisible = pathEndVisible._pathStart 
+                    visible.setPathEndPoints(pathStartVisible, pathEndVisible)
                     visible.setPathMidPoints(params.get('pathMidPoints', []))
                     visible.setPathIsFixed(params.get('pathIsFixed', None))
                     visible.setFlowTo(pathFlowsTo)
@@ -2466,7 +2473,7 @@ class Display(wx.glcanvas.GLCanvas):
             if wildcard != '':
                 wildcard += '|'
             wildcard += fileTypes[index] + '|' + fileExtensions[index]
-        fileDialog = wx.FileDialog(None, gettext('Save As:'), '', '', wildcard, wx.FD_SAVE)
+        fileDialog = wx.FileDialog(None, gettext('Save As:'), '', '', wildcard, wx.SAVE | wx.FD_OVERWRITE_PROMPT)
         if fileDialog.ShowModal() == wx.ID_OK:
             extension = fileExtensions[fileDialog.GetFilterIndex()]
             savePath = str(fileDialog.GetPath())
@@ -2585,6 +2592,15 @@ class Display(wx.glcanvas.GLCanvas):
         """
         
         return self.GetTopLevelParent().endProgress()
+    
+    
+    def addObjectOfClass(self, objectClass):
+        self._visibleBeingAdded = self.visualizeObject(None, **objectClass._defaultVisualizationParams())
+        self._visibleBeingAdded.objectClass = objectClass
+    
+    
+    def objectClassBeingAdded(self):
+        return self._visibleBeingAdded.objectClass if self._visibleBeingAdded else None
             
 
 class DisplayDropTarget(wx.PyDropTarget):

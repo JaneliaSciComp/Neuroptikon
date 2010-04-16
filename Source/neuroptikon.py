@@ -131,6 +131,8 @@ def shapeClass(shapeName):
 library = None
 config = None
 
+enableNetworkMenu = ('DEBUG' in os.environ)
+
 def scriptLocals():
     return {}
 

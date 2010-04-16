@@ -13,6 +13,11 @@ except ImportError:
     import xml.etree.ElementTree as ElementTree
 import display.display, display.layout
 from network.network import Network
+from network.region import Region
+from network.neuron import Neuron
+from network.muscle import Muscle
+from network.stimulus import Stimulus
+
 from search.finder import Finder
 
 if platform.system() == 'Darwin':
@@ -158,12 +163,14 @@ class NeuroptikonFrame(wx.Frame):
         return displayRef
     
     
-    def loadBitmap(self, fileName):
+    def loadBitmap(self, fileName, size = None):
         image = neuroptikon.loadImage(fileName)
         if image is None or not image.IsOk():
             image = wx.EmptyImage(32, 32)
-        if platform.system() == 'Windows':
-            image.Rescale(16, 15, wx.IMAGE_QUALITY_HIGH)
+        if size is not None:
+            image.Rescale(size[0], size[1], wx.IMAGE_QUALITY_HIGH)
+        elif platform.system() == 'Windows':
+            image.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH)
         return image.ConvertToBitmap()
     
     
@@ -186,8 +193,8 @@ class NeuroptikonFrame(wx.Frame):
         self.clearMenuItem = editMenu.Append(wx.ID_CLEAR, gettext('Clear\tCtrl-K'), gettext('Clear the contents of the console'))
         self.Bind(wx.EVT_MENU, self.onClear, self.clearMenuItem)
         editMenu.AppendSeparator()
-        self.pasteMenuItem = editMenu.Append(wx.ID_FIND, gettext('Find\tCtrl-F'), gettext('Find objects in the network'))
-        self.Bind(wx.EVT_MENU, self.onFind, self.pasteMenuItem)
+        self.findMenuItem = editMenu.Append(wx.ID_FIND, gettext('Find\tCtrl-F'), gettext('Find objects in the network'))
+        self.Bind(wx.EVT_MENU, self.onFind, self.findMenuItem)
         menuBar.Insert(menuBar.GetMenuCount() - 1, editMenu, gettext('&Edit'))
         
         viewMenu = wx.Menu()
@@ -240,6 +247,25 @@ class NeuroptikonFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.display.onSaveView, viewMenu.Append(wx.NewId(), gettext('Save View as...'), gettext('Save the current view to a file')))
         menuBar.Insert(menuBar.GetMenuCount() - 1, viewMenu, gettext('&View'))
         
+        if neuroptikon.enableNetworkMenu:
+            networkMenu = wx.Menu()
+            self.addRegionMenuItem = networkMenu.Append(wx.NewId(), gettext('Add Region...'), gettext('Add a new region to the network'))
+            self.addRegionMenuItem.SetBitmap(self.loadBitmap('Region.png', (16, 16)))
+            self.Bind(wx.EVT_MENU, self.onAddRegion, self.addRegionMenuItem)
+            self.addNeuronMenuItem = networkMenu.Append(wx.NewId(), gettext('Add Neuron...'), gettext('Add a new neuron to the network'))
+            self.addNeuronMenuItem.SetBitmap(self.loadBitmap('Neuron.png', (16, 16)))
+            self.Bind(wx.EVT_MENU, self.onAddNeuron, self.addNeuronMenuItem)
+            self.addMuscleMenuItem = networkMenu.Append(wx.NewId(), gettext('Add Muscle...'), gettext('Add a new muscle to the network'))
+            self.addMuscleMenuItem.SetBitmap(self.loadBitmap('Muscle.png', (16, 16)))
+            self.Bind(wx.EVT_MENU, self.onAddMuscle, self.addMuscleMenuItem)
+            self.addStimulusMenuItem = networkMenu.Append(wx.NewId(), gettext('Add Stimulus...'), gettext('Add a stimulus to the selected object'))
+            self.addStimulusMenuItem.SetBitmap(self.loadBitmap('Stimulus.png', (16, 16)))
+            self.Bind(wx.EVT_MENU, self.onAddStimulus, self.addStimulusMenuItem)
+            networkMenu.AppendSeparator()  # -----------------
+            self.deleteObjectsMenuItem = networkMenu.Append(wx.NewId(), gettext('Delete...\tCtrl-Del'), gettext('Remove the selected objects from the network'))
+            self.Bind(wx.EVT_MENU, self.onDeleteObjects, self.deleteObjectsMenuItem)
+            menuBar.Insert(menuBar.GetMenuCount() - 1, networkMenu, gettext('&Network'))
+        
         # pylint: enable-msg=W0201
         
         return menuBar
@@ -261,6 +287,14 @@ class NeuroptikonFrame(wx.Frame):
         toolBar.AddCheckLabelTool(self.rotateMenuItem.GetId(), gettext('Rotate'), self.loadBitmap("Rotate.png"), shortHelp = gettext('Rotate the display'))
         toolBar.AddSeparator()
         toolBar.AddCheckLabelTool(self.highlightOnlyWithinSelectionItem.GetId(), gettext('Highlight Only Within Selection'), self.loadBitmap("HighlightOnlyWithinSelectionOff.png"), shortHelp = gettext('Only highlight connections to other selected objects'))
+        if neuroptikon.enableNetworkMenu:
+            toolBar.AddSeparator()
+            toolBar.AddCheckLabelTool(self.addRegionMenuItem.GetId(), gettext('Add Region'), self.loadBitmap("Region.png"))
+            toolBar.AddCheckLabelTool(self.addNeuronMenuItem.GetId(), gettext('Add Neuron'), self.loadBitmap("Neuron.png"))
+            toolBar.AddCheckLabelTool(self.addMuscleMenuItem.GetId(), gettext('Add Muscle'), self.loadBitmap("Muscle.png"))
+            toolBar.AddCheckLabelTool(self.addStimulusMenuItem.GetId(), gettext('Add Stimulus'), self.loadBitmap("Stimulus.png"))
+            toolBar.AddSeparator()
+            toolBar.AddLabelTool(self.deleteObjectsMenuItem.GetId(), gettext('Delete Objects'), self.loadBitmap("Delete.png"))
         toolBar.Realize()
         return toolBar
     
@@ -309,6 +343,17 @@ class NeuroptikonFrame(wx.Frame):
         elif eventId == self.rotateMenuItem.GetId():
             event.Check(self.display.navigationMode() == display.display.ROTATING_MODE)
             event.Enable(self.display.viewDimensions == 3)
+        elif neuroptikon.enableNetworkMenu:
+            if eventId == self.addRegionMenuItem.GetId():
+                event.Check(self.display.objectClassBeingAdded() == Region)
+            elif eventId == self.addNeuronMenuItem.GetId():
+                event.Check(self.display.objectClassBeingAdded() == Neuron)
+            elif eventId == self.addMuscleMenuItem.GetId():
+                event.Check(self.display.objectClassBeingAdded() == Muscle)
+            elif eventId == self.addStimulusMenuItem.GetId():
+                event.Check(self.display.objectClassBeingAdded() == Stimulus)
+            elif eventId == self.deleteObjectsMenuItem.GetId():
+                event.Enable(any(self.display.selection()))
     
     
     def onDisplayChangedHighlightOnlyWithinSelection(self):
@@ -402,7 +447,7 @@ class NeuroptikonFrame(wx.Frame):
             except:
                 (exceptionType, exceptionValue, exceptionTraceback) = sys.exc_info()
                 frames = traceback.extract_tb(exceptionTraceback)[2:]
-                dialog = wx.MessageBox(str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + '\n\nTraceback:\n' + ''.join(traceback.format_list(frames)), gettext('An error occurred while running the script:'), parent = self, style = wx.ICON_ERROR | wx.OK)
+                wx.MessageBox(str(exceptionValue) + ' (' + exceptionType.__name__ + ')' + '\n\nTraceback:\n' + ''.join(traceback.format_list(frames)), gettext('An error occurred while running the script:'), parent = self, style = wx.ICON_ERROR | wx.OK)
         self.Show(True)
         
         # Turn off bulk loading in case the script forgot to.
@@ -513,7 +558,39 @@ class NeuroptikonFrame(wx.Frame):
         self.display.setNavigationMode(display.display.ROTATING_MODE)
     
     
-    def onCloseWindow(self, event):
+    def onAddRegion(self, event_):
+        self.display.addObjectOfClass(Region)
+    
+    
+    def onAddNeuron(self, event_):
+        self.display.addObjectOfClass(Neuron)
+    
+    
+    def onAddMuscle(self, event_):
+        self.display.addObjectOfClass(Muscle)
+    
+    
+    def onAddStimulus(self, event_):
+        self.display.addObjectOfClass(Stimulus)
+    
+    
+    def onDeleteObjects(self, event_):
+        # TODO: how to allow removing from display OR removing from network and all displays?
+        
+        message = gettext('Are you sure you wish to delete the selected objects?')
+        if platform.system() == 'Darwin':
+            result = wx.MessageBox('', message, style = wx.ICON_QUESTION | wx.YES_NO)
+        else:
+            result = wx.MessageBox(message, gettext('Neuroptikon'), style = wx.ICON_QUESTION | wx.YES_NO)
+        if result == wx.YES:
+            for visible in self.display.selection():
+                if visible.client:
+                    self.display.network.removeObject(visible.client)
+                else:
+                    self.display.removeVisible(visible)
+    
+    
+    def onCloseWindow(self, event_):
         self.Close()
     
     
@@ -773,9 +850,9 @@ class NeuroptikonFrame(wx.Frame):
             wx.CallLater(visualDelay, self._updateProgress)
     
     
-    def _updateProgress(self):
+    def _updateProgress(self, forceDisplay = False):
         if self._progressNestingLevel > 0:
-            if datetime.datetime.now() > self._progressDisplayTime:
+            if forceDisplay or datetime.datetime.now() > self._progressDisplayTime:
                 if self._progressDialog is None:
                     self._progressDialog = wx.ProgressDialog(gettext('Neuroptikon'), 'some long text that will make the dialog a nice width', parent = self, style = wx.PD_APP_MODAL | wx.PD_CAN_ABORT | wx.PD_REMAINING_TIME)
                     if platform.system() == 'Darwin':
@@ -792,7 +869,7 @@ class NeuroptikonFrame(wx.Frame):
             self._progressLastUpdate = datetime.datetime.now()
     
     
-    def updateProgress(self, message = None, fractionComplete = None):
+    def updateProgress(self, message = None, fractionComplete = None, forceDisplay = False):
         """
         Update the message and/or completion fraction during a lengthy task.
         
@@ -804,7 +881,7 @@ class NeuroptikonFrame(wx.Frame):
             self._progressMessage = message
         self._progressFractionComplete = fractionComplete
         if datetime.datetime.now() - self._progressLastUpdate > self._progressUpdateDelta:
-            self._updateProgress()
+            self._updateProgress(forceDisplay)
         
         # Allow events to be processed while the task is running.
         wx.Yield()
