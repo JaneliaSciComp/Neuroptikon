@@ -513,6 +513,50 @@ class Network:
                 dispatcher.send(('set', 'modified'), self)
     
     
+    def simplifiedGraph(self):
+        """
+        Return a simplified version of the NetworkX representation of the network.
+        
+        This version of the network will have far fewer nodes but will not accurately model edges with more than two end points (hyperedges).  This speeds processing when using NetworkX's algorithms.
+        """
+        
+        def addEdge(graph, object1, object2, weight):
+            node1 = object1.networkId
+            node2 = object2.networkId
+            if node1 in graph and node2 in graph[node1]:
+                if weight < graph[node1][node2]['weight']:
+                    # Use a smaller weight for an existing edge.
+                    graph[node1][node2]['weight'] = weight
+            else:
+                # Create a new edge.
+                graph.add_edge(node1, node2, weight = weight)
+        
+        simplifiedGraph = DiGraph()
+        
+        # In self.graph edges are actually nodes to support hyperedges.  Convert these to standard edges in the simplified graph.
+        # TODO: make this object type independent
+        for synapse in self.synapses():
+            for postPartner in synapse.postSynapticPartners:
+                if isinstance(postPartner, Neurite):
+                    postPartner = postPartner.neuron()
+                addEdge(simplifiedGraph, synapse.preSynapticNeurite.neuron(), postPartner, self.weightOfObject(synapse))
+        for gapJunction in self.gapJunctions():
+            neurites = gapJunction.neurites()
+            addEdge(simplifiedGraph, neurites[0].neuron(), neurites[1].neuron(), self.weightOfObject(gapJunction))
+            addEdge(simplifiedGraph, neurites[1].neuron(), neurites[0].neuron(), self.weightOfObject(gapJunction))
+        for innervation in self.innervations():
+            addEdge(simplifiedGraph, innervation.neurite.neuron(), innervation.muscle, self.weightOfObject(innervation))
+        for pathway in self.pathways():
+            region1, region2 = pathway.regions()
+            weight = self.weightOfObject(pathway)
+            if pathway.region1Projects:
+                addEdge(simplifiedGraph, region1, region2, weight)
+            if pathway.region2Projects:
+                addEdge(simplifiedGraph, region2, region1, weight)
+        
+        return simplifiedGraph
+    
+    
     def setModified(self, modified):
         """
         Set whether or not this network is dirty and needs to be saved.
