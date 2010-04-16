@@ -3,7 +3,6 @@
 #  Use is subject to Janelia Farm Research Campus Software Copyright 1.1 license terms.
 #  http://license.janelia.org/license/jfrc_copyright_1_1.html
 
-import neuroptikon
 from neuro_object import NeuroObject
 from region import Region
 from arborization import Arborization
@@ -41,6 +40,7 @@ class Neurite(NeuroObject):
     
     
     def defaultName(self):
+        from neuron import Neuron
         neuron = self.neuron()
         connectedObjects = set()
         for connection in self.connections():
@@ -56,9 +56,11 @@ class Neurite(NeuroObject):
             elif isinstance(connection, Synapse):
                 if connection.preSynapticNeurite.neuron() != neuron:
                     connectedObjects.add(connection.preSynapticNeurite)
-                for neurite in connection.postSynapticNeurites:
-                    if neurite.neuron() != neuron:
-                        connectedObjects.add(neurite.neuron())
+                for partner in connection.postSynapticPartners:
+                    if isinstance(partner, Neuron):
+                        connectedObjects.add(partner)
+                    elif partner.neuron() != neuron:
+                        connectedObjects.add(partner.neuron())
             elif isinstance(connection, Innervation):
                 connectedObjects.add(connection.muscle)
         objectNames = [connectedObject.name or connectedObject.defaultName() for connectedObject in connectedObjects]
@@ -272,7 +274,7 @@ class Neurite(NeuroObject):
         
         synapses = []
         for synapse in self._synapses:
-            if (synapse.preSynapticNeurite == self and includePre) or (self in synapse.postSynapticNeurites and includePost):
+            if (synapse.preSynapticNeurite == self and includePre) or (self in synapse.postSynapticPartners and includePost):
                 synapses += [synapse]
         if recurse:
             for neurite in self._neurites:

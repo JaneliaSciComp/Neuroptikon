@@ -122,7 +122,7 @@ class Neuron(NeuroObject):
             elif isinstance(connection, Synapse):
                 if connection.preSynapticNeurite.neuron() == self:
                     # TODO: check if other neuron names are nameless
-                    otherName = ', '.join([neurite.neuron().name for neurite in connection.postSynapticNeurites])
+                    otherName = ', '.join([(partner.name if isinstance(partner, Neuron) else partner.neuron().name) for partner in connection.postSynapticPartners])
                     sends = True
                 else: 
                     otherName = connection.preSynapticNeurite.neuron().name

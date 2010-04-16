@@ -12,7 +12,7 @@ except ImportError:
 
 
 class Synapse(NeuroObject):
-    def __init__(self, network, preSynapticNeurite = None, postSynapticNeurites = [], activation = None, *args, **keywords):
+    def __init__(self, network, preSynapticNeurite = None, postSynapticPartners = [], activation = None, *args, **keywords):
         """
         A Synapse object represents a chemical synapse between a single pre-synaptic neurite and one or more post-synaptic neurites.
         
@@ -25,14 +25,16 @@ class Synapse(NeuroObject):
         
         NeuroObject.__init__(self, network, *args, **keywords)
         self.preSynapticNeurite = preSynapticNeurite
-        self.postSynapticNeurites = postSynapticNeurites
+        self.postSynapticPartners = postSynapticPartners
         self.activation = activation
     
     
     def defaultName(self):
         names = []
-        for postNeurite in self.postSynapticNeurites:
-            names += [str(postNeurite.neuron().name)]
+        for postPartner in self.postSynapticPartners:
+            if isinstance(postPartner, Neurite):
+                postPartner = postPartner.neuron()
+            names += [str(postPartner.name)]
         names.sort()
         return str(self.preSynapticNeurite.neuron().name) + ' -> ' + ', '.join(names)
     
@@ -47,17 +49,19 @@ class Synapse(NeuroObject):
         if synapse.preSynapticNeurite is None:
             raise ValueError, gettext('Neurite with id "%s" does not exist') % (preSynapticNeuriteId)
         synapse.preSynapticNeurite._synapses.append(synapse)
-        synapse.postSynapticNeurites = []
-        if xmlElement.find('PreSynapticNeuriteId') is not None:
-            postSynapticNeuriteIds = xmlElement.findall('PostSynapticNeuriteId')
+        synapse.postSynapticPartners = []
+        if xmlElement.find('PostSynapticPartnerId') is not None:
+            postSynapticPartnerIds = xmlElement.findall('PostSynapticPartnerId')
+        elif xmlElement.find('PostSynapticNeuriteId') is not None:
+            postSynapticPartnerIds = xmlElement.findall('PostSynapticNeuriteId')
         else:
-            postSynapticNeuriteIds = xmlElement.findall('postSynapticNeuriteId')
-        for neuriteElement in postSynapticNeuriteIds:
-            neuriteId = neuriteElement.text
-            neurite = network.objectWithId(neuriteId)
-            if neurite is None:
-                raise ValueError, gettext('Neurite with id "%s" does not exist') % (neuriteId)
-            synapse.postSynapticNeurites.append(neurite)
+            postSynapticPartnerIds = xmlElement.findall('postSynapticNeuriteId')
+        for partnerElement in postSynapticPartnerIds:
+            partnerId = partnerElement.text
+            partner = network.objectWithId(partnerId)
+            if partner is None:
+                raise ValueError, gettext('Neuron/neurite with id "%s" does not exist') % (partnerId)
+            synapse.postSynapticPartners.append(partner)
             neurite._synapses.append(synapse)
         synapse.activation = xmlElement.findtext('Activation')
         if synapse.activation is None:
@@ -68,8 +72,8 @@ class Synapse(NeuroObject):
     def _toXMLElement(self, parentElement):
         synapseElement = NeuroObject._toXMLElement(self, parentElement)
         ElementTree.SubElement(synapseElement, 'PreSynapticNeuriteId').text = str(self.preSynapticNeurite.networkId)
-        for neurite in self.postSynapticNeurites:
-            ElementTree.SubElement(synapseElement, 'PostSynapticNeuriteId').text = str(neurite.networkId)
+        for partner in self.postSynapticPartners:
+            ElementTree.SubElement(synapseElement, 'PostSynapticPartnerId').text = str(partner.networkId)
         if self.activation is not None:
             ElementTree.SubElement(synapseElement, 'Activation').text = self.activation
         return synapseElement
@@ -85,11 +89,11 @@ class Synapse(NeuroObject):
     def _creationScriptParams(self, scriptRefs):
         args, keywords = NeuroObject._creationScriptParams(self, scriptRefs)
         postRefs = []
-        for postNeurite in self.postSynapticNeurites:
-            if postNeurite.networkId in scriptRefs:
-                postRefs.append(scriptRefs[postNeurite.networkId])
+        for postPartner in self.postSynapticPartners:
+            if postPartner in scriptRefs:
+                postRefs.append(scriptRefs[postPartner.networkId])
             else:
-                postRefs.append(scriptRefs[postNeurite.root.networkId])
+                postRefs.append(scriptRefs[postPartner.root.networkId])
         if len(postRefs) == 1:
             args.insert(0, postRefs[0])
         else:
@@ -98,7 +102,7 @@ class Synapse(NeuroObject):
     
     
     def connections(self, recurse = True):
-        return NeuroObject.connections(self, recurse) + [self.preSynapticNeurite] + self.postSynapticNeurites
+        return NeuroObject.connections(self, recurse) + [self.preSynapticNeurite] + self.postSynapticPartners
     
     
     def inputs(self, recurse = True):
@@ -106,13 +110,13 @@ class Synapse(NeuroObject):
     
     
     def outputs(self, recurse = True):
-        return NeuroObject.outputs(self, recurse) + self.postSynapticNeurites
+        return NeuroObject.outputs(self, recurse) + self.postSynapticPartners
     
     
     def disconnectFromNetwork(self):
         self.preSynapticNeurite._synapses.remove(self)
-        for neurite in self.postSynapticNeurites:
-            neurite._synapses.remove(self)
+        for partner in self.postSynapticPartners:
+            partner._synapses.remove(self)
     
     
     @classmethod
@@ -128,8 +132,8 @@ class Synapse(NeuroObject):
         
         params = self.__class__._defaultVisualizationParams()
         params['color'] = (1.0, 0.0, 0.0) if self.activation == 'inhibitory' else (0.0, 0.0, 1.0)
-        if any(self.postSynapticNeurites):
-            postSynapticObject = self.postSynapticNeurites[0]
+        if any(self.postSynapticPartners):
+            postSynapticObject = self.postSynapticPartners[0]
             if isinstance(postSynapticObject, Neurite):
                 postSynapticObject = postSynapticObject.neuron()
             params['pathEndPoints'] = (self.preSynapticNeurite.neuron(), postSynapticObject)

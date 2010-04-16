@@ -93,9 +93,9 @@ for synapse in synapses:
             preSynapticPath = visualizeNeurite(preRoot)
             updateFlow(preSynapticPath, flowTo = True)
             synapseStart = preSynapticPath.pathEndPoints()[1]
-        postRoot = synapse.postSynapticNeurites[0].root
-        if not isinstance(postRoot, Neuron):
-            postSynapticPath = visualizeNeurite(postRoot)
+        postPartner = synapse.postSynapticPartners[0]
+        if isinstance(postPartner, Neurite) and not isinstance(postPartner.root, Neuron):
+            postSynapticPath = visualizeNeurite(postPartner.root)
             updateFlow(postSynapticPath, flowFrom = True)
             synapseEnd = postSynapticPath.pathEndPoints()[1]
         synapsePath.setPathEndPoints(synapseStart, synapseEnd)
