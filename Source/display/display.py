@@ -8,7 +8,7 @@ from __future__ import with_statement # This isn't required in Python 2.6
 import neuroptikon
 import wx.glcanvas
 from pydispatch import dispatcher
-import osg, osgDB, osgGA, osgManipulator, osgViewer
+import osg, osgDB, osgGA, osgManipulator, osgText, osgViewer
 from math import log, pi
 import os.path, platform, sys, cPickle
 try:
@@ -212,6 +212,9 @@ class Display(wx.glcanvas.GLCanvas):
         self._closing = False
         
         self._visibleBeingAdded = None
+        
+        self.compassCamera = None
+        self._compassDrawables = {}
     
     
     def _fromXMLElement(self, xmlElement):
@@ -293,6 +296,8 @@ class Display(wx.glcanvas.GLCanvas):
             self.setLabelsFloatOnTop(xmlElement.get('labelsFloatOnTop') in trueValues)
         if xmlElement.get('highlightOnlyWithinSelection') is not None:
             self.setHighlightOnlyWithinSelection(xmlElement.get('highlightOnlyWithinSelection') in trueValues)
+        if xmlElement.get('showCompass') is not None:
+            self.setShowCompass(xmlElement.get('showCompass') in trueValues)
         
         selectedVisibleIds = xmlElement.get('selectedVisibleIds')
         visiblesToSelect = []
@@ -357,6 +362,7 @@ class Display(wx.glcanvas.GLCanvas):
         displayElement.set('autoVisualize', 'true' if self.autoVisualize else 'false')
         displayElement.set('labelsFloatOnTop', 'true' if self._labelsFloatOnTop else 'false')
         displayElement.set('highlightOnlyWithinSelection', 'true' if self._highlightOnlyWithinSelection else 'false')
+        displayElement.set('showCompass', 'true' if self.isShowingCompass() else 'false')
         selectedVisibleIds = []
         for visible in self.selectedVisibles:
             selectedVisibleIds.append(str(visible.displayId))
@@ -372,6 +378,7 @@ class Display(wx.glcanvas.GLCanvas):
         scriptFile.write(displayRef + '.setDefaultFlowSpeed(' + str(self.defaultFlowSpeed) + ')\n')
         scriptFile.write(displayRef + '.setDefaultFlowSpread(' + str(self.defaultFlowSpread) + ')\n')
         scriptFile.write(displayRef + '.setViewDimensions(' + str(self.viewDimensions) + ')\n')
+        scriptFile.write(displayRef + '.setShowCompass(' + str(self.isShowingCompass()) + ')\n')
         scriptFile.write(displayRef + '.setShowRegionNames(' + str(self._showRegionNames) + ')\n')
         scriptFile.write(displayRef + '.setShowNeuronNames(' + str(self._showNeuronNames) + ')\n')
         scriptFile.write(displayRef + '.setShowFlow(' + str(self._showFlow) + ')\n')
@@ -464,6 +471,8 @@ class Display(wx.glcanvas.GLCanvas):
             
             # TODO: call _updatePath on all visibles so parallel edges are drawn correctly?
             
+            self._updateCompassAxes()
+            
             self.Refresh()
             dispatcher.send(('set', 'viewDimensions'), self)
     
@@ -501,8 +510,120 @@ class Display(wx.glcanvas.GLCanvas):
             
             # TODO: call _updatePath on all visibles so parallel edges are drawn correctly?
             
+            self._updateCompassAxes()
+            
             self.Refresh()
             dispatcher.send(('set', 'orthoViewPlane'), self)
+    
+    
+    def setShowCompass(self, showCompass):
+        
+        def _addCompassAxis(geode, text, position):
+            # Add a line along the axis.
+            axis = osg.Geometry()
+            axis.setVertexArray(Shape.vectorArrayFromList([(0.0, 0.0, 0.0), (position[0] * 0.75, position[1] * 0.75, position[2] * 0.75)]))
+            axis.addPrimitiveSet(Shape.primitiveSetFromList(osg.PrimitiveSet.LINE_STRIP, range(2)))
+            axis.setNormalArray(Shape.vectorArrayFromList([(0.0, 0.0, 0.0)]))
+            axis.setNormalBinding(osg.Geometry.BIND_OVERALL)
+            axis.setColorArray(Shape.vectorArrayFromList([(0.5, 0.5, 0.5)]))
+            axis.setColorBinding(osg.Geometry.BIND_OVERALL)
+            geode.addDrawable(axis)
+            
+            # Add the axis label.
+            label = osgText.Text()
+            label.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
+            if Visible.labelFont is None:
+                label.setCharacterSize(48.0)
+            else:
+                label.setFont(Visible.labelFont)
+                label.setCharacterSize(18.0)
+            label.setAxisAlignment(osgText.Text.SCREEN)
+            label.setAlignment(osgText.Text.CENTER_CENTER)
+            label.setColor(osg.Vec4(0.25, 0.25, 0.25, 1.0))
+            label.setBackdropColor(osg.Vec4(0.75, 0.75, 0.75, 0.25))
+            label.setBackdropType(osgText.Text.OUTLINE)
+            label.setPosition(osg.Vec3(*position))
+            label.setText(text)
+            geode.addDrawable(label)
+            
+            return (axis, label)
+        
+        if showCompass != (self.compassCamera != None):
+            if showCompass:
+                self.compassCamera = osg.Camera()
+                self.compassCamera.setProjectionMatrixAsPerspective(30.0, 1.0, 1.0, 10000.0)
+                self.compassCamera.setReferenceFrame(osg.Transform.ABSOLUTE_RF)
+                self.compassCamera.setViewMatrixAsLookAt(osg.Vec3d(0, 0, 5), osg.Vec3d(0, 0, 0), osg.Vec3d(0, 1, 0))
+                self.compassCamera.setClearMask(osg.GL_DEPTH_BUFFER_BIT)
+                self.compassCamera.setRenderOrder(osg.Camera.POST_RENDER)
+                self.compassCamera.setAllowEventFocus(False)
+                self.compassCamera.setViewport(0, 0, 50, 50)
+                        
+                # Add the axes
+                self._compassGeode = osg.Geode()
+                self.compassTransform = osg.MatrixTransform()
+                self.compassTransform.addChild(self._compassGeode)
+                self.compassCamera.addChild(self.compassTransform)
+                self._compassDrawables['X'] = _addCompassAxis(self._compassGeode, 'X', (1.0, 0.0, 0.0))
+                self._compassDrawables['Y'] = _addCompassAxis(self._compassGeode, 'Y', (0.0, 1.0, 0.0))
+                self._compassDrawables['Z'] = _addCompassAxis(self._compassGeode, 'Z', (0.0, 0.0, 1.0))
+                self._updateCompassAxes()
+                
+                stateSet = self._compassGeode.getOrCreateStateSet() 
+                stateSet.setMode(osg.GL_LIGHTING, osg.StateAttribute.OFF)
+                stateSet.setMode(osg.GL_LINE_SMOOTH, osg.StateAttribute.ON)
+                stateSet.setRenderingHint(osg.StateSet.TRANSPARENT_BIN)
+                stateSet.setMode(osg.GL_BLEND, osg.StateAttribute.ON)
+                
+                self.rootNode.addChild(self.compassCamera)
+            else:
+                self.rootNode.removeChild(self.compassCamera)
+                self._compassGeode = None
+                self.compassCamera = None
+            
+            self.Refresh()
+    
+    
+    def isShowingCompass(self):
+        return self.compassCamera != None
+    
+    
+    def _updateCompassAxes(self):
+        # Show/hide the desired axes.
+        
+        if self.compassCamera:
+            if self.viewDimensions == 2:
+                if self.orthoViewPlane == 'xy':
+                    axesToShow = ['X', 'Y']
+                elif self.orthoViewPlane == 'xz':
+                    axesToShow = ['X', 'Z']
+                elif self.orthoViewPlane == 'zy':
+                    axesToShow = ['Y', 'Z']
+            else:
+                axesToShow = ['X', 'Y', 'Z']
+            
+            for axis in ['X', 'Y', 'Z']:
+                for drawable in self._compassDrawables[axis]:
+                    if axis in axesToShow:
+                        if not self._compassGeode.containsDrawable(drawable):
+                            self._compassGeode.addDrawable(drawable)
+                    else:
+                        if self._compassGeode.containsDrawable(drawable):
+                            self._compassGeode.removeDrawable(drawable)
+    
+    
+    def _updateCompass(self):
+        if self.viewDimensions == 2:
+            if self.orthoViewPlane == 'xy':
+                rotation = osg.Quat(0, osg.Vec3(1, 0, 0))
+            elif self.orthoViewPlane == 'xz':
+                rotation = osg.Quat(-pi / 2.0, osg.Vec3(1, 0, 0))
+            elif self.orthoViewPlane == 'zy':
+                rotation = osg.Quat(pi / 2.0, osg.Vec3(0, 1, 0))
+        else:
+            rotation = self.trackball.getRotation().inverse()
+            
+        self.compassTransform.setMatrix(osg.Matrixd.rotate(rotation))        
     
     
     def setUseStereo(self, useStereo):
@@ -902,6 +1023,8 @@ class Display(wx.glcanvas.GLCanvas):
     
     def Refresh(self, *args, **keywordArgs):    # pylint: disable-msg=W0221
         if not self._suppressRefresh:
+            if self.compassCamera:
+                self._updateCompass()
             wx.glcanvas.GLCanvas.Refresh(self, *args, **keywordArgs)
     
     

@@ -227,6 +227,8 @@ class NeuroptikonFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.display.onViewIn2D, self.viewIn2DMenuItem)
         self.viewIn3DMenuItem = viewMenu.Append(wx.NewId(), gettext('View in 3D\tCtrl-3'), gettext('Show the objects in the three dimensional space'), True)
         self.Bind(wx.EVT_MENU, self.display.onViewIn3D, self.viewIn3DMenuItem)
+        self.showCompassMenuItem = viewMenu.Append(wx.NewId(), gettext('Show Compass\tCtrl-4'), gettext('Show a compass indicating the current orientation of the display'), True)
+        self.Bind(wx.EVT_MENU, self.onShowCompass, self.showCompassMenuItem)
         viewMenu.AppendSeparator()  # -----------------
         self.resetViewMenuItem = viewMenu.Append(wx.NewId(), gettext('Reset View'), gettext('Return to the default view'))
         self.Bind(wx.EVT_MENU, self.onResetView, self.resetViewMenuItem)
@@ -328,6 +330,8 @@ class NeuroptikonFrame(wx.Frame):
             event.Check(self.display.viewDimensions == 2)
         elif eventId == self.viewIn3DMenuItem.GetId():
             event.Check(self.display.viewDimensions == 3)
+        elif eventId == self.showCompassMenuItem.GetId():
+            event.Check(self.display.isShowingCompass())
         elif eventId == self.resetViewMenuItem.GetId():
             event.Enable(self.display.viewDimensions == 3)
         elif eventId == self.zoomToFitMenuItem.GetId():
@@ -528,6 +532,10 @@ class NeuroptikonFrame(wx.Frame):
         menuItem = self.GetMenuBar().FindItemById(event.GetId())
         layoutClass = self.layoutClasses[event.GetId()]
         menuItem.Enable(layoutClass.canLayoutDisplay(self.display))
+    
+    
+    def onShowCompass(self, event_):
+        self.display.setShowCompass(not self.display.isShowingCompass())
     
     
     def onResetView(self, event_):
