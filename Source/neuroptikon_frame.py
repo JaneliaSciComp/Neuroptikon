@@ -86,17 +86,27 @@ class NeuroptikonFrame(wx.Frame):
         self.splitter.SetSashPosition(-100)
     
     
+    def _updateTitle(self):
+        if self.display.name() != None:
+            self.SetTitle(self.display.network.name() + ': ' + self.display.name())
+        else:        
+            self.SetTitle(self.display.network.name())
+    
+    
     def networkDidChange(self):
         self._scriptLocals['network'] = self.display.network
     
     
     def networkDidChangeSavePath(self):
-        self.SetTitle(self.display.network.name())
+        self._updateTitle()
     
     
     def displayDidChange(self, signal = None):
-        if isinstance(signal, tuple) and signal[0] == 'set':
-            self.setModified(True)
+        if isinstance(signal, tuple):
+            if signal[0] == 'set':
+                self.setModified(True)
+                if signal[1] == 'name':
+                    self._updateTitle()
     
     
     @classmethod

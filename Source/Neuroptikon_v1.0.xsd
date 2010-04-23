@@ -220,6 +220,7 @@ http://license.janelia.org/license/jfrc_copyright_1_1.html
 			<xs:element name="DefaultFlowAppearance" type="FlowAppearance" minOccurs="0"/>
 			<xs:element name="DisplayRule" type="DisplayRule" minOccurs="0" maxOccurs="unbounded"/>
 			<xs:element name="Visible" type="Visible" minOccurs="0" maxOccurs="unbounded"/>
+			<xs:element name="Name" type="xs:string" minOccurs="0"/>
 		</xs:sequence>
 		<xs:attribute name="dimensions" type="xs:nonNegativeInteger"/>
 		<xs:attribute name="showRegionNames" type="xs:boolean"/>
@@ -228,6 +229,7 @@ http://license.janelia.org/license/jfrc_copyright_1_1.html
 		<xs:attribute name="useGhosting" type="xs:boolean"/>
 		<xs:attribute name="useMouseOverSelecting" type="xs:boolean"/>
 		<xs:attribute name="autoVisualize" type="xs:boolean"/>
+		<xs:attribute name="showCompass" type="xs:boolean"/>
 		<xs:attribute name="selectedVisibleIds" type="xs:string"/>
 	</xs:complexType>
 	

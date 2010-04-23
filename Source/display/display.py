@@ -59,7 +59,8 @@ class Display(wx.glcanvas.GLCanvas):
             wx.glcanvas.WX_GL_SAMPLE_BUFFERS = wx.glcanvas.WX_GL_MIN_ACCUM_ALPHA + 1
         attribList = [wx.glcanvas.WX_GL_RGBA, wx.glcanvas.WX_GL_DOUBLEBUFFER, wx.glcanvas.WX_GL_DEPTH_SIZE, 16, 0, 0]
         wx.glcanvas.GLCanvas.__init__(self, parent, wxId, wx.DefaultPosition, wx.DefaultSize, style, "", attribList)
-
+        
+        self._name = None
         self.network = network
         if self.network is not None:
             self.network.addDisplay(self)
@@ -220,6 +221,10 @@ class Display(wx.glcanvas.GLCanvas):
     def _fromXMLElement(self, xmlElement):
         self._suppressRefresh = True
         
+        name = xmlElement.findtext('Name')
+        if name is not None:
+            self.setName(name)
+        
         colorElement = xmlElement.find('BackgroundColor')
         if colorElement is None:
             colorElement = xmlElement.find('backgroundColor')
@@ -320,6 +325,9 @@ class Display(wx.glcanvas.GLCanvas):
     def _toXMLElement(self, parentElement):
         displayElement = ElementTree.SubElement(parentElement, 'Display')
         
+        if self._name:
+            ElementTree.SubElement(displayElement, 'Name').text = self._name
+        
         # Add the background color
         colorElement = ElementTree.SubElement(displayElement, 'BackgroundColor')
         colorElement.set('r', str(self.backgroundColor[0]))
@@ -372,6 +380,8 @@ class Display(wx.glcanvas.GLCanvas):
     
     
     def _toScriptFile(self, scriptFile, scriptRefs, displayRef, savingNetwork):
+        if self._name != None:
+            scriptFile.write(displayRef + '.setName(' + repr(self._name) + ')\n')
         scriptFile.write(displayRef + '.setBackgroundColor((' + ', '.join([str(component) for component in self.backgroundColor]) + '))\n')
         scriptFile.write(displayRef + '.setDefaultFlowColor(' + str(self.defaultFlowColor) + ')\n')
         scriptFile.write(displayRef + '.setDefaultFlowSpacing(' + str(self.defaultFlowSpacing) + ')\n')
@@ -416,6 +426,16 @@ class Display(wx.glcanvas.GLCanvas):
             scriptFile.write('\n' + displayRef + '.zoomToFit()\n')
         else:
             scriptFile.write('\n' + displayRef + '.resetView()\n')
+    
+    
+    def setName(self, name):
+        if name != self._name:
+            self._name = name
+            dispatcher.send(('set', 'name'), self)
+    
+    
+    def name(self):
+        return None if not self._name else str(self._name)
     
     
     def _generateUniqueId(self):
