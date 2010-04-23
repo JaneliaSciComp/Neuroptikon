@@ -25,7 +25,7 @@ if platform.system() == 'Darwin':
     carbon = ctypes.CDLL('/System/Library/Carbon.framework/Carbon')
 
 class NeuroptikonFrame(wx.Frame):
-    def __init__(self, network = None, wxId = wx.ID_ANY):
+    def __init__(self, network = None, wxId = wx.ID_ANY, populateDisplay = True):
         if network is None:
             title = Network().name()
         else:
@@ -42,6 +42,7 @@ class NeuroptikonFrame(wx.Frame):
         self._modified = False
         
         self.display = display.display.Display(self.splitter)
+        self.display.autoVisualize = populateDisplay
         self.display.setNetwork(network)
         dispatcher.connect(self.networkDidChange, ('set', 'network'), self.display)
         dispatcher.connect(self.networkDidChangeSavePath, ('set', 'savePath'), network)

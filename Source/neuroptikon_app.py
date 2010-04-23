@@ -358,14 +358,14 @@ class NeuroptikonApp(wx.App):
             self._networks.remove(network)
     
     
-    def displayNetwork(self, network):
+    def displayNetwork(self, network, populateDisplay = True):
         """
         Open a new display for the network.
         """
         
         self._networks.add(network)
         from neuroptikon_frame import NeuroptikonFrame
-        frame = NeuroptikonFrame(network = network)
+        frame = NeuroptikonFrame(network = network, populateDisplay = populateDisplay)
         frame.Show(True)
         frame.Raise()
         self._frames.append(frame)
