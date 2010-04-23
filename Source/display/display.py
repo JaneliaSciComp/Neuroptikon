@@ -453,7 +453,7 @@ class Display(wx.glcanvas.GLCanvas):
                 self.SetScrollbar(wx.VERTICAL, 0, height, height, True)
                 width, height = self.GetClientSize()
                 self.graphicsWindow = self.viewer.setUpViewerAsEmbeddedInWindow(0, 0, width, height)
-                self.viewer.getCamera().setProjectionMatrixAsPerspective(30.0, float(width)/height, 1.0, 10000.0)
+                self.viewer.getCamera().setProjectionMatrixAsPerspective(30.0, float(width)/height, 1.0, 1000.0)
                 self.viewer.setCameraManipulator(self.trackball)
                 if self._first3DView:
                     self.resetView()
@@ -1296,6 +1296,15 @@ class Display(wx.glcanvas.GLCanvas):
             self.removeVisible(self.visiblesForObject(networkObject)[0])
     
     
+    def clear(self):
+        """
+        Remove every :class:`network object <network.object.Object>` from the visualization.
+        """
+        
+        while any(self.visibles):
+            self.removeVisible(self.visibles.values()[0][0])
+    
+    
     def _arborizationChangedFlow(self, sender):
         arborizationVis = self.visiblesForObject(sender)
         if len(arborizationVis) == 1:
@@ -1315,8 +1324,8 @@ class Display(wx.glcanvas.GLCanvas):
             if self.network != None:
                 self.network.removeDisplay(self)
                 
-                while any(self.visibles):
-                    self.removeVisible(self.visibles.values()[0][0])
+                # TBD: are there situations where you wouldn't want to clear anonymous visibles?
+                self.clear()
                 
                 # TODO: anything else?
             
