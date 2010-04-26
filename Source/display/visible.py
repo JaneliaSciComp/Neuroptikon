@@ -2031,7 +2031,7 @@ class Visible(object):
         
         parallelPaths = self.parallelPaths()
         
-        if self._pathStart == self._pathEnd:
+        if len(path) == 1 and self._pathStart == self._pathEnd:
             # Special case for paths with the same start and end point.  Create a loop via temporary mid-points so the path is visible (and not zero-length).
             # Once mid-points become editable in the GUI then the temporary mid-points should become permanent once modified by the user.
             # TODO: handle multiple self-connections.
@@ -2046,7 +2046,7 @@ class Visible(object):
             path += [self._pathEnd.worldPosition()]
         
         # Make sure parallel paths (with no mid-points) are not drawn right on top of each other.
-        if len(path) == 2 and len(parallelPaths) > 0:
+        if len(path) == 2 and any(parallelPaths):
             # Since each parallel path renders itself we need to have a reliable order to the paths.  For now just sorting by each path's id(). 
             pathIds = [id(parallelPath) for parallelPath in parallelPaths] + [id(self)]
             pathIds.sort()
