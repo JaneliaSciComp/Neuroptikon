@@ -9,3 +9,4 @@ Neuroptikon can be controlled via its scripting language for tasks that are not 
    Console
    Biology
    Visualization
+   Library

@@ -1733,11 +1733,11 @@ class Display(wx.glcanvas.GLCanvas):
     
     def setVisibleTexture(self, networkObject, texture, scale = 1.0):
         """
-        Set the texture used to paint the surface of the visualized :class:`network object <network.object.Object>`.
+        Set the :class:`texture <library.texture.Texture>` used to paint the surface of the visualized :class:`network object <network.object.Object>`.
         
         >>> display.setVisibleTexture(region1, library.texture('Stripes'))
         
-        The texture parameter should be an object obtained from the :class:`library <Library.Library.Library>` or None.
+        The texture parameter should be a :class:`texture <library.texture.Texture>` instance or None.
         
         The scale parameter can be used to reduce or enlarge the texture relative to the visualized object.
         """

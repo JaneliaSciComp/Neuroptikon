@@ -1648,7 +1648,7 @@ class Visible(object):
         
         >>> display.setVisibleTexture(region1, library.texture('Stripes'))
         
-        The texture parameter should be an object obtained from the :class:`library <Library.Library.Library>` or None.
+        The texture parameter should be a :class:`texture <library.texture.Texture>` instance or None.
         """
         
         if not isinstance(texture, (Texture, type(None))):
@@ -1667,7 +1667,7 @@ class Visible(object):
     
     def texture(self):
         """
-        Set the texture used to paint the surface of the visualized :class:`object <Network.Object.Object>`.
+        Get the :class:`texture <library.texture.Texture>` used to paint the surface of the visualized :class:`object <Network.Object.Object>`.
         """
         
         return self._staticTexture
@@ -1675,7 +1675,7 @@ class Visible(object):
         
     def setTextureScale(self, scale):
         """
-        Set the scale of the texture used to paint the surface of the visualized :class:`object <Network.Object.Object>`.
+        Set the scale of the :class:`texture <library.texture.Texture>` used to paint the surface of the visualized :class:`object <Network.Object.Object>`.
         
         The scale parameter can be used to reduce or enlarge the texture relative to the visualized object.
         """
@@ -1697,7 +1697,7 @@ class Visible(object):
     
     def textureScale(self):
         """
-        Return the scale of the texture used to paint the surface of the visualized :class:`object <Network.Object.Object>`.
+        Return the scale of the :class:`texture <library.texture.Texture>` used to paint the surface of the visualized :class:`object <Network.Object.Object>`.
         """
         
         return self._staticTextureScale

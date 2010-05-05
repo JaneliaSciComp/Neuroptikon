@@ -39,6 +39,12 @@ class Texture(LibraryItem):
     
     
     def loadImage(self, imagePath):
+        """
+        Load the texture data from the image file at the specified path.
+        
+        Returns True if the texture was loaded successfully.
+        """
+        
         try:
             image = osgDB.readImageFile(str(imagePath))
         except:
@@ -47,6 +53,14 @@ class Texture(LibraryItem):
     
     
     def setImage(self, image):
+        """
+        Set the texture data from an image in memory.
+        
+        The image parameter must be an osg.Image instance.
+        
+        Returns True if the texture was set successfully.
+        """
+        
         if isinstance(image, osg.Image) and image.valid():
             self._texture = osg.Texture2D()
             self._texture.setFilter(osg.Texture.MIN_FILTER, osg.Texture.LINEAR)
@@ -62,6 +76,14 @@ class Texture(LibraryItem):
     
     
     def loadImageCube(self, imagePaths):
+        """
+        Load the texture data from the six image files at the specified paths.
+        
+        The imagePaths parameter should be a list of six paths to image files.  The order of images is: +X, -X, +Y, -Y, +Z, -Z.
+        
+        Returns True if the texture was loaded successfully.
+        """
+        
         images = []
         for imagePath in imagePaths:
             try:
@@ -72,6 +94,14 @@ class Texture(LibraryItem):
     
     
     def setImageCube(self, images):
+        """
+        Set the texture data from six images.
+        
+        The images parameter should be a list of six osg.Image instances.  The order of images is: +X, -X, +Y, -Y, +Z, -Z.
+        
+        Returns True if the texture was set successfully.
+        """
+        
         if isinstance(images, (list, tuple)) and len(images) == 6:
             faces = [osg.TextureCubeMap.POSITIVE_X, osg.TextureCubeMap.NEGATIVE_X, osg.TextureCubeMap.POSITIVE_Y, osg.TextureCubeMap.NEGATIVE_Y, osg.TextureCubeMap.POSITIVE_Z, osg.TextureCubeMap.NEGATIVE_Z]
             self._texture = osg.TextureCubeMap()
