@@ -7,6 +7,8 @@
 A custom centrality script for the C. elegans network.
 """
 
+import networkx
+
 # Load the neurons and their interconnections if needed.
 if not any(network.objects):
     execfile('Connectivity.py')
@@ -35,7 +37,7 @@ if any(centralities):
     for synapse in network.synapses():
         centrality = objectCentralities[synapse.preSynapticNeurite.neuron()]
         for partner in synapse.postSynapticPartners:
-            centrality += objectCentralities[partner if instance(partner, Neuron) else partner.neuron()]
+            centrality += objectCentralities[partner if isinstance(partner, Neuron) else partner.neuron()]
         centrality /= 1 + len(synapse.postSynapticPartners)
         display.setVisibleOpacity(synapse, centrality)
     
