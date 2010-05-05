@@ -30,6 +30,7 @@ class Synapse(NeuroObject):
     
     
     def defaultName(self):
+        import Neurite
         names = []
         for postPartner in self.postSynapticPartners:
             if isinstance(postPartner, Neurite):
@@ -62,7 +63,7 @@ class Synapse(NeuroObject):
             if partner is None:
                 raise ValueError, gettext('Neuron/neurite with id "%s" does not exist') % (partnerId)
             synapse.postSynapticPartners.append(partner)
-            neurite._synapses.append(synapse)
+            partner._synapses.append(synapse)
         synapse.activation = xmlElement.findtext('Activation')
         if synapse.activation is None:
             synapse.activation = xmlElement.findtext('activation')
