@@ -1659,6 +1659,8 @@ class Visible(object):
                 self._shapeGeode.getOrCreateStateSet().removeTextureAttribute(0, osg.StateAttribute.TEXTURE)
             else:
                 self._shapeGeode.getOrCreateStateSet().setTextureAttributeAndModes(0, texture.textureData(), osg.StateAttribute.ON)
+                if texture.isCube():
+                    self._shapeGeode.getStateSet().setTextureAttributeAndModes(0, osg.TexGen(), osg.StateAttribute.ON)
             self._staticTexture = texture
             dispatcher.send(('set', 'texture'), self)
     
