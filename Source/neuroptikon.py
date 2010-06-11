@@ -65,12 +65,12 @@ else:
         if eggPath.endswith('.egg'):
             sys.path.insert(0, os.path.join(platformLibPath, eggPath))
 
-# TODO: figure out if it's worth building and packaging psyco
-#    try:
-#        import psyco
-#        psyco.full()
-#    except ImportError:
-#        print 'Psyco not installed, the program will just run slower'
+    # TODO: figure out if it's worth packaging psyco...
+    try:
+        import psyco
+        psyco.full()
+    except ImportError:
+        pass
 
 
 # Make sure fonts are found on Mac OS X
