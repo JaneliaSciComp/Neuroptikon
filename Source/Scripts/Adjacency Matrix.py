@@ -22,7 +22,7 @@ def weightByCount(networkObject):
 
 
 # Ask the user which adjacency file should be loaded.
-fileDlg = wx.FileDialog(None, 'Choose an adjacency file to load', '', '', '*.txt', wx.OPEN)
+fileDlg = wx.FileDialog(None, 'Choose an adjacency file to load', '', '', 'Text files|*.txt|CSV files|*.csv', wx.OPEN)
 try:
     if fileDlg.ShowModal() == wx.ID_OK:
         # Ask the user what kind of connections are in the file.
@@ -35,14 +35,26 @@ try:
                 else:
                     neurons = {}
                 
-                # ...
-                network.setWeightingFunction(weightByCount)
+                fileType = os.path.splitext(fileDlg.GetPath())[1]
+                if fileType == '.csv':
+                    fieldSep = ','
+                else:
+                    fieldSep = '\t'
                 
+                # ...
+                valuesAreCounts = True
                 
                 adjancencyFile = open(fileDlg.GetPath())
                 try:
                     # Create the regions/neurons.
-                    names = adjancencyFile.next().strip().split('\t')
+                    names = adjancencyFile.next().strip().split(fieldSep)
+                    names = [name.strip().strip('"') for name in names]
+                    if names[0] == '':
+                        names = names[1:]
+                        hasRowHeaders = True
+                    else:
+                        hasRowHeaders = False
+                    
                     if connectionType == 'Pathways':
                         for regionName in names:
                             regions[regionName] = network.findRegion(name = regionName) or network.createRegion(name = regionName)
@@ -52,19 +64,29 @@ try:
                     
                     # Create the connections.
                     for preObject, postObjects in map(None, names, adjancencyFile):
-                        if preObject is not None and postObjects is not None:
-                            for postObject, adjacency in map(None, names, postObjects.strip().split('\t')):
-                                if postObject is not None and adjacency is not None:
-                                    adjacency = adjacency.strip()
+                        if preObject is not None and preObject != '' and postObjects is not None:
+                            postObjects = postObjects.strip().split(fieldSep)
+                            if hasRowHeaders:
+                                if postObjects[0].strip('"') != preObject:
+                                    raise 'The row headers do not match the column headers.'
+                                postObjects = postObjects[1:]
+                            for postObject, adjacency in map(None, names, postObjects):
+                                postObject = postObject.strip().strip('"')
+                                if postObject is not None and postObject is not preObject and adjacency is not None:
+                                    adjacency = adjacency.strip().strip('"')
                                     if adjacency != '0':
                                         if connectionType == 'Pathways':
-                                            connection = regions[preObject.strip()].projectToRegion(regions[postObject.strip()])
+                                            connection = regions[preObject].projectToRegion(regions[postObject])
                                         elif connectionType == 'Chemical synapses':
-                                            connection = neurons[preObject.strip()].synapseOn(neurons[postObject.strip()])
+                                            connection = neurons[preObject].synapseOn(neurons[postObject])
                                         elif connectionType == 'Electrical synapses':
-                                            connection = neurons[preObject.strip()].gapJunctionWith(neurons[postObject.strip()])
+                                            connection = neurons[preObject].gapJunctionWith(neurons[postObject])
                                         try:
-                                            connection.addAttribute('Count', Attribute.INTEGER_TYPE, int(adjacency))
+                                            if '.' in adjacency:
+                                                connection.addAttribute('Weight', Attribute.DECIMAL_TYPE, float(adjacency))
+                                                valuesAreCounts = False
+                                            else:
+                                                connection.addAttribute('Count', Attribute.INTEGER_TYPE, int(adjacency))
                                         except:
                                             pass
                     
@@ -73,6 +95,9 @@ try:
                         display.showNeuronNames()
                 finally:
                     adjancencyFile.close()
+                
+                if valuesAreCounts:
+                    network.setWeightingFunction(weightByCount)
         finally:
             choiceDlg.Destroy()
 finally:
