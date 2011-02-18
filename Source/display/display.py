@@ -19,13 +19,9 @@ except ImportError:
 from pick_handler import PickHandler
 from dragger_cull_callback import DraggerCullCallback
 from network.object import Object
-from network.region import Region
 from network.pathway import Pathway # pylint: disable-msg=E0611,F0401
-from network.neuron import Neuron
-from network.neurite import Neurite # pylint: disable-msg=E0611,F0401
 from network.arborization import Arborization
 from network.stimulus import Stimulus
-from network.muscle import Muscle
 from network.object_list import ObjectList
 from visible import Visible
 import layout as layout_module
@@ -1356,7 +1352,7 @@ class Display(wx.glcanvas.GLCanvas):
                 
                 if self.autoVisualize:
                     for networkObject in network.objects:
-                        if not isinstance(networkObject, Neurite):
+                        if not networkObject.parentObject():
                             self.visualizeObject(networkObject)
                 
                 dispatcher.connect(receiver=self._networkChanged, signal=dispatcher.Any, sender=self.network)
@@ -1369,7 +1365,7 @@ class Display(wx.glcanvas.GLCanvas):
         signal = arguments['signal']
         if signal == 'addition' and self.autoVisualize:
             for addedObject in affectedObjects:
-                if not isinstance(addedObject, Neurite):
+                if not addedObject.parentObject():
                     self.visualizeObject(addedObject)
             self.Refresh()
         elif signal == 'deletion':
@@ -2153,10 +2149,11 @@ class Display(wx.glcanvas.GLCanvas):
         else:
             # Add the visibles to the new selection.
             for visible in visibles:
-                if isinstance(visible.client, Neurite) and not self.objectIsSelected(visible.client.neuron()) and not self.visiblesForObject(visible.client.neuron())[0] in visibles:
-                    visibles = self.visiblesForObject(visible.client.neuron())
+                # Select the root of the object if appropriate.
+                rootObject = visible.client.rootObject()
+                if rootObject and not self.objectIsSelected(rootObject) and not self.visiblesForObject(rootObject)[0] in visibles:
+                    visibles = self.visiblesForObject(rootObject)
                     if any(visibles):
-                        # TODO: only the neuron's visible connected to the neurite visible? 
                         visible = visibles[0]
                 newSelection.add(visible)
         
@@ -2237,10 +2234,11 @@ class Display(wx.glcanvas.GLCanvas):
                 elif visible not in visiblesToHighlight:
                     visiblesToHighlight.add(visible)
                     highlightedSomething = True
-            # If it's a neurite then highlight all the way back to the soma.
-            while isinstance(networkObject, Neurite):
-                if _highlightObject(networkObject.root):
-                    networkObject = networkObject.root
+            # Highlight to the root of the object if appropriate.
+            networkObject = networkObject.parentObject()
+            while networkObject:
+                if _highlightObject(networkObject):
+                    networkObject = networkObject.parentObject()
                 else:
                     networkObject = None
             
@@ -2252,78 +2250,28 @@ class Display(wx.glcanvas.GLCanvas):
         selectedObjects = self.selectedObjects()
         for selectedVisible in self.selectedVisibles:
             if isinstance(selectedVisible.client, Object):
-                # Highlight/animate objects connected to this object based on biological connectivity.
+                # Highlight/animate objects connected to this object based on network connectivity.
                 networkObject = selectedVisible.client
                 _highlightObject(networkObject)
                 if self.selectConnectedVisibles and not self._selectedShortestPath:
                     for connection in networkObject.connections():
-                        if isinstance(connection, Stimulus):
-                            _highlightObject(connection)
-                        elif isinstance(networkObject, Neuron) or isinstance(networkObject, Neurite):
-                            connectionHighlighted = False
-                            objectNeurites = set()
-                            
-                            # Highlight the counterpart(s) of the connection.
-                            selfConnected = True
-                            for counterpart in connection.connections():
-                                if isinstance(counterpart, Neurite):
-                                    rootCounterpart = counterpart.neuron()
-                                else:
-                                    rootCounterpart = counterpart
-                                if rootCounterpart != networkObject:
-                                    selfConnected = False
-                                if rootCounterpart == networkObject or (isinstance(networkObject, Neurite) and rootCounterpart == networkObject.neuron()):
-                                    objectNeurites.add(counterpart)
-                                elif singleSelection or rootCounterpart in selectedObjects:
-                                    _highlightObject(connection)
+                        counterparts = set(connection.connections())
+                        
+                        # Figure out which counterpart is part of the starting networkObject.
+                        theseParts = counterparts.intersection(set([networkObject] + networkObject.descendants()))
+                        if any(theseParts):
+                            thisPart = theseParts.pop()
+                            counterparts.remove(thisPart)
+                            highlightedSomething = False
+                            for counterpart in counterparts:
+                                if singleSelection or counterpart in selectedObjects or counterpart.rootObject() in selectedObjects:
                                     _highlightObject(counterpart)
-                                    connectionHighlighted = True
-                            if selfConnected:
+                                    highlightedSomething = True
+                            if highlightedSomething:
                                 _highlightObject(connection)
-                                connectionHighlighted = True
-                            # Highlight the neurites of the neuron involved in the connection.
-                            if connectionHighlighted:
-                                for objectNeurite in objectNeurites:
-                                    _highlightObject(objectNeurite)
-                        elif isinstance(networkObject, Region):
-                            if isinstance(connection, Pathway):
-                                # Highlight any pathways coming out of this region or any of its sub-regions.
-                                if connection.regions()[0] == connection.regions()[1]:
-                                    # Special case for a self-projecting region.
-                                    _highlightObject(connection)
-                                else:
-                                    connectedRegion = (set(connection.regions()) & set([networkObject] + networkObject.allSubRegions())).pop()
-                                    nonSelf = set(connection.regions()) - set([connectedRegion])
-                                    if any(nonSelf):
-                                        otherRegion = nonSelf.pop()
-                                        if singleSelection or otherRegion in selectedObjects:
-                                            _highlightObject(connection)
-                                            _highlightObject(otherRegion)
-                            elif isinstance(connection, Arborization):
-                                if singleSelection or connection.neurite in selectedObjects or connection.neurite.neuron() in selectedObjects:
-                                    _highlightObject(connection)
-                                    _highlightObject(connection.neurite)
-                                if singleSelection:
-                                    # Also highlight any other arborizations the neuron makes that could send information to or receive it from this region.
-                                    for arborization in connection.neurite.neuron().arborizations():
-                                        if (connection.sendsOutput and arborization.receivesInput) or (connection.receivesInput and arborization.sendsOutput):
-                                            _highlightObject(arborization)
-                                            _highlightObject(arborization.neurite)
-                                            _highlightObject(arborization.region)
-                        elif isinstance(networkObject, Muscle):
-                            if singleSelection or connection.neurite in selectedObjects or connection.neurite.neuron() in selectedObjects:
-                                _highlightObject(connection)
-                                _highlightObject(connection.neurite)
-                        else:
-                            _highlightObject(connection)
-                    if singleSelection:
-                        if isinstance(networkObject, Neuron):
-                            for neurite in networkObject.neurites():
-                                _highlightObject(neurite)
-                        elif isinstance(networkObject, Neurite):
-                            _highlightObject(networkObject.root)
+                                _highlightObject(thisPart)
             else:
-                # The selected visible has no biological counterpart so highlight/animate connected visibles purely based on connectivity in the visualization.
+                # The selected visible has no network counterpart so highlight/animate connected visibles purely based on connectivity in the visualization.
                 visiblesToHighlight.add(selectedVisible)
                 if selectedVisible.isPath() and (selectedVisible.flowTo() or selectedVisible.flowFrom()):
                     visiblesToAnimate.add(selectedVisible)

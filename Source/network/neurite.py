@@ -386,15 +386,7 @@ class Neurite(NeuroObject):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        connections = NeuroObject.connections(self, recurse) + [self.root]
-        if recurse:
-            connections += self.arborizations()
-            connections += self.gapJunctions()
-            connections += self.innervations()
-            connections += self.synapses()
-        else:
-            connections += self._neurites
-        return connections
+        return NeuroObject.connections(self, recurse) + [self.root] + self.arborizations(False) + self.gapJunctions(False) + self.innervations(False) + self.synapses(False)
     
     
     def inputs(self, recurse = True):
@@ -404,16 +396,9 @@ class Neurite(NeuroObject):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        inputs = NeuroObject.inputs(self, recurse)
+        inputs = NeuroObject.inputs(self, recurse) + self.gapJunctions(False) + self.synapses(includePre = False, recurse = False)
         if self.arborization is not None and self.arborization.receivesInput:
             inputs += [self.arborization]
-        inputs += self._gapJunctions
-        inputs += self.synapses(includePre = False, recurse = recurse)
-        if recurse:
-            for neurite in self._neurites:
-                inputs += neurite.inputs()
-        else:
-            inputs += self._neurites
         return inputs
     
     
@@ -424,18 +409,18 @@ class Neurite(NeuroObject):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        outputs = NeuroObject.outputs(self, recurse)
+        outputs = NeuroObject.outputs(self, recurse) + self.gapJunctions(False) + self.innervations(False) + self.synapses(includePost = False, recurse = False)
         if self.arborization is not None and self.arborization.sendsOutput:
             outputs += [self.arborization]
-        outputs += self._gapJunctions
-        outputs += self._innervations
-        outputs += self.synapses(includePost = False, recurse = recurse)
-        if recurse:
-            for neurite in self._neurites:
-                outputs += neurite.outputs()
-        else:
-            outputs += self._neurites
         return outputs
+    
+    
+    def parentObject(self):
+        return self.root
+    
+    
+    def childObjects(self):
+        return list(self._neurites)
     
     
     def dependentObjects(self):

@@ -312,10 +312,9 @@ class Neuron(NeuroObject):
         If this neuron does not form a synapse with any other neurons then an empty list will be returned.
         """
         
+        synapses = []
         if includePost:
-            synapses = self._synapses
-        else:
-            synapses = []
+            synapses += self._synapses
         for neurite in self._neurites:
             synapses += neurite.synapses(includePre = includePre, includePost = includePost)
         return synapses
@@ -376,15 +375,7 @@ class Neuron(NeuroObject):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        connections = NeuroObject.connections(self, recurse)
-        if recurse:
-            for neurite in self._neurites:
-                connections += neurite.connections()
-            while self in connections:
-                connections.remove(self)
-        else:
-            connections += self._neurites
-        return connections
+        return NeuroObject.connections(self, recurse) + self._synapses
     
     
     def inputs(self, recurse = True):
@@ -394,13 +385,7 @@ class Neuron(NeuroObject):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`stimuli <Network.Stimulus.Stimulus>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        inputs = NeuroObject.inputs(self, recurse) + self._synapses
-        if recurse:
-            for neurite in self._neurites:
-                inputs += neurite.inputs()
-        else:
-            inputs += self._neurites
-        return inputs
+        return NeuroObject.inputs(self, recurse) + self._synapses
     
     
     def outputs(self, recurse = True):
@@ -410,13 +395,11 @@ class Neuron(NeuroObject):
         The list may contain any number of :class:`arborizations <Network.Arborization.Arborization>`, :class:`gap junctions <Network.GapJunction.GapJunction>`, :class:`innervations <Network.Innervation.Innervation>` or :class:`synapses <Network.Synapse.Synapse>`.
         """
         
-        outputs = NeuroObject.outputs(self, recurse)
-        if recurse:
-            for neurite in self._neurites:
-                outputs += neurite.outputs()
-        else:
-            outputs += self._neurites
-        return outputs
+        return NeuroObject.outputs(self, recurse)
+    
+    
+    def childObjects(self):
+        return list(self._neurites)
     
     
     def dependentObjects(self):

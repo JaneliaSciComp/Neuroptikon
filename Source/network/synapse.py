@@ -30,10 +30,9 @@ class Synapse(NeuroObject):
     
     
     def defaultName(self):
-        import Neurite
         names = []
         for postPartner in self.postSynapticPartners:
-            if isinstance(postPartner, Neurite):
+            if type(postPartner).__name__ == 'Neurite':
                 postPartner = postPartner.neuron()
             names += [str(postPartner.name)]
         names.sort()
@@ -129,13 +128,11 @@ class Synapse(NeuroObject):
     
     
     def defaultVisualizationParams(self):
-        from neurite import Neurite
-        
         params = self.__class__._defaultVisualizationParams()
         params['color'] = (1.0, 0.0, 0.0) if self.activation == 'inhibitory' else (0.0, 0.0, 1.0)
         if any(self.postSynapticPartners):
             postSynapticObject = self.postSynapticPartners[0]
-            if isinstance(postSynapticObject, Neurite):
+            if type(postSynapticObject).__name__ == 'Neurite':
                 postSynapticObject = postSynapticObject.neuron()
             params['pathEndPoints'] = (self.preSynapticNeurite.neuron(), postSynapticObject)
             params['pathIsFixed'] = None

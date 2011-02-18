@@ -183,27 +183,48 @@ class Object(object):
         return None
     
     
-    def connections(self, recurse = True):  # pylint: disable-msg=W0613
+    def connections(self, recurse = True):
         """
-        Return a list of the objects that connect to this object.
+        Return a list of the objects that connect to this object and optionally any of the children of this object.
         """
         
-        return []
+        connections = []
+        if recurse:
+            for childObject in self.childObjects():
+                connections += childObject.connections()
+            while self in connections:
+                connections.remove(self)
+        else:
+            connections += self.childObjects()
+        return connections
     
     
-    def inputs(self, recurse = True):  # pylint: disable-msg=W0613
+    def inputs(self, recurse = True):
         """
         Return a list of objects that send information into this object.
         """
         
-        return []
+        inputs = []
+        if recurse:
+            for childObject in self.childObjects():
+                inputs += childObject.inputs()
+        else:
+            inputs += self.childObjects()
+        return inputs
     
     
-    def outputs(self, recurse = True):  # pylint: disable-msg=W0613
-        """ Return a list of objects that receive information from this object.
+    def outputs(self, recurse = True):
+        """
+        Return a list of objects that receive information from this object.
         """
         
-        return []
+        outputs = []
+        if recurse:
+            for childObject in self.childObjects():
+                outputs += childObject.outputs()
+        else:
+            outputs += self.childObjects()
+        return outputs
         
         
     def _printConnections(self):
@@ -211,6 +232,57 @@ class Object(object):
         print '\tConnections: ' + ', '.join([connection.name or connection.defaultName() or '<anonymous %s>' % connection.__class__.displayName().lower() for connection in self.connections()])
         print '\tInputs: ' + ', '.join([input.name or input.defaultName() or '<anonymous %s>' % input.__class__.displayName().lower() for input in self.inputs()])  # pylint: disable-msg=W0622
         print '\tOutputs: ' + ', '.join([output.name or output.defaultName() or '<anonymous %s>' % output.__class__.displayName().lower() for output in self.outputs()])
+    
+    
+    def rootObject(self):
+        """
+        Return the object that is the root of this object's tree of components.
+        """
+        
+        parent = self.parentObject()
+        if parent:
+            return parent.rootObject()
+        else:
+            return self
+    
+    
+    def ancestors(self):
+        """
+        Return all objects connecting this object to the root of the component tree, including the root.
+        """
+        
+        parent = self.parentObject()
+        if parent:
+            return [parent] + parent.ancestors()
+        else:
+            return []
+    
+    
+    def parentObject(self):
+        """
+        Return the object that is directly above this object in the component tree.
+        """
+        
+        return None
+    
+    
+    def childObjects(self):
+        """
+        Return the objects directly below this object in the component tree.
+        """
+        
+        return []
+    
+    
+    def descendants(self):
+        """
+        Return all objects below this object in the component tree.
+        """
+        
+        descendants = list(self.childObjects())
+        for child in list(descendants):
+            descendants += child.descendants()
+        return descendants
     
     
     def dependentObjects(self):

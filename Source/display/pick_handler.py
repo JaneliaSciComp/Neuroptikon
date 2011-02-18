@@ -4,6 +4,7 @@
 #  http://license.janelia.org/license/jfrc_copyright_1_1.html
 
 import osg, osgGA, osgManipulator, osgUtil, osgViewer
+import sys
 
 import display
 from shape import UnitShape
@@ -25,44 +26,48 @@ class PickHandler(osgGA.GUIEventHandler):
         eventWasHandled = False
         viewer = osgViewer.GUIActionAdapterToViewer(actionAdaptor)
         if viewer:
-            eventtype = eventAdaptor.getEventType()
-            if eventtype == eventAdaptor.PUSH:
-                self.pointerInfo.reset()
-                self._lastMouse = (eventAdaptor.getX(), eventAdaptor.getY())
-                eventWasHandled = self.startDragPanOrPick(eventAdaptor, viewer)
-            elif eventtype == eventAdaptor.MOVE:
-                self._lastMouse = (eventAdaptor.getX(), eventAdaptor.getY())
-                eventWasHandled = False
-            elif eventtype == eventAdaptor.DRAG:
-                if self.dragger != None:
-                    self.pointerInfo.setCamera(viewer.getCamera())
-                    self.pointerInfo.setMousePosition(eventAdaptor.getX(), eventAdaptor.getY())
-                    eventWasHandled = self.dragger.handle(self.pointerInfo, eventAdaptor, actionAdaptor)
-                    if eventWasHandled:
-                        self._display._visibleWasDragged()
-                elif self._panning or self._display.navigationMode() == display.PANNING_MODE:
-                    self._display.shiftView(eventAdaptor.getX() - self._lastMouse[0], eventAdaptor.getY() - self._lastMouse[1])
-                    self._panning = True
-                    self._lastMouse = (eventAdaptor.getX(), eventAdaptor.getY())
-                    eventWasHandled = True
-            elif eventtype == eventAdaptor.RELEASE:
-                if self.dragger != None:
-                    # Finish the drag.
-                    self.pointerInfo.setCamera(viewer.getCamera())
-                    self.pointerInfo.setMousePosition(eventAdaptor.getX(), eventAdaptor.getY())
-                    eventWasHandled = self.dragger.handle(self.pointerInfo, eventAdaptor, actionAdaptor)
-                    self.dragger = None
+            try:
+                eventtype = eventAdaptor.getEventType()
+                if eventtype == eventAdaptor.PUSH:
                     self.pointerInfo.reset()
-                    self._display.computeVisiblesBound()
-                    self._display._resetView()
-                    # TODO: is this where visible's size and position should get updated?
-                elif self._panning:
-                    # Finish panning.
-                    self._panning = False
-                elif self._lastMouse == (eventAdaptor.getX(), eventAdaptor.getY()):
-                    # Do a pick.
-                    
-                    eventWasHandled = self.pick(eventAdaptor.getX(), eventAdaptor.getY(), viewer)
+                    self._lastMouse = (eventAdaptor.getX(), eventAdaptor.getY())
+                    eventWasHandled = self.startDragPanOrPick(eventAdaptor, viewer)
+                elif eventtype == eventAdaptor.MOVE:
+                    self._lastMouse = (eventAdaptor.getX(), eventAdaptor.getY())
+                    eventWasHandled = False
+                elif eventtype == eventAdaptor.DRAG:
+                    if self.dragger != None:
+                        self.pointerInfo.setCamera(viewer.getCamera())
+                        self.pointerInfo.setMousePosition(eventAdaptor.getX(), eventAdaptor.getY())
+                        eventWasHandled = self.dragger.handle(self.pointerInfo, eventAdaptor, actionAdaptor)
+                        if eventWasHandled:
+                            self._display._visibleWasDragged()
+                    elif self._panning or self._display.navigationMode() == display.PANNING_MODE:
+                        self._display.shiftView(eventAdaptor.getX() - self._lastMouse[0], eventAdaptor.getY() - self._lastMouse[1])
+                        self._panning = True
+                        self._lastMouse = (eventAdaptor.getX(), eventAdaptor.getY())
+                        eventWasHandled = True
+                elif eventtype == eventAdaptor.RELEASE:
+                    if self.dragger != None:
+                        # Finish the drag.
+                        self.pointerInfo.setCamera(viewer.getCamera())
+                        self.pointerInfo.setMousePosition(eventAdaptor.getX(), eventAdaptor.getY())
+                        eventWasHandled = self.dragger.handle(self.pointerInfo, eventAdaptor, actionAdaptor)
+                        self.dragger = None
+                        self.pointerInfo.reset()
+                        self._display.computeVisiblesBound()
+                        self._display._resetView()
+                        # TODO: is this where visible's size and position should get updated?
+                    elif self._panning:
+                        # Finish panning.
+                        self._panning = False
+                    elif self._lastMouse == (eventAdaptor.getX(), eventAdaptor.getY()):
+                        # Do a pick.
+                        
+                        eventWasHandled = self.pick(eventAdaptor.getX(), eventAdaptor.getY(), viewer)
+            except:
+                (exceptionType, exceptionValue) = sys.exc_info()[0:2]
+                print('Mouse click failed: ' + str(exceptionValue) + ' (' + exceptionType.__name__ + ')')
         return eventWasHandled
     
     
