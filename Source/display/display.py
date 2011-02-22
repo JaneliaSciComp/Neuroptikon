@@ -77,6 +77,7 @@ class Display(wx.glcanvas.GLCanvas):
         self._ghostingOpacity = 0.25
         self._primarySelectionColor = (0, 0, 1, .4)
         self._secondarySelectionColor = (0, 0, 1, .2)
+        self._selectionHighlightDepth = 2
         self.viewDimensions = 2
         
         self._recomputeBounds = True
@@ -295,6 +296,8 @@ class Display(wx.glcanvas.GLCanvas):
             self.autoVisualize = xmlElement.get('autoVisualize') in trueValues
         if xmlElement.get('labelsFloatOnTop') is not None:
             self.setLabelsFloatOnTop(xmlElement.get('labelsFloatOnTop') in trueValues)
+        if xmlElement.get('selectionHighlightDepth') is not None:
+            self.setSelectionHighlightDepth(int(xmlElement.get('selectionHighlightDepth')))
         if xmlElement.get('highlightOnlyWithinSelection') is not None:
             self.setHighlightOnlyWithinSelection(xmlElement.get('highlightOnlyWithinSelection') in trueValues)
         if xmlElement.get('showCompass') is not None:
@@ -365,6 +368,7 @@ class Display(wx.glcanvas.GLCanvas):
         displayElement.set('useMouseOverSelecting', 'true' if self._useMouseOverSelecting else 'false')
         displayElement.set('autoVisualize', 'true' if self.autoVisualize else 'false')
         displayElement.set('labelsFloatOnTop', 'true' if self._labelsFloatOnTop else 'false')
+        displayElement.set('selectionHighlightDepth', str(self._selectionHighlightDepth))
         displayElement.set('highlightOnlyWithinSelection', 'true' if self._highlightOnlyWithinSelection else 'false')
         displayElement.set('showCompass', 'true' if self.isShowingCompass() else 'false')
         selectedVisibleIds = []
@@ -392,6 +396,7 @@ class Display(wx.glcanvas.GLCanvas):
         scriptFile.write(displayRef + '.setGhostingOpacity(' + str(self._ghostingOpacity) + ')\n')
         scriptFile.write(displayRef + '.setUseMouseOverSelecting(' + str(self._useMouseOverSelecting) + ')\n')
         scriptFile.write(displayRef + '.setLabelsFloatOnTop(' + str(self._labelsFloatOnTop) + ')\n')
+        scriptFile.write(displayRef + '.setSelectionHighlightDepth(' + str(self._selectionHighlightDepth) + ')\n')
         scriptFile.write(displayRef + '.setHighlightOnlyWithinSelection(' + str(self._highlightOnlyWithinSelection) + ')\n')
         scriptFile.write('\n')
         
@@ -1462,6 +1467,25 @@ class Display(wx.glcanvas.GLCanvas):
         return self._showFlow
     
     
+    def setSelectionHighlightDepth(self, depth):
+        """
+        Set how far away objects connected to the current selection should be highlighted.
+        """
+        
+        if depth != self._selectionHighlightDepth:
+            self._selectionHighlightDepth = depth
+            self._onSelectionOrShowFlowChanged()
+            dispatcher.send(('set', 'selectionHighlightDepth'), self)
+    
+    
+    def selectionHighlightDepth(self):
+        """
+        Return how far away objects connected to the current selection should be highlighted.
+        """
+        
+        return self._selectionHighlightDepth
+    
+    
     def setHighlightOnlyWithinSelection(self, flag):
         """
         Set whether connections to objects outside of the selection should be highlighted when more than one object is selected.
@@ -2243,53 +2267,58 @@ class Display(wx.glcanvas.GLCanvas):
                     networkObject = None
             
             return highlightedSomething  
-            
+
+        def _highlightConnectedObjects(rootObjects, maxDepth, highlightWithinSelection):
+            # Do a breadth-first search on the graph of objects.
+            queue = [[rootObject] for rootObject in rootObjects]
+            # TBD: needed? visitedObjects = []
+            highlightedObjects = [rootObject.rootObject() for rootObject in rootObjects]
+            while any(queue):
+                curPath = queue.pop(0)
+                curObject = curPath[-1]
+                curObjectRoot = curObject.rootObject()
+                
+                # If we've reached a highlighted object or the maximum depth then highlight the objects in the current path.
+                if curObjectRoot in highlightedObjects or (not highlightWithinSelection and len(curPath) == maxDepth + 1):
+                    for pathObject in curPath:
+                        _highlightObject(pathObject)
+                
+                # If we haven't reached the maximum depth then add the next layer of connections to the end of the queue.  
+                if len(curPath) < maxDepth + 1:
+                    for connectedObject in curObjectRoot.connections():
+                        if connectedObject not in curPath and connectedObject.rootObject() not in curPath:
+                            queue += [curPath + [connectedObject]]
+        
         visiblesToHighlight = set()
         visiblesToAnimate = set()
-        singleSelection = (len(self.selectedVisibles) == 1) or not self._highlightOnlyWithinSelection
-        selectedObjects = self.selectedObjects()
-        for selectedVisible in self.selectedVisibles:
-            if isinstance(selectedVisible.client, Object):
-                # Highlight/animate objects connected to this object based on network connectivity.
-                networkObject = selectedVisible.client
-                _highlightObject(networkObject)
-                if self.selectConnectedVisibles and not self._selectedShortestPath:
-                    for connection in networkObject.connections():
-                        counterparts = set(connection.connections())
-                        
-                        # Figure out which counterpart is part of the starting networkObject.
-                        theseParts = counterparts.intersection(set([networkObject] + networkObject.descendants()))
-                        if any(theseParts):
-                            thisPart = theseParts.pop()
-                            counterparts.remove(thisPart)
-                            highlightedSomething = False
-                            for counterpart in counterparts:
-                                if singleSelection or counterpart in selectedObjects or counterpart.rootObject() in selectedObjects:
-                                    _highlightObject(counterpart)
-                                    highlightedSomething = True
-                            if highlightedSomething:
-                                _highlightObject(connection)
-                                _highlightObject(thisPart)
-            else:
-                # The selected visible has no network counterpart so highlight/animate connected visibles purely based on connectivity in the visualization.
-                visiblesToHighlight.add(selectedVisible)
-                if selectedVisible.isPath() and (selectedVisible.flowTo() or selectedVisible.flowFrom()):
-                    visiblesToAnimate.add(selectedVisible)
+        if self._selectedShortestPath or not self.selectConnectedVisibles:
+            isSingleSelection = (len(self.selectedVisibles) == 1) or not self._highlightOnlyWithinSelection
+            for selectedVisible in self.selectedVisibles:
+                if isinstance(selectedVisible.client, Object):
+                    _highlightObject(selectedVisible.client)
+                else:
+                    # The selected visible has no network counterpart so highlight/animate connected visibles purely based on connectivity in the visualization.
                     visiblesToHighlight.add(selectedVisible)
-                if selectedVisible.isPath():
-                    # Highlight the visibles at each end of the path.
-                    if selectedVisible.flowTo() or selectedVisible.flowFrom():
+                    if selectedVisible.isPath() and (selectedVisible.flowTo() or selectedVisible.flowFrom()):
                         visiblesToAnimate.add(selectedVisible)
                         visiblesToHighlight.add(selectedVisible)
-                    [visiblesToHighlight.add(endPoint) for endPoint in selectedVisible.pathEndPoints()] 
-                elif self.selectConnectedVisibles and not self._selectedShortestPath:
-                    # Animate paths connecting to this non-path visible and highlight the other end of the paths.
-                    for pathVisible in selectedVisible.connectedPaths:
-                        otherVis = pathVisible._pathCounterpart(selectedVisible)
-                        if singleSelection or otherVis in self.selectedVisibles:
-                            visiblesToAnimate.add(pathVisible)
-                            visiblesToHighlight.add(pathVisible)
-                            visiblesToHighlight.add(otherVis)
+                    if selectedVisible.isPath():
+                        # Highlight the visibles at each end of the path.
+                        if selectedVisible.flowTo() or selectedVisible.flowFrom():
+                            visiblesToAnimate.add(selectedVisible)
+                            visiblesToHighlight.add(selectedVisible)
+                        [visiblesToHighlight.add(endPoint) for endPoint in selectedVisible.pathEndPoints()] 
+                    elif self.selectConnectedVisibles and not self._selectedShortestPath:
+                        # Animate paths connecting to this non-path visible and highlight the other end of the paths.
+                        for pathVisible in selectedVisible.connectedPaths:
+                            otherVis = pathVisible._pathCounterpart(selectedVisible)
+                            if isSingleSelection or otherVis in self.selectedVisibles:
+                                visiblesToAnimate.add(pathVisible)
+                                visiblesToHighlight.add(pathVisible)
+                                visiblesToHighlight.add(otherVis)
+        else:
+            # TODO: handle object-less visibles
+            _highlightConnectedObjects(self.selectedObjects(), self._selectionHighlightDepth, len(self.selectedVisibles) > 1 and self._highlightOnlyWithinSelection)
         
         if len(self.selectedVisibles) == 0 and self._showFlow:
             for visibles in self.visibles.itervalues():
