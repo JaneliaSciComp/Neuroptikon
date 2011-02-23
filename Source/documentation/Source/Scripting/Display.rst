@@ -36,6 +36,8 @@ Use the following methods to change the settings of the entire visualization.
 .. automethod:: display.display.Display.ghostingOpacity
 .. automethod:: display.display.Display.setUseMouseOverSelecting
 .. automethod:: display.display.Display.useMouseOverSelecting
+.. automethod:: display.display.Display.setSelectionHighlightDepth
+.. automethod:: display.display.Display.selectionHighlightDepth
 .. automethod:: display.display.Display.setHighlightOnlyWithinSelection
 .. automethod:: display.display.Display.highlightOnlyWithinSelection
 

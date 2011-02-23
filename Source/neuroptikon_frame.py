@@ -210,8 +210,13 @@ class NeuroptikonFrame(wx.Frame):
         
         viewMenu = wx.Menu()
         self.Bind(wx.EVT_MENU, wx.GetApp().onOpenInspector, viewMenu.Append(wx.NewId(), gettext('Open Inspector Window\tCtrl-I'), gettext('Open the inspector window')))
+        viewMenu.AppendSeparator()  # -----------------
         self.mouseOverSelectingItem = viewMenu.Append(wx.NewId(), gettext('Use Mouse-Over Highlighting'), gettext('Automatically select the object under the mouse'), True)
         self.Bind(wx.EVT_MENU, self.OnUseMouseOverSelecting, self.mouseOverSelectingItem)
+        self.decreaseSelectionHighlightDepthItem = viewMenu.Append(wx.NewId(), gettext('Decrease Selection Highlight Depth\tCtrl-Shift--'), gettext('Highlight objects closer to the selection'), True)
+        self.Bind(wx.EVT_MENU, self.onDecreaseSelectionHighlightDepth, self.decreaseSelectionHighlightDepthItem)
+        self.increaseSelectionHighlightDepthItem = viewMenu.Append(wx.NewId(), gettext('Increase Selection Highlight Depth\tCtrl-Shift-+'), gettext('Highlight objects farther from the selection'), True)
+        self.Bind(wx.EVT_MENU, self.onIncreaseSelectionHighlightDepth, self.increaseSelectionHighlightDepthItem)
         self.highlightOnlyWithinSelectionItem = viewMenu.Append(wx.NewId(), gettext('Highlight Only Within Selection'), gettext('Only highlight connections to other selected objects'), True)
         self.Bind(wx.EVT_MENU, self.onHighlightOnlyWithinSelection, self.highlightOnlyWithinSelectionItem)
         viewMenu.AppendSeparator()  # -----------------
@@ -299,6 +304,8 @@ class NeuroptikonFrame(wx.Frame):
         toolBar.AddCheckLabelTool(self.panMenuItem.GetId(), gettext('Pan'), self.loadBitmap("Pan.png"), shortHelp = gettext('Scroll the display'))
         toolBar.AddCheckLabelTool(self.rotateMenuItem.GetId(), gettext('Rotate'), self.loadBitmap("Rotate.png"), shortHelp = gettext('Rotate the display'))
         toolBar.AddSeparator()
+        toolBar.AddLabelTool(self.decreaseSelectionHighlightDepthItem.GetId(), gettext('Decrease Highlight Depth'), self.loadBitmap("HighlightDepthDecrease.png"), shortHelp = self.decreaseSelectionHighlightDepthItem.GetHelp())
+        toolBar.AddLabelTool(self.increaseSelectionHighlightDepthItem.GetId(), gettext('Increase Highlight Depth'), self.loadBitmap("HighlightDepthIncrease.png"), shortHelp = self.increaseSelectionHighlightDepthItem.GetHelp())
         toolBar.AddCheckLabelTool(self.highlightOnlyWithinSelectionItem.GetId(), gettext('Highlight Only Within Selection'), self.loadBitmap("HighlightOnlyWithinSelectionOff.png"), shortHelp = gettext('Only highlight connections to other selected objects'))
         if neuroptikon.enableNetworkMenu:
             toolBar.AddSeparator()
@@ -335,6 +342,8 @@ class NeuroptikonFrame(wx.Frame):
             event.Check(self.display.showNeuronNames())
         elif eventId == self.labelsFloatOnTopMenuItem.GetId():
             event.Check(self.display.labelsFloatOnTop())
+        elif eventId == self.decreaseSelectionHighlightDepthItem.GetId():
+            event.Enable(self.display.selectionHighlightDepth() > 0)
         elif eventId == self.useGhostsMenuItem.GetId():
             event.Check(self.display.useGhosts())
         elif eventId == self.viewIn2DMenuItem.GetId():
@@ -513,6 +522,14 @@ class NeuroptikonFrame(wx.Frame):
     
     def OnUseMouseOverSelecting(self, event_):
         self.display.setUseMouseOverSelecting(not self.display.useMouseOverSelecting())
+    
+    
+    def onDecreaseSelectionHighlightDepth(self, event_):
+        self.display.setSelectionHighlightDepth(self.display.selectionHighlightDepth() - 1)
+    
+    
+    def onIncreaseSelectionHighlightDepth(self, event_):
+        self.display.setSelectionHighlightDepth(self.display.selectionHighlightDepth() + 1)
     
     
     def onHighlightOnlyWithinSelection(self, event_):
