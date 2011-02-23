@@ -188,7 +188,7 @@ class NeuroptikonFrame(wx.Frame):
     def menuBar(self):
         menuBar = wx.GetApp().menuBar(self)
         
-        # pylint: disable-msg=W0201
+        # pylint: disable=W0201
         
         editMenu = wx.Menu()
         self.Bind(wx.EVT_MENU, self.onUndo, editMenu.Append(wx.ID_UNDO, gettext('Undo\tCtrl-Z'), gettext('Undo the last action')))
@@ -284,7 +284,7 @@ class NeuroptikonFrame(wx.Frame):
             self.Bind(wx.EVT_MENU, self.onDeleteObjects, self.deleteObjectsMenuItem)
             menuBar.Insert(menuBar.GetMenuCount() - 1, networkMenu, gettext('&Network'))
         
-        # pylint: enable-msg=W0201
+        # pylint: enable=W0201
         
         return menuBar
     
@@ -641,9 +641,9 @@ class NeuroptikonFrame(wx.Frame):
                 message = gettext('Your changes will be lost if you don\'t save them.')
                 caption = gettext('Do you want to save the changes you made to "%s"?') % (self.display.network.name())
             result = wx.MessageBox( message, caption, parent = self, style = wx.ICON_QUESTION | wx.YES_NO | wx.CANCEL)
-            if result == wx.ID_YES:
+            if result == wx.YES:
                 doClose = self.onSaveNetwork()
-            elif result == wx.ID_CANCEL:
+            elif result == wx.CANCEL:
                 doClose = False
         
         if doClose:
