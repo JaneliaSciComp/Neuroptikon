@@ -1235,6 +1235,9 @@ class Visible(object):
         
         For objects without containers or those that are :meth:`absolutely sized <Display.Visible.Visible.setSizeIsAbsolute>` this value is in world-space coordinates.  For relatively sized objects within containers the coordinate space is a unit cube centered at (0.0, 0.0, 0.0).
         """
+        for sizeDim in size:
+            if sizeDim <= 0.0:
+                raise ValueError, 'The visible size of an object must be greater than zero in all dimensions.'
         
         if self._size != size:
             self._size = size
