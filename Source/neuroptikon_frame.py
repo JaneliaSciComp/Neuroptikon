@@ -418,6 +418,8 @@ class NeuroptikonFrame(wx.Frame):
         
         prevDir = os.getcwd()
         os.chdir(os.path.dirname(scriptPath))
+        if '' not in sys.path:
+            sys.path += ['']
         if 'DEBUG' in os.environ:
             self._console.redirectStdin(True)
             self._console.redirectStdout(True)
