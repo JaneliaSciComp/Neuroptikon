@@ -43,7 +43,7 @@ triadEdges = {'003': [],
               '120U': [(1, 0), (1, 2), (2, 0), (2, 1)], 
               '120C': [(0, 2), (1, 0), (1, 2), (2, 1)], 
               '210': [(0, 2), (1, 0), (1, 2), (2, 0), (2, 1)], 
-              '300': [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1), (2, 1)]}
+              '300': [(0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1)]}
 
 updateProgress(gettext('Creating triad motif compatible version of the network...'), forceDisplay = True)
 # The triadic census code requires the nodes of the graph to be named 0, 1, 2, etc.
@@ -102,6 +102,7 @@ for triad in triadOrder:
 # Open a new display that shows the results graphically
 network = createNetwork()
 display = displayNetwork(network)
+display.setDefaultFlowSpacing(0.15)
 edgeLength = 0.5
 xDiff = edgeLength / 2.0
 yDiff = sqrt(edgeLength ** 2 - xDiff ** 2) / 2.0
