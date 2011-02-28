@@ -2067,21 +2067,49 @@ class Visible(object):
                 endVec = osg.Vec3d(*self._pathEnd.worldPosition())
             pathVec = endVec - startVec
             
-            # Get a normal to the path.
-            if pathVec.x() != 0.0 and pathVec.y() != 0.0:
-                otherVec = osg.Vec3d(0.0, 0.0, 1.0)
+            # Calculate an offset vector that can be used to visually separate the parallel connections. 
+            if self.display.viewDimensions == 2:
+                # In 2D use an offset vector that evenly spaces the paths in the current view plane.  For example with three paths:
+                #
+                #   \-------------/
+                #       |  |  |
+                #       |  |  |
+                #       0  1  2   <- path index
+                #       |  |  |
+                #       |  |  |
+                #     /---------\
+                
+                numPaths = len(parallelPaths) + 1
+                size1 = self._pathStart.worldSize()
+                size2 = self._pathEnd.worldSize()
+                if self.display.orthoViewPlane == 'xy':
+                    minSize = min(size1[0], size1[1], size2[0], size2[1])
+                    normal = pathVec ^ (osg.Vec3d(0.0, 0.0, 1.0) if pathVec.x() != 0 or pathVec.y() != 0 else osg.Vec3d(1.0, 0.0, 0.0))
+                elif self.display.orthoViewPlane == 'xz':
+                    minSize = min(size1[0], size1[2], size2[0], size2[2])
+                    normal = pathVec ^ (osg.Vec3d(0.0, 1.0, 0.0) if pathVec.x() != 0 or pathVec.z() != 0 else osg.Vec3d(1.0, 0.0, 0.0))
+                else: #'zy'
+                    minSize = min(size1[1], size1[2], size2[1], size2[2])
+                    normal = pathVec ^ (osg.Vec3d(1.0, 0.0, 0.0) if pathVec.z() != 0 or pathVec.y() != 0 else osg.Vec3d(0.0, 1.0, 0.0))
+                # Set the spacing based on the smaller of the objects at the ends of the path.
+                unitSpacing = minSize / (numPaths + 1)
+                # Determine the offset magnitude from the path index.
+                offsetSize = unitSpacing * (pathIndex - (numPaths - 1) / 2.0)
+                normal.normalize()
+                offsetVec = normal * offsetSize
             else:
-                otherVec = osg.Vec3d(1.0, 1.0, 0.0)
-            normal = pathVec ^ otherVec
-            normal.normalize()
-            
-            # Rotate the normal based on this path's order in the path list.
-            quat = osg.Quat(2.0 * pi / (len(parallelPaths) + 1) * pathIndex, pathVec)
-            spacing = min([min(self._pathStart.worldSize()), min(self._pathEnd.worldSize())]) * 0.3
-            offsetVec = quat * (normal * spacing)
+                # In 3D use an offset vector that evenly spaces the paths around a cylinder centered on where a single path connection would be.
+                # Ideally the paths would be placed as in 2D but the paths would have to be recalculated every time the camera moved which is impractical.
+                # TBD: Could a vector shader do that?
+                normal = pathVec ^ (osg.Vec3d(1.0, 1.0, 0.0) if pathVec.x() == 0.0 and pathVec.y() == 0.0 else osg.Vec3d(0.0, 0.0, 1.0))
+                normal.normalize()
+                # Rotate the normal based on this path's order in the path list.
+                quat = osg.Quat(2.0 * pi / (len(parallelPaths) + 1) * pathIndex, pathVec)
+                # Base the cylinder's radius on the size of the smaller of the objects at the ends of the path.
+                spacing = min([min(self._pathStart.worldSize()), min(self._pathEnd.worldSize())]) * 0.3
+                offsetVec = quat * (normal * spacing)
             
             # Add two points along the path so the lines will be parallel visually.
-            # TODO: This works fine in 3D but will start to have problems in 2D with more than three parallel edges.
             nearPoint = startVec * 0.4 + endVec * 0.6 + offsetVec
             farPoint = startVec * 0.6 + endVec * 0.4 + offsetVec
             if flip:

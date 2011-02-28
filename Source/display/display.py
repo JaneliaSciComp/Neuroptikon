@@ -490,7 +490,11 @@ class Display(wx.glcanvas.GLCanvas):
                 if visible._isDraggable():
                     self._addDragger(visible)
             
-            # TODO: call _updatePath on all visibles so parallel edges are drawn correctly?
+            # Call _updatePath on all path visibles so parallel edges are drawn correctly.
+            for visibles in self.visibles.values():
+                for visible in visibles:
+                    if visible.isPath():
+                        visible._updatePath()
             
             self._updateCompassAxes()
             
@@ -529,7 +533,11 @@ class Display(wx.glcanvas.GLCanvas):
                 self.orthoYPlane = 2
             self._resetView()
             
-            # TODO: call _updatePath on all visibles so parallel edges are drawn correctly?
+            # Call _updatePath on all path visibles so parallel edges are drawn correctly.
+            for visibles in self.visibles.values():
+                for visible in visibles:
+                    if visible.isPath():
+                        visible._updatePath()
             
             self._updateCompassAxes()
             
@@ -2267,7 +2275,9 @@ class Display(wx.glcanvas.GLCanvas):
                     networkObject = None
             
             return highlightedSomething  
-
+        
+        # TODO: selecting neuron X in Morphology.py doesn't highlight neurites
+        
         def _highlightConnectedObjects(rootObjects, maxDepth, highlightWithinSelection):
             # Do a breadth-first search on the graph of objects.
             queue = [[rootObject] for rootObject in rootObjects]
