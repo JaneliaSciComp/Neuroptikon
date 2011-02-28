@@ -558,6 +558,8 @@ class Network:
                 addEdge(simplifiedGraph, region1, region2, weight)
             if pathway.region2Projects:
                 addEdge(simplifiedGraph, region2, region1, weight)
+        for stimulus in self.stimuli():
+            addEdge(simplifiedGraph, stimulus, stimulus.target.rootObject(), self.weightOfObject(stimulus))
         
         return simplifiedGraph
     
