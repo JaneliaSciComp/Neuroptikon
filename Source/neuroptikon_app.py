@@ -60,7 +60,7 @@ class NeuroptikonApp(wx.App):
     
     def OnInit(self):
         
-        import Inspectors, Layouts, Shapes  # pylint: disable-msg=W0612
+        import Inspectors, Layouts, Shapes  # pylint: disable=W0612
         
         neuroptikon.library = Library()
         self._loadDefaultLibraryItems()
@@ -108,7 +108,7 @@ class NeuroptikonApp(wx.App):
         neuroptikon.library.add(Neurotransmitter('norepinephrine', gettext('Norepinephrine')))
         neuroptikon.library.add(Neurotransmitter('5-HT', gettext('Serotonin')))
         
-        # pylint: disable-msg=E1101
+        # pylint: disable=E1101
         neuroptikon.library.add(NeuronClass(identifier = 'basket', name = gettext('Basket cell'), polarity = Neuron.Polarity.MULTIPOLAR, functions = [Neuron.Function.INTERNEURON], activation = 'inhibitory', neurotransmitters = [neuroptikon.library.neurotransmitter('GABA')]))
         neuroptikon.library.add(NeuronClass(identifier = 'pyramidal', name = gettext('Pyramidal cell'), polarity = Neuron.Polarity.MULTIPOLAR, activation = 'excitatory', neurotransmitters = [neuroptikon.library.neurotransmitter('glutamate')]))
         neuroptikon.library.add(NeuronClass(identifier = 'RSad pyramidal', name = gettext('RSad Pyramidal cell'), parentClass = neuroptikon.library.neuronClass('pyramidal')))
@@ -119,7 +119,7 @@ class NeuroptikonApp(wx.App):
         neuroptikon.library.add(NeuronClass(identifier = 'purkinje', name = gettext('Purkinje cell'), polarity = Neuron.Polarity.MULTIPOLAR, activation = 'inhibitory', neurotransmitters = [neuroptikon.library.neurotransmitter('GABA')]))
         neuroptikon.library.add(NeuronClass(identifier = 'renshaw', name = gettext('Renshaw cell'), polarity = Neuron.Polarity.MULTIPOLAR, functions = [Neuron.Function.INTERNEURON], activation = 'inhibitory', neurotransmitters = [neuroptikon.library.neurotransmitter('glycine')]))
         neuroptikon.library.add(NeuronClass(identifier = 'anterior horn', name = gettext('Anterior horn cell')))
-        # pylint: enable-msg=E1101
+        # pylint: enable=E1101
         
         neuroptikon.library.add(Modality('light', gettext('Light')))
         neuroptikon.library.add(Modality('odor', gettext('Odor')))
@@ -239,7 +239,7 @@ class NeuroptikonApp(wx.App):
                         'shapes': shapeClasses, 
                         'Object': Object, 
                         'showMessage': self.showMessage}
-        for objectClass in NeuroObject.__subclasses__(): # pylint: disable-msg=E1101
+        for objectClass in NeuroObject.__subclasses__(): # pylint: disable=E1101
             scriptLocals[objectClass.__name__] = objectClass
         if 'DEBUG' in os.environ:
             scriptLocals['os'] = os

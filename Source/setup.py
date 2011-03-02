@@ -100,7 +100,7 @@ elif sys.platform == 'win32':
     # - python setup.py --quiet py2exe
     
     try:
-        import py2exe   # pylint: disable-msg=F0401,W0611
+        import py2exe   # pylint: disable=F0401,W0611
     except ImportError:
         print 'You must have py2exe installed and in the Python path to build the Neuroptikon package.'
         sys.exit(1)

@@ -26,7 +26,7 @@ from innervation import Innervation
 from attribute import Attribute
 
 try:
-    import pydot    # pylint: disable-msg=F0401,W0611
+    import pydot    # pylint: disable=F0401,W0611
 except ImportError:
     pydot = None
 
@@ -751,7 +751,7 @@ class Network:
                     display.selectObjects(selection)
     
     
-    def addAttribute(self, name = None, type = None, value = None): # pylint: disable-msg=W0622
+    def addAttribute(self, name = None, type = None, value = None): # pylint: disable=W0622
         """
         Add a user-defined attribute to this network.
         

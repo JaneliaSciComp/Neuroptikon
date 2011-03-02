@@ -21,14 +21,14 @@ from pydispatch import dispatcher
 class Neuron(NeuroObject):
     
     
-    class Polarity: # pylint: disable-msg=W0232
+    class Polarity: # pylint: disable=W0232
         UNIPOLAR = 'UNIPOLAR'
         BIPOLAR = 'BIPOLAR'
         PSEUDOUNIPOLAR = 'PSEUDOUNIPOLAR'
         MULTIPOLAR = 'MULTIPOLAR'
     
     
-    class Function: # pylint: disable-msg=W0232
+    class Function: # pylint: disable=W0232
         SENSORY = 'SENSORY'
         INTERNEURON = 'INTERNEURON'
         MOTOR = 'MOTOR'

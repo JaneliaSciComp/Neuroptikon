@@ -9,7 +9,7 @@ import wx
 
 def layoutClasses():
     layoutClasses = []
-    classesToInspect = Layout.__subclasses__() # pylint_disabled: disable-msg=E1101
+    classesToInspect = Layout.__subclasses__() # pylint_disabled: disable=E1101
     while any(classesToInspect):
         classToInspect = classesToInspect.pop(0)
         if classToInspect.shouldBeRegistered():

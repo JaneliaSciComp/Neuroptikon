@@ -69,7 +69,7 @@ class Object(object):
         return objectElement
     
     
-    def _includeInScript(self, atTopLevel = False): # pylint: disable-msg=W0613
+    def _includeInScript(self, atTopLevel = False): # pylint: disable=W0613
         return True
     
     
@@ -97,11 +97,11 @@ class Object(object):
         return scriptRefs[self.networkId]
     
     
-    def _creationScriptMethod(self, scriptRefs):   # pylint: disable-msg=W0613
+    def _creationScriptMethod(self, scriptRefs):   # pylint: disable=W0613
         return 'network.create' + self.__class__.__name__
     
     
-    def _creationScriptParams(self, scriptRefs):    # pylint: disable-msg=W0613
+    def _creationScriptParams(self, scriptRefs):    # pylint: disable=W0613
         args = []
         keywords = {}
         if self.name is not None:
@@ -230,7 +230,7 @@ class Object(object):
     def _printConnections(self):
         print self.name or self.defaultName() or '<anonymous %s>' % self.__class__.displayName()
         print '\tConnections: ' + ', '.join([connection.name or connection.defaultName() or '<anonymous %s>' % connection.__class__.displayName().lower() for connection in self.connections()])
-        print '\tInputs: ' + ', '.join([input.name or input.defaultName() or '<anonymous %s>' % input.__class__.displayName().lower() for input in self.inputs()])  # pylint: disable-msg=W0622
+        print '\tInputs: ' + ', '.join([input.name or input.defaultName() or '<anonymous %s>' % input.__class__.displayName().lower() for input in self.inputs()])  # pylint: disable=W0622
         print '\tOutputs: ' + ', '.join([output.name or output.defaultName() or '<anonymous %s>' % output.__class__.displayName().lower() for output in self.outputs()])
     
     

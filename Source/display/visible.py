@@ -11,7 +11,7 @@ import neuroptikon
 from network.object import Object
 from network.region import Region
 from network.neuron import Neuron
-from network.neurite import Neurite # pylint: disable-msg=E0611,F0401
+from network.neurite import Neurite # pylint: disable=E0611,F0401
 from network.stimulus import Stimulus
 from network.attribute import Attribute
 from library.texture import Texture

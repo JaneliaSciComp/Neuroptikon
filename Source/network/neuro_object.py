@@ -33,7 +33,7 @@ class NeuroObject(Object):
         return any(self.stimuli) or Object._needsScriptRef(self)
     
     
-    def connections(self, recurse = True):  # pylint: disable-msg=W0613
+    def connections(self, recurse = True):  # pylint: disable=W0613
         """
         Return a list of the objects that connect to this object.
         """
@@ -41,7 +41,7 @@ class NeuroObject(Object):
         return Object.connections(self, recurse) + self.stimuli
     
     
-    def inputs(self, recurse = True):  # pylint: disable-msg=W0613
+    def inputs(self, recurse = True):  # pylint: disable=W0613
         """
         Return a list of objects that send information into this object.
         """

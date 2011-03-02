@@ -11,7 +11,7 @@ from ctypes import c_float, c_uint, pointer
 
 def shapeClasses():
     shapeClasses = []
-    classesToInspect = Shape.__subclasses__() # pylint_disabled: disable-msg=E1101
+    classesToInspect = Shape.__subclasses__() # pylint_disabled: disable=E1101
     while any(classesToInspect):
         classToInspect = classesToInspect.pop(0)
         if classToInspect.shouldBeRegistered():
@@ -58,7 +58,7 @@ class Shape(object):
             vectorArray = osg.Vec4Array(len(vectorList))
         else:
             raise ValueError, gettext('Vector arrays can only be created with vectors of 2, 3 or 4 dimensions.')
-        arrayPointer = pointer(c_float.from_address(int(vectorArray.getDataPointer()))) # pylint: disable-msg=E1101
+        arrayPointer = pointer(c_float.from_address(int(vectorArray.getDataPointer()))) # pylint: disable=E1101
         vectorSize = vectorArray.getDataSize()
         offset = 0
         for vector in vectorList:
@@ -71,7 +71,7 @@ class Shape(object):
     @classmethod
     def primitiveSetFromList(cls, primitiveType, vertexIndexList):
         primitiveSet = osg.DrawElementsUInt(primitiveType, len(vertexIndexList))
-        arrayPointer = pointer(c_uint.from_address(int(primitiveSet.getDataPointer()))) # pylint: disable-msg=E1101
+        arrayPointer = pointer(c_uint.from_address(int(primitiveSet.getDataPointer()))) # pylint: disable=E1101
         offset = 0
         for vertex in vertexIndexList:
             arrayPointer[offset] = vertex
