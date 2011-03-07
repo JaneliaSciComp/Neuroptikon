@@ -19,7 +19,7 @@ except ImportError:
 from pick_handler import PickHandler
 from dragger_cull_callback import DraggerCullCallback
 from network.object import Object
-from network.pathway import Pathway # pylint: disable-msg=E0611,F0401
+from network.pathway import Pathway # pylint: disable=E0611,F0401
 from network.arborization import Arborization
 from network.stimulus import Stimulus
 from network.object_list import ObjectList
@@ -81,6 +81,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.viewDimensions = 2
         
         self._recomputeBounds = True
+        self._recomputeBoundsScheduled = False
         self.visiblesMin = [-100, -100, -100]
         self.visiblesMax = [100, 100, 100]
         self.visiblesCenter = [0, 0, 0]
@@ -705,6 +706,7 @@ class Display(wx.glcanvas.GLCanvas):
             # computes a screwy center.  Because there's no camera?
             # Manually compute the bounding box instead.
             # TODO: figure out how to let the faster C++ code do this
+            origBounds = (self.visiblesCenter, self.visiblesSize)
             self.visiblesMin = [100000, 100000, 100000]
             self.visiblesMax = [-100000, -100000, -100000]
             for visibles in self.visibles.values():
@@ -741,11 +743,13 @@ class Display(wx.glcanvas.GLCanvas):
             self.visiblesSize = (self.visiblesMax[0] - self.visiblesMin[0], self.visiblesMax[1] - self.visiblesMin[1], self.visiblesMax[2] - self.visiblesMin[2])
             self._recomputeBounds = False
             
-            # The size of the glow effect is based on the bounding box of the whole display.
-            for visibles in self.visibles.itervalues():
-                for visible in visibles:
-                    visible._updateGlow()
-            
+            if origBounds != (self.visiblesCenter, self.visiblesSize):
+                # The size of the glow effect is based on the bounding box of the whole display.
+                # This is expensive so only do it if something actually changed.
+                for visibles in self.visibles.itervalues():
+                    for visible in visibles:
+                        visible._updateGlow()
+        
         width, height = self.GetClientSize()
         xZoom = self.visiblesSize[self.orthoXPlane] / (width - 10.0)
         yZoom = self.visiblesSize[self.orthoYPlane] / (height - 10.0)
@@ -1050,7 +1054,7 @@ class Display(wx.glcanvas.GLCanvas):
         return list(self.visibles[networkObject.networkId]) if networkObject and networkObject.networkId in self.visibles else []
     
     
-    def Refresh(self, *args, **keywordArgs):    # pylint: disable-msg=W0221
+    def Refresh(self, *args, **keywordArgs):    # pylint: disable=W0221
         if not self._suppressRefresh:
             if self.compassCamera:
                 self._updateCompass()
@@ -1060,14 +1064,28 @@ class Display(wx.glcanvas.GLCanvas):
     def _visibleChanged(self, signal):
         if signal[1] in ('position', 'size', 'rotation', 'path', 'pathMidPoints'):
             self._recomputeBounds = True
-        if signal[1] in ('positionIsFixed', 'sizeIsFixed') and any(self.selectedVisibles):
+            if not self._recomputeBoundsScheduled:
+                # Trigger a single recompute of the visibles bounds this pass through the event loop no matter how many visibles are updated.
+                wx.CallAfter(self._resetViewAfterVisiblesChanged)
+                self._recomputeBoundsScheduled = True
+        elif signal[1] in ('positionIsFixed', 'sizeIsFixed') and any(self.selectedVisibles):
             self._clearDragger()
             visible = list(self.selectedVisibles)[0]
             if visible._isDraggable():
                 self._addDragger(visible)
+        
         self.Refresh()
+        
         if signal[1] not in ('glowColor'):
             self.GetTopLevelParent().setModified(True)
+    
+    
+    def _resetViewAfterVisiblesChanged(self):
+        self.computeVisiblesBound()
+        if self.orthoZoom == 0:
+            self.orthoCenter = (self.visiblesCenter[self.orthoXPlane], self.visiblesCenter[self.orthoYPlane])
+        self._resetView()
+        self._recomputeBoundsScheduled = False
     
     
     def addVisible(self, visible, parentVisible = None):
@@ -2557,7 +2575,7 @@ class Display(wx.glcanvas.GLCanvas):
                 if not layout.__class__.canLayoutDisplay(self):
                     raise ValueError, gettext('The supplied layout cannot be used.')
             
-            if layout == None or not layout.__class__.canLayoutDisplay(self):   # pylint: disable-msg=E1103
+            if layout == None or not layout.__class__.canLayoutDisplay(self):   # pylint: disable=E1103
                 layouts = neuroptikon.scriptLocals()['layouts']
                 if 'Graphviz' in layouts:
                     layout = layouts['Graphviz']()
