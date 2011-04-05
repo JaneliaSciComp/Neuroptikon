@@ -22,7 +22,7 @@ class RegionInspector( ObjectInspector ):
     
     def objectSizer(self, parentWindow):
         if not hasattr(self, '_sizer'):
-            self._sizer = wx.FlexGridSizer(1, 2, 8, 8)
+            self._sizer = wx.FlexGridSizer(3, 2, 8, 8)
             self._sizer.SetFlexibleDirection(wx.HORIZONTAL | wx.VERTICAL)
             
             regionImage = Region.image()

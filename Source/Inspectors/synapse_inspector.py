@@ -22,7 +22,7 @@ class SynapseInspector( ObjectInspector ):
     
     def objectSizer(self, parentWindow):
         if not hasattr(self, '_sizer'):
-            self._sizer = wx.FlexGridSizer(2, 2, 8, 8)
+            self._sizer = wx.FlexGridSizer(4, 2, 8, 8)
             
             self.excitatoryButton = wx.RadioButton(parentWindow, wx.ID_ANY, gettext('Excitatory'), style=wx.RB_GROUP)
             parentWindow.Bind(wx.EVT_RADIOBUTTON, self.onSetActivation, self.excitatoryButton)

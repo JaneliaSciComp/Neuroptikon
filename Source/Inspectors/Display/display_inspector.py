@@ -19,7 +19,7 @@ class DisplayInspector(Inspector):
         if not hasattr(self, '_window'):
             self._window = wx.Window(parentWindow, wx.ID_ANY)
             
-            self._sizer = wx.FlexGridSizer(2, 2, 8, 8)
+            self._sizer = wx.FlexGridSizer(5, 2, 8, 8)
             
             self.backgroundColorPicker = wx.lib.colourselect.ColourSelect(self._window, wx.ID_ANY)
             self._window.Bind(wx.lib.colourselect.EVT_COLOURSELECT, self.onColorChanged, self.backgroundColorPicker)
@@ -57,7 +57,7 @@ class DisplayInspector(Inspector):
         self.display = display
             
         red, green, blue, alpha = self.display.backgroundColor
-        self.backgroundColorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, alpha * 255))
+        self.backgroundColorPicker.SetColour(wx.Colour(red * 255, green * 255, blue * 255, alpha * 255))
     
         # TODO: listen for changes to the background color, view plane or ghosting opacity
         

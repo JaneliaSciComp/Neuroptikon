@@ -31,11 +31,6 @@ else:
     platformLibPath = os.path.join(rootDir, 'lib', platform.system())
 
     if platform.system() == 'Darwin':
-        if 'wx' not in sys.modules:
-            # Use the copy of wx in /Library
-            import wxversion
-            wxversion.select('2.8')
-        
         libraryEnvVar = 'DYLD_LIBRARY_PATH'
     elif platform.system() == 'Windows':
         libraryEnvVar = 'PATH'

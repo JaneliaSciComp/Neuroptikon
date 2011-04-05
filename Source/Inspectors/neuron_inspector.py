@@ -29,7 +29,7 @@ class NeuronInspector( ObjectInspector ):
     
     def objectSizer(self, parentWindow):
         if not hasattr(self, '_sizer'):
-            self._sizer = wx.FlexGridSizer(2, 2, 8, 8)
+            self._sizer = wx.FlexGridSizer(4, 2, 8, 8)
             self._sizer.SetFlexibleDirection(wx.HORIZONTAL | wx.VERTICAL)
             
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Class:')))

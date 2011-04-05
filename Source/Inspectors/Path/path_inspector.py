@@ -34,7 +34,7 @@ class PathInspector(Inspector):
             
             self._flowToBoxSizer = wx.StaticBoxSizer(wx.StaticBox(self._window, wx.ID_ANY, gettext('Flow to')), wx.HORIZONTAL)
             
-            flowToGridSizer = wx.FlexGridSizer(3, 2, 8, 0)
+            flowToGridSizer = wx.FlexGridSizer(6, 2, 8, 0)
             flowToGridSizer.SetFlexibleDirection(wx.HORIZONTAL)
             flowToGridSizer.AddGrowableCol(1, 1)
             
@@ -69,7 +69,7 @@ class PathInspector(Inspector):
             
             self._flowFromBoxSizer = wx.StaticBoxSizer(wx.StaticBox(self._window, wx.ID_ANY, gettext('Flow to')), wx.HORIZONTAL)
             
-            flowFromGridSizer = wx.FlexGridSizer(3, 2, 8, 0)
+            flowFromGridSizer = wx.FlexGridSizer(6, 2, 8, 0)
             flowFromGridSizer.SetFlexibleDirection(wx.HORIZONTAL)
             flowFromGridSizer.AddGrowableCol(1, 1)
             
@@ -182,7 +182,7 @@ class PathInspector(Inspector):
                     red, green, blue, alpha = self.display.defaultFlowColor
                 else:
                     red, green, blue, alpha = self.paths[0].flowToColor() or self.display.defaultFlowColor
-                self._flowToColorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, alpha * 255))
+                self._flowToColorPicker.SetColour(wx.Colour(red * 255, green * 255, blue * 255, alpha * 255))
                 self._flowToColorPicker.SetLabel(gettext(''))
             else:
                 self._flowToColorPicker.SetColour(wx.NamedColour('GRAY'))  # TODO: be clever and pick the average color?
@@ -240,7 +240,7 @@ class PathInspector(Inspector):
                     red, green, blue, alpha = self.display.defaultFlowColor
                 else:
                     red, green, blue, alpha = self.paths[0].flowFromColor() or self.display.defaultFlowColor
-                self._flowFromColorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, alpha * 255))
+                self._flowFromColorPicker.SetColour(wx.Colour(red * 255, green * 255, blue * 255, alpha * 255))
                 self._flowFromColorPicker.SetLabel(gettext(''))
             else:
                 self._flowFromColorPicker.SetColour(wx.NamedColour('GRAY'))  # TODO: be clever and pick the average color?

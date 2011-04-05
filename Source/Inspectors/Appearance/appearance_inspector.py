@@ -26,7 +26,7 @@ class AppearanceInspector(Inspector):
     def window(self, parentWindow=None):
         if not hasattr(self, '_window'):
             self._window = wx.Window(parentWindow, wx.ID_ANY)
-            gridSizer = wx.FlexGridSizer(3, 2, 8, 8)
+            gridSizer = wx.FlexGridSizer(5, 2, 8, 8)
             
             # Add a color picker for our fill color.
             self._colorPicker = wx.lib.colourselect.ColourSelect(self._window, wx.ID_ANY)
@@ -53,8 +53,9 @@ class AppearanceInspector(Inspector):
             
             # Add a pop-up for choosing the texture.
             self._textureChoice = wx.Choice(self._window, wx.ID_ANY)
-            for texture in neuroptikon.library.textures():
-                self._textureChoice.Append(gettext(texture.name), texture)
+            if hasattr(neuroptikon.library, 'texture'):
+                for texture in neuroptikon.library.textures():
+                    self._textureChoice.Append(gettext(texture.name), texture)
             self._textureChoice.Append(gettext('None'), None)
             self._multipleTexturesId = wx.NOT_FOUND
             gridSizer.Add(wx.StaticText(self._window, wx.ID_ANY, gettext('Texture:')), 0)
@@ -98,7 +99,7 @@ class AppearanceInspector(Inspector):
             if updatedAttribute is None or updatedAttribute == 'color':
                 if self.visibles.haveEqualAttr('color'):
                     red, green, blue = self.visibles[0].color()
-                    self._colorPicker.SetColour(wx.Color(red * 255, green * 255, blue * 255, 255))
+                    self._colorPicker.SetColour(wx.Colour(red * 255, green * 255, blue * 255, 255))
                     self._colorPicker.SetLabel(gettext(''))
                 else:
                     self._colorPicker.SetColour(wx.NamedColour('GRAY'))  # TODO: be clever and pick the average color?
