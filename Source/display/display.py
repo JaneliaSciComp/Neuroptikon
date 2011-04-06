@@ -51,10 +51,12 @@ class Display(wx.glcanvas.GLCanvas):
         """
         
         style = wx.WANTS_CHARS | wx.FULL_REPAINT_ON_RESIZE | wx.HSCROLL | wx.VSCROLL
-        if not hasattr(wx.glcanvas, "WX_GL_SAMPLE_BUFFERS"):
-            wx.glcanvas.WX_GL_SAMPLE_BUFFERS = wx.glcanvas.WX_GL_MIN_ACCUM_ALPHA + 1
-        attribList = [wx.glcanvas.WX_GL_RGBA, wx.glcanvas.WX_GL_DOUBLEBUFFER, wx.glcanvas.WX_GL_DEPTH_SIZE, 16, 0, 0]
-        wx.glcanvas.GLCanvas.__init__(self, parent, wxId, wx.DefaultPosition, wx.DefaultSize, style, "", attribList)
+        attribList = [wx.glcanvas.WX_GL_RGBA, wx.glcanvas.WX_GL_DOUBLEBUFFER]
+        if neuroptikon.config.ReadBool('Smooth All Objects') and hasattr(wx.glcanvas, 'WX_GL_SAMPLE_BUFFERS'):
+            attribList += [wx.glcanvas.WX_GL_SAMPLE_BUFFERS, 1, wx.glcanvas.WX_GL_SAMPLES, 4]
+        attribList += [wx.glcanvas.WX_GL_DEPTH_SIZE, 16, 0, 0]
+        wx.glcanvas.GLCanvas.__init__(self, parent, wxId, attribList, wx.DefaultPosition, (200,200), style, "")
+        self.glContext = wx.glcanvas.GLContext(self)
         
         self._name = None
         self.network = network
@@ -105,6 +107,7 @@ class Display(wx.glcanvas.GLCanvas):
         else:
             self.scrollWheelScale = 1
         
+        # TODO: only if pref set?
         osg.DisplaySettings.instance().setNumMultiSamples(4)
         
         self.trackball = osgGA.TrackballManipulator()
@@ -1000,14 +1003,14 @@ class Display(wx.glcanvas.GLCanvas):
     def onSize(self, event):
         w, h = self.GetClientSize()
         
-        if self.GetParent().IsShown():
-            self.SetCurrent()
+        if self.IsShownOnScreen():
+            self.SetCurrent(self.glContext)
 
-        if self.graphicsWindow.valid():
-            self.graphicsWindow.getEventQueue().windowResize(0, 0, w, h)
-            self.graphicsWindow.resized(0, 0, w, h)
-        
-        self._resetView()
+            if self.graphicsWindow.valid():
+                self.graphicsWindow.getEventQueue().windowResize(0, 0, w, h)
+                self.graphicsWindow.resized(0, 0, w, h)
+            
+            self._resetView()
         
         event.Skip()
     
@@ -1015,8 +1018,8 @@ class Display(wx.glcanvas.GLCanvas):
     def onPaint(self, event_):
         wx.PaintDC(self)
         
-        if self.GetContext() != 0 and self.graphicsWindow.valid():
-            self.SetCurrent()
+        if self.IsShownOnScreen():  #self.GetContext() != 0 and self.graphicsWindow.valid():
+            self.SetCurrent(self.glContext)
             self.viewer.frame()
             self.SwapBuffers()
      
@@ -2617,7 +2620,7 @@ class Display(wx.glcanvas.GLCanvas):
         
         width, height = self.GetClientSize()
         image = osg.Image()
-        self.SetCurrent()
+        self.SetCurrent(self.glContext)
         image.readPixels(0, 0, width, height, osg.GL_RGBA, osg.GL_UNSIGNED_BYTE)
         osgDB.writeImageFile(image, path)
     
