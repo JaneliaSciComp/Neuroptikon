@@ -4,6 +4,7 @@
 #  http://license.janelia.org/license/jfrc_copyright_1_1.html
 
 import neuroptikon
+import osgUtil
 from neuro_object import NeuroObject
 try:
     import xml.etree.cElementTree as ElementTree
@@ -122,7 +123,7 @@ class Synapse(NeuroObject):
     @classmethod
     def _defaultVisualizationParams(cls):
         params = NeuroObject._defaultVisualizationParams()
-        params['shape'] = 'Line'
+        params['shape'] = 'Line' if hasattr(osgUtil, 'PolytopeIntersector') else 'Cylinder'
         params['color'] = (0.0, 0.0, 1.0)
         return params
     

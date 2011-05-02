@@ -4,6 +4,7 @@
 #  http://license.janelia.org/license/jfrc_copyright_1_1.html
 
 import neuroptikon
+import osgUtil
 from neuro_object import NeuroObject
 
 
@@ -86,7 +87,7 @@ class Innervation(NeuroObject):
     @classmethod
     def _defaultVisualizationParams(cls):
         params = NeuroObject._defaultVisualizationParams()
-        params['shape'] = 'Line'
+        params['shape'] = 'Line' if hasattr(osgUtil, 'PolytopeIntersector') else 'Cylinder'
         params['color'] = (0.55, 0.35, 0.25)
         params['pathIsFixed'] = None
         params['flowTo'] = True

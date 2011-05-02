@@ -4,6 +4,7 @@
 #  http://license.janelia.org/license/jfrc_copyright_1_1.html
 
 import neuroptikon
+import osgUtil
 from neuro_object import NeuroObject
 
 class GapJunction(NeuroObject):
@@ -105,7 +106,7 @@ class GapJunction(NeuroObject):
     @classmethod
     def _defaultVisualizationParams(cls):
         params = NeuroObject._defaultVisualizationParams()
-        params['shape'] = 'Line'
+        params['shape'] = 'Line' if hasattr(osgUtil, 'PolytopeIntersector') else 'Cylinder'
         params['color'] = (.65, 0.75, 0.4)
         params['pathIsFixed'] = None
         params['flowTo'] = True

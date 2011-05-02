@@ -12,6 +12,7 @@ from muscle import Muscle
 from innervation import Innervation
 from pathway import Pathway
 from stimulus import Stimulus
+import osgUtil
 
 
 class Neurite(NeuroObject):
@@ -436,5 +437,5 @@ class Neurite(NeuroObject):
     @classmethod
     def _defaultVisualizationParams(cls):
         params = NeuroObject._defaultVisualizationParams()
-        params['shape'] = 'Line'
+        params['shape'] = 'Line' if hasattr(osgUtil, 'PolytopeIntersector') else 'Cylinder'
         return params

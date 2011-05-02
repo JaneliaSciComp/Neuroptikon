@@ -82,7 +82,10 @@ class PickHandler(osgGA.GUIEventHandler):
                 if self._display.activeDragger == self._display.compositeDragger:
                     self._display.draggerLOD.removeChild(self._display.simpleDragger)
             x, y = eventAdaptor.getX(), eventAdaptor.getY()
-            picker = osgUtil.PolytopeIntersector(osgUtil.Intersector.WINDOW, x - 2.0, y - 2.0, x + 2.0, y + 2.0)
+            if hasattr(osgUtil, 'PolytopeIntersector'):
+                picker = osgUtil.PolytopeIntersector(osgUtil.Intersector.WINDOW, x - 2.0, y - 2.0, x + 2.0, y + 2.0)
+            else:
+                picker = osgUtil.LineSegmentIntersector(osgUtil.Intersector.WINDOW, x, y)
             intersectionVisitor = osgUtil.IntersectionVisitor(picker)
             intersectionVisitor.setTraversalMode(osg.NodeVisitor.TRAVERSE_ACTIVE_CHILDREN)
             viewer.getCamera().accept(intersectionVisitor)
@@ -96,7 +99,10 @@ class PickHandler(osgGA.GUIEventHandler):
                             self.dragger = osgManipulator.NodeToDragger(node)
                         if self.dragger is not None:
                             localPoint = intersection.localIntersectionPoint  # have to do stupid conversion from Vec3d to Vec3
-                            self.pointerInfo.addIntersection(intersection.nodePath, osg.Vec3(localPoint.x(), localPoint.y(), localPoint.z()))
+                            if hasattr(osgUtil, 'PolytopeIntersector'):
+                                self.pointerInfo.addIntersection(intersection.nodePath, osg.Vec3(localPoint.x(), localPoint.y(), localPoint.z()))
+                            else:
+                                self.pointerInfo.addIntersection(intersection.nodePath, osg.Vec3d(localPoint.x(), localPoint.y(), localPoint.z()))
                 if self.dragger is not None:
                     self.dragger.handle(self.pointerInfo, eventAdaptor, viewer)
                     eventWasHandled = True
@@ -111,7 +117,10 @@ class PickHandler(osgGA.GUIEventHandler):
     # TODO: have this return the picked object (or None) and leave the action up to the caller
     def pick(self, x, y, viewer):
         if viewer.getSceneData():
-            picker = osgUtil.PolytopeIntersector(osgUtil.Intersector.WINDOW, x - 2.0, y - 2.0, x + 2.0, y + 2.0)
+            if hasattr(osgUtil, 'PolytopeIntersector'):
+                picker = osgUtil.PolytopeIntersector(osgUtil.Intersector.WINDOW, x - 2.0, y - 2.0, x + 2.0, y + 2.0)
+            else:
+                picker = osgUtil.LineSegmentIntersector(osgUtil.Intersector.WINDOW, x, y)
             intersectionVisitor = osgUtil.IntersectionVisitor(picker)
             viewer.getCamera().accept(intersectionVisitor)
             if picker.containsIntersections():
