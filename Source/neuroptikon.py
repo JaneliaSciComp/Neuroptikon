@@ -34,10 +34,10 @@ else:
         libraryEnvVar = 'DYLD_LIBRARY_PATH'
     elif platform.system() == 'Windows':
         libraryEnvVar = 'PATH'
-    #elif platform.system() == 'Linux':
-    #    libraryEnvVar = 'LD_LIBRARY_PATH'
+    else:
+        libraryEnvVar = None
 
-    if libraryEnvVar not in os.environ or platformLibPath not in os.environ[libraryEnvVar].split(os.pathsep):
+    if libraryEnvVar and (libraryEnvVar not in os.environ or platformLibPath not in os.environ[libraryEnvVar].split(os.pathsep)):
         # Add the search path for the native libraries to the enviroment.
         if libraryEnvVar in os.environ:
             os.environ[libraryEnvVar] = platformLibPath + os.pathsep + os.environ[libraryEnvVar]
