@@ -858,7 +858,7 @@ class NeuroptikonFrame(wx.Frame):
                 # Use ctypes to call into the Carbon API to set the window's modified state.  When modified is True this causes the close button to be drawn with a dot inside it.
                 # Use wx.CallAfter otherwise the dot won't show up until the window is resized, deactivated or the mouse hovers over the button.
                 wx.CallAfter(carbon.SetWindowModified, self.MacGetTopLevelWindowRef(), modified)
-            elif platform.system() == 'Windows':
+            elif platform.system() != 'Darwin':
                 title = self.GetTitle()
                 if modified and not title.endswith('*'):
                     self.SetTitle(title + '*')

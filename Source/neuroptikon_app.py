@@ -163,7 +163,7 @@ class NeuroptikonApp(wx.App):
             if not frame.Close():
                 continueQuit = False
                 break
-        if continueQuit and not any(self._frames) and platform.system() != 'Windows':
+        if continueQuit and not any(self._frames) and platform.system() == 'Darwin':
             self.ExitMainLoop()
     
     
@@ -374,7 +374,7 @@ class NeuroptikonApp(wx.App):
     
     def displayWasClosed(self, displayFrame):
         self._frames.remove(displayFrame)
-        if len(self._frames) == 0 and platform.system() == 'Windows':
+        if len(self._frames) == 0 and platform.system() != 'Darwin':
             self.ExitMainLoop()
 
     
