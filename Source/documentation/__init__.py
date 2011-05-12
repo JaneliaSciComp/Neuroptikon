@@ -2,7 +2,7 @@
 
 import neuroptikon
 
-import wx
+import wx, wx.html
 import os.path, sys, urllib
 
 _sharedFrame = None
@@ -10,9 +10,9 @@ _sharedFrame = None
 
 def baseURL():
     if neuroptikon.runningFromSource:
-        basePath = os.path.join(neuroptikon.rootDir, 'Documentation', 'build', 'Documentation')
+        basePath = os.path.join(neuroptikon.rootDir, 'documentation', 'build', 'Documentation')
     else:
-        basePath = os.path.join(neuroptikon.rootDir, 'Documentation')
+        basePath = os.path.join(neuroptikon.rootDir, 'documentation')
     
     return 'file:' + urllib.pathname2url(basePath) + '/'
 
@@ -25,6 +25,5 @@ def showPage(page):
         import documentation_frame
         documentation_frame.showPage(pageURL)
     except:
-        raise
         # Fall back to using the user's default browser outside of Neuroptikon.
-        #wx.LaunchDefaultBrowser(pageURL)
+        wx.LaunchDefaultBrowser(pageURL)

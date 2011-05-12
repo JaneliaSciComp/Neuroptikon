@@ -5,7 +5,7 @@ import platform
 
 try:
     import wx.webkit as webkit
-except ImportError:
+except (ImportError, NameError):
     webkit = None
 
 try:
@@ -33,9 +33,15 @@ class DocumentationFrame( wx.Frame ):
                 self.htmlViewer = webkit.WebKitCtrl(self)
             except:
                 self.htmlViewer = None
-        if (not webkit or self.htmlViewer == None) and iewin:
-            self.htmlViewer = iewin.IEHtmlWindow(self)
-            self.htmlViewer.LoadURL = self.htmlViewer.LoadUrl
+        if (not webkit or self.htmlViewer == None):
+            if iewin:
+                self.htmlViewer = iewin.IEHtmlWindow(self)
+                self.htmlViewer.LoadURL = self.htmlViewer.LoadUrl
+            else:
+                self.htmlViewer = wx.html.HtmlWindow(self)
+                self.htmlViewer.LoadURL = self.htmlViewer.LoadPage
+                self.htmlViewer.GoBack = self.htmlViewer.HistoryBack
+                self.htmlViewer.GoForward = self.htmlViewer.HistoryForward
         self.mainSizer = wx.BoxSizer(wx.VERTICAL)
         self.mainSizer.Add(self.htmlViewer, 1, wx.EXPAND)
         self.SetSizer(self.mainSizer)

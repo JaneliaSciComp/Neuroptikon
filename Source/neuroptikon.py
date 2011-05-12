@@ -28,13 +28,15 @@ else:
     
     # Make sure that the library paths are set up correctly for the current location.
     commonLibPath = os.path.join(rootDir, 'lib', 'CrossPlatform')
-    platformLibPath = os.path.join(rootDir, 'lib', platform.system())
 
     if platform.system() == 'Darwin':
+        platformLibPath = os.path.join(rootDir, 'lib', 'Darwin')
         libraryEnvVar = 'DYLD_LIBRARY_PATH'
     elif platform.system() == 'Windows':
+        platformLibPath = os.path.join(rootDir, 'lib', 'Windows')
         libraryEnvVar = 'PATH'
     else:
+        platformLibPath = None
         libraryEnvVar = None
 
     if libraryEnvVar and (libraryEnvVar not in os.environ or platformLibPath not in os.environ[libraryEnvVar].split(os.pathsep)):
@@ -55,10 +57,11 @@ else:
     for eggPath in os.listdir(commonLibPath):
         if eggPath.endswith('.egg'):
             sys.path.insert(0, os.path.join(commonLibPath, eggPath))
-    sys.path.insert(0, platformLibPath)
-    for eggPath in os.listdir(platformLibPath):
-        if eggPath.endswith('.egg'):
-            sys.path.insert(0, os.path.join(platformLibPath, eggPath))
+    if platformLibPath:
+        sys.path.insert(0, platformLibPath)
+        for eggPath in os.listdir(platformLibPath):
+            if eggPath.endswith('.egg'):
+                sys.path.insert(0, os.path.join(platformLibPath, eggPath))
 
     # TODO: figure out if it's worth packaging psyco...
     try:

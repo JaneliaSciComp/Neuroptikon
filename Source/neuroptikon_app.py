@@ -452,8 +452,8 @@ class NeuroptikonApp(wx.App):
         Display a message to the user.
         """
         
-        if platform.system() == 'Windows':
-            wx.MessageBox('Neuroptikon', (message + '\n\n' + subMessage if message else subMessage or ''), style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
-        else:
+        if platform.system() == 'Darwin':
             wx.MessageBox(subMessage, message or '', style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
+        else:
+            wx.MessageBox('Neuroptikon', (message + '\n\n' + subMessage if message else subMessage or ''), style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
     

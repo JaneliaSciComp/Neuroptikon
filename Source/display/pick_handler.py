@@ -93,8 +93,11 @@ class PickHandler(osgGA.GUIEventHandler):
                 # Add all intersections from the first dragger hit onward to the pointer info.  This allows dragging of nested regions.
                 self.pointerInfo.setCamera(viewer.getCamera())
                 self.pointerInfo.setMousePosition(eventAdaptor.getX(), eventAdaptor.getY())
-                for intersection in picker.getIntersections():
-                    for node in intersection.nodePath:
+                intersections = picker.getIntersections()
+                for i in range(0, len(intersections)):
+                    intersection = intersections[i]
+                    for j in range(0, len(intersection.nodePath)):
+                        node = intersection.nodePath[j]
                         if self.dragger is None:
                             self.dragger = osgManipulator.NodeToDragger(node)
                         if self.dragger is not None:
@@ -133,8 +136,10 @@ class PickHandler(osgGA.GUIEventHandler):
                 eye, center, up = (osg.Vec3(), osg.Vec3(), osg.Vec3())
                 viewer.getCamera().getViewMatrixAsLookAt(eye, center, up)
                 eye = (eye.x(), eye.y(), eye.z())
-                for intersection in intersections:
-                    for node in intersection.nodePath:
+                for i in range(0, len(intersections)):
+                    intersection = intersections[i]
+                    for j in range(0, len(intersection.nodePath)):
+                        node = intersection.nodePath[j]
                         geode = osg.NodeToGeode(node)
                         if geode != None:
                             visibleID = int(geode.getName())

@@ -182,6 +182,8 @@ class NeuroptikonFrame(wx.Frame):
             image.Rescale(size[0], size[1], wx.IMAGE_QUALITY_HIGH)
         elif platform.system() == 'Windows':
             image.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH)
+        elif platform.system() == 'Linux':
+            image.Rescale(32, 32, wx.IMAGE_QUALITY_HIGH)
         return image.ConvertToBitmap()
     
     
@@ -636,7 +638,7 @@ class NeuroptikonFrame(wx.Frame):
         doClose = True
         
         if self._modified:
-            if platform.system() == 'Windows':
+            if platform.system() != 'Darwin':
                 message = gettext('Your changes will be lost if you don\'t save them.') + '\n\n' + gettext('Do you want to save the changes you made to "%s"?') % (self.display.network.name())
                 caption = gettext('Neuroptikon')
             else:
@@ -948,8 +950,8 @@ class NeuroptikonFrame(wx.Frame):
         """
         
         self.Thaw()
-        if platform.system() == 'Windows':
-            wx.MessageBox('Neuroptikon', (message + '\n\n' + subMessage if message else subMessage or ''), style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
-        else:
+        if platform.system() == 'Darwin':
             wx.MessageBox(subMessage, message or '', style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
+        else:
+            wx.MessageBox('Neuroptikon', (message + '\n\n' + subMessage if message else subMessage or ''), style = (wx.ICON_ERROR if isError else wx.ICON_INFORMATION) | wx.OK)
         self.Freeze()
