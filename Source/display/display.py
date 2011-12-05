@@ -55,7 +55,7 @@ class Display(wx.glcanvas.GLCanvas):
         if neuroptikon.config.ReadBool('Smooth All Objects') and hasattr(wx.glcanvas, 'WX_GL_SAMPLE_BUFFERS'):
             attribList += [wx.glcanvas.WX_GL_SAMPLE_BUFFERS, 1, wx.glcanvas.WX_GL_SAMPLES, 4]
         attribList += [wx.glcanvas.WX_GL_DEPTH_SIZE, 16, 0, 0]
-        wx.glcanvas.GLCanvas.__init__(self, parent, wxId, attribList, wx.DefaultPosition, (200,200), style, "")
+        wx.glcanvas.GLCanvas.__init__(self, parent, wxId, attribList = attribList, pos = wx.DefaultPosition, size = (200,200), style = style, name = "")
         self.glContext = wx.glcanvas.GLContext(self)
         
         self._name = None
