@@ -30,7 +30,7 @@ class Preferences( wx.Frame ):
         self.Bind(wx.EVT_CHECKBOX, self.onSetSmoothAllObjects, self._smoothAllCheckBox)
         self._smoothAllCheckBox.SetValue(neuroptikon.config.ReadBool('Smooth All Objects'))
         if not hasattr(wx.glcanvas, 'WX_GL_SAMPLE_BUFFERS'):
-            self._smoothAllCheckBox.SetEnabled(False)
+            self._smoothAllCheckBox.Disable()
         smoothingBox.Add(self._smoothAllCheckBox)
         
         self._smoothLinesCheckBox = wx.CheckBox(self, wx.ID_ANY, gettext('Smooth Lines'))
