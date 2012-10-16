@@ -229,6 +229,7 @@ class NeuroptikonApp(wx.App):
                         'networks': self.networks, 
                         'library': neuroptikon.library, 
                         'Neurotransmitter': Neurotransmitter, 
+                        'NeuronClass': NeuronClass, 
                         'Modality': Modality, 
                         'Ontology': Ontology, 
                         'Texture': Texture, 
