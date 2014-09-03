@@ -108,7 +108,8 @@ class Display(wx.glcanvas.GLCanvas):
             self.scrollWheelScale = 1
         
         # TODO: only if pref set?
-        osg.DisplaySettings.instance().setNumMultiSamples(4)
+        # Not in osg 3.2.1?
+        # osg.DisplaySettings.instance().setNumMultiSamples(4)
         
         self.trackball = osgGA.TrackballManipulator()
         self._previousTrackballMatrix = None
