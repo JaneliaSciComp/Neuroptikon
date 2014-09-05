@@ -140,6 +140,7 @@ class Visible(object):
                 cullFacesPath = os.path.join(neuroptikon.rootDir, 'display', 'cull_faces.osg')
             else:
                 cullFacesPath = os.path.join(neuroptikon.rootDir, 'cull_faces.osg')
+            print "cullFacesPath = ", cullFacesPath
             cullFacesNode = osgDB.readNodeFile(cullFacesPath)
             cullFacesGroup = cullFacesNode.asGroup()
             Visible.cullFrontFacesAttr = cullFacesGroup.getChild(0).getStateSet().getAttribute(osg.StateAttribute.CULLFACE)

@@ -4620,6 +4620,10 @@ class refStateAttribute(_object):
         """__ne__(refStateAttribute self, StateAttribute rhs) -> bool"""
         return _osg.refStateAttribute___ne__(self, *args)
 
+    def getParents(self):
+        """getParents(refStateAttribute self) -> vectorStateSet"""
+        return _osg.refStateAttribute_getParents(self)
+
     def getParent(self, *args):
         """
         getParent(refStateAttribute self, unsigned int i) -> StateSet
@@ -4894,6 +4898,13 @@ class StateSet(Object):
     def __ne__(self, *args):
         """__ne__(StateSet self, StateSet rhs) -> bool"""
         return _osg.StateSet___ne__(self, *args)
+
+    def getParents(self, *args):
+        """
+        getParents(StateSet self) -> osg::StateSet::ParentList const
+        getParents(StateSet self) -> osg::StateSet::ParentList
+        """
+        return _osg.StateSet_getParents(self, *args)
 
     def getParent(self, *args):
         """
@@ -5372,6 +5383,10 @@ class StateAttribute(Object):
     def __ne__(self, *args):
         """__ne__(StateAttribute self, StateAttribute rhs) -> bool"""
         return _osg.StateAttribute___ne__(self, *args)
+
+    def getParents(self):
+        """getParents(StateAttribute self) -> vectorStateSet"""
+        return _osg.StateAttribute_getParents(self)
 
     def getParent(self, *args):
         """
@@ -14273,6 +14288,13 @@ class Drawable(Object):
         """computeDataVariance(Drawable self)"""
         return _osg.Drawable_computeDataVariance(self)
 
+    def getParents(self, *args):
+        """
+        getParents(Drawable self) -> vectorNode
+        getParents(Drawable self) -> vectorNode
+        """
+        return _osg.Drawable_getParents(self, *args)
+
     def getParent(self, *args):
         """
         getParent(Drawable self, unsigned int i) -> Node
@@ -20411,6 +20433,10 @@ class Node(Object):
         """traverse(Node self, NodeVisitor arg2)"""
         return _osg.Node_traverse(self, *args)
 
+    def getParents(self):
+        """getParents(Node self) -> vectorGroup"""
+        return _osg.Node_getParents(self)
+
     def getParent(self, *args):
         """
         getParent(Node self, unsigned int i) -> Group
@@ -26464,6 +26490,10 @@ class TextureRef(_object):
         """__ne__(TextureRef self, StateAttribute rhs) -> bool"""
         return _osg.TextureRef___ne__(self, *args)
 
+    def getParents(self):
+        """getParents(TextureRef self) -> vectorStateSet"""
+        return _osg.TextureRef_getParents(self)
+
     def getParent(self, *args):
         """
         getParent(TextureRef self, unsigned int i) -> StateSet
@@ -26792,6 +26822,10 @@ class GroupRef(_object):
     def ascend(self, *args):
         """ascend(GroupRef self, NodeVisitor nv)"""
         return _osg.GroupRef_ascend(self, *args)
+
+    def getParents(self):
+        """getParents(GroupRef self) -> vectorGroup"""
+        return _osg.GroupRef_getParents(self)
 
     def getParent(self, *args):
         """
@@ -27204,6 +27238,10 @@ class NodeRef(_object):
     def traverse(self, *args):
         """traverse(NodeRef self, NodeVisitor arg2)"""
         return _osg.NodeRef_traverse(self, *args)
+
+    def getParents(self):
+        """getParents(NodeRef self) -> vectorGroup"""
+        return _osg.NodeRef_getParents(self)
 
     def getParent(self, *args):
         """
@@ -27736,6 +27774,10 @@ class TransformRef(_object):
         """ascend(TransformRef self, NodeVisitor nv)"""
         return _osg.TransformRef_ascend(self, *args)
 
+    def getParents(self):
+        """getParents(TransformRef self) -> vectorGroup"""
+        return _osg.TransformRef_getParents(self)
+
     def getParent(self, *args):
         """
         getParent(TransformRef self, unsigned int i) -> Group
@@ -28220,6 +28262,10 @@ class GeodeRef(_object):
     def traverse(self, *args):
         """traverse(GeodeRef self, NodeVisitor arg2)"""
         return _osg.GeodeRef_traverse(self, *args)
+
+    def getParents(self):
+        """getParents(GeodeRef self) -> vectorGroup"""
+        return _osg.GeodeRef_getParents(self)
 
     def getParent(self, *args):
         """
@@ -28756,6 +28802,10 @@ class BillboardRef(_object):
         """traverse(BillboardRef self, NodeVisitor arg2)"""
         return _osg.BillboardRef_traverse(self, *args)
 
+    def getParents(self):
+        """getParents(BillboardRef self) -> vectorGroup"""
+        return _osg.BillboardRef_getParents(self)
+
     def getParent(self, *args):
         """
         getParent(BillboardRef self, unsigned int i) -> Group
@@ -29287,6 +29337,10 @@ class SwitchRef(_object):
     def ascend(self, *args):
         """ascend(SwitchRef self, NodeVisitor nv)"""
         return _osg.SwitchRef_ascend(self, *args)
+
+    def getParents(self):
+        """getParents(SwitchRef self) -> vectorGroup"""
+        return _osg.SwitchRef_getParents(self)
 
     def getParent(self, *args):
         """
@@ -29835,6 +29889,10 @@ class LODRef(_object):
     def ascend(self, *args):
         """ascend(LODRef self, NodeVisitor nv)"""
         return _osg.LODRef_ascend(self, *args)
+
+    def getParents(self):
+        """getParents(LODRef self) -> vectorGroup"""
+        return _osg.LODRef_getParents(self)
 
     def getParent(self, *args):
         """
@@ -30526,6 +30584,10 @@ class PagedLODRef(_object):
         """ascend(PagedLODRef self, NodeVisitor nv)"""
         return _osg.PagedLODRef_ascend(self, *args)
 
+    def getParents(self):
+        """getParents(PagedLODRef self) -> vectorGroup"""
+        return _osg.PagedLODRef_getParents(self)
+
     def getParent(self, *args):
         """
         getParent(PagedLODRef self, unsigned int i) -> Group
@@ -31081,6 +31143,10 @@ class ProxyNodeRef(_object):
         """ascend(ProxyNodeRef self, NodeVisitor nv)"""
         return _osg.ProxyNodeRef_ascend(self, *args)
 
+    def getParents(self):
+        """getParents(ProxyNodeRef self) -> vectorGroup"""
+        return _osg.ProxyNodeRef_getParents(self)
+
     def getParent(self, *args):
         """
         getParent(ProxyNodeRef self, unsigned int i) -> Group
@@ -31579,6 +31645,10 @@ class ProjectionRef(_object):
         """ascend(ProjectionRef self, NodeVisitor nv)"""
         return _osg.ProjectionRef_ascend(self, *args)
 
+    def getParents(self):
+        """getParents(ProjectionRef self) -> vectorGroup"""
+        return _osg.ProjectionRef_getParents(self)
+
     def getParent(self, *args):
         """
         getParent(ProjectionRef self, unsigned int i) -> Group
@@ -32072,6 +32142,10 @@ class LightRef(_object):
         """__ne__(LightRef self, StateAttribute rhs) -> bool"""
         return _osg.LightRef___ne__(self, *args)
 
+    def getParents(self):
+        """getParents(LightRef self) -> vectorStateSet"""
+        return _osg.LightRef_getParents(self)
+
     def getParent(self, *args):
         """
         getParent(LightRef self, unsigned int i) -> StateSet
@@ -32465,6 +32539,10 @@ class MatrixTransformRef(_object):
     def ascend(self, *args):
         """ascend(MatrixTransformRef self, NodeVisitor nv)"""
         return _osg.MatrixTransformRef_ascend(self, *args)
+
+    def getParents(self):
+        """getParents(MatrixTransformRef self) -> vectorGroup"""
+        return _osg.MatrixTransformRef_getParents(self)
 
     def getParent(self, *args):
         """
@@ -33084,6 +33162,10 @@ class AutoTransformRef(_object):
         """ascend(AutoTransformRef self, NodeVisitor nv)"""
         return _osg.AutoTransformRef_ascend(self, *args)
 
+    def getParents(self):
+        """getParents(AutoTransformRef self) -> vectorGroup"""
+        return _osg.AutoTransformRef_getParents(self)
+
     def getParent(self, *args):
         """
         getParent(AutoTransformRef self, unsigned int i) -> Group
@@ -33681,6 +33763,10 @@ class CameraViewRef(_object):
     def ascend(self, *args):
         """ascend(CameraViewRef self, NodeVisitor nv)"""
         return _osg.CameraViewRef_ascend(self, *args)
+
+    def getParents(self):
+        """getParents(CameraViewRef self) -> vectorGroup"""
+        return _osg.CameraViewRef_getParents(self)
 
     def getParent(self, *args):
         """
@@ -34588,6 +34674,10 @@ class CameraRef(_object):
         """ascend(CameraRef self, NodeVisitor nv)"""
         return _osg.CameraRef_ascend(self, *args)
 
+    def getParents(self):
+        """getParents(CameraRef self) -> vectorGroup"""
+        return _osg.CameraRef_getParents(self)
+
     def getParent(self, *args):
         """
         getParent(CameraRef self, unsigned int i) -> Group
@@ -35486,6 +35576,10 @@ class Uniform(Object):
     def copyData(self, *args):
         """copyData(Uniform self, Uniform rhs)"""
         return _osg.Uniform_copyData(self, *args)
+
+    def getParents(self):
+        """getParents(Uniform self) -> vectorStateSet"""
+        return _osg.Uniform_getParents(self)
 
     def getParent(self, *args):
         """
