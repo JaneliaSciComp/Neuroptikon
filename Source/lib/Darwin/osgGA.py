@@ -1816,12 +1816,115 @@ class StateSetManipulator(GUIEventHandler):
 StateSetManipulator_swigregister = _osgGA.StateSetManipulator_swigregister
 StateSetManipulator_swigregister(StateSetManipulator)
 
+OSGGA_CAMERA_MANIPULATOR = _osgGA.OSGGA_CAMERA_MANIPULATOR
+class StandardManipulator(CameraManipulator):
+    """Proxy of C++ osgGA::StandardManipulator class"""
+    __swig_setmethods__ = {}
+    for _s in [CameraManipulator]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
+    __setattr__ = lambda self, name, value: _swig_setattr(self, StandardManipulator, name, value)
+    __swig_getmethods__ = {}
+    for _s in [CameraManipulator]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    __getattr__ = lambda self, name: _swig_getattr(self, StandardManipulator, name)
+    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined - class is abstract")
+    __repr__ = _swig_repr
+    UPDATE_MODEL_SIZE = _osgGA.StandardManipulator_UPDATE_MODEL_SIZE
+    COMPUTE_HOME_USING_BBOX = _osgGA.StandardManipulator_COMPUTE_HOME_USING_BBOX
+    PROCESS_MOUSE_WHEEL = _osgGA.StandardManipulator_PROCESS_MOUSE_WHEEL
+    SET_CENTER_ON_WHEEL_FORWARD_MOVEMENT = _osgGA.StandardManipulator_SET_CENTER_ON_WHEEL_FORWARD_MOVEMENT
+    DEFAULT_SETTINGS = _osgGA.StandardManipulator_DEFAULT_SETTINGS
+    def className(self):
+        """className(StandardManipulator self) -> char const *"""
+        return _osgGA.StandardManipulator_className(self)
+
+    def setTransformation(self, *args):
+        """
+        setTransformation(StandardManipulator self, Vec3d eye, Quat rotation)
+        setTransformation(StandardManipulator self, Vec3d eye, Vec3d center, Vec3d up)
+        """
+        return _osgGA.StandardManipulator_setTransformation(self, *args)
+
+    def getTransformation(self, *args):
+        """
+        getTransformation(StandardManipulator self, Vec3d eye, Quat rotation)
+        getTransformation(StandardManipulator self, Vec3d eye, Vec3d center, Vec3d up)
+        """
+        return _osgGA.StandardManipulator_getTransformation(self, *args)
+
+    def setNode(self, *args):
+        """setNode(StandardManipulator self, Node arg2)"""
+        return _osgGA.StandardManipulator_setNode(self, *args)
+
+    def getNode(self, *args):
+        """
+        getNode(StandardManipulator self) -> Node
+        getNode(StandardManipulator self) -> Node
+        """
+        return _osgGA.StandardManipulator_getNode(self, *args)
+
+    def setVerticalAxisFixed(self, *args):
+        """setVerticalAxisFixed(StandardManipulator self, bool value)"""
+        return _osgGA.StandardManipulator_setVerticalAxisFixed(self, *args)
+
+    def getVerticalAxisFixed(self):
+        """getVerticalAxisFixed(StandardManipulator self) -> bool"""
+        return _osgGA.StandardManipulator_getVerticalAxisFixed(self)
+
+    def getAllowThrow(self):
+        """getAllowThrow(StandardManipulator self) -> bool"""
+        return _osgGA.StandardManipulator_getAllowThrow(self)
+
+    def setAllowThrow(self, *args):
+        """setAllowThrow(StandardManipulator self, bool allowThrow)"""
+        return _osgGA.StandardManipulator_setAllowThrow(self, *args)
+
+    def setAnimationTime(self, *args):
+        """setAnimationTime(StandardManipulator self, double const t)"""
+        return _osgGA.StandardManipulator_setAnimationTime(self, *args)
+
+    def getAnimationTime(self):
+        """getAnimationTime(StandardManipulator self) -> double"""
+        return _osgGA.StandardManipulator_getAnimationTime(self)
+
+    def isAnimating(self):
+        """isAnimating(StandardManipulator self) -> bool"""
+        return _osgGA.StandardManipulator_isAnimating(self)
+
+    def finishAnimation(self):
+        """finishAnimation(StandardManipulator self)"""
+        return _osgGA.StandardManipulator_finishAnimation(self)
+
+    def home(self, *args):
+        """
+        home(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us)
+        home(StandardManipulator self, double arg2)
+        """
+        return _osgGA.StandardManipulator_home(self, *args)
+
+    def init(self, *args):
+        """init(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us)"""
+        return _osgGA.StandardManipulator_init(self, *args)
+
+    def handle(self, *args):
+        """handle(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_handle(self, *args)
+
+    def getUsage(self, *args):
+        """getUsage(StandardManipulator self, ApplicationUsage usage)"""
+        return _osgGA.StandardManipulator_getUsage(self, *args)
+
+    __swig_destroy__ = _osgGA.delete_StandardManipulator
+    __del__ = lambda self : None;
+StandardManipulator_swigregister = _osgGA.StandardManipulator_swigregister
+StandardManipulator_swigregister(StandardManipulator)
+
 OSGGA_ORBIT_MANIPULATOR = _osgGA.OSGGA_ORBIT_MANIPULATOR
-class OrbitManipulator(_object):
+class OrbitManipulator(StandardManipulator):
     """Proxy of C++ osgGA::OrbitManipulator class"""
     __swig_setmethods__ = {}
+    for _s in [StandardManipulator]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
     __setattr__ = lambda self, name, value: _swig_setattr(self, OrbitManipulator, name, value)
     __swig_getmethods__ = {}
+    for _s in [StandardManipulator]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, OrbitManipulator, name)
     __repr__ = _swig_repr
     def __init__(self, *args): 
@@ -2125,107 +2228,6 @@ class SphericalManipulator(CameraManipulator):
 
 SphericalManipulator_swigregister = _osgGA.SphericalManipulator_swigregister
 SphericalManipulator_swigregister(SphericalManipulator)
-
-OSGGA_CAMERA_MANIPULATOR = _osgGA.OSGGA_CAMERA_MANIPULATOR
-class StandardManipulator(CameraManipulator):
-    """Proxy of C++ osgGA::StandardManipulator class"""
-    __swig_setmethods__ = {}
-    for _s in [CameraManipulator]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
-    __setattr__ = lambda self, name, value: _swig_setattr(self, StandardManipulator, name, value)
-    __swig_getmethods__ = {}
-    for _s in [CameraManipulator]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
-    __getattr__ = lambda self, name: _swig_getattr(self, StandardManipulator, name)
-    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined - class is abstract")
-    __repr__ = _swig_repr
-    UPDATE_MODEL_SIZE = _osgGA.StandardManipulator_UPDATE_MODEL_SIZE
-    COMPUTE_HOME_USING_BBOX = _osgGA.StandardManipulator_COMPUTE_HOME_USING_BBOX
-    PROCESS_MOUSE_WHEEL = _osgGA.StandardManipulator_PROCESS_MOUSE_WHEEL
-    SET_CENTER_ON_WHEEL_FORWARD_MOVEMENT = _osgGA.StandardManipulator_SET_CENTER_ON_WHEEL_FORWARD_MOVEMENT
-    DEFAULT_SETTINGS = _osgGA.StandardManipulator_DEFAULT_SETTINGS
-    def className(self):
-        """className(StandardManipulator self) -> char const *"""
-        return _osgGA.StandardManipulator_className(self)
-
-    def setTransformation(self, *args):
-        """
-        setTransformation(StandardManipulator self, Vec3d eye, Quat rotation)
-        setTransformation(StandardManipulator self, Vec3d eye, Vec3d center, Vec3d up)
-        """
-        return _osgGA.StandardManipulator_setTransformation(self, *args)
-
-    def getTransformation(self, *args):
-        """
-        getTransformation(StandardManipulator self, Vec3d eye, Quat rotation)
-        getTransformation(StandardManipulator self, Vec3d eye, Vec3d center, Vec3d up)
-        """
-        return _osgGA.StandardManipulator_getTransformation(self, *args)
-
-    def setNode(self, *args):
-        """setNode(StandardManipulator self, Node arg2)"""
-        return _osgGA.StandardManipulator_setNode(self, *args)
-
-    def getNode(self, *args):
-        """
-        getNode(StandardManipulator self) -> Node
-        getNode(StandardManipulator self) -> Node
-        """
-        return _osgGA.StandardManipulator_getNode(self, *args)
-
-    def setVerticalAxisFixed(self, *args):
-        """setVerticalAxisFixed(StandardManipulator self, bool value)"""
-        return _osgGA.StandardManipulator_setVerticalAxisFixed(self, *args)
-
-    def getVerticalAxisFixed(self):
-        """getVerticalAxisFixed(StandardManipulator self) -> bool"""
-        return _osgGA.StandardManipulator_getVerticalAxisFixed(self)
-
-    def getAllowThrow(self):
-        """getAllowThrow(StandardManipulator self) -> bool"""
-        return _osgGA.StandardManipulator_getAllowThrow(self)
-
-    def setAllowThrow(self, *args):
-        """setAllowThrow(StandardManipulator self, bool allowThrow)"""
-        return _osgGA.StandardManipulator_setAllowThrow(self, *args)
-
-    def setAnimationTime(self, *args):
-        """setAnimationTime(StandardManipulator self, double const t)"""
-        return _osgGA.StandardManipulator_setAnimationTime(self, *args)
-
-    def getAnimationTime(self):
-        """getAnimationTime(StandardManipulator self) -> double"""
-        return _osgGA.StandardManipulator_getAnimationTime(self)
-
-    def isAnimating(self):
-        """isAnimating(StandardManipulator self) -> bool"""
-        return _osgGA.StandardManipulator_isAnimating(self)
-
-    def finishAnimation(self):
-        """finishAnimation(StandardManipulator self)"""
-        return _osgGA.StandardManipulator_finishAnimation(self)
-
-    def home(self, *args):
-        """
-        home(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us)
-        home(StandardManipulator self, double arg2)
-        """
-        return _osgGA.StandardManipulator_home(self, *args)
-
-    def init(self, *args):
-        """init(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us)"""
-        return _osgGA.StandardManipulator_init(self, *args)
-
-    def handle(self, *args):
-        """handle(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
-        return _osgGA.StandardManipulator_handle(self, *args)
-
-    def getUsage(self, *args):
-        """getUsage(StandardManipulator self, ApplicationUsage usage)"""
-        return _osgGA.StandardManipulator_getUsage(self, *args)
-
-    __swig_destroy__ = _osgGA.delete_StandardManipulator
-    __del__ = lambda self : None;
-StandardManipulator_swigregister = _osgGA.StandardManipulator_swigregister
-StandardManipulator_swigregister(StandardManipulator)
 
 OSGGA_TERRAIN_MANIPULATOR = _osgGA.OSGGA_TERRAIN_MANIPULATOR
 class TerrainManipulator(OrbitManipulator):
