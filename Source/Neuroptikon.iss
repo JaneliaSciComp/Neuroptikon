@@ -33,7 +33,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; TODO: Figure out how to make the build path relative to the path of this file.
-Source: "C:\Documents and Settings\midgleyf\Desktop\Neuroptikon\Source\build\Neuroptikon {#APP_VERSION}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: "F:\Users\cmbruns\git\Neuroptikon\Source\build\Neuroptikon {#APP_VERSION}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]

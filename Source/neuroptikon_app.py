@@ -31,7 +31,6 @@ import documentation
 from feedback_dialog import FeedbackDialog
 import __version__
 
-
 # The following import is required to allow quitting on Mac OS X when no windows are open.  If osgViewer is imported after the common menu bar is set then the quit event handler is overwritten.
 import osgViewer
 

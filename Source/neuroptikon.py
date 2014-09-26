@@ -75,7 +75,7 @@ else:
 if platform.system() == 'Darwin':
     fontPaths = []
     try:
-        from Carbon import File, Folder, Folders
+        from Carbon import File, Folder, Folders  # @UnresolvedImport
         domains = [Folders.kUserDomain, Folders.kLocalDomain, Folders.kSystemDomain]
         if not runningFromSource:
             domains.append(Folders.kNetworkDomain)

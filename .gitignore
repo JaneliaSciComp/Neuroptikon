@@ -1,1 +1,6 @@
 *.pyc
+/Source/.project
+/Source/build/Neuroptikon 0.9.9/Documentation/.buildinfo
+/Source/.pydevproject
+/Source/build
+/Source/documentation/build

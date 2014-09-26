@@ -198,6 +198,6 @@ if sys.platform == 'darwin':
 elif sys.platform == 'win32':
     # Create the installer
     print 'Creating installer...'
-    retcode = call('C:\Program Files\Inno Setup 5\iscc.exe /Q /O"build" "/dAPP_VERSION=' + app_version + '" Neuroptikon.iss')
+    retcode = call('C:\Program Files (x86)\Inno Setup 5\iscc.exe /Q /O"build" "/dAPP_VERSION=' + app_version + '" Neuroptikon.iss')
     if retcode != 0:
         print "Could not create the installer"
