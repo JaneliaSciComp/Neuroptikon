@@ -140,13 +140,17 @@ class Visible(object):
                 cullFacesPath = os.path.join(neuroptikon.rootDir, 'display', 'cull_faces.osg')
             else:
                 cullFacesPath = os.path.join(neuroptikon.rootDir, 'cull_faces.osg')
-            cullFacesNode = osgDB.readNodeFile(cullFacesPath)
-            cullFacesGroup = cullFacesNode.asGroup()
-            Visible.cullFrontFacesAttr = cullFacesGroup.getChild(0).getStateSet().getAttribute(osg.StateAttribute.CULLFACE)
-            Visible.cullBackFacesAttr = cullFacesGroup.getChild(1).getStateSet().getAttribute(osg.StateAttribute.CULLFACE)
-            # Make sure the node with our attributes doesn't get garbage collected.
-            cullFacesNode.ref()
-    
+            # TODO - installed version fails to load cull_faces.osg on Windows
+            try:
+                cullFacesNode = osgDB.readNodeFile(cullFacesPath)
+                cullFacesGroup = cullFacesNode.asGroup()
+                Visible.cullFrontFacesAttr = cullFacesGroup.getChild(0).getStateSet().getAttribute(osg.StateAttribute.CULLFACE)
+                Visible.cullBackFacesAttr = cullFacesGroup.getChild(1).getStateSet().getAttribute(osg.StateAttribute.CULLFACE)
+                # Make sure the node with our attributes doesn't get garbage collected.
+                cullFacesNode.ref()
+            except IOError:
+                print "cullFacesPath = " + cullFacesPath
+                pass
     
     def __repr__(self):
         if self.client is None:
