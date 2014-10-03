@@ -292,7 +292,7 @@ class NeuroptikonFrame(wx.Frame):
     
     
     def toolBar(self):
-        toolBar = wx.ToolBar(self)
+        toolBar = self.CreateToolBar() 
         toolBar.AddCheckLabelTool(self.viewIn2DMenuItem.GetId(), gettext('2D View'), self.loadBitmap("View2D.png"), shortHelp = gettext('View in 2D'))
         self.Bind(wx.EVT_TOOL, self.display.onViewIn2D, id = self.viewIn2DMenuItem.GetId())
         toolBar.AddCheckLabelTool(self.viewIn3DMenuItem.GetId(), gettext('3D View'), self.loadBitmap("View3D.png"), shortHelp = gettext('View in 3D'))
