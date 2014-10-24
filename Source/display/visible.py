@@ -33,10 +33,14 @@ class Visible(object):
     """
     
     try:
-        if osgText.readFontFile("Arial Bold.ttf"):
-            labelFont = 'Arial Bold.ttf'
-        elif osgText.readFontFile("ArialBD.ttf"):
-            labelFont = 'ArialBD.ttf'
+        if osgText.readFontFile(str("Arial Bold.ttf")):
+            labelFont = str('Arial Bold.ttf')
+        elif osgText.readFontFile(str("ArialBD.ttf")):
+            labelFont = str('ArialBD.ttf')
+        elif osgText.readFontFile(str("Arial.ttf")):
+            labelFont = str('Arial.ttf')
+        elif osgText.readFontFile(str("Georgia.ttf")):
+            labelFont = str('Georgia.ttf')
         else:
             labelFont = None
     except:
@@ -897,7 +901,7 @@ class Visible(object):
                 self._textDrawable.setDataVariance(osg.Object.DYNAMIC)
                 self._textDrawable.setCharacterSizeMode(osgText.Text.SCREEN_COORDS)
                 if Visible.labelFont is None:
-                    self._textDrawable.setCharacterSize(48.0)
+                    self._textDrawable.setCharacterSize(18.0)
                 else:
                     self._textDrawable.setFont(Visible.labelFont)
                     self._textDrawable.setCharacterSize(18.0)
