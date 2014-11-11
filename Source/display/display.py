@@ -16,6 +16,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ElementTree
 
+from gettext import gettext
 from pick_handler import PickHandler
 from dragger_cull_callback import DraggerCullCallback
 from network.object import Object
@@ -79,7 +80,7 @@ class Display(wx.glcanvas.GLCanvas):
         self._ghostingOpacity = 0.25
         self._primarySelectionColor = (0, 0, 1, .4)
         self._secondarySelectionColor = (0, 0, 1, .2)
-        self._selectionHighlightDepth = 2
+        self._selectionHighlightDepth = 3
         self.viewDimensions = 2
         
         self._recomputeBounds = True
