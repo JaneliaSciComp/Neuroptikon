@@ -26,7 +26,7 @@ app_scripts = ['neuroptikon.py']
 
 resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
 resources += ['display/flow_shader.vert', 'display/flow_shader.frag', 'display/cull_faces.osg']
-includes = ['community']
+includes = ['community', 'site']
 packages = ['wx', 'xlrd']
 excludes = ['Inspectors', 'Layouts', 'matplotlib', 'pygraphviz', 'scipy', 'Shapes']
 
@@ -34,20 +34,24 @@ sys.path += ['lib/CrossPlatform', 'lib/' + platform.system()]
 
 if sys.platform == 'darwin':
     import wxversion
-    wxversion.select('2.8')
+    wxversion.select('3.0')
 
 # Purge and then rebuild the documentation with Sphinx
 if os.path.exists('documentation/build'):
     shutil.rmtree('documentation/build')
 try:
-    from sphinx import main
+    import sphinx
 except ImportError:
     print 'You must have sphinx installed and in the Python path to build the Neuroptikon package.  See <http://sphinx.pocoo.org/>.'
     sys.exit(1)
-result = main(['-q', '-b', 'html', 'documentation/Source', 'documentation/build/Documentation'])
+# Work around bug in version of Sphinx on my Mac, which uses sys.argv, even when passed this argument
+saved_sys_argv = sys.argv
+sphinx_args = ['-q', '-b', 'html', 'documentation/Source', 'documentation/build/Documentation']
+sys.argv = sphinx_args
+result = sphinx.build_main(argv=sphinx_args)
+sys.argv = saved_sys_argv
 if result != 0:
     sys.exit(result)
-
 
 # Assemble the platform-specific application settings. 
 if sys.platform == 'darwin':
@@ -79,14 +83,20 @@ if sys.platform == 'darwin':
     py2app_options['excludes'] = excludes
     
     resources += ['../Artwork/Neuroptikon.icns']
-    resources += ['lib/Darwin/osgdb_freetype.so', 'lib/Darwin/osgdb_osg.so', 'lib/Darwin/osgdb_qt.so']
+    resources += ['lib/Darwin/osgdb_freetype.so', 'lib/Darwin/osgdb_osg.so'
+                  # I don't have osgdb_qt on my Mac right now
+                  ] # TODO , 'lib/Darwin/osgdb_qt.so']
     resources += ['documentation/build/Documentation']
     py2app_options['resources'] = ','.join(resources)
     
     py2app_options['argv_emulation'] = True
     py2app_options['plist'] = dict()
     py2app_options['plist']['CFBundleIconFile'] = 'Neuroptikon.icns'
-    py2app_options['plist']['PyResourcePackages'] = ['lib/python2.5/lib-dynload']
+    py2app_options['plist']['PyResourcePackages'] = [
+            'lib/python2.7',
+            'lib/python2.7/lib-dynload',
+            'lib/python2.7/site-packages.zip',
+            ]
     py2app_options['plist']['LSEnvironment'] = dict(DYLD_LIBRARY_PATH = '../Resources')
     
     setup_options['options'] = dict(py2app = py2app_options)
