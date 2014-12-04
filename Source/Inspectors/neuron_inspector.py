@@ -18,7 +18,7 @@ class NeuronInspector( ObjectInspector ):
     
     @classmethod
     def inspectedAttributes(cls):
-        return ['neuronClass', 'functions', 'polarity', 'neurotransmitters']
+        return ['neuronClass', 'functions', 'polarity', 'neurotransmitters', 'neuronImage']
     
     
     def _appendNeuronClass(self, neuronClass, indent):
@@ -29,7 +29,7 @@ class NeuronInspector( ObjectInspector ):
     
     def objectSizer(self, parentWindow):
         if not hasattr(self, '_sizer'):
-            self._sizer = wx.FlexGridSizer(4, 2, 8, 8)
+            self._sizer = wx.FlexGridSizer(5, 2, 8, 8)
             self._sizer.SetFlexibleDirection(wx.HORIZONTAL | wx.VERTICAL)
             
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Class:')))
@@ -76,6 +76,12 @@ class NeuronInspector( ObjectInspector ):
             self._sizer.Add(self._neurotransmittersOptions)
             parentWindow.Bind(wx.EVT_CHOICE, self.onAddNeurotransmitter, self._neurotransmitterChoice)
             
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Neuron Image:')))
+            self.imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
+            self.imageOfNeuron.SetMinSize(wx.Size(32, 32))
+            self.imageOfNeuron.SetMaxSize(wx.Size(32, 32))
+            self._sizer.Add(self.imageOfNeuron, 0, wx.EXPAND)
+
             self._parentWindow = parentWindow
         
         return self._sizer
@@ -145,7 +151,20 @@ class NeuronInspector( ObjectInspector ):
             else:
                 self._neurotransmittersSizer.Add(wx.StaticText(self._parentWindow, wx.ID_ANY, gettext('Multiple values')))
                 self._neurotransmitterChoice.Disable()
-        
+                
+        if attribute is None or attribute == 'neuronImage':
+            if self.objects.haveEqualAttr('neuronImage'):
+                #TODO replace with real neuron Image
+                image = self.objects[0].neuronImage.Copy()
+                if image == None:
+                    pass
+                else:
+                    scaledImage = image.Rescale(100, 100, wx.IMAGE_QUALITY_HIGH)
+                    self.imageOfNeuron.SetBitmap(wx.BitmapFromImage(scaledImage))
+            else:
+                pass
+                #option if not all neurons have the same image
+            
         self._sizer.Layout()
         
     
