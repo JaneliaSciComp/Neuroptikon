@@ -17,6 +17,8 @@ ez_setup.use_setuptools()
 import os, platform, shutil, sys
 from setuptools import setup
 
+from glob import glob
+
 import __version__
 app_version = __version__.version
 
@@ -90,6 +92,7 @@ if sys.platform == 'darwin':
     py2app_options['resources'] = ','.join(resources)
     
     py2app_options['argv_emulation'] = True
+    py2app_options['no_strip'] = True
     py2app_options['plist'] = dict()
     py2app_options['plist']['CFBundleIconFile'] = 'Neuroptikon.icns'
     py2app_options['plist']['PyResourcePackages'] = [
@@ -194,9 +197,26 @@ for root, dirs, files in os.walk(dist_dir, topdown=False):
         if os.path.splitext(name)[1] in ['.pyc', '.pyo']:
             os.remove(os.path.join(root, name))
 
+# Clean up references to system python library -- 2014 CMB
+# TODO - replace the hard-coded link paths here with paths extracted dynamically using "otool -L"
+from subprocess import call
+if sys.platform == 'darwin':
+    contentsDir = os.path.join(dist_dir, "Neuroptikon.app", "Contents")
+    binaries = glob(os.path.join(contentsDir, "MacOS/python"))
+    binaries.extend(glob(os.path.join(contentsDir, "Frameworks/_osg*.so")))
+    binaries.extend(glob(os.path.join(contentsDir, "Resources/lib/python2.7/lib-dynload/_osg*.so")))
+    for fname in binaries:
+        # print fname
+        cmd = 'install_name_tool -change %s %s "%s"' % (
+            '/System/Library/Frameworks/Python.framework/Versions/2.7/Python',
+            '@executable_path/../Frameworks/Python.framework/Versions/2.7/Python', 
+            fname)
+        # print cmd
+        retcode = call(cmd, shell=True)
+        if retcode < 0:
+            print "Could not change link library name in file '" + fname + "'"
 
 # Package up the application.
-from subprocess import call
 if sys.platform == 'darwin':
     # Create the disk image
     dmgPath = 'build/Neuroptikon ' + app_version + '.dmg'
