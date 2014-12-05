@@ -20,6 +20,8 @@ if not runningFromSource:
     rootDir = os.path.dirname(sys.executable)
     if platform.system() == 'Darwin':
         rootDir = os.path.dirname(rootDir) + os.sep + 'Resources'
+        # print "rootDir = ", rootDir
+        sys.path.append(rootDir) # Needed for running on my Mountain Lion Mac Pro Dec 2014 CMB
     elif platform.system() == 'Windows':
         sys.path.append(rootDir)
     platformLibPath = rootDir

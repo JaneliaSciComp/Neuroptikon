@@ -1087,8 +1087,10 @@ class Visible(object):
                     self._shapeGeode2 = osg.Geode()
                     self._shapeGeode2.addDrawable(self._shape.geometry())
                     stateSet2 = self._shapeGeode2.getOrCreateStateSet()
-                    stateSet2.setAttributeAndModes(Visible.cullFrontFacesAttr, osg.StateAttribute.ON)
-                    stateSet1.setAttributeAndModes(Visible.cullBackFacesAttr, osg.StateAttribute.ON)
+                    # TODO - installed version on Mac does not load cull_faces
+                    if hasattr(Visible, 'cullFrontFacesAttr'):
+                        stateSet2.setAttributeAndModes(Visible.cullFrontFacesAttr, osg.StateAttribute.ON)
+                        stateSet1.setAttributeAndModes(Visible.cullBackFacesAttr, osg.StateAttribute.ON)
                 else:
                     stateSet2 = self._shapeGeode2.getOrCreateStateSet()
                 stateSet1.setMode(osg.GL_BLEND, osg.StateAttribute.ON)

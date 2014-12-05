@@ -85,7 +85,9 @@ if sys.platform == 'darwin':
     py2app_options['excludes'] = excludes
     
     resources += ['../Artwork/Neuroptikon.icns']
-    resources += ['lib/Darwin/osgdb_freetype.so', 'lib/Darwin/osgdb_osg.so'
+    resources += ['lib/Darwin/osgdb_freetype.so', 
+                  'lib/Darwin/osgdb_osg.so',
+                  'lib/Darwin/osgdb_deprecated_osg.so',
                   # I don't have osgdb_qt on my Mac right now
                   ] # TODO , 'lib/Darwin/osgdb_qt.so']
     resources += ['documentation/build/Documentation']
@@ -201,20 +203,41 @@ for root, dirs, files in os.walk(dist_dir, topdown=False):
 # TODO - replace the hard-coded link paths here with paths extracted dynamically using "otool -L"
 from subprocess import call
 if sys.platform == 'darwin':
+    print "Translating link library path names"
+    # store set of library names to translate
+    path_translations = {
+        '/System/Library/Frameworks/Python.framework/Versions/2.7/Python' : 'Python.framework/Versions/2.7/Python',
+    }
+    for libname in [
+                'libOpenThreads.20.dylib', 
+                'libosg.100.dylib', 
+                'libosgAnimation.100.dylib',
+                'libosgDB.100.dylib',
+                'libosgFX.100.dylib',
+                'libosgGA.100.dylib',
+                'libosgManipulator.100.dylib',
+                'libosgSim.100.dylib',
+                'libosgText.100.dylib',
+                'libosgUtil.100.dylib',
+                'libosgViewer.100.dylib',
+                'libosgVolume.100.dylib',
+            ]:
+        path_translations[libname] = libname
     contentsDir = os.path.join(dist_dir, "Neuroptikon.app", "Contents")
     binaries = glob(os.path.join(contentsDir, "MacOS/python"))
     binaries.extend(glob(os.path.join(contentsDir, "Frameworks/_osg*.so")))
     binaries.extend(glob(os.path.join(contentsDir, "Resources/lib/python2.7/lib-dynload/_osg*.so")))
     for fname in binaries:
+        for old, new in path_translations.iteritems():
         # print fname
-        cmd = 'install_name_tool -change %s %s "%s"' % (
-            '/System/Library/Frameworks/Python.framework/Versions/2.7/Python',
-            '@executable_path/../Frameworks/Python.framework/Versions/2.7/Python', 
-            fname)
-        # print cmd
-        retcode = call(cmd, shell=True)
-        if retcode < 0:
-            print "Could not change link library name in file '" + fname + "'"
+            cmd = 'install_name_tool -change %s %s "%s"' % (
+                old,
+                '@executable_path/../Frameworks/' + new, 
+                fname)
+            # print cmd
+            retcode = call(cmd, shell=True)
+            if retcode < 0:
+                print "Could not change link library name in file '" + fname + "'"
 
 # Package up the application.
 if sys.platform == 'darwin':
