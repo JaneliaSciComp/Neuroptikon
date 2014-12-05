@@ -47,11 +47,14 @@ except ImportError:
     print 'You must have sphinx installed and in the Python path to build the Neuroptikon package.  See <http://sphinx.pocoo.org/>.'
     sys.exit(1)
 # Work around bug in version of Sphinx on my Mac, which uses sys.argv, even when passed this argument
-saved_sys_argv = sys.argv
 sphinx_args = ['-q', '-b', 'html', 'documentation/Source', 'documentation/build/Documentation']
-sys.argv = sphinx_args
-result = sphinx.build_main(argv=sphinx_args)
-sys.argv = saved_sys_argv
+if sys.platform == 'darwin':
+    saved_sys_argv = sys.argv
+    sys.argv = sphinx_args
+    result = sphinx.build_main(argv=sphinx_args) # python 2.7.8?
+    sys.argv = saved_sys_argv
+else:
+    result = sphinx.main(argv=sphinx_args) # python 2.7.2?
 if result != 0:
     sys.exit(result)
 
