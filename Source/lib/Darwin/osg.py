@@ -10020,9 +10020,12 @@ class Traits(Referenced,ScreenIdentifier):
     for _s in [Referenced,ScreenIdentifier]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, Traits, name)
     __repr__ = _swig_repr
-    def __init__(self): 
-        """__init__(Traits self) -> Traits"""
-        this = _osg.new_Traits()
+    def __init__(self, ds=None): 
+        """
+        __init__(Traits self, DisplaySettings ds=None) -> Traits
+        __init__(Traits self) -> Traits
+        """
+        this = _osg.new_Traits(ds)
         try: self.this.append(this)
         except: self.this = this
     __swig_setmethods__["x"] = _osg.Traits_x_set
@@ -10097,12 +10100,34 @@ class Traits(Referenced,ScreenIdentifier):
     __swig_setmethods__["vsync"] = _osg.Traits_vsync_set
     __swig_getmethods__["vsync"] = _osg.Traits_vsync_get
     if _newclass:vsync = _swig_property(_osg.Traits_vsync_get, _osg.Traits_vsync_set)
+    __swig_setmethods__["swapGroupEnabled"] = _osg.Traits_swapGroupEnabled_set
+    __swig_getmethods__["swapGroupEnabled"] = _osg.Traits_swapGroupEnabled_get
+    if _newclass:swapGroupEnabled = _swig_property(_osg.Traits_swapGroupEnabled_get, _osg.Traits_swapGroupEnabled_set)
+    __swig_setmethods__["swapGroup"] = _osg.Traits_swapGroup_set
+    __swig_getmethods__["swapGroup"] = _osg.Traits_swapGroup_get
+    if _newclass:swapGroup = _swig_property(_osg.Traits_swapGroup_get, _osg.Traits_swapGroup_set)
+    __swig_setmethods__["swapBarrier"] = _osg.Traits_swapBarrier_set
+    __swig_getmethods__["swapBarrier"] = _osg.Traits_swapBarrier_get
+    if _newclass:swapBarrier = _swig_property(_osg.Traits_swapBarrier_get, _osg.Traits_swapBarrier_set)
     __swig_setmethods__["useMultiThreadedOpenGLEngine"] = _osg.Traits_useMultiThreadedOpenGLEngine_set
     __swig_getmethods__["useMultiThreadedOpenGLEngine"] = _osg.Traits_useMultiThreadedOpenGLEngine_get
     if _newclass:useMultiThreadedOpenGLEngine = _swig_property(_osg.Traits_useMultiThreadedOpenGLEngine_get, _osg.Traits_useMultiThreadedOpenGLEngine_set)
     __swig_setmethods__["useCursor"] = _osg.Traits_useCursor_set
     __swig_getmethods__["useCursor"] = _osg.Traits_useCursor_get
     if _newclass:useCursor = _swig_property(_osg.Traits_useCursor_get, _osg.Traits_useCursor_set)
+    __swig_setmethods__["glContextVersion"] = _osg.Traits_glContextVersion_set
+    __swig_getmethods__["glContextVersion"] = _osg.Traits_glContextVersion_get
+    if _newclass:glContextVersion = _swig_property(_osg.Traits_glContextVersion_get, _osg.Traits_glContextVersion_set)
+    __swig_setmethods__["glContextFlags"] = _osg.Traits_glContextFlags_set
+    __swig_getmethods__["glContextFlags"] = _osg.Traits_glContextFlags_get
+    if _newclass:glContextFlags = _swig_property(_osg.Traits_glContextFlags_get, _osg.Traits_glContextFlags_set)
+    __swig_setmethods__["glContextProfileMask"] = _osg.Traits_glContextProfileMask_set
+    __swig_getmethods__["glContextProfileMask"] = _osg.Traits_glContextProfileMask_get
+    if _newclass:glContextProfileMask = _swig_property(_osg.Traits_glContextProfileMask_get, _osg.Traits_glContextProfileMask_set)
+    def getContextVersion(self, *args):
+        """getContextVersion(Traits self, unsigned int & major, unsigned int & minor) -> bool"""
+        return _osg.Traits_getContextVersion(self, *args)
+
     __swig_setmethods__["sharedContext"] = _osg.Traits_sharedContext_set
     __swig_getmethods__["sharedContext"] = _osg.Traits_sharedContext_get
     if _newclass:sharedContext = _swig_property(_osg.Traits_sharedContext_get, _osg.Traits_sharedContext_set)
@@ -10112,6 +10137,12 @@ class Traits(Referenced,ScreenIdentifier):
     __swig_setmethods__["setInheritedWindowPixelFormat"] = _osg.Traits_setInheritedWindowPixelFormat_set
     __swig_getmethods__["setInheritedWindowPixelFormat"] = _osg.Traits_setInheritedWindowPixelFormat_get
     if _newclass:setInheritedWindowPixelFormat = _swig_property(_osg.Traits_setInheritedWindowPixelFormat_get, _osg.Traits_setInheritedWindowPixelFormat_set)
+    __swig_setmethods__["overrideRedirect"] = _osg.Traits_overrideRedirect_set
+    __swig_getmethods__["overrideRedirect"] = _osg.Traits_overrideRedirect_get
+    if _newclass:overrideRedirect = _swig_property(_osg.Traits_overrideRedirect_get, _osg.Traits_overrideRedirect_set)
+    __swig_setmethods__["swapMethod"] = _osg.Traits_swapMethod_set
+    __swig_getmethods__["swapMethod"] = _osg.Traits_swapMethod_get
+    if _newclass:swapMethod = _swig_property(_osg.Traits_swapMethod_get, _osg.Traits_swapMethod_set)
     __swig_destroy__ = _osg.delete_Traits
     __del__ = lambda self : None;
 Traits_swigregister = _osg.Traits_swigregister

@@ -17,6 +17,8 @@ ez_setup.use_setuptools()
 import os, platform, shutil, sys
 from setuptools import setup
 
+from glob import glob
+
 import __version__
 app_version = __version__.version
 
@@ -26,7 +28,7 @@ app_scripts = ['neuroptikon.py']
 
 resources = ['Images', 'Inspectors', 'Layouts', 'Neuroptikon_v1.0.xsd', 'Ontologies', 'Shapes', 'Textures']
 resources += ['display/flow_shader.vert', 'display/flow_shader.frag', 'display/cull_faces.osg']
-includes = ['community']
+includes = ['community', 'site']
 packages = ['wx', 'xlrd']
 excludes = ['Inspectors', 'Layouts', 'matplotlib', 'pygraphviz', 'scipy', 'Shapes']
 
@@ -34,20 +36,24 @@ sys.path += ['lib/CrossPlatform', 'lib/' + platform.system()]
 
 if sys.platform == 'darwin':
     import wxversion
-    wxversion.select('2.8')
+    wxversion.select('3.0')
 
 # Purge and then rebuild the documentation with Sphinx
 if os.path.exists('documentation/build'):
     shutil.rmtree('documentation/build')
 try:
-    from sphinx import main
+    import sphinx
 except ImportError:
     print 'You must have sphinx installed and in the Python path to build the Neuroptikon package.  See <http://sphinx.pocoo.org/>.'
     sys.exit(1)
-result = main(['-q', '-b', 'html', 'documentation/Source', 'documentation/build/Documentation'])
+# Work around bug in version of Sphinx on my Mac, which uses sys.argv, even when passed this argument
+saved_sys_argv = sys.argv
+sphinx_args = ['-q', '-b', 'html', 'documentation/Source', 'documentation/build/Documentation']
+sys.argv = sphinx_args
+result = sphinx.build_main(argv=sphinx_args)
+sys.argv = saved_sys_argv
 if result != 0:
     sys.exit(result)
-
 
 # Assemble the platform-specific application settings. 
 if sys.platform == 'darwin':
@@ -79,14 +85,23 @@ if sys.platform == 'darwin':
     py2app_options['excludes'] = excludes
     
     resources += ['../Artwork/Neuroptikon.icns']
-    resources += ['lib/Darwin/osgdb_freetype.so', 'lib/Darwin/osgdb_osg.so', 'lib/Darwin/osgdb_qt.so']
+    resources += ['lib/Darwin/osgdb_freetype.so', 
+                  'lib/Darwin/osgdb_osg.so',
+                  'lib/Darwin/osgdb_deprecated_osg.so',
+                  # I don't have osgdb_qt on my Mac right now
+                  ] # TODO , 'lib/Darwin/osgdb_qt.so']
     resources += ['documentation/build/Documentation']
     py2app_options['resources'] = ','.join(resources)
     
     py2app_options['argv_emulation'] = True
+    py2app_options['no_strip'] = True
     py2app_options['plist'] = dict()
     py2app_options['plist']['CFBundleIconFile'] = 'Neuroptikon.icns'
-    py2app_options['plist']['PyResourcePackages'] = ['lib/python2.5/lib-dynload']
+    py2app_options['plist']['PyResourcePackages'] = [
+            'lib/python2.7',
+            'lib/python2.7/lib-dynload',
+            'lib/python2.7/site-packages.zip',
+            ]
     py2app_options['plist']['LSEnvironment'] = dict(DYLD_LIBRARY_PATH = '../Resources')
     
     setup_options['options'] = dict(py2app = py2app_options)
@@ -184,9 +199,50 @@ for root, dirs, files in os.walk(dist_dir, topdown=False):
         if os.path.splitext(name)[1] in ['.pyc', '.pyo']:
             os.remove(os.path.join(root, name))
 
+# Clean up references to system python library -- 2014 CMB
+# TODO - replace the hard-coded link paths here with paths extracted dynamically using "otool -L"
+from subprocess import call
+if sys.platform == 'darwin':
+    print "Translating link library path names"
+    # store set of library names to translate
+    path_translations = {
+        # Default system python. Old way. Maybe too system specific
+        '/System/Library/Frameworks/Python.framework/Versions/2.7/Python' : 'Python.framework/Versions/2.7/Python',
+        # New way. Installed from python.org
+        '/Library/Frameworks/Python.framework/Versions/2.7/Python' : 'Python.framework/Versions/2.7/Python',
+    }
+    for libname in [
+                'libOpenThreads.20.dylib', 
+                'libosg.100.dylib', 
+                'libosgAnimation.100.dylib',
+                'libosgDB.100.dylib',
+                'libosgFX.100.dylib',
+                'libosgGA.100.dylib',
+                'libosgManipulator.100.dylib',
+                'libosgSim.100.dylib',
+                'libosgText.100.dylib',
+                'libosgUtil.100.dylib',
+                'libosgViewer.100.dylib',
+                'libosgVolume.100.dylib',
+            ]:
+        path_translations[libname] = libname
+    contentsDir = os.path.join(dist_dir, "Neuroptikon.app", "Contents")
+    binaries = glob(os.path.join(contentsDir, "MacOS/python"))
+    binaries.extend(glob(os.path.join(contentsDir, "Frameworks/_osg*.so")))
+    binaries.extend(glob(os.path.join(contentsDir, "Resources/lib/python2.7/lib-dynload/_osg*.so")))
+    for fname in binaries:
+        for old, new in path_translations.iteritems():
+        # print fname
+            cmd = 'install_name_tool -change %s %s "%s"' % (
+                old,
+                '@executable_path/../Frameworks/' + new, 
+                fname)
+            # print cmd
+            retcode = call(cmd, shell=True)
+            if retcode < 0:
+                print "Could not change link library name in file '" + fname + "'"
 
 # Package up the application.
-from subprocess import call
 if sys.platform == 'darwin':
     # Create the disk image
     dmgPath = 'build/Neuroptikon ' + app_version + '.dmg'

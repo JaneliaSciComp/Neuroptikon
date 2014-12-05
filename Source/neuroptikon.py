@@ -20,6 +20,8 @@ if not runningFromSource:
     rootDir = os.path.dirname(sys.executable)
     if platform.system() == 'Darwin':
         rootDir = os.path.dirname(rootDir) + os.sep + 'Resources'
+        # print "rootDir = ", rootDir
+        sys.path.append(rootDir) # Needed for running on my Mountain Lion Mac Pro Dec 2014 CMB
     elif platform.system() == 'Windows':
         sys.path.append(rootDir)
     platformLibPath = rootDir
@@ -108,11 +110,13 @@ def _getdoc(pyObject):
     return docstring
 inspect.getdoc = _getdoc
 
-def loadImage(imageFileName):
+def loadImage(imageFileName, imagePath=None):
     import wx
-
     try:
-        image = wx.Image(rootDir + os.sep + 'Images' + os.sep + imageFileName)
+        if not imagePath:
+            image = wx.Image(rootDir + os.sep + 'Images' + os.sep + imageFileName)
+        else:
+            image = wx.Image(imagePath + os.sep + imageFileName)
     except:
         image = None
     return image
