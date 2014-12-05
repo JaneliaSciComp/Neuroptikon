@@ -20,7 +20,10 @@ class NeuronImageInspector( Inspector ):
     @classmethod
     def canInspectDisplay(cls, display):
         if display:
-            return any([visible.client.displayName() == 'Neuron' for visible in display.selection()])
+            for visible in display.selection():
+                if visible.client.displayName() == gettext('Neuron'):
+                    if visible.client.neuronImage:
+                        return True	
         return None
     
     def window(self, parentWindow=None):
