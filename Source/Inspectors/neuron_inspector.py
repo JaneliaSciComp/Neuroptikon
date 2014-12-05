@@ -155,11 +155,11 @@ class NeuronInspector( ObjectInspector ):
         if attribute is None or attribute == 'neuronImage':
             if self.objects.haveEqualAttr('neuronImage'):
                 #TODO replace with real neuron Image
-                image = self.objects[0].neuronImage.Copy()
+                image = self.objects[0].neuronImage
                 if image == None:
                     pass
                 else:
-                    scaledImage = image.Rescale(100, 100, wx.IMAGE_QUALITY_HIGH)
+                    scaledImage = image.Copy().Rescale(100, 100, wx.IMAGE_QUALITY_HIGH)
                     self.imageOfNeuron.SetBitmap(wx.BitmapFromImage(scaledImage))
             else:
                 pass
