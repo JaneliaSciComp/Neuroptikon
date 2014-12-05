@@ -8,9 +8,9 @@ This script creates a region and 2 neuron to demonstrate how the neuron image fi
 """
 
 regionA = network.createRegion(name = 'A')
-neuron1 = network.createNeuron(name = '1', neuronImage='../Images/Neurite.png')
+neuron1 = network.createNeuron(name = '1', neuronImage='./neuron1.jpg')
 neuron1.arborize(regionA, True, False)
 
-neuron1 = network.createNeuron(name = '2', neuronImage='../Images/Neuron.png')
+neuron1 = network.createNeuron(name = '2', neuronImage='./neuron2.jpg')
 neuron1.arborize(regionA, True, False)
 display.performLayout()
