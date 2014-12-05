@@ -206,7 +206,10 @@ if sys.platform == 'darwin':
     print "Translating link library path names"
     # store set of library names to translate
     path_translations = {
+        # Default system python. Old way. Maybe too system specific
         '/System/Library/Frameworks/Python.framework/Versions/2.7/Python' : 'Python.framework/Versions/2.7/Python',
+        # New way. Installed from python.org
+        '/Library/Frameworks/Python.framework/Versions/2.7/Python' : 'Python.framework/Versions/2.7/Python',
     }
     for libname in [
                 'libOpenThreads.20.dylib', 
