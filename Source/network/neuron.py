@@ -4,6 +4,7 @@
 #  http://license.janelia.org/license/jfrc_copyright_1_1.html
 
 import neuroptikon
+from os import path
 from neuro_object import NeuroObject
 from neurite import Neurite
 from arborization import Arborization
@@ -57,7 +58,7 @@ class Neuron(NeuroObject):
         # Pull out the keyword arguments specific to this class before we call super.
         # We need to do this so we can know if the caller specified an argument or not.
         # For example, the caller might specify a neuron class and one attribute to override.  We need to know which attributes _not_ to set.
-        localAttrNames = ['activation', 'functions', 'neurotransmitters', 'polarity', 'region']
+        localAttrNames = ['activation', 'functions', 'neurotransmitters', 'polarity', 'region', 'neuronImage']
         localKeywordArgs = {}
         for attrName in localAttrNames:
             if attrName in keywordArgs:
@@ -74,6 +75,7 @@ class Neuron(NeuroObject):
         self.polarity = None
         self.region = None
         self._synapses = []
+        self.neuronImage = None
         
         for attrName in localAttrNames:
             if attrName == 'functions':
@@ -86,6 +88,9 @@ class Neuron(NeuroObject):
                 # The user has explicitly set the attribute.
                 if attrName == 'functions':
                     attrValue = set(localKeywordArgs[attrName])
+                if attrName == 'neuronImage':
+                    imagePath, imageName = path.split(localKeywordArgs[attrName])
+                    attrValue = neuroptikon.loadImage(imageName, imagePath)
                 else:
                     attrValue = localKeywordArgs[attrName]  
             elif self.neuronClass:
@@ -409,6 +414,12 @@ class Neuron(NeuroObject):
     def disconnectFromNetwork(self):
         if self.region:
             self.region.neurons.remove(self)
+    
+    def setImage(self, imageName, pathToImage):
+        image = neuroptikon.loadImage(imageName, pathToImage)
+        if image != None and not image.IsOk():
+            image = None
+        self.neuronImage = image
     
     
     def setHasFunction(self, function, hasFunction):

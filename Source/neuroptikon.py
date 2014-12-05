@@ -110,11 +110,13 @@ def _getdoc(pyObject):
     return docstring
 inspect.getdoc = _getdoc
 
-def loadImage(imageFileName):
+def loadImage(imageFileName, imagePath=None):
     import wx
-
     try:
-        image = wx.Image(rootDir + os.sep + 'Images' + os.sep + imageFileName)
+        if not imagePath:
+            image = wx.Image(rootDir + os.sep + 'Images' + os.sep + imageFileName)
+        else:
+            image = wx.Image(imagePath + os.sep + imageFileName)
     except:
         image = None
     return image
