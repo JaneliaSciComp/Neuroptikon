@@ -103,7 +103,7 @@ class Ball(UnitShape):
         return (Ball._vertexArray[tessellation], Ball._normalArray[tessellation], Ball._texCoordArray[tessellation], Ball._faceSet[tessellation])
     
     
-    def __init__(self, tessellation = 1, *args, **keywordArgs):
+    def __init__(self, tessellation = 3, *args, **keywordArgs):
         Shape.__init__(self, *args, **keywordArgs)
         
         self.tessellation = tessellation
