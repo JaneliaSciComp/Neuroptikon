@@ -23,6 +23,7 @@ class Ring(UnitShape):
         self.holeSize = holeSize
         self.startAngle = startAngle
         self.endAngle = endAngle
+        self._bounds = ((-0.5, -0.5, -0.5), (0.5, 0.5, 0.5))
         
         steps = 32
         ringIncrement = (endAngle - startAngle) / steps
@@ -61,6 +62,7 @@ class Ring(UnitShape):
         midY, sizeY = ((minY + maxY) / 2.0, maxY - minY)
         minZ, maxZ = (min(zs), max(zs))
         midZ = (minZ + maxZ) / 2.0
+        self._bounds = ((minX, minY, minZ), (maxX, maxY, maxZ))
         scale = 1.0 / max(sizeX, sizeY) # size in Z will always be 1.0
         newVertices = []
         for vertex in vertices:
@@ -82,7 +84,10 @@ class Ring(UnitShape):
                 vertexIndices += [baseIndex + segmentStep, baseIndex + steps + 1 + segmentStep]
             faceSet = Shape.primitiveSetFromList(osg.PrimitiveSet.QUAD_STRIP, vertexIndices)
             self.geometry().addPrimitiveSet(faceSet)
-    
+            
+            
+    def interiorBounds(self):
+        return self._bounds
     
     def persistentAttributes(self):
         attributes = {}
