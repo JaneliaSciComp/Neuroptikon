@@ -6,7 +6,7 @@
 import wx
 from object_inspector import ObjectInspector
 from network.arborization import Arborization
-
+from network.neuron import Neuron
 
 class ArborizationInspector( ObjectInspector ):
     
@@ -22,8 +22,15 @@ class ArborizationInspector( ObjectInspector ):
     
     def objectSizer(self, parentWindow):
         if not hasattr(self, '_sizer'):
-            self._sizer = wx.FlexGridSizer(2, 2, 8, 8)
+            self._sizer = wx.FlexGridSizer(3, 2, 8, 8)
             self._sizer.SetFlexibleDirection(wx.HORIZONTAL)
+            
+            neuronImage = Neuron.image()
+            if neuronImage == None:
+                self._regionBitmap = wx.EmptyBitmap(16, 16)
+            else:
+                self._regionBitmap = wx.BitmapFromImage(neuronImage.Rescale(16, 16, wx.IMAGE_QUALITY_HIGH))
+            
             
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Sends output to region:')))
             self._sendsOutputChoice = wx.Choice(parentWindow, wx.ID_ANY)
@@ -41,6 +48,23 @@ class ArborizationInspector( ObjectInspector ):
             self._receivesInputChoice.Append(gettext('Unknown'), None)
             self._multipleReceivesInputsId = wx.NOT_FOUND
             self._sizer.Add(self._receivesInputChoice)
+            
+            #add a neuron sizer
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Neuron: ')))
+            parentSizer = wx.BoxSizer(wx.HORIZONTAL)
+            parentSizer.Add(wx.StaticBitmap(parentWindow, wx.ID_ANY, self._regionBitmap))
+            self._parentNameField = wx.StaticText(parentWindow, wx.ID_ANY)
+            parentSizer.Add(self._parentNameField, 1, wx.LEFT, 2)
+            self._selectParentButton = wx.Button(parentWindow, wx.ID_ANY, gettext('Select'), style = wx.BU_EXACTFIT)
+            self._selectParentButton.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
+            self._selectParentButton.SetSize(wx.Size(50, self._selectParentButton.GetSize().GetHeight()))
+            self._selectParentButton.SetMinSize(self._selectParentButton.GetSize())
+            self._window.Bind(wx.EVT_BUTTON, self.onSelectNeuron, self._selectParentButton)
+            parentSizer.Add(self._selectParentButton, 0, wx.LEFT, 8)
+            self._selectParentButton.Disable()
+            self._sizer.Add(parentSizer)
+            
+            
             parentWindow.Bind(wx.EVT_CHOICE, self.onChooseReceievesInput, self._receivesInputChoice)
             
         return self._sizer
@@ -71,6 +95,18 @@ class ArborizationInspector( ObjectInspector ):
                 self._multipleReceivesInputsId = self._receivesInputChoice.Append(gettext('Multiple values'))
                 self._receivesInputChoice.SetSelection(3)
         
+        if attribute is None or attribute == 'neurite':
+            if self.objects.haveEqualAttr('neurite'):
+                if self.objects[0].neurite is None or self.objects[0].neurite.root is None:
+                    self._parentNameField.SetLabel(gettext('None'))
+                    self._selectParentButton.Disable()
+                else:
+                    self._parentNameField.SetLabel(self.objects[0].neurite.root.name or gettext('Unnamed neuron'))
+                    self._selectParentButton.Enable()
+            else:
+                self._parentNameField.SetLabel(gettext('Multiple values'))
+                self._selectParentButton.Disable()
+        
         self._sizer.Layout()
         
     
@@ -94,3 +130,6 @@ class ArborizationInspector( ObjectInspector ):
             if self._multipleReceivesInputsId != wx.NOT_FOUND:
                 self._receivesInputChoice.Delete(self._multipleReceivesInputsId)
                 self._multipleReceivesInputsId = wx.NOT_FOUND
+
+    def onSelectNeuron(self, event):
+        self.selectObject(self.objects[0].neurite.root)
