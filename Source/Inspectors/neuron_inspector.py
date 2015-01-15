@@ -29,7 +29,7 @@ class NeuronInspector( ObjectInspector ):
     
     def objectSizer(self, parentWindow):
         if not hasattr(self, '_sizer'):
-            self._sizer = wx.FlexGridSizer(5, 2, 8, 8)
+            self._sizer = wx.FlexGridSizer(6, 2, 8, 8)
             self._sizer.SetFlexibleDirection(wx.HORIZONTAL | wx.VERTICAL)
             
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Class:')))
@@ -75,6 +75,12 @@ class NeuronInspector( ObjectInspector ):
             self._neurotransmittersOptions.Add(self._neurotransmitterChoice, 0, wx.TOP, 4)
             self._sizer.Add(self._neurotransmittersOptions)
             parentWindow.Bind(wx.EVT_CHOICE, self.onAddNeurotransmitter, self._neurotransmitterChoice)
+            
+            
+            self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Links:')))
+            self._linkSizer = wx.BoxSizer(wx.VERTICAL)
+            self._sizer.Add(self._linkSizer)
+            
             
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Neuron Image:')))
             self.imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
@@ -164,7 +170,15 @@ class NeuronInspector( ObjectInspector ):
             else:
                 pass
                 #option if not all neurons have the same image
-            
+           
+        if attribute is None or attribute == 'links':
+            if self.objects.haveEqualAttr('neuronImage'):
+                self._linkSizer.Clear(True)
+                self._linkSizer.Clear()
+                for url in self.objects[0].links:
+                    self._linkOut = wx.HyperlinkCtrl(self._parentWindow, wx.ID_ANY, gettext(url), gettext(url))
+                    self._linkSizer.Add(self._linkOut)
+         
         self._sizer.Layout()
         
     

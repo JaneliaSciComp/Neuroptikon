@@ -58,7 +58,7 @@ class Neuron(NeuroObject):
         # Pull out the keyword arguments specific to this class before we call super.
         # We need to do this so we can know if the caller specified an argument or not.
         # For example, the caller might specify a neuron class and one attribute to override.  We need to know which attributes _not_ to set.
-        localAttrNames = ['activation', 'functions', 'neurotransmitters', 'polarity', 'region', 'neuronImage']
+        localAttrNames = ['activation', 'functions', 'neurotransmitters', 'polarity', 'region', 'neuronImage', 'links']
         localKeywordArgs = {}
         for attrName in localAttrNames:
             if attrName in keywordArgs:
@@ -76,7 +76,8 @@ class Neuron(NeuroObject):
         self.region = None
         self._synapses = []
         self.neuronImage = None
-        
+        self.links = []
+           
         for attrName in localAttrNames:
             if attrName == 'functions':
                 attrValue = set()
@@ -420,7 +421,6 @@ class Neuron(NeuroObject):
         if image != None and not image.IsOk():
             image = None
         self.neuronImage = image
-    
     
     def setHasFunction(self, function, hasFunction):
         """
