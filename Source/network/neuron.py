@@ -148,6 +148,7 @@ class Neuron(NeuroObject):
     
     @classmethod
     def _fromXMLElement(cls, network, xmlElement):
+        #TODO need to add links and images when I get this working
         neuron = super(Neuron, cls)._fromXMLElement(network, xmlElement)
         classId = xmlElement.findtext('Class')
         if classId is None:
@@ -195,6 +196,7 @@ class Neuron(NeuroObject):
     
     
     def _toXMLElement(self, parentElement):
+        #TODO need to add links and images when I get this working
         neuronElement = NeuroObject._toXMLElement(self, parentElement)
         if self.neuronClass is not None:
             ElementTree.SubElement(neuronElement, 'Class').text = self.neuronClass.identifier
