@@ -3,6 +3,6 @@
 #  Use is subject to Janelia Farm Research Campus Software Copyright 1.1 license terms.
 #  http://license.janelia.org/license/jfrc_copyright_1_1.html
 
-version = "1.0.0rc2"
-version_info = (1, 0, 0, "rc2")
+version = "1.0.0rc2a"
+version_info = (1, 0, 0, "rc2a")
 JIRA_version_id = 10011
