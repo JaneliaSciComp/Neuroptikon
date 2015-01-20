@@ -40,21 +40,21 @@ class Neuron(NeuroObject):
     def __init__(self, network, neuronClass = None, *args, **keywordArgs):
         """
         Neurons represent individual neural cells in the network.
-        
+
         You create a neuron by messaging the network:
-        
+
         >>> neuron1 = network.createNeuron(...)
         """
-        
+
         # Upconvert old 'function' singleton param to list expected by new 'functions' param.
         if 'function' in keywordArgs:
-            keywordArgs['functions'] = set([keywordArgs['function']])
-            del keywordArgs['function']
+            functions = set([function])
+            del function
         # Upconvert old 'neurotransmitter' singleton param to list expected by new 'neurotransmitters' param.
         if 'neurotransmitter' in keywordArgs:
-            keywordArgs['neurotransmitters'] = [keywordArgs['neurotransmitter']]
-            del keywordArgs['neurotransmitter']
-        
+            neurotransmitters = [neurotransmitter]
+            del neurotransmitter
+
         # Pull out the keyword arguments specific to this class before we call super.
         # We need to do this so we can know if the caller specified an argument or not.
         # For example, the caller might specify a neuron class and one attribute to override.  We need to know which attributes _not_ to set.
@@ -64,9 +64,9 @@ class Neuron(NeuroObject):
             if attrName in keywordArgs:
                 localKeywordArgs[attrName] = keywordArgs[attrName]
                 del keywordArgs[attrName]
-        
+
         NeuroObject.__init__(self, network, *args, **keywordArgs)
-        
+
         self._neurites = []
         self.neuronClass = neuronClass
         self.activation = None
@@ -77,7 +77,7 @@ class Neuron(NeuroObject):
         self._synapses = []
         self.neuronImage = None
         self.links = []
-           
+
         for attrName in localAttrNames:
             if attrName == 'functions':
                 attrValue = set()
@@ -90,8 +90,13 @@ class Neuron(NeuroObject):
                 if attrName == 'functions':
                     attrValue = set(localKeywordArgs[attrName])
                 if attrName == 'neuronImage':
-                    imagePath, imageName = path.split(localKeywordArgs[attrName])
-                    attrValue = neuroptikon.loadImage(imageName, imagePath)
+                    imageLabel = localKeywordArgs[attrName]['label']
+                    imageLocation = localKeywordArgs[attrName]['path']
+                    imagePath, imageName = path.split(imageLocation)
+                    attrValue = {
+                        'label': imageLabel,
+                        'image': neuroptikon.loadImage(imageName, imagePath)
+                    }
                 else:
                     attrValue = localKeywordArgs[attrName]  
             elif self.neuronClass:
