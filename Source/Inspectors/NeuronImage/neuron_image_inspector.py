@@ -29,10 +29,11 @@ class NeuronImageInspector( Inspector ):
     def window(self, parentWindow=None):
         if not hasattr(self, '_window'):
             self._window = wx.Window(parentWindow, wx.ID_ANY)
-            self.gridSizer = wx.FlexGridSizer(1, 1, 8, 8)
-            
-            self.imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
-            self.gridSizer.Add(self.imageOfNeuron, 0, wx.EXPAND)
+            self.gridSizer = wx.FlexGridSizer(2, 1, 8, 8)
+            self._labelForNeuron = wx.StaticText(parentWindow, wx.ID_ANY, gettext(''))
+            self._imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
+            self.gridSizer.Add(self._labelForNeuron, 0, wx.EXPAND)
+            self.gridSizer.Add(self._imageOfNeuron, 0, wx.EXPAND)
             
             mainSizer = wx.BoxSizer(wx.VERTICAL)
             mainSizer.Add(self.gridSizer, 1, wx.ALL, 5)
@@ -56,10 +57,12 @@ class NeuronImageInspector( Inspector ):
                     pass
                 else:
                     windowSize = self._window.Parent.GetSize()
-                    scaledImage = image.Rescale(windowSize[0], windowSize[1], wx.IMAGE_QUALITY_HIGH)
-                    self.imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
-                    self.imageOfNeuron.SetBitmap(wx.BitmapFromImage(scaledImage))
-                    self.gridSizer.Add(self.imageOfNeuron, 0, wx.EXPAND)
+                    self._labelForNeuron = wx.StaticText(self._window, wx.ID_ANY, gettext(image['label']))
+                    scaledImage = image['image'].Rescale(windowSize[0], windowSize[1], wx.IMAGE_QUALITY_HIGH)
+                    self._imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
+                    self._imageOfNeuron.SetBitmap(wx.BitmapFromImage(scaledImage))
+                    self.gridSizer.Add(self._labelForNeuron, 0, wx.EXPAND)
+                    self.gridSizer.Add(self._imageOfNeuron, 0, wx.EXPAND)
             else:
                 pass
         

@@ -13,7 +13,6 @@ class InspectorFrame( wx.Frame ):
     
     def __init__(self, parent=None):
         wx.Frame.__init__(self, parent, -1, gettext('Inspector'), size=(200,300), style=wx.DEFAULT_FRAME_STYLE | wx.FRAME_TOOL_WINDOW)
-        
         self.display = None
         
         self._updatingInspectors = False
@@ -111,6 +110,7 @@ class InspectorFrame( wx.Frame ):
                 self.GetSizer().Show(self._activeInspector.window())
                 self.SetTitle(gettext('%s Inspector') % (inspector.name()))
                 toolbarWidth = len(self._activeInspectors) * 32
+                #should i be setting min height too?
                 self.SetMinSize(wx.Size(max(self._minWidth, toolbarWidth), self._minHeight + 40))
                 self._activeInspector.window().Layout()
                 toolbar = self.GetToolBar()
