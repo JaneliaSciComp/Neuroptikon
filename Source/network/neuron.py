@@ -91,13 +91,13 @@ class Neuron(NeuroObject):
                     attrValue = set(localKeywordArgs[attrName])
                 if attrName == 'neuronImage':
                     for img in localKeywordArgs[attrName]:
-                    imageLabel = img['label']
-                    imageLocation = img['path']
-                    imagePath, imageName = path.split(imageLocation)
-                    attrValue.append({
-                        'label': imageLabel,
-                        'image': neuroptikon.loadImage(imageName, imagePath)
-                    })
+                        imageLabel = img['label']
+                        imageLocation = img['path']
+                        imagePath, imageName = path.split(imageLocation)
+                        attrValue.append({
+                            'label': imageLabel,
+                            'image': neuroptikon.loadImage(imageName, imagePath)
+                        })
                 else:
                     attrValue = localKeywordArgs[attrName]  
             elif self.neuronClass:
@@ -105,7 +105,6 @@ class Neuron(NeuroObject):
             if attrName == 'functions':
                 attrName = '_functions'
             setattr(self, attrName, attrValue)
-        
         if self.region is not None:
             self.region.neurons.append(self)
     

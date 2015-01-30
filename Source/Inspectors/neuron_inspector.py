@@ -78,13 +78,13 @@ class NeuronInspector( ObjectInspector ):
             
             
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Links:')))
-            self._linkSizer = wx.BoxSizer(wx.VERTICAL)
+            self._linkSizer = wx.FlexGridSizer(0, 1, 2, 5)
             self._sizer.Add(self._linkSizer)
             
             
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Neuron Image:')))
-            self._imageSizer = wx.FlexGridSizer(2, 0, 2, 5)
-            self._imageSizer.SetFlexibleDirection(wx.VERTICAL)
+            self._imageSizer = wx.BoxSizer(wx.VERTICAL) #wx.FlexGridSizer(2, 0, 2, 5)
+            self._imageSizer.Clear()
             self._sizer.Add(self._imageSizer, 0, wx.EXPAND)
 
             self._parentWindow = parentWindow
@@ -160,20 +160,28 @@ class NeuronInspector( ObjectInspector ):
         if attribute is None or attribute == 'neuronImage':
             if self.objects.haveEqualAttr('neuronImage'):
                 image = self.objects[0].neuronImage
+                #print self._imageSizer.GetChildren()
+                self._imageSizer.Clear(True)
+                self._imageSizer.Clear()
+                #print self._imageSizer.GetChildren()
+                #print 'clearing'
                 #loop through images
                 if image == None or image == []:
                     pass
                 else:
+                    imagesGridSizer = wx.FlexGridSizer(2 * len(image), 0, 2, 5)
+                    imagesGridSizer.SetFlexibleDirection(wx.VERTICAL)
+                    self._imageSizer.Add(imagesGridSizer)
                     for img in image:
                         scaledImage = img['image'].Copy().Rescale(100, 100, wx.IMAGE_QUALITY_HIGH)
                         #TODO append wx objects for image and label
-                        labelForNeuron = wx.StaticText(parentWindow, wx.ID_ANY, gettext(img['label']))
+                        labelForNeuron = wx.StaticText(self._window, wx.ID_ANY, gettext(img['label']))
                         imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
                         imageOfNeuron.SetBitmap(wx.BitmapFromImage(scaledImage))
-                        imageOfNeuron.SetMinSize(wx.Size(32, 32))
-                        imageOfNeuron.SetMaxSize(wx.Size(32, 32))
-                        self._imageSizer.Add(labelForNeuron)
-                        self._imageSizer.Add(self._imageOfNeuron)
+                        imageOfNeuron.SetMinSize(wx.Size(100, 100))
+                        imageOfNeuron.SetMaxSize(wx.Size(100, 100))
+                        imagesGridSizer.Add(labelForNeuron)
+                        imagesGridSizer.Add(imageOfNeuron)
             else:
                 pass
                 #option if not all neurons have the same image
