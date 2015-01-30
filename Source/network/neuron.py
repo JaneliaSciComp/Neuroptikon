@@ -75,13 +75,13 @@ class Neuron(NeuroObject):
         self.polarity = None
         self.region = None
         self._synapses = []
-        self.neuronImage = None
+        self.neuronImage = []
         self.links = []
 
         for attrName in localAttrNames:
             if attrName == 'functions':
                 attrValue = set()
-            elif attrName == 'neurotransmitters':
+            elif attrName in ('neurotransmitters', 'links', 'neuronImage'):
                 attrValue = []
             else:
                 attrValue = None
@@ -90,13 +90,14 @@ class Neuron(NeuroObject):
                 if attrName == 'functions':
                     attrValue = set(localKeywordArgs[attrName])
                 if attrName == 'neuronImage':
-                    imageLabel = localKeywordArgs[attrName]['label']
-                    imageLocation = localKeywordArgs[attrName]['path']
+                    for img in localKeywordArgs[attrName]:
+                    imageLabel = img['label']
+                    imageLocation = img['path']
                     imagePath, imageName = path.split(imageLocation)
-                    attrValue = {
+                    attrValue.append({
                         'label': imageLabel,
                         'image': neuroptikon.loadImage(imageName, imagePath)
-                    }
+                    })
                 else:
                     attrValue = localKeywordArgs[attrName]  
             elif self.neuronClass:

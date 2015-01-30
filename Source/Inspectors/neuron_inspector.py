@@ -85,12 +85,6 @@ class NeuronInspector( ObjectInspector ):
             self._sizer.Add(wx.StaticText(parentWindow, wx.ID_ANY, gettext('Neuron Image:')))
             self._imageSizer = wx.FlexGridSizer(2, 0, 2, 5)
             self._imageSizer.SetFlexibleDirection(wx.VERTICAL)
-            self._labelForNeuron = wx.StaticText(parentWindow, wx.ID_ANY, gettext(''))
-            self._imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
-            self._imageOfNeuron.SetMinSize(wx.Size(32, 32))
-            self._imageOfNeuron.SetMaxSize(wx.Size(32, 32))
-            self._imageSizer.Add(self._labelForNeuron)
-            self._imageSizer.Add(self._imageOfNeuron)
             self._sizer.Add(self._imageSizer, 0, wx.EXPAND)
 
             self._parentWindow = parentWindow
@@ -166,12 +160,20 @@ class NeuronInspector( ObjectInspector ):
         if attribute is None or attribute == 'neuronImage':
             if self.objects.haveEqualAttr('neuronImage'):
                 image = self.objects[0].neuronImage
-                if image == None:
+                #loop through images
+                if image == None or image == []:
                     pass
                 else:
-                    scaledImage = image['image'].Copy().Rescale(100, 100, wx.IMAGE_QUALITY_HIGH)
-                    self._imageOfNeuron.SetBitmap(wx.BitmapFromImage(scaledImage))
-                    self._labelForNeuron.SetLabel(image['label'])
+                    for img in image:
+                        scaledImage = img['image'].Copy().Rescale(100, 100, wx.IMAGE_QUALITY_HIGH)
+                        #TODO append wx objects for image and label
+                        labelForNeuron = wx.StaticText(parentWindow, wx.ID_ANY, gettext(img['label']))
+                        imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
+                        imageOfNeuron.SetBitmap(wx.BitmapFromImage(scaledImage))
+                        imageOfNeuron.SetMinSize(wx.Size(32, 32))
+                        imageOfNeuron.SetMaxSize(wx.Size(32, 32))
+                        self._imageSizer.Add(labelForNeuron)
+                        self._imageSizer.Add(self._imageOfNeuron)
             else:
                 pass
                 #option if not all neurons have the same image

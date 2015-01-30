@@ -19,6 +19,8 @@ class NeuronImageInspector( Inspector ):
     
     @classmethod
     def canInspectDisplay(cls, display):
+        #TODO delete line below, only show neuron image when image is clicked
+        return False
         if display:
             for visible in display.selection():
                 if visible.client.displayName() == gettext('Neuron'):
