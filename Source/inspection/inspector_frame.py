@@ -118,6 +118,11 @@ class InspectorFrame( wx.Frame ):
             self.Layout()
             self.SendSizeEvent()
     
+    def findInspector(self, inspectorName):
+        for inspector in self._activeInspectors:
+            if inspector.name() == inspectorName:
+                return inspector
+        return None
     
     def onShowInspector(self, event):
         for inspector in self._activeInspectors:

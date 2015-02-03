@@ -19,8 +19,6 @@ class NeuronImageInspector( Inspector ):
     
     @classmethod
     def canInspectDisplay(cls, display):
-        #TODO delete line below, only show neuron image when image is clicked
-        return False
         if display:
             for visible in display.selection():
                 if visible.client.displayName() == gettext('Neuron'):
@@ -32,6 +30,7 @@ class NeuronImageInspector( Inspector ):
         if not hasattr(self, '_window'):
             self._window = wx.Window(parentWindow, wx.ID_ANY)
             self.gridSizer = wx.FlexGridSizer(2, 1, 8, 8)
+            self._currentIdx = 0
             self._labelForNeuron = wx.StaticText(parentWindow, wx.ID_ANY, gettext(''))
             self._imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
             self.gridSizer.Add(self._labelForNeuron, 0, wx.EXPAND)
@@ -42,31 +41,33 @@ class NeuronImageInspector( Inspector ):
             self._window.SetSizer(mainSizer)
         
         return self._window
-    
-    def inspectDisplay(self, display):
+
+    def _neuronImage(self, display, imageIdx=0):
         selection = display.selection()
-        
-        self.gridSizer.Clear(True)
-        neuron = None
         for visible in selection:
-            if visible.client is not None and visible.client.displayName() == 'Neuron':
-                neuron = visible
-                break
-        if neuron.client is not None and neuron.client.displayName() == 'Neuron':
-            if neuron.client.neuronImage:
-                image = neuron.client.neuronImage
-                if image == None:
-                    pass
-                else:
-                    windowSize = self._window.Parent.GetSize()
-                    self._labelForNeuron = wx.StaticText(self._window, wx.ID_ANY, gettext(image['label']))
-                    scaledImage = image['image'].Rescale(windowSize[0], windowSize[1], wx.IMAGE_QUALITY_HIGH)
-                    self._imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
-                    self._imageOfNeuron.SetBitmap(wx.BitmapFromImage(scaledImage))
-                    self.gridSizer.Add(self._labelForNeuron, 0, wx.EXPAND)
-                    self.gridSizer.Add(self._imageOfNeuron, 0, wx.EXPAND)
-            else:
-                pass
-        
+            if visible.client is not None and visible.client.displayName() == 'Neuron':          
+                if visible.client.neuronImage:
+                    try:
+                        image = visible.client.neuronImage[imageIdx]
+                        return image
+                    except:
+                        return False
+                return False #return only for first neuron selected
+        return False
+
+    def inspectDisplay(self, display, imageIdx=0):
+        image = self._neuronImage(display, imageIdx)
+        self.gridSizer.Clear(True)
+        if image and image.bmp is not None:
+            windowSize = self._window.Parent.GetSize()
+            self._labelForNeuron = wx.StaticText(self._window, wx.ID_ANY, gettext(image.label))
+            scaledImage = image.bmp.Rescale(windowSize[0], windowSize[1], wx.IMAGE_QUALITY_HIGH)
+            self._imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
+            self._imageOfNeuron.SetBitmap(wx.BitmapFromImage(scaledImage))
+            self.gridSizer.Add(self._labelForNeuron, 0, wx.EXPAND)
+            self.gridSizer.Add(self._imageOfNeuron, 0, wx.EXPAND)
+            self._currentIdx = imageIdx
+        else:
+            pass
         self._window.Layout()
    

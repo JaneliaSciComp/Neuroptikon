@@ -13,6 +13,30 @@ from attribute import Attribute
 
     
 class Object(object):
+
+    class Img:
+        label = ''
+        bmp = None
+
+        def __init__(self, label = None, path = None):
+            self.label = label
+            self.bmp = self._loadImage(path)
+
+        def setImage(self, path):
+            image = self._loadImage(path)
+            if image != None and not image.IsOk():
+                image = None
+            self.bmp = image
+
+        def _loadImage(self, imageFileName):
+            import wx
+            import os
+            try:
+                convertedImagePath = os.path.abspath(imageFileName)
+                image = wx.Image(convertedImagePath)
+            except:
+                image = None
+            return image
     
     def __init__(self, network, name = None, abbreviation = None, description = None):
         """

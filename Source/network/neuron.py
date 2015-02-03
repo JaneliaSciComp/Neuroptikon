@@ -33,6 +33,8 @@ class Neuron(NeuroObject):
         SENSORY = 'SENSORY'
         INTERNEURON = 'INTERNEURON'
         MOTOR = 'MOTOR'
+
+    #TODO Refactor neuron image into an object
     
     Functions = [Function.SENSORY, Function.INTERNEURON, Function.MOTOR]
     
@@ -93,11 +95,8 @@ class Neuron(NeuroObject):
                     for img in localKeywordArgs[attrName]:
                         imageLabel = img['label']
                         imageLocation = img['path']
-                        imagePath, imageName = path.split(imageLocation)
-                        attrValue.append({
-                            'label': imageLabel,
-                            'image': neuroptikon.loadImage(imageName, imagePath)
-                        })
+                        myImage = self.Img(imageLabel, imageLocation)
+                        attrValue.append(myImage)
                 else:
                     attrValue = localKeywordArgs[attrName]  
             elif self.neuronClass:
@@ -422,12 +421,6 @@ class Neuron(NeuroObject):
     def disconnectFromNetwork(self):
         if self.region:
             self.region.neurons.remove(self)
-    
-    def setImage(self, imageName, pathToImage):
-        image = neuroptikon.loadImage(imageName, pathToImage)
-        if image != None and not image.IsOk():
-            image = None
-        self.neuronImage = image
     
     def setHasFunction(self, function, hasFunction):
         """
