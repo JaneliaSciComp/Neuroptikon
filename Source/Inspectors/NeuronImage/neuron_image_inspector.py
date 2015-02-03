@@ -29,11 +29,13 @@ class NeuronImageInspector( Inspector ):
     def window(self, parentWindow=None):
         if not hasattr(self, '_window'):
             self._window = wx.Window(parentWindow, wx.ID_ANY)
-            self.gridSizer = wx.FlexGridSizer(2, 1, 8, 8)
+            self.gridSizer = wx.FlexGridSizer(3, 1, 8, 8)
             self._currentIdx = 0
-            self._labelForNeuron = wx.StaticText(parentWindow, wx.ID_ANY, gettext(''))
+            self._next = wx.Button(self._window, wx.ID_ANY, gettext('Next'))
+            self._labelForNeuron = wx.StaticText(self._window, wx.ID_ANY, gettext(''))
             self._imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
             self.gridSizer.Add(self._labelForNeuron, 0, wx.EXPAND)
+            self.gridSizer.Add(self._next, 0, wx.LEFT, 8)
             self.gridSizer.Add(self._imageOfNeuron, 0, wx.EXPAND)
             
             mainSizer = wx.BoxSizer(wx.VERTICAL)
