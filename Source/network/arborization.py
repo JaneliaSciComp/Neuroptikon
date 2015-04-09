@@ -124,6 +124,7 @@ class Arborization(NeuroObject):
         params['shape'] = 'Line' if hasattr(osgUtil, 'PolytopeIntersector') else 'Cylinder'
         params['color'] = (0.0, 0.0, 0.0)
         params['pathIsFixed'] = None
+        params['weight'] = 1.0
         return params
     
     

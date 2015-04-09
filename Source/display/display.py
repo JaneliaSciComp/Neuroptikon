@@ -2364,6 +2364,7 @@ class Display(wx.glcanvas.GLCanvas):
             if highlightedNode not in visiblesToHighlight:
                 highlightedNode.setGlowColor(None)
         for animatedEdge in self.animatedVisibles:
+            animatedEdge.boldWeight(1.0)
             if animatedEdge not in visiblesToAnimate:
                 animatedEdge.animateFlow(False)
         
@@ -2376,6 +2377,7 @@ class Display(wx.glcanvas.GLCanvas):
             else:
                 visibleToHighlight.setGlowColor(None)
         for visibleToAnimate in visiblesToAnimate:
+            visibleToAnimate.boldWeight(5.0)
             visibleToAnimate.animateFlow()
         
         self.highlightedVisibles = visiblesToHighlight

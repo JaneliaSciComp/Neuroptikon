@@ -14,3 +14,4 @@ neuron1.arborize(regionA, True, False)
 neuron1 = network.createNeuron(name = '2', neuronImage=[{'label': "Neuron 2's image", 'path':'./neuron2.jpg'}])
 neuron1.arborize(regionA, True, False)
 display.performLayout()
+

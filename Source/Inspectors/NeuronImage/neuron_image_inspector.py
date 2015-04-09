@@ -83,6 +83,7 @@ class NeuronImageInspector( Inspector ):
             labelSizer = wx.BoxSizer(wx.HORIZONTAL)
             labelSizer.Add(self._labelForNeuron, 1, wx.LEFT, 2)
 
+            #Only show the next and previous buttons if there are multiple images
             if (self._neuronImageCount(display) > 1):
                 self._prevButton = wx.Button(self._window, wx.ID_ANY, gettext('Prev'), style = wx.BU_EXACTFIT)
                 self._prevButton.SetWindowVariant(wx.WINDOW_VARIANT_SMALL)
@@ -102,8 +103,6 @@ class NeuronImageInspector( Inspector ):
             self._imageOfNeuron = wx.StaticBitmap(self._window, wx.ID_ANY)
             self._imageOfNeuron.SetBitmap(wx.BitmapFromImage(scaledImage))
             self.gridSizer.Add(labelSizer)
-            #self.gridSizer.Add(self._labelForNeuron, 0, wx.EXPAND)
-            #self.gridSizer.Add(self._next, 0, wx.EXPAND)
             self.gridSizer.Add(self._imageOfNeuron, 0, wx.EXPAND)
             self._currentIdx = imageIdx
         else:

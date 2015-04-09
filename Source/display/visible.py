@@ -74,6 +74,7 @@ class Visible(object):
         
         # Appearance attributes
         self._weight = 1.0
+        self._originalWeight = None
         self._label = None
         self._labelNode = None
         self._labelPosition = (0.0, 0.0, 0.0)   # in local coordinates
@@ -1138,7 +1139,9 @@ class Visible(object):
     def _updateTransform(self):
         if isinstance(self._shape, (UnitShape, type(None))):
             # update the transform unless we're under an osgGA.Selection node, i.e. being dragged
-            if len(self.sgNode.getParents()) == 0 or self.display.dragSelection is None or self.sgNode.getParent(0).__repr__() != self.display.dragSelection.asGroup().__repr__():
+            # TODO fix this when we add dragging back in
+            draggingDoesntWorkAnyways = True
+            if len(self.sgNode.getParents()) == 0 or self.display.dragSelection is None or self.sgNode.getParent(0).__repr__() != self.display.dragSelection.asGroup().__repr__() or draggingDoesntWorkAnyways:
                 if self.parent is None or not self.sizeIsAbsolute():
                     scale = self._size
                 else:
@@ -1353,10 +1356,9 @@ class Visible(object):
         """
         Return the weight of the visualized :class:`object <Network.Object.Object>`.
         """
-        
         return self._weight
     
-    
+
     def setWeight(self, weight):
         """
         Set the weight of the visualized :class:`object <Network.Object.Object>`.
@@ -1372,6 +1374,18 @@ class Visible(object):
             elif self.isPath():
                 self._updatePath()
             dispatcher.send(('set', 'weight'), self)
+
+    def originalWeight(self):
+        """
+        Return the original weight of the visualized :class:`object <Network.Object.Object>`.
+        """
+        return self._originalWeight
+
+    def boldWeight(self, factor):
+        if self.isPath() and not isinstance(self._shape, PathShape):
+            if not self._originalWeight:
+                self._originalWeight = self.weight()
+            self.setWeight(factor * self._originalWeight)
     
     
     def addChildVisible(self, childVisible):
