@@ -52,8 +52,12 @@ else:
             print 'Restarting with corrected ' + libraryEnvVar
         arguments = [sys.executable]
         arguments.extend(sys.argv)
-        os.system(' '.join(arguments))
-        raise SystemExit
+        # Restarting interferes with hitting breakpoints in Eclipse.
+        # So use this flag to bypass the restart process
+        tryingToDebugInEclipse = False
+        if not tryingToDebugInEclipse:
+            os.system(' '.join(arguments))
+            raise SystemExit
 
     sys.path.insert(0, commonLibPath)
     for eggPath in os.listdir(commonLibPath):
