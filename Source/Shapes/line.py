@@ -23,7 +23,6 @@ class Line(PathShape):
         self._weight = 1.01 # so setting to 1.0 triggers a geometry update, bit of a hack
         
         PathShape.__init__(self, *args, **keywordArgs)
-        print self.weight()
         if neuroptikon.config.ReadBool('Smooth Lines'):
             self.geometry().getOrCreateStateSet().setMode(osg.GL_LINE_SMOOTH, osg.StateAttribute.ON)
             #self.geometry().getStateSet().setAttributeAndModes(osg.BlendFunc(osg.BlendFunc.SRC_ALPHA, osg.BlendFunc.ONE_MINUS_SRC_ALPHA), osg.StateAttribute.ON)

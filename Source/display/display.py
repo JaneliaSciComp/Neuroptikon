@@ -28,6 +28,7 @@ from visible import Visible
 import layout as layout_module
 from shape import Shape
 from library.texture import Texture
+import time
 
 
 # Navigation modes
@@ -2181,7 +2182,7 @@ class Display(wx.glcanvas.GLCanvas):
         
         If findShortestPath is True then the shortest path between the currently selected visible(s) and the indicated visible will be found and all will be selected.
         """
-        
+        time1 = time.time()
         if (extend or findShortestPath) and not self.hoverSelected:
             newSelection = set(self.selectedVisibles)
         else:
@@ -2239,7 +2240,8 @@ class Display(wx.glcanvas.GLCanvas):
         self.hoverSelected = self.hoverSelecting
         self.hoverSelecting = False
         self.Refresh()
-   
+        time2 = time.time()
+        print 'It took %0.3f ms' % ((time2-time1)*1000.0)
     
     def selection(self):
         return ObjectList(self.selectedVisibles)
