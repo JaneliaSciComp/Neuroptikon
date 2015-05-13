@@ -31,19 +31,21 @@ class ForceDirectedLayout(Layout):
         maxPositions = {}
         edges = []
         shouldLayout = {}
-        #TODO ignore nodes if their position is fixed
-        unFixed = False
         for visibles in display.visibles.itervalues():
             for visible in visibles:
                 if visible.isPath():
                     edges.append(visible)
                 else:
                     shouldLayout[visible] = True
+                    # Don't layout regions that are fixed or neurons that only connect to fixed regions
                     if visible.positionIsFixed():
                         shouldLayout[visible] = False
                     elif visible.client.displayName() == 'Neuron':
                         connections = visible.client.connections()
-                        regionsFixed = [display.visibles[connection.region.networkId][0].positionIsFixed() for connection in connections if hasattr(connection, 'region')]
+                        regionsFixed = []
+                        for connection in connections:
+                            if hasattr(connection, 'region'):
+                                regionsFixed.append(display.visibles[connection.region.networkId][0].positionIsFixed())
                         if regionsFixed != [] and all(regionsFixed):
                             shouldLayout[visible] = False
                     position = visible.worldPosition()
@@ -79,10 +81,10 @@ class ForceDirectedLayout(Layout):
                 displacements[node] = N.zeros(display.viewDimensions)
 
             # Avoid overlapping nodes.
-            #Check if it is the case that regions are fixed and neurons are not?
             nodePositions = positions.keys()
             for index1 in range(0, nodeCount - 1):
                 node1 = nodePositions[index1]
+                # Don't waste time laying out nodes that have a fixed position
                 if node1 not in shouldLayout or shouldLayout[node1]:
                     ancestors1 = node1.ancestors() + [node1]
                     min1 = minPositions[node1]
@@ -149,9 +151,7 @@ class ForceDirectedLayout(Layout):
                     minPositions[node] = minPositions[node] + temperedDisplacement
                     maxPositions[node] = maxPositions[node] + temperedDisplacement
                     totalDisplacement += displacementMag
-            
-            #print str(totalDisplacement / nodeCount)
-        
+                    
         if not userCancelled:
             for node, position in positions.iteritems():
                 if node.parent == None and not node.positionIsFixed():
@@ -162,4 +162,3 @@ class ForceDirectedLayout(Layout):
                     node.setPosition(position)
             for edge in edges:
                 edge.setPathMidPoints([])
-
