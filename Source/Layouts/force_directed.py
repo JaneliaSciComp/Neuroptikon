@@ -30,11 +30,24 @@ class ForceDirectedLayout(Layout):
         minPositions = {}
         maxPositions = {}
         edges = []
+        shouldLayout = {}
         for visibles in display.visibles.itervalues():
             for visible in visibles:
                 if visible.isPath():
                     edges.append(visible)
                 else:
+                    shouldLayout[visible] = True
+                    # Don't layout regions that are fixed or neurons that only connect to fixed regions
+                    if visible.positionIsFixed():
+                        shouldLayout[visible] = False
+                    elif visible.client.displayName() == 'Neuron':
+                        connections = visible.client.connections()
+                        regionsFixed = []
+                        for connection in connections:
+                            if hasattr(connection, 'region'):
+                                regionsFixed.append(display.visibles[connection.region.networkId][0].positionIsFixed())
+                        if regionsFixed != [] and all(regionsFixed):
+                            shouldLayout[visible] = False
                     position = visible.worldPosition()
                     if display.viewDimensions == 2:
                         position = N.array((position[0], position[1]))
@@ -59,60 +72,62 @@ class ForceDirectedLayout(Layout):
             if not display.updateProgress('Laying out the network...', float(i) / self.maxIterations):
                 userCancelled = True
                 break
-            
+
             temperature = 0.1 * (self.maxIterations - i) / self.maxIterations
-            
+
             # calculate the displacement for each node
             displacements = {}
             for node in positions:
                 displacements[node] = N.zeros(display.viewDimensions)
-            
+
             # Avoid overlapping nodes.
             nodePositions = positions.keys()
             for index1 in range(0, nodeCount - 1):
                 node1 = nodePositions[index1]
-                ancestors1 = node1.ancestors() + [node1]
-                min1 = minPositions[node1]
-                max1 = maxPositions[node1]
-                
-                for index2 in range(index1 + 1, nodeCount):
-                    node2 = nodePositions[index2]
-                    ancestors2 = node2.ancestors() + [node2]
-                    min2 = minPositions[node2]
-                    max2 = maxPositions[node2]
-                    
-                    if self.fill:
-                        centerDelta = positions[node1] - positions[node2]
-                        centerDeltaMag2 = max(N.dot(centerDelta, centerDelta), 0.0001)
-                        delta = centerDelta / centerDeltaMag2 * optimalNodeSep ** 2
-                        if not ancestors1[0].positionIsFixed():
-                            displacements[ancestors1[0]] = displacements[ancestors1[0]] + delta
-                        if not ancestors2[0].positionIsFixed():
-                            displacements[ancestors2[0]] = displacements[ancestors2[0]] - delta
-                        
-                    if node1 not in ancestors2 and node2 not in ancestors1 and (max1 > min2).all() and (min1 < max2).all():
-                        # The nodes overlap so apply a force pushing them apart.
-                        
-                        centerDelta = positions[node1] - positions[node2]
-                        if True:
+                # Don't waste time laying out nodes that have a fixed position
+                if node1 not in shouldLayout or shouldLayout[node1]:
+                    ancestors1 = node1.ancestors() + [node1]
+                    min1 = minPositions[node1]
+                    max1 = maxPositions[node1]
+
+                    for index2 in range(index1 + 1, nodeCount):
+                        node2 = nodePositions[index2]
+                        ancestors2 = node2.ancestors() + [node2]
+                        min2 = minPositions[node2]
+                        max2 = maxPositions[node2]
+
+                        if self.fill:
+                            centerDelta = positions[node1] - positions[node2]
                             centerDeltaMag2 = max(N.dot(centerDelta, centerDelta), 0.0001)
-                            delta = centerDelta / centerDeltaMag2 #* self.spacing ** 2
-                        else:
-                            overlapMin = N.zeros(display.viewDimensions)
-                            overlapMax = N.zeros(display.viewDimensions)
-                            for dim in range(0, display.viewDimensions):
-                                overlapMin[dim] = max(min1[dim], min2[dim])
-                                overlapMax[dim] = min(max1[dim], max2[dim])
-                            overlapDelta = overlapMax - overlapMin
-                            overlapMag2 = N.dot(overlapDelta, overlapDelta)
-                            centerDeltaMag = sqrt(N.dot(centerDelta, centerDelta))
-                            delta = centerDelta / centerDeltaMag / overlapMag2
-                        
-                        if not ancestors1[0].positionIsFixed():
-                            displacements[ancestors1[0]] = displacements[ancestors1[0]] + delta
-                        if not ancestors2[0].positionIsFixed():
-                            displacements[ancestors2[0]] = displacements[ancestors2[0]] - delta
-            
+                            delta = centerDelta / centerDeltaMag2 * optimalNodeSep ** 2
+                            if not ancestors1[0].positionIsFixed():
+                                displacements[ancestors1[0]] = displacements[ancestors1[0]] + delta
+                            if not ancestors2[0].positionIsFixed():
+                                displacements[ancestors2[0]] = displacements[ancestors2[0]] - delta
+
+                        if node1 not in ancestors2 and node2 not in ancestors1 and (max1 > min2).all() and (min1 < max2).all():
+                            # The nodes overlap so apply a force pushing them apart.
+
+                            centerDelta = positions[node1] - positions[node2]
+                            if True:
+                                centerDeltaMag2 = max(N.dot(centerDelta, centerDelta), 0.0001)
+                                delta = centerDelta / centerDeltaMag2 #* self.spacing ** 2
+                            else:
+                                overlapMin = N.zeros(display.viewDimensions)
+                                overlapMax = N.zeros(display.viewDimensions)
+                                for dim in range(0, display.viewDimensions):
+                                    overlapMin[dim] = max(min1[dim], min2[dim])
+                                    overlapMax[dim] = min(max1[dim], max2[dim])
+                                overlapDelta = overlapMax - overlapMin
+                                overlapMag2 = N.dot(overlapDelta, overlapDelta)
+                                centerDeltaMag = sqrt(N.dot(centerDelta, centerDelta))
+                                delta = centerDelta / centerDeltaMag / overlapMag2
+
+                            if not ancestors1[0].positionIsFixed():
+                                displacements[ancestors1[0]] = displacements[ancestors1[0]] + delta
+                            if not ancestors2[0].positionIsFixed():
+                                displacements[ancestors2[0]] = displacements[ancestors2[0]] - delta
+
             # Make the edges as short as possible
             for edge in edges:
                 (pathStart, pathEnd) = edge.pathEndPoints()
@@ -136,9 +151,7 @@ class ForceDirectedLayout(Layout):
                     minPositions[node] = minPositions[node] + temperedDisplacement
                     maxPositions[node] = maxPositions[node] + temperedDisplacement
                     totalDisplacement += displacementMag
-            
-            #print str(totalDisplacement / nodeCount)
-        
+                    
         if not userCancelled:
             for node, position in positions.iteritems():
                 if node.parent == None and not node.positionIsFixed():
@@ -149,4 +162,3 @@ class ForceDirectedLayout(Layout):
                     node.setPosition(position)
             for edge in edges:
                 edge.setPathMidPoints([])
-    

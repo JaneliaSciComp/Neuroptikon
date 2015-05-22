@@ -2558,7 +2558,7 @@ class Display(wx.glcanvas.GLCanvas):
             self.performLayout(SpectralLayout())
     
     
-    def performLayout(self, layout = None):
+    def performLayout(self, layout = None, **kwargs):
         """ Perform an automatic layout of the :class:`network objects <network.object.Object>` in the visualization.
         
         >>> display.performLayout(layouts['Force Directed'])
@@ -2577,7 +2577,7 @@ class Display(wx.glcanvas.GLCanvas):
             else:
                 # If a layout class was passed in then create a default instance.
                 if isinstance(layout, type(self.__class__)):
-                    layout = layout()
+                    layout = layout(**kwargs)
                 
                 if not layout.__class__.canLayoutDisplay(self):
                     raise ValueError, gettext('The supplied layout cannot be used.')
@@ -2585,16 +2585,16 @@ class Display(wx.glcanvas.GLCanvas):
             if layout == None or not layout.__class__.canLayoutDisplay(self):   # pylint: disable=E1103
                 layouts = neuroptikon.scriptLocals()['layouts']
                 if 'Graphviz' in layouts:
-                    layout = layouts['Graphviz']()
+                    layout = layouts['Graphviz'](**kwargs)
                 elif 'Force Directed' in layouts:
-                    layout = layouts['Force Directed']()
+                    layout = layouts['Force Directed'](**kwargs)
                 elif 'Spectral' in layouts:
-                    layout = layouts['Spectral']()
+                    layout = layouts['Spectral'](**kwargs)
                 else:
                     # Pick the first layout class capable of laying out the display.
                     for layoutClass in layouts.itervalues():
                         if layoutClass.canLayoutDisplay(self):
-                            layout = layoutClass()
+                            layout = layoutClass(**kwargs)
                             break
             
             refreshWasSuppressed = self._suppressRefresh
