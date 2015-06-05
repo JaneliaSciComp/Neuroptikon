@@ -5,6 +5,7 @@
 
 import osg, osgGA, osgManipulator, osgUtil, osgViewer
 import sys
+import os
 
 import display
 from shape import UnitShape
@@ -82,7 +83,7 @@ class PickHandler(osgGA.GUIEventHandler):
                 if self._display.activeDragger == self._display.compositeDragger:
                     self._display.draggerLOD.removeChild(self._display.simpleDragger)
             x, y = eventAdaptor.getX(), eventAdaptor.getY()
-            if hasattr(osgUtil, 'PolytopeIntersector'):
+            if self.usePolytopeIntersector():
                 picker = osgUtil.PolytopeIntersector(osgUtil.Intersector.WINDOW, x - 2.0, y - 2.0, x + 2.0, y + 2.0)
             else:
                 picker = osgUtil.LineSegmentIntersector(osgUtil.Intersector.WINDOW, x, y)
@@ -94,7 +95,7 @@ class PickHandler(osgGA.GUIEventHandler):
                 self.pointerInfo.setCamera(viewer.getCamera())
                 self.pointerInfo.setMousePosition(eventAdaptor.getX(), eventAdaptor.getY())
                 intersections = picker.getIntersections()
-                for i in range(0, len(intersections)):
+                for i in range( 0, len(intersections)):
                     intersection = intersections[i]
                     for j in range(0, len(intersection.nodePath)):
                         node = intersection.nodePath[j]
@@ -102,7 +103,7 @@ class PickHandler(osgGA.GUIEventHandler):
                             self.dragger = osgManipulator.NodeToDragger(node)
                         if self.dragger is not None:
                             localPoint = intersection.localIntersectionPoint  # have to do stupid conversion from Vec3d to Vec3
-                            if hasattr(osgUtil, 'PolytopeIntersector'):
+                            if self.usePolytopeIntersector():
                                 self.pointerInfo.addIntersection(intersection.nodePath, osg.Vec3(localPoint.x(), localPoint.y(), localPoint.z()))
                             else:
                                 self.pointerInfo.addIntersection(intersection.nodePath, osg.Vec3d(localPoint.x(), localPoint.y(), localPoint.z()))
@@ -116,11 +117,20 @@ class PickHandler(osgGA.GUIEventHandler):
                     self._display.draggerLOD.addChild(self._display.simpleDragger)
         return eventWasHandled
     
+    # Even though I recently wrapped PolytopeIntersector on Windows, the
+    # getIntersections() method returns something not very useful. So disable
+    # use of PolytopeIntersector for now. CMB 4-10-2015
+    def usePolytopeIntersector(self):
+        if not hasattr(osgUtil, 'PolytopeIntersector'):
+            return False
+        if os.name.startswith('nt'):
+            return False # Windows
+        return True
     
     # TODO: have this return the picked object (or None) and leave the action up to the caller
     def pick(self, x, y, viewer):
         if viewer.getSceneData():
-            if hasattr(osgUtil, 'PolytopeIntersector'):
+            if self.usePolytopeIntersector():
                 picker = osgUtil.PolytopeIntersector(osgUtil.Intersector.WINDOW, x - 2.0, y - 2.0, x + 2.0, y + 2.0)
             else:
                 picker = osgUtil.LineSegmentIntersector(osgUtil.Intersector.WINDOW, x, y)
