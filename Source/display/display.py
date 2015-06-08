@@ -2191,6 +2191,7 @@ class Display(wx.glcanvas.GLCanvas):
         if findShortestPath:
             # Add the visibles that exist along the path to the selection.
             pathWasFound = False
+            #TODO Slow
             for visible in visibles:
                 for startVisible in self.selectedVisibles:
                     for pathObject in self.network.shortestPath(startVisible.client, visible.client):
@@ -2228,12 +2229,13 @@ class Display(wx.glcanvas.GLCanvas):
                 # An explicit selection has been made via the GUI or console.
                 
                 self.hoverSelect = False    # disable hover selecting
-            
+                # TODO Dragging doesn't work so this just takes time
                 if len(self.selectedVisibles) == 1:
+                    pass
                     # Add a dragger to the selected visible.
-                    visible = list(self.selectedVisibles)[0]
-                    if visible._isDraggable():
-                        self._addDragger(visible)
+                    # visible = list(self.selectedVisibles)[0]
+                    # if visible._isDraggable():
+                    #     self._addDragger(visible)
             
             dispatcher.send(('set', 'selection'), self)
         
@@ -2241,7 +2243,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.hoverSelecting = False
         self.Refresh()
         time2 = time.time()
-        print 'It took %0.3f ms' % ((time2-time1)*1000.0)
+        print 'FINAL It took %0.3f ms' % ((time2-time1)*1000.0)
     
     def selection(self):
         return ObjectList(self.selectedVisibles)
@@ -2274,6 +2276,7 @@ class Display(wx.glcanvas.GLCanvas):
     def _onSelectionOrShowFlowChanged(self):
         # Update the highlighting, animation and ghosting based on the current selection.
         # TODO: this should all be handled by display rules
+        time1 = time.time()
         
         refreshWasSupressed = self._suppressRefresh
         self._suppressRefresh = True
@@ -2353,8 +2356,10 @@ class Display(wx.glcanvas.GLCanvas):
                                 visiblesToHighlight.add(otherVis)
         else:
             # TODO: handle object-less visibles
+            # SLOW for selecting object, no time for deselecting objects
             _highlightConnectedObjects(self.selectedObjects(), self._selectionHighlightDepth, len(self.selectedVisibles) > 1 and self._highlightOnlyWithinSelection)
-        
+            time2 = time.time()
+            print 'B It took %0.3f ms' % ((time2-time1)*1000.0)
         if len(self.selectedVisibles) == 0 and self._showFlow:
             for visibles in self.visibles.itervalues():
                 for visible in visibles:
@@ -2369,6 +2374,7 @@ class Display(wx.glcanvas.GLCanvas):
             animatedEdge.boldWeight(1.0)
             if animatedEdge not in visiblesToAnimate:
                 animatedEdge.animateFlow(False)
+
         
         # Highlight/animate the visibles that should have it now.
         for visibleToHighlight in visiblesToHighlight:
@@ -2378,18 +2384,26 @@ class Display(wx.glcanvas.GLCanvas):
                 visibleToHighlight.setGlowColor(self._secondarySelectionColor)
             else:
                 visibleToHighlight.setGlowColor(None)
+        # SLOW
+        s = []
         for visibleToAnimate in visiblesToAnimate:
             visibleToAnimate.boldWeight(5.0)
             visibleToAnimate.animateFlow()
+            s.append(visibleToAnimate)
+        print len(s)
+        time2 = time.time()
+        print 'G It took %0.3f ms' % ((time2-time1)*1000.0)
         
         self.highlightedVisibles = visiblesToHighlight
         self.animatedVisibles = visiblesToAnimate
-        
+        # SLOWISH not the main culprit
         if self._useGhosts:
             # Dim everything that isn't selected, highlighted or animated.
             for visibles in self.visibles.itervalues():
                 for visible in visibles:
                     visible._updateOpacity()
+        time2 = time.time()
+        print 'H It took %0.3f ms' % ((time2-time1)*1000.0)
         
         if any(self.animatedVisibles):
             # Start the animation timer and cap the frame rate at 60 fps.
@@ -2398,6 +2412,8 @@ class Display(wx.glcanvas.GLCanvas):
         elif self._animationTimer.IsRunning():
             # Don't need to redraw automatically if nothing is animated. 
             self._animationTimer.Stop()
+        time2 = time.time()
+        print 'EOM It took %0.3f ms' % ((time2-time1)*1000.0)
         
         self._suppressRefresh = refreshWasSupressed
     
