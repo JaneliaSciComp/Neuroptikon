@@ -121,7 +121,7 @@ class Arborization(NeuroObject):
     @classmethod
     def _defaultVisualizationParams(cls):
         params = NeuroObject._defaultVisualizationParams()
-        params['shape'] = 'Line' if hasattr(osgUtil, 'PolytopeIntersector') else 'Cylinder'
+        params['shape'] = 'Cylinder' #'Line' if hasattr(osgUtil, 'PolytopeIntersector') else 'Cylinder'
         params['color'] = (0.0, 0.0, 0.0)
         params['pathIsFixed'] = None
         params['weight'] = 1.0

@@ -471,5 +471,6 @@ neuron.arborize(regions['PB-R4'], False, True)
 neuron.arborize(regions['EB-post-in'], True, False)
 neuron.arborize(regions['LTR-R'], True, False)
 
-display.autoLayout()
+#display.autoLayout()
+display.performLayout(layouts['Path Routing'])
 display.setLabelsFloatOnTop(True)

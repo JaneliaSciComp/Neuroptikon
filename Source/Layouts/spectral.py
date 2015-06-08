@@ -64,7 +64,7 @@ class SpectralLayout(Layout):
             c = (A + A_prime) / 2.0
             d = diag(c.sum(0))
             l = mat(d - c)
-            print c, d
+            #print c, d
             if display.viewDimensions == 2:
                 z = zeros((n, 1))
             else:
