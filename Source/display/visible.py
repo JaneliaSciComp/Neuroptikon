@@ -1371,9 +1371,9 @@ class Visible(object):
             if isinstance(self._shape, PathShape):
                 self._shape.setWeight(weight)
                 self._updateGlow()
-            elif self.isPath():
-                self._updatePath()
-            dispatcher.send(('set', 'weight'), self)
+            #elif self.isPath():
+            #    self._updatePath()
+            #dispatcher.send(('set', 'weight'), self)
 
     def originalWeight(self):
         """
@@ -2042,7 +2042,7 @@ class Visible(object):
     
     def animateFlow(self, animate=True):
         if self._animateFlow != animate:
-            self._animateFlow = animate
+            #self._animateFlow = animate
             self._updateFlowAnimation()
     
     
