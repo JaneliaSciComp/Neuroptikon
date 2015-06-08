@@ -3756,6 +3756,87 @@ class LineSegmentIntersector(Intersector):
 LineSegmentIntersector_swigregister = _osgUtil.LineSegmentIntersector_swigregister
 LineSegmentIntersector_swigregister(LineSegmentIntersector)
 
+OSGUTIL_POLYTOPEINTERSECTOR = _osgUtil.OSGUTIL_POLYTOPEINTERSECTOR
+class PolytopeIntersector(Intersector):
+    """Proxy of C++ osgUtil::PolytopeIntersector class"""
+    __swig_setmethods__ = {}
+    for _s in [Intersector]: __swig_setmethods__.update(getattr(_s,'__swig_setmethods__',{}))
+    __setattr__ = lambda self, name, value: _swig_setattr(self, PolytopeIntersector, name, value)
+    __swig_getmethods__ = {}
+    for _s in [Intersector]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
+    __getattr__ = lambda self, name: _swig_getattr(self, PolytopeIntersector, name)
+    __repr__ = _swig_repr
+    DimZero = _osgUtil.PolytopeIntersector_DimZero
+    DimOne = _osgUtil.PolytopeIntersector_DimOne
+    DimTwo = _osgUtil.PolytopeIntersector_DimTwo
+    AllDims = _osgUtil.PolytopeIntersector_AllDims
+    def __init__(self, *args): 
+        """
+        __init__(osgUtil::PolytopeIntersector self, Polytope polytope) -> PolytopeIntersector
+        __init__(osgUtil::PolytopeIntersector self, osgUtil::Intersector::CoordinateFrame cf, Polytope polytope) -> PolytopeIntersector
+        __init__(osgUtil::PolytopeIntersector self, osgUtil::Intersector::CoordinateFrame cf, double xMin, double yMin, double xMax, 
+            double yMax) -> PolytopeIntersector
+        """
+        this = _osgUtil.new_PolytopeIntersector(*args)
+        try: self.this.append(this)
+        except: self.this = this
+    def insertIntersection(self, *args):
+        """insertIntersection(PolytopeIntersector self, osgUtil::PolytopeIntersector::Intersection const & intersection)"""
+        return _osgUtil.PolytopeIntersector_insertIntersection(self, *args)
+
+    def getIntersections(self):
+        """getIntersections(PolytopeIntersector self) -> osgUtil::PolytopeIntersector::Intersections &"""
+        return _osgUtil.PolytopeIntersector_getIntersections(self)
+
+    def getFirstIntersection(self):
+        """getFirstIntersection(PolytopeIntersector self) -> osgUtil::PolytopeIntersector::Intersection"""
+        return _osgUtil.PolytopeIntersector_getFirstIntersection(self)
+
+    def getDimensionMask(self):
+        """getDimensionMask(PolytopeIntersector self) -> unsigned int"""
+        return _osgUtil.PolytopeIntersector_getDimensionMask(self)
+
+    def setDimensionMask(self, *args):
+        """setDimensionMask(PolytopeIntersector self, unsigned int dimensionMask)"""
+        return _osgUtil.PolytopeIntersector_setDimensionMask(self, *args)
+
+    def getReferencePlane(self):
+        """getReferencePlane(PolytopeIntersector self) -> Plane"""
+        return _osgUtil.PolytopeIntersector_getReferencePlane(self)
+
+    def setReferencePlane(self, *args):
+        """setReferencePlane(PolytopeIntersector self, Plane plane)"""
+        return _osgUtil.PolytopeIntersector_setReferencePlane(self, *args)
+
+    def clone(self, *args):
+        """clone(PolytopeIntersector self, IntersectionVisitor iv) -> Intersector"""
+        return _osgUtil.PolytopeIntersector_clone(self, *args)
+
+    def enter(self, *args):
+        """enter(PolytopeIntersector self, Node node) -> bool"""
+        return _osgUtil.PolytopeIntersector_enter(self, *args)
+
+    def leave(self):
+        """leave(PolytopeIntersector self)"""
+        return _osgUtil.PolytopeIntersector_leave(self)
+
+    def intersect(self, *args):
+        """intersect(PolytopeIntersector self, IntersectionVisitor iv, Drawable drawable)"""
+        return _osgUtil.PolytopeIntersector_intersect(self, *args)
+
+    def reset(self):
+        """reset(PolytopeIntersector self)"""
+        return _osgUtil.PolytopeIntersector_reset(self)
+
+    def containsIntersections(self):
+        """containsIntersections(PolytopeIntersector self) -> bool"""
+        return _osgUtil.PolytopeIntersector_containsIntersections(self)
+
+    __swig_destroy__ = _osgUtil.delete_PolytopeIntersector
+    __del__ = lambda self : None;
+PolytopeIntersector_swigregister = _osgUtil.PolytopeIntersector_swigregister
+PolytopeIntersector_swigregister(PolytopeIntersector)
+
 # This file is compatible with both classic and new-style classes.
 
 

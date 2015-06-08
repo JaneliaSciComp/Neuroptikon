@@ -1353,7 +1353,6 @@ class CameraManipulator(GUIEventHandler):
     __swig_getmethods__ = {}
     for _s in [GUIEventHandler]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, CameraManipulator, name)
-    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined - class is abstract")
     __repr__ = _swig_repr
     def className(self):
         """className(CameraManipulator self) -> char const *"""
@@ -1423,7 +1422,7 @@ class CameraManipulator(GUIEventHandler):
         return _osgGA.CameraManipulator_getIntersectTraversalMask(self)
 
     def setNode(self, *args):
-        """setNode(CameraManipulator self, Node arg2)"""
+        """setNode(CameraManipulator self, Node arg0)"""
         return _osgGA.CameraManipulator_setNode(self, *args)
 
     def getNode(self, *args):
@@ -1462,19 +1461,36 @@ class CameraManipulator(GUIEventHandler):
 
     def home(self, *args):
         """
-        home(CameraManipulator self, GUIEventAdapter arg2, GUIActionAdapter arg3)
-        home(CameraManipulator self, double arg2)
+        home(CameraManipulator self, GUIEventAdapter arg0, GUIActionAdapter arg1)
+        home(CameraManipulator self, double arg0)
         """
         return _osgGA.CameraManipulator_home(self, *args)
 
     def init(self, *args):
-        """init(CameraManipulator self, GUIEventAdapter arg2, GUIActionAdapter arg3)"""
+        """init(CameraManipulator self, GUIEventAdapter arg0, GUIActionAdapter arg1)"""
         return _osgGA.CameraManipulator_init(self, *args)
 
     def handle(self, *args):
         """handle(CameraManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
         return _osgGA.CameraManipulator_handle(self, *args)
 
+    def __init__(self, *args): 
+        """
+        __init__(osgGA::CameraManipulator self) -> CameraManipulator
+        __init__(osgGA::CameraManipulator self, CameraManipulator mm, CopyOp copyOp=SHALLOW_COPY) -> CameraManipulator
+        __init__(osgGA::CameraManipulator self, CameraManipulator mm) -> CameraManipulator
+        """
+        if self.__class__ == CameraManipulator:
+            _self = None
+        else:
+            _self = self
+        this = _osgGA.new_CameraManipulator(_self, *args)
+        try: self.this.append(this)
+        except: self.this = this
+    def __disown__(self):
+        self.this.disown()
+        _osgGA.disown_CameraManipulator(self)
+        return weakref_proxy(self)
 CameraManipulator_swigregister = _osgGA.CameraManipulator_swigregister
 CameraManipulator_swigregister(CameraManipulator)
 
@@ -1825,13 +1841,26 @@ class StandardManipulator(CameraManipulator):
     __swig_getmethods__ = {}
     for _s in [CameraManipulator]: __swig_getmethods__.update(getattr(_s,'__swig_getmethods__',{}))
     __getattr__ = lambda self, name: _swig_getattr(self, StandardManipulator, name)
-    def __init__(self, *args, **kwargs): raise AttributeError("No constructor defined - class is abstract")
     __repr__ = _swig_repr
     UPDATE_MODEL_SIZE = _osgGA.StandardManipulator_UPDATE_MODEL_SIZE
     COMPUTE_HOME_USING_BBOX = _osgGA.StandardManipulator_COMPUTE_HOME_USING_BBOX
     PROCESS_MOUSE_WHEEL = _osgGA.StandardManipulator_PROCESS_MOUSE_WHEEL
     SET_CENTER_ON_WHEEL_FORWARD_MOVEMENT = _osgGA.StandardManipulator_SET_CENTER_ON_WHEEL_FORWARD_MOVEMENT
     DEFAULT_SETTINGS = _osgGA.StandardManipulator_DEFAULT_SETTINGS
+    def __init__(self, *args): 
+        """
+        __init__(osgGA::StandardManipulator self, int flags=DEFAULT_SETTINGS) -> StandardManipulator
+        __init__(osgGA::StandardManipulator self) -> StandardManipulator
+        __init__(osgGA::StandardManipulator self, StandardManipulator m, CopyOp copyOp=SHALLOW_COPY) -> StandardManipulator
+        __init__(osgGA::StandardManipulator self, StandardManipulator m) -> StandardManipulator
+        """
+        if self.__class__ == StandardManipulator:
+            _self = None
+        else:
+            _self = self
+        this = _osgGA.new_StandardManipulator(_self, *args)
+        try: self.this.append(this)
+        except: self.this = this
     def className(self):
         """className(StandardManipulator self) -> char const *"""
         return _osgGA.StandardManipulator_className(self)
@@ -1851,7 +1880,7 @@ class StandardManipulator(CameraManipulator):
         return _osgGA.StandardManipulator_getTransformation(self, *args)
 
     def setNode(self, *args):
-        """setNode(StandardManipulator self, Node arg2)"""
+        """setNode(StandardManipulator self, Node arg0)"""
         return _osgGA.StandardManipulator_setNode(self, *args)
 
     def getNode(self, *args):
@@ -1896,7 +1925,7 @@ class StandardManipulator(CameraManipulator):
     def home(self, *args):
         """
         home(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us)
-        home(StandardManipulator self, double arg2)
+        home(StandardManipulator self, double arg0)
         """
         return _osgGA.StandardManipulator_home(self, *args)
 
@@ -1912,8 +1941,100 @@ class StandardManipulator(CameraManipulator):
         """getUsage(StandardManipulator self, ApplicationUsage usage)"""
         return _osgGA.StandardManipulator_getUsage(self, *args)
 
+    def handleFrame(self, *args):
+        """handleFrame(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_handleFrame(self, *args)
+
+    def handleResize(self, *args):
+        """handleResize(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_handleResize(self, *args)
+
+    def handleMouseMove(self, *args):
+        """handleMouseMove(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_handleMouseMove(self, *args)
+
+    def handleMouseDrag(self, *args):
+        """handleMouseDrag(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_handleMouseDrag(self, *args)
+
+    def handleMousePush(self, *args):
+        """handleMousePush(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_handleMousePush(self, *args)
+
+    def handleMouseRelease(self, *args):
+        """handleMouseRelease(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_handleMouseRelease(self, *args)
+
+    def handleKeyDown(self, *args):
+        """handleKeyDown(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_handleKeyDown(self, *args)
+
+    def handleKeyUp(self, *args):
+        """handleKeyUp(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_handleKeyUp(self, *args)
+
+    def handleMouseWheel(self, *args):
+        """handleMouseWheel(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_handleMouseWheel(self, *args)
+
+    def handleMouseDeltaMovement(self, *args):
+        """handleMouseDeltaMovement(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_handleMouseDeltaMovement(self, *args)
+
+    def performMovement(self):
+        """performMovement(StandardManipulator self) -> bool"""
+        return _osgGA.StandardManipulator_performMovement(self)
+
+    def performMovementLeftMouseButton(self, *args):
+        """performMovementLeftMouseButton(StandardManipulator self, double const eventTimeDelta, double const dx, double const dy) -> bool"""
+        return _osgGA.StandardManipulator_performMovementLeftMouseButton(self, *args)
+
+    def performMovementMiddleMouseButton(self, *args):
+        """performMovementMiddleMouseButton(StandardManipulator self, double const eventTimeDelta, double const dx, double const dy) -> bool"""
+        return _osgGA.StandardManipulator_performMovementMiddleMouseButton(self, *args)
+
+    def performMovementRightMouseButton(self, *args):
+        """performMovementRightMouseButton(StandardManipulator self, double const eventTimeDelta, double const dx, double const dy) -> bool"""
+        return _osgGA.StandardManipulator_performMovementRightMouseButton(self, *args)
+
+    def performMouseDeltaMovement(self, *args):
+        """performMouseDeltaMovement(StandardManipulator self, float const dx, float const dy) -> bool"""
+        return _osgGA.StandardManipulator_performMouseDeltaMovement(self, *args)
+
+    def performAnimationMovement(self, *args):
+        """performAnimationMovement(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_performAnimationMovement(self, *args)
+
+    def applyAnimationStep(self, *args):
+        """applyAnimationStep(StandardManipulator self, double const currentProgress, double const prevProgress)"""
+        return _osgGA.StandardManipulator_applyAnimationStep(self, *args)
+
+    def isMouseMoving(self):
+        """isMouseMoving(StandardManipulator self) -> bool"""
+        return _osgGA.StandardManipulator_isMouseMoving(self)
+
+    def centerMousePointer(self, *args):
+        """centerMousePointer(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us)"""
+        return _osgGA.StandardManipulator_centerMousePointer(self, *args)
+
+    def setCenterByMousePointerIntersection(self, *args):
+        """setCenterByMousePointerIntersection(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_setCenterByMousePointerIntersection(self, *args)
+
+    def startAnimationByMousePointerIntersection(self, *args):
+        """startAnimationByMousePointerIntersection(StandardManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.StandardManipulator_startAnimationByMousePointerIntersection(self, *args)
+
+    def allocAnimationData(self):
+        """allocAnimationData(StandardManipulator self)"""
+        return _osgGA.StandardManipulator_allocAnimationData(self)
+
     __swig_destroy__ = _osgGA.delete_StandardManipulator
     __del__ = lambda self : None;
+    def __disown__(self):
+        self.this.disown()
+        _osgGA.disown_StandardManipulator(self)
+        return weakref_proxy(self)
 StandardManipulator_swigregister = _osgGA.StandardManipulator_swigregister
 StandardManipulator_swigregister(StandardManipulator)
 
@@ -2474,7 +2595,11 @@ class FirstPersonManipulator(StandardManipulator):
         __init__(osgGA::FirstPersonManipulator self, FirstPersonManipulator fpm, CopyOp copyOp=SHALLOW_COPY) -> FirstPersonManipulator
         __init__(osgGA::FirstPersonManipulator self, FirstPersonManipulator fpm) -> FirstPersonManipulator
         """
-        this = _osgGA.new_FirstPersonManipulator(*args)
+        if self.__class__ == FirstPersonManipulator:
+            _self = None
+        else:
+            _self = self
+        this = _osgGA.new_FirstPersonManipulator(_self, *args)
         try: self.this.append(this)
         except: self.this = this
     def cloneType(self):
@@ -2580,7 +2705,7 @@ class FirstPersonManipulator(StandardManipulator):
     def home(self, *args):
         """
         home(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us)
-        home(FirstPersonManipulator self, double arg2)
+        home(FirstPersonManipulator self, double arg0)
         """
         return _osgGA.FirstPersonManipulator_home(self, *args)
 
@@ -2588,8 +2713,100 @@ class FirstPersonManipulator(StandardManipulator):
         """init(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us)"""
         return _osgGA.FirstPersonManipulator_init(self, *args)
 
+    def handleMouseWheel(self, *args):
+        """handleMouseWheel(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.FirstPersonManipulator_handleMouseWheel(self, *args)
+
+    def performMovementLeftMouseButton(self, *args):
+        """performMovementLeftMouseButton(FirstPersonManipulator self, double const eventTimeDelta, double const dx, double const dy) -> bool"""
+        return _osgGA.FirstPersonManipulator_performMovementLeftMouseButton(self, *args)
+
+    def performMouseDeltaMovement(self, *args):
+        """performMouseDeltaMovement(FirstPersonManipulator self, float const dx, float const dy) -> bool"""
+        return _osgGA.FirstPersonManipulator_performMouseDeltaMovement(self, *args)
+
+    def applyAnimationStep(self, *args):
+        """applyAnimationStep(FirstPersonManipulator self, double const currentProgress, double const prevProgress)"""
+        return _osgGA.FirstPersonManipulator_applyAnimationStep(self, *args)
+
+    def startAnimationByMousePointerIntersection(self, *args):
+        """startAnimationByMousePointerIntersection(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.FirstPersonManipulator_startAnimationByMousePointerIntersection(self, *args)
+
+    def allocAnimationData(self):
+        """allocAnimationData(FirstPersonManipulator self)"""
+        return _osgGA.FirstPersonManipulator_allocAnimationData(self)
+
     __swig_destroy__ = _osgGA.delete_FirstPersonManipulator
     __del__ = lambda self : None;
+    def __disown__(self):
+        self.this.disown()
+        _osgGA.disown_FirstPersonManipulator(self)
+        return weakref_proxy(self)
+    def handleFrame(self, *args):
+        """handleFrame(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.FirstPersonManipulator_handleFrame(self, *args)
+
+    def handleResize(self, *args):
+        """handleResize(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.FirstPersonManipulator_handleResize(self, *args)
+
+    def handleMouseMove(self, *args):
+        """handleMouseMove(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.FirstPersonManipulator_handleMouseMove(self, *args)
+
+    def handleMouseDrag(self, *args):
+        """handleMouseDrag(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.FirstPersonManipulator_handleMouseDrag(self, *args)
+
+    def handleMousePush(self, *args):
+        """handleMousePush(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.FirstPersonManipulator_handleMousePush(self, *args)
+
+    def handleMouseRelease(self, *args):
+        """handleMouseRelease(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.FirstPersonManipulator_handleMouseRelease(self, *args)
+
+    def handleKeyDown(self, *args):
+        """handleKeyDown(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.FirstPersonManipulator_handleKeyDown(self, *args)
+
+    def handleKeyUp(self, *args):
+        """handleKeyUp(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.FirstPersonManipulator_handleKeyUp(self, *args)
+
+    def handleMouseDeltaMovement(self, *args):
+        """handleMouseDeltaMovement(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.FirstPersonManipulator_handleMouseDeltaMovement(self, *args)
+
+    def performMovement(self):
+        """performMovement(FirstPersonManipulator self) -> bool"""
+        return _osgGA.FirstPersonManipulator_performMovement(self)
+
+    def performMovementMiddleMouseButton(self, *args):
+        """performMovementMiddleMouseButton(FirstPersonManipulator self, double const eventTimeDelta, double const dx, double const dy) -> bool"""
+        return _osgGA.FirstPersonManipulator_performMovementMiddleMouseButton(self, *args)
+
+    def performMovementRightMouseButton(self, *args):
+        """performMovementRightMouseButton(FirstPersonManipulator self, double const eventTimeDelta, double const dx, double const dy) -> bool"""
+        return _osgGA.FirstPersonManipulator_performMovementRightMouseButton(self, *args)
+
+    def performAnimationMovement(self, *args):
+        """performAnimationMovement(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.FirstPersonManipulator_performAnimationMovement(self, *args)
+
+    def isMouseMoving(self):
+        """isMouseMoving(FirstPersonManipulator self) -> bool"""
+        return _osgGA.FirstPersonManipulator_isMouseMoving(self)
+
+    def centerMousePointer(self, *args):
+        """centerMousePointer(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us)"""
+        return _osgGA.FirstPersonManipulator_centerMousePointer(self, *args)
+
+    def setCenterByMousePointerIntersection(self, *args):
+        """setCenterByMousePointerIntersection(FirstPersonManipulator self, GUIEventAdapter ea, GUIActionAdapter us) -> bool"""
+        return _osgGA.FirstPersonManipulator_setCenterByMousePointerIntersection(self, *args)
+
 FirstPersonManipulator_swigregister = _osgGA.FirstPersonManipulator_swigregister
 FirstPersonManipulator_swigregister(FirstPersonManipulator)
 
