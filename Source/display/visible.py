@@ -2042,7 +2042,7 @@ class Visible(object):
     
     def animateFlow(self, animate=True):
         if self._animateFlow != animate:
-            #self._animateFlow = animate
+            self._animateFlow = animate
             self._updateFlowAnimation()
     
     

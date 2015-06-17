@@ -2310,22 +2310,26 @@ class Display(wx.glcanvas.GLCanvas):
             # Do a breadth-first search on the graph of objects.
             queue = [[rootObject] for rootObject in rootObjects]
             # TBD: needed? visitedObjects = []
+            print queue
             highlightedObjects = [rootObject.rootObject() for rootObject in rootObjects]
-            while any(queue):
-                curPath = queue.pop(0)
-                curObject = curPath[-1]
-                curObjectRoot = curObject.rootObject()
-                
-                # If we've reached a highlighted object or the maximum depth then highlight the objects in the current path.
-                if curObjectRoot in highlightedObjects or (not highlightWithinSelection and len(curPath) == maxDepth + 1):
-                    for pathObject in curPath:
-                        _highlightObject(pathObject)
-                
-                # If we haven't reached the maximum depth then add the next layer of connections to the end of the queue.  
-                if len(curPath) < maxDepth + 1:
-                    for connectedObject in curObjectRoot.connections():
-                        if connectedObject not in curPath and connectedObject.rootObject() not in curPath:
-                            queue += [curPath + [connectedObject]]
+            count = 0
+            # while any(queue):
+            #     count += 1
+            #     curPath = queue.pop(0)
+            #     curObject = curPath[-1]
+            #     curObjectRoot = curObject.rootObject()
+            #
+            #     # If we've reached a highlighted object or the maximum depth then highlight the objects in the current path.
+            #     if curObjectRoot in highlightedObjects or (not highlightWithinSelection and len(curPath) == maxDepth + 1):
+            #         for pathObject in curPath:
+            #             _highlightObject(pathObject)
+            #
+            #     # If we haven't reached the maximum depth then add the next layer of connections to the end of the queue.
+            #     if len(curPath) < maxDepth + 1:
+            #         for connectedObject in curObjectRoot.connections():
+            #             if connectedObject not in curPath and connectedObject.rootObject() not in curPath:
+            #                 queue += [curPath + [connectedObject]]
+            print count
         
         visiblesToHighlight = set()
         visiblesToAnimate = set()
