@@ -28,7 +28,6 @@ from visible import Visible
 import layout as layout_module
 from shape import Shape
 from library.texture import Texture
-import time
 
 
 # Navigation modes
@@ -2182,7 +2181,6 @@ class Display(wx.glcanvas.GLCanvas):
         
         If findShortestPath is True then the shortest path between the currently selected visible(s) and the indicated visible will be found and all will be selected.
         """
-        time1 = time.time()
         if (extend or findShortestPath) and not self.hoverSelected:
             newSelection = set(self.selectedVisibles)
         else:
@@ -2242,8 +2240,6 @@ class Display(wx.glcanvas.GLCanvas):
         self.hoverSelected = self.hoverSelecting
         self.hoverSelecting = False
         self.Refresh()
-        time2 = time.time()
-        print 'FINAL It took %0.3f ms' % ((time2-time1)*1000.0)
     
     def selection(self):
         return ObjectList(self.selectedVisibles)
@@ -2276,7 +2272,6 @@ class Display(wx.glcanvas.GLCanvas):
     def _onSelectionOrShowFlowChanged(self):
         # Update the highlighting, animation and ghosting based on the current selection.
         # TODO: this should all be handled by display rules
-        time1 = time.time()
         
         refreshWasSupressed = self._suppressRefresh
         self._suppressRefresh = True
@@ -2309,27 +2304,25 @@ class Display(wx.glcanvas.GLCanvas):
         def _highlightConnectedObjects(rootObjects, maxDepth, highlightWithinSelection):
             # Do a breadth-first search on the graph of objects.
             queue = [[rootObject] for rootObject in rootObjects]
-            # TBD: needed? visitedObjects = []
-            print queue
             highlightedObjects = [rootObject.rootObject() for rootObject in rootObjects]
-            count = 0
-            # while any(queue):
-            #     count += 1
-            #     curPath = queue.pop(0)
-            #     curObject = curPath[-1]
-            #     curObjectRoot = curObject.rootObject()
-            #
-            #     # If we've reached a highlighted object or the maximum depth then highlight the objects in the current path.
-            #     if curObjectRoot in highlightedObjects or (not highlightWithinSelection and len(curPath) == maxDepth + 1):
-            #         for pathObject in curPath:
-            #             _highlightObject(pathObject)
-            #
-            #     # If we haven't reached the maximum depth then add the next layer of connections to the end of the queue.
-            #     if len(curPath) < maxDepth + 1:
-            #         for connectedObject in curObjectRoot.connections():
-            #             if connectedObject not in curPath and connectedObject.rootObject() not in curPath:
-            #                 queue += [curPath + [connectedObject]]
-            print count
+            visitedObjects = highlightedObjects
+            while any(queue):
+                curPath = queue.pop(0)
+                curObject = curPath[-1]
+                visitedObjects.append(curObject)
+                curObjectRoot = curObject.rootObject()
+
+            
+                # If we've reached a highlighted object or the maximum depth then highlight the objects in the current path.
+                if curObjectRoot in highlightedObjects or (not highlightWithinSelection and len(curPath) == maxDepth + 1):
+                    for pathObject in curPath:
+                        _highlightObject(pathObject)
+
+                # If we haven't reached the maximum depth then add the next layer of connections to the end of the queue.
+                if len(curPath) < maxDepth + 1:
+                    for connectedObject in curObjectRoot.connections():
+                        if connectedObject not in curPath and connectedObject.rootObject() not in curPath and connectedObject not in visitedObjects:
+                            queue += [curPath + [connectedObject]]
         
         visiblesToHighlight = set()
         visiblesToAnimate = set()
@@ -2362,8 +2355,7 @@ class Display(wx.glcanvas.GLCanvas):
             # TODO: handle object-less visibles
             # SLOW for selecting object, no time for deselecting objects
             _highlightConnectedObjects(self.selectedObjects(), self._selectionHighlightDepth, len(self.selectedVisibles) > 1 and self._highlightOnlyWithinSelection)
-            time2 = time.time()
-            print 'B It took %0.3f ms' % ((time2-time1)*1000.0)
+            
         if len(self.selectedVisibles) == 0 and self._showFlow:
             for visibles in self.visibles.itervalues():
                 for visible in visibles:
@@ -2394,9 +2386,6 @@ class Display(wx.glcanvas.GLCanvas):
             visibleToAnimate.boldWeight(5.0)
             visibleToAnimate.animateFlow()
             s.append(visibleToAnimate)
-        print len(s)
-        time2 = time.time()
-        print 'G It took %0.3f ms' % ((time2-time1)*1000.0)
         
         self.highlightedVisibles = visiblesToHighlight
         self.animatedVisibles = visiblesToAnimate
@@ -2406,8 +2395,6 @@ class Display(wx.glcanvas.GLCanvas):
             for visibles in self.visibles.itervalues():
                 for visible in visibles:
                     visible._updateOpacity()
-        time2 = time.time()
-        print 'H It took %0.3f ms' % ((time2-time1)*1000.0)
         
         if any(self.animatedVisibles):
             # Start the animation timer and cap the frame rate at 60 fps.
@@ -2416,8 +2403,6 @@ class Display(wx.glcanvas.GLCanvas):
         elif self._animationTimer.IsRunning():
             # Don't need to redraw automatically if nothing is animated. 
             self._animationTimer.Stop()
-        time2 = time.time()
-        print 'EOM It took %0.3f ms' % ((time2-time1)*1000.0)
         
         self._suppressRefresh = refreshWasSupressed
     
