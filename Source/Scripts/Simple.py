@@ -8,7 +8,7 @@ This script creates a simple network that includes each type of network componen
 """
 
 regionA = network.createRegion(name = 'A')
-display.setVisibleShape(regionA, shapes['Cylinder'])
+#display.setVisibleShape(regionA, shapes['Cylinder'])
 regionB = network.createRegion(name = 'B')
 pathway = regionA.projectToRegion(regionB)
 

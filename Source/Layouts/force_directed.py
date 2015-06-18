@@ -14,7 +14,7 @@ class ForceDirectedLayout(Layout):
         return gettext('Force Directed')
     
     
-    def __init__(self, maxIterations = 10, spacing = .005, fill = False, *args, **keywordArgs):
+    def __init__(self, maxIterations = 50, spacing = .005, fill = False, *args, **keywordArgs):
         """ForceDirectedLayout(maxIterations = 50, spacing = .005, fill = False)
         
         """

@@ -2381,11 +2381,9 @@ class Display(wx.glcanvas.GLCanvas):
             else:
                 visibleToHighlight.setGlowColor(None)
         # SLOW
-        s = []
         for visibleToAnimate in visiblesToAnimate:
             visibleToAnimate.boldWeight(5.0)
             visibleToAnimate.animateFlow()
-            s.append(visibleToAnimate)
         
         self.highlightedVisibles = visiblesToHighlight
         self.animatedVisibles = visiblesToAnimate
