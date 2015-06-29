@@ -189,8 +189,9 @@ class NeuronInspector( ObjectInspector ):
                 self._linkSizer.Clear()
                 if self.objects[0].links:
                     for url in self.objects[0].links:
-                        self._linkOut = wx.HyperlinkCtrl(self._parentWindow, wx.ID_ANY, gettext(url), gettext(url))
-                        self._linkSizer.Add(self._linkOut)
+                        if (url):
+                            self._linkOut = wx.HyperlinkCtrl(self._parentWindow, wx.ID_ANY, gettext(url), gettext(url))
+                            self._linkSizer.Add(self._linkOut)
          
         self._sizer.Layout()
         

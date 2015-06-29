@@ -91,12 +91,13 @@ class Neuron(NeuroObject):
                 # The user has explicitly set the attribute.
                 if attrName == 'functions':
                     attrValue = set(localKeywordArgs[attrName])
-                if attrName == 'neuronImage':
+                elif attrName == 'neuronImage':
                     for img in localKeywordArgs[attrName]:
-                        imageLabel = img['label']
-                        imageLocation = img['path']
-                        myImage = self.Img(imageLabel, imageLocation)
-                        attrValue.append(myImage)
+                        if img['path']:
+                            imageLabel = img['label']
+                            imageLocation = img['path']
+                            myImage = self.Img(imageLabel, imageLocation)
+                            attrValue.append(myImage)
                 else:
                     attrValue = localKeywordArgs[attrName]  
             elif self.neuronClass:
