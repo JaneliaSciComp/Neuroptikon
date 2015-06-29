@@ -122,11 +122,9 @@ class Arborization(NeuroObject):
     @classmethod
     def _defaultVisualizationParams(cls):
         params = NeuroObject._defaultVisualizationParams()
-        # TODO fix this when PolytopeIntersector works on windows.
-        # Defaults to cylinder on windows, because polytope intersector
-        # builds but doesn't work
-        params['shape'] = 'Line' if (hasattr(osgUtil, 'PolytopeIntersector') and not
-         os.name.startswith('nt')) else 'Cylinder'
+        # NOTE: Fixed now that PolytopeIntersector works on windows.
+        # Used to default to cylinder on windows
+        params['shape'] = 'Line' if hasattr(osgUtil, 'PolytopeIntersector') else 'Cylinder' # and not os.name.startswith('nt')) 
         params['color'] = (0.0, 0.0, 0.0)
         params['pathIsFixed'] = None
         params['weight'] = 1.0

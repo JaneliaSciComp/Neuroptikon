@@ -117,14 +117,13 @@ class PickHandler(osgGA.GUIEventHandler):
                     self._display.draggerLOD.addChild(self._display.simpleDragger)
         return eventWasHandled
     
-    # Even though I recently wrapped PolytopeIntersector on Windows, the
-    # getIntersections() method returns something not very useful. So disable
-    # use of PolytopeIntersector for now. CMB 4-10-2015
+    # Previously, getIntersections() method of PolytopeIntersector returned something not very useful. 
+    # So we temporarily disabled use of PolytopeIntersector on Windows in April 2015. CMB 4-10-2015
     def usePolytopeIntersector(self):
         if not hasattr(osgUtil, 'PolytopeIntersector'):
             return False
-        if os.name.startswith('nt'):
-            return False # Windows
+        # if os.name.startswith('nt'): # April 2015
+        #     return False # Windows
         return True
     
     # TODO: have this return the picked object (or None) and leave the action up to the caller
