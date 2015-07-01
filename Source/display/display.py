@@ -2147,7 +2147,30 @@ class Display(wx.glcanvas.GLCanvas):
         for networkObject in objects:
             visibles.extend(self.visiblesForObject(networkObject))
         self.selectVisibles(visibles, extend, findShortestPath)
-    
+
+    def deselectObjects(self, objects):
+        """
+        Deselect the indicated :class:`network objects <network.object.Object>`.
+        
+        Objects will be deleted from the current selection.
+        """
+        
+        if not isinstance(objects, (list, tuple, set)):
+            raise TypeError, 'The objects argument passed to selectObjects must be a list, tuple or set.'
+        
+        visibles = []
+        for networkObject in objects:
+            visibles.extend(self.visiblesForObject(networkObject))
+        self.deselectVisibles(visibles)
+
+    def deselectObject(self, networkObject):
+        """
+        Deselect the indicated :class:`network objects <network.object.Object>`.
+
+        Objects will be deleted from the current selection.
+        """
+        or visible in self.visiblesForObject(networkObject):
+            self.deselectVisibles([visible])
     
     def selectObject(self, networkObject, extend = False, findShortestPath = False):
         """
@@ -2240,10 +2263,47 @@ class Display(wx.glcanvas.GLCanvas):
         self.hoverSelected = self.hoverSelecting
         self.hoverSelecting = False
         self.Refresh()
+
+    def deselectVisibles(self, visibles):
+        """
+        Deselect the indicated :class:`visible proxies <display.visible.Visible>`.
+        
+        The visible will be deleted from the current selection.
+        """
+
+        newSelection = set(self.selectedVisibles)
+
+        for visible in visibles:
+            if visible in newSelection:
+                newSelection.remove(visible)
+        
+        if newSelection != self.selectedVisibles or (self.hoverSelected and not self.hoverSelecting):
+            self._clearDragger()
+            self.selectedVisibles = newSelection
+            if len(self.selectedVisibles) == 0:
+                # There is no selection so hover selecting should be enabled.
+                self.hoverSelecting = False
+                self.hoverSelect = True
+            elif not self.hoverSelecting:
+                # An explicit selection has been made via the GUI or console.
+                
+                self.hoverSelect = False    # disable hover selecting
+                # TODO Dragging doesn't work so this just takes time
+                if len(self.selectedVisibles) == 1:
+                    pass
+                    # Add a dragger to the selected visible.
+                    # visible = list(self.selectedVisibles)[0]
+                    # if visible._isDraggable():
+                    #     self._addDragger(visible)
+            
+            dispatcher.send(('set', 'selection'), self)
+        
+        self.hoverSelected = self.hoverSelecting
+        self.hoverSelecting = False
+        self.Refresh()
     
     def selection(self):
         return ObjectList(self.selectedVisibles)
-    
     
     def selectedObjects(self):
         """

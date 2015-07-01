@@ -208,6 +208,21 @@ class Network:
                     return networkObject
         return None
     
+    def findObjectsRegex(self, objectClass, name = None):
+        """
+
+        """
+        from re import search
+        matchingObjects = []
+        
+        if name is not None:
+            for networkObject in self.objects:
+                if isinstance(networkObject, objectClass) and (search(name, networkObject.name)):
+                    matchingObjects.append(networkObject)
+        if matchingObjects:
+            return matchingObjects
+        else:
+            return None
     
     def createRegion(self, addSubTerms = False, *args, **keywordArgs):
         """
