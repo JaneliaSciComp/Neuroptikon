@@ -77,7 +77,7 @@ class Display(wx.glcanvas.GLCanvas):
         self._showFlow = False
         self._highlightOnlyWithinSelection = False
         self._useGhosts = True
-        self._ghostingOpacity = 0.25
+        self._ghostingOpacity = 0.15
         self._primarySelectionColor = (0, 0, 1, .4)
         self._secondarySelectionColor = (0, 0, 1, .2)
         self._selectionHighlightDepth = 3
@@ -2367,7 +2367,6 @@ class Display(wx.glcanvas.GLCanvas):
             if highlightedNode not in visiblesToHighlight:
                 highlightedNode.setGlowColor(None)
         for animatedEdge in self.animatedVisibles:
-            animatedEdge.boldWeight(1.0)
             if animatedEdge not in visiblesToAnimate:
                 animatedEdge.animateFlow(False)
 
@@ -2382,7 +2381,6 @@ class Display(wx.glcanvas.GLCanvas):
                 visibleToHighlight.setGlowColor(None)
         # SLOW
         for visibleToAnimate in visiblesToAnimate:
-            visibleToAnimate.boldWeight(5.0)
             visibleToAnimate.animateFlow()
         
         self.highlightedVisibles = visiblesToHighlight
