@@ -2169,7 +2169,7 @@ class Display(wx.glcanvas.GLCanvas):
 
         Objects will be deleted from the current selection.
         """
-        or visible in self.visiblesForObject(networkObject):
+        for visible in self.visiblesForObject(networkObject):
             self.deselectVisibles([visible])
     
     def selectObject(self, networkObject, extend = False, findShortestPath = False):
