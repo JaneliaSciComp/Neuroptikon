@@ -207,23 +207,44 @@ class Network:
                 if isinstance(networkObject, objectClass) and ((not default and networkObject.name == name) or (default and networkObject.defaultName() == name)):
                     return networkObject
         return None
-    
-    def findObjectsRegex(self, objectClass, name = None):
-        """
 
+    def findObjects(self, objectClass, name = None, default = False):
+        """
+        Return all objects of the given class with the given name.
+        
+        >>> neuron = network.findObject(Neuron, 'AVAL')
+        
+        Returns a list of :class:`Object <Network.Object.Object>` or None if there are no matching objects.
+        
+        If default is True then each object's :meth:`defaultName() <Network.Object.Object.defaultName>` will be queried instead of its name.
+        """
+        
+        objects = []
+        if name is not None:
+            for networkObject in self.objects:
+                if isinstance(networkObject, objectClass) and ((not default and networkObject.name == name) or (default and networkObject.defaultName() == name)):
+                    objects.append(networkObject)
+        return objects if objects else None
+
+    
+    def findObjectsRegex(self, objectClass, nameRegex = None, default = False):
+        """
+        Return all objects of the given class whos name matches the regular expression
+        
+        >>> neuron = network.findObject(Neuron, 'AVAL')
+        
+        Returns a list of :class:`Object <Network.Object.Object>` or None if there are no matching objects.
+        
         """
         from re import search
         matchingObjects = []
         
-        if name is not None:
+        if nameRegex is not None:
             for networkObject in self.objects:
-                if isinstance(networkObject, objectClass) and (search(name, networkObject.name)):
+                if isinstance(networkObject, objectClass) and ((not default and search(nameRegex, networkObject.name)) or (default and search(nameRegex, networkObject.defaultName()))):
                     matchingObjects.append(networkObject)
-        if matchingObjects:
-            return matchingObjects
-        else:
-            return None
-    
+        return matchingObjects if matchingObjects else None
+
     def createRegion(self, addSubTerms = False, *args, **keywordArgs):
         """
         Create a new region optionally associated with an ontology term.
