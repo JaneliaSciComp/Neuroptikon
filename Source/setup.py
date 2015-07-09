@@ -48,7 +48,8 @@ except ImportError:
     sys.exit(1)
 # Work around bug in version of Sphinx on my Mac, which uses sys.argv, even when passed this argument
 sphinx_args = ['-q', '-b', 'html', 'documentation/Source', 'documentation/build/Documentation']
-if sys.platform == 'darwin':
+#Used to check mac vs windows, but seems to be a sphinx version issue instead
+if sphinx.__version__ >= "1.2.3":
     saved_sys_argv = sys.argv
     sys.argv = sphinx_args
     result = sphinx.build_main(argv=sphinx_args) # python 2.7.8?
@@ -57,6 +58,7 @@ else:
     result = sphinx.main(argv=sphinx_args) # python 2.7.2?
 if result != 0:
     sys.exit(result)
+
 
 # Assemble the platform-specific application settings. 
 if sys.platform == 'darwin':
