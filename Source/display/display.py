@@ -80,6 +80,7 @@ class Display(wx.glcanvas.GLCanvas):
         self._ghostingOpacity = 0.15
         self._primarySelectionColor = (0, 0, 1, .4)
         self._secondarySelectionColor = (0, 0, 1, .2)
+        self._visiblesSelectionColors = {}
         self._selectionHighlightDepth = 3
         self.viewDimensions = 2
         
@@ -2131,7 +2132,7 @@ class Display(wx.glcanvas.GLCanvas):
         self.selectVisibles(matchingVisibles)
     
     
-    def selectObjects(self, objects, extend = False, findShortestPath = False):
+    def selectObjects(self, objects, extend = False, findShortestPath = False, color = None):
         """
         Select the indicated :class:`network objects <network.object.Object>`.
         
@@ -2146,6 +2147,9 @@ class Display(wx.glcanvas.GLCanvas):
         visibles = []
         for networkObject in objects:
             visibles.extend(self.visiblesForObject(networkObject))
+        if color:
+            for visible in visibles:
+                self._visiblesSelectionColors[visible] = color
         self.selectVisibles(visibles, extend, findShortestPath)
 
     def deselectObjects(self, objects):
@@ -2172,7 +2176,7 @@ class Display(wx.glcanvas.GLCanvas):
         for visible in self.visiblesForObject(networkObject):
             self.deselectVisibles([visible])
     
-    def selectObject(self, networkObject, extend = False, findShortestPath = False):
+    def selectObject(self, networkObject, extend = False, findShortestPath = False, color = None):
         """
         Select the indicated :class:`network object <network.object.Object>`.
         
@@ -2182,6 +2186,8 @@ class Display(wx.glcanvas.GLCanvas):
         """
         
         for visible in self.visiblesForObject(networkObject):
+            if color:
+                self._visiblesSelectionColors[visible] = color
             self.selectVisibles([visible], extend, findShortestPath)
     
     
@@ -2218,7 +2224,10 @@ class Display(wx.glcanvas.GLCanvas):
                     for pathObject in self.network.shortestPath(startVisible.client, visible.client):
                         for pathVisible in self.visiblesForObject(pathObject):
                             pathWasFound = True
+                            if visible in self._visiblesSelectionColors:
+                                self._visiblesSelectionColors[pathVisible] = self._visiblesSelectionColors[visible] 
                             newSelection.add(pathVisible)
+
             if not pathWasFound:
                 wx.Bell()
         elif extend and len(visibles) == 1 and visibles[0] in newSelection:
@@ -2231,8 +2240,13 @@ class Display(wx.glcanvas.GLCanvas):
                 rootObject = visible.client.rootObject()
                 if rootObject and not self.objectIsSelected(rootObject) and not self.visiblesForObject(rootObject)[0] in visibles:
                     visibles = self.visiblesForObject(rootObject)
+                    # Highlight root object instead of visible
+                    if visible in self._visiblesSelectionColors:
+                        self._visiblesSelectionColors[visibles[0]] = self._visiblesSelectionColors[visible]
+                        del self._visiblesSelectionColors[visible]
                     if any(visibles):
                         visible = visibles[0]
+
                 newSelection.add(visible)
         
         self._selectedShortestPath = findShortestPath
@@ -2276,7 +2290,7 @@ class Display(wx.glcanvas.GLCanvas):
         for visible in visibles:
             if visible in newSelection:
                 newSelection.remove(visible)
-        
+
         if newSelection != self.selectedVisibles or (self.hoverSelected and not self.hoverSelecting):
             self._clearDragger()
             self.selectedVisibles = newSelection
@@ -2297,7 +2311,6 @@ class Display(wx.glcanvas.GLCanvas):
                     #     self._addDragger(visible)
             
             dispatcher.send(('set', 'selection'), self)
-        
         self.hoverSelected = self.hoverSelecting
         self.hoverSelecting = False
         self.Refresh()
@@ -2336,19 +2349,29 @@ class Display(wx.glcanvas.GLCanvas):
         refreshWasSupressed = self._suppressRefresh
         self._suppressRefresh = True
         
-        def _highlightObject(networkObject):
+        def _highlightObject(networkObject, originalObject = None):
             highlightedSomething = False
             
             # Highlight/animate all visibles for this object.
+            # If root object's visible in colors, add this visible to colors too.
+            originalColors = []
+            if originalObject:
+                originalVisibles = self.visiblesForObject(originalObject)
+                originalColors = [o for o in originalVisibles if o in self._visiblesSelectionColors]
+
             for visible in self.visiblesForObject(networkObject):
                 if visible.isPath():
                     if visible not in visiblesToAnimate:
                         visiblesToAnimate.add(visible)
                         visiblesToHighlight.add(visible)
                         highlightedSomething = True
+                        if originalColors:
+                            self._visiblesSelectionColors[visible] = self._visiblesSelectionColors[originalColors[0]]
                 elif visible not in visiblesToHighlight:
                     visiblesToHighlight.add(visible)
                     highlightedSomething = True
+                    if originalColors:
+                        self._visiblesSelectionColors[visible] = self._visiblesSelectionColors[originalColors[0]]
             # Highlight to the root of the object if appropriate.
             networkObject = networkObject.parentObject()
             while networkObject:
@@ -2356,7 +2379,6 @@ class Display(wx.glcanvas.GLCanvas):
                     networkObject = networkObject.parentObject()
                 else:
                     networkObject = None
-            
             return highlightedSomething  
         
         # TODO: selecting neuron X in Morphology.py doesn't highlight neurites
@@ -2369,17 +2391,17 @@ class Display(wx.glcanvas.GLCanvas):
             while any(queue):
                 curPath = queue.pop(0)
                 curObject = curPath[-1]
+                originalObject = curPath[0]
                 visitedObjects.append(curObject)
                 curObjectRoot = curObject.rootObject()
 
-            
                 # If we've reached a highlighted object or the maximum depth then highlight the objects in the current path.
                 if curObjectRoot in highlightedObjects or (not highlightWithinSelection and len(curPath) == maxDepth + 1):
                     for pathObject in curPath:
-                        _highlightObject(pathObject)
+                        _highlightObject(pathObject, originalObject)
 
                 # If we haven't reached the maximum depth then add the next layer of connections to the end of the queue.
-                if len(curPath) < maxDepth + 1:
+                if len(curPath) <= maxDepth:
                     for connectedObject in curObjectRoot.connections():
                         if connectedObject not in curPath and connectedObject.rootObject() not in curPath and connectedObject not in visitedObjects:
                             queue += [curPath + [connectedObject]]
@@ -2426,15 +2448,25 @@ class Display(wx.glcanvas.GLCanvas):
         for highlightedNode in self.highlightedVisibles:
             if highlightedNode not in visiblesToHighlight:
                 highlightedNode.setGlowColor(None)
+                if highlightedNode in self._visiblesSelectionColors:
+                    del self._visiblesSelectionColors[highlightedNode]
+
         for animatedEdge in self.animatedVisibles:
             if animatedEdge not in visiblesToAnimate:
                 animatedEdge.animateFlow(False)
+                if animatedEdge in self._visiblesSelectionColors:
+                    del self._visiblesSelectionColors[animatedEdge]
 
         
         # Highlight/animate the visibles that should have it now.
         for visibleToHighlight in visiblesToHighlight:
             if visibleToHighlight in self.selectedVisibles:
-                visibleToHighlight.setGlowColor(self._primarySelectionColor)
+                if visibleToHighlight in self._visiblesSelectionColors:
+                    visibleToHighlight.setGlowColor(self._visiblesSelectionColors[visibleToHighlight])
+                else:
+                    visibleToHighlight.setGlowColor(self._primarySelectionColor)
+            elif visibleToHighlight in self._visiblesSelectionColors:
+                visibleToHighlight.setGlowColor(self._visiblesSelectionColors[visibleToHighlight])
             elif not self._useGhosts:
                 visibleToHighlight.setGlowColor(self._secondarySelectionColor)
             else:
