@@ -13,10 +13,10 @@
 AppId={{4FD376DB-F23F-4A6E-9736-F216FBD42671}
 AppName=Neuroptikon
 AppVerName=Neuroptikon {#APP_VERSION}
-AppPublisher=HHMI Janelia Farm Research Campus
-AppPublisherURL=http://openwiki.janelia.org/wiki/display/neuroptikon
-AppSupportURL=http://openwiki.janelia.org/wiki/display/neuroptikon
-AppUpdatesURL=http://openwiki.janelia.org/wiki/display/neuroptikon
+AppPublisher=HHMI Janelia Research Campus
+AppPublisherURL=https://github.com/JaneliaSciComp/Neuroptikon
+AppSupportURL=https://github.com/JaneliaSciComp/Neuroptikon
+AppUpdatesURL=https://github.com/JaneliaSciComp/Neuroptikon
 DefaultDirName={pf}\Neuroptikon
 DefaultGroupName=Neuroptikon
 OutputBaseFilename=Neuroptikon_{#APP_VERSION}
@@ -33,7 +33,7 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 
 [Files]
 ; TODO: Figure out how to make the build path relative to the path of this file.
-Source: "F:\Users\cmbruns\git\Neuroptikon\Source\build\Neuroptikon {#APP_VERSION}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: "C:\Users\charlotte\Documents\GitHub\Neuroptikon\Source\build\Neuroptikon {#APP_VERSION}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
