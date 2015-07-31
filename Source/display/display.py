@@ -23,6 +23,7 @@ from network.object import Object
 from network.pathway import Pathway # pylint: disable=E0611,F0401
 from network.arborization import Arborization
 from network.stimulus import Stimulus
+from network.neuron import Neuron
 from network.object_list import ObjectList
 from visible import Visible
 import layout as layout_module
@@ -73,6 +74,8 @@ class Display(wx.glcanvas.GLCanvas):
         self.selectConnectedVisibles = True
         self._showRegionNames = True
         self._showNeuronNames = False
+        self._showNeuronNamesOnSelection = False
+        self._printNeuronNamesOnSelection = False
         self._labelsFloatOnTop = False
         self._showFlow = False
         self._highlightOnlyWithinSelection = False
@@ -83,6 +86,7 @@ class Display(wx.glcanvas.GLCanvas):
         self._visiblesSelectionColors = {}
         self._selectionHighlightDepth = 3
         self.viewDimensions = 2
+        self.console = None
         
         self._recomputeBounds = True
         self._recomputeBoundsScheduled = False
@@ -291,6 +295,10 @@ class Display(wx.glcanvas.GLCanvas):
             self.setShowRegionNames(xmlElement.get('showRegionNames') in trueValues)
         if xmlElement.get('showNeuronNames') is not None:
             self.setShowNeuronNames(xmlElement.get('showNeuronNames') in trueValues)
+        if xmlElement.get('showNeuronNamesOnSelection') is not None:
+            self.setShowNeuronNamesOnSelection(xmlElement.get('showNeuronNamesOnSelection') in trueValues)
+        if xmlElement.get('printNeuronNamesOnSelection') is not None:
+            self.setPrintNeuronNamesOnSelection(xmlElement.get('printNeuronNamesOnSelection') in trueValues)
         if xmlElement.get('showFlow') is not None:
             self.setShowFlow(xmlElement.get('showFlow') in trueValues)
         if xmlElement.get('useGhosting') is not None:
@@ -369,6 +377,7 @@ class Display(wx.glcanvas.GLCanvas):
         displayElement.set('dimensions', str(self.viewDimensions))
         displayElement.set('showRegionNames', 'true' if self._showRegionNames else 'false')
         displayElement.set('showNeuronNames', 'true' if self._showNeuronNames else 'false')
+        displayElement.set('showNeuronNamesOnSelection', 'true' if self._showNeuronNamesOnSelection else 'false')
         displayElement.set('showFlow', 'true' if self._showFlow else 'false')
         displayElement.set('useGhosting', 'true' if self._useGhosts else 'false')
         displayElement.set('ghostingOpacity', str(self._ghostingOpacity))
@@ -398,6 +407,8 @@ class Display(wx.glcanvas.GLCanvas):
         scriptFile.write(displayRef + '.setShowCompass(' + str(self.isShowingCompass()) + ')\n')
         scriptFile.write(displayRef + '.setShowRegionNames(' + str(self._showRegionNames) + ')\n')
         scriptFile.write(displayRef + '.setShowNeuronNames(' + str(self._showNeuronNames) + ')\n')
+        scriptFile.write(displayRef + '.setShowNeuronNamesOnSelection(' + str(self._showNeuronNamesOnSelection) + ')\n')
+        scriptFile.write(displayRef + '.setPrintNeuronNamesOnSelection(' + str(self._showNeuronNamesOnSelection) + ')\n')
         scriptFile.write(displayRef + '.setShowFlow(' + str(self._showFlow) + ')\n')
         scriptFile.write(displayRef + '.setUseGhosts(' + str(self._useGhosts) + ')\n')
         scriptFile.write(displayRef + '.setGhostingOpacity(' + str(self._ghostingOpacity) + ')\n')
@@ -1371,7 +1382,9 @@ class Display(wx.glcanvas.GLCanvas):
             pathwayVis[0].setFlowTo(sender.region1Projects)
             pathwayVis[0].setFlowFrom(sender.region2Projects)
     
-        
+    def setConsole(self, console):
+        self.console = console
+
     def setNetwork(self, network):
         if network != self.network:
             if self.network != None:
@@ -1460,6 +1473,42 @@ class Display(wx.glcanvas.GLCanvas):
         """
         
         return self._showNeuronNames
+
+    def setShowNeuronNamesOnSelection(self, show):
+        """
+        Set whether the names of neurons should be shown by default in the visualization when selected.
+        """
+        
+        if show != self._showNeuronNamesOnSelection:
+            self._showNeuronNamesOnSelection = show
+            dispatcher.send(('set', 'showNeuronNamesOnSelection'), self)
+            self.Refresh()
+    
+    
+    def showNeuronNamesOnSelection(self):
+        """
+        Return whether the names of neurons should be shown by default in the visualization when selected.
+        """
+        
+        return self._showNeuronNamesOnSelection
+
+    def setPrintNeuronNamesOnSelection(self, show):
+        """
+        Set whether the names of neurons should be printed by default in the visualization when selected.
+        """
+        
+        if show != self._printNeuronNamesOnSelection:
+            self._printNeuronNamesOnSelection = show
+            dispatcher.send(('set', 'printNeuronNamesOnSelection'), self)
+            self.Refresh()
+    
+    
+    def printNeuronNamesOnSelection(self):
+        """
+        Return whether the names of neurons should be printed by default in the visualization when selected.
+        """
+        
+        return self._printNeuronNamesOnSelection
     
     
     def setLabelsFloatOnTop(self, floatLabels):
@@ -2214,7 +2263,6 @@ class Display(wx.glcanvas.GLCanvas):
             newSelection = set(self.selectedVisibles)
         else:
             newSelection = set()
-        
         if findShortestPath:
             # Add the visibles that exist along the path to the selection.
             pathWasFound = False
@@ -2459,18 +2507,25 @@ class Display(wx.glcanvas.GLCanvas):
 
         
         # Highlight/animate the visibles that should have it now.
+        selectedString = ""
         for visibleToHighlight in visiblesToHighlight:
             if visibleToHighlight in self.selectedVisibles:
                 if visibleToHighlight in self._visiblesSelectionColors:
                     visibleToHighlight.setGlowColor(self._visiblesSelectionColors[visibleToHighlight])
                 else:
                     visibleToHighlight.setGlowColor(self._primarySelectionColor)
+                visibleToHighlight._updateLabel()
+                if isinstance(visibleToHighlight.client, Neuron) and visibleToHighlight.client.name:
+                    selectedString += " " + visibleToHighlight.client.name + ","
             elif visibleToHighlight in self._visiblesSelectionColors:
                 visibleToHighlight.setGlowColor(self._visiblesSelectionColors[visibleToHighlight])
             elif not self._useGhosts:
                 visibleToHighlight.setGlowColor(self._secondarySelectionColor)
             else:
                 visibleToHighlight.setGlowColor(None)
+        if self._printNeuronNamesOnSelection and selectedString:
+            self.console.run("print 'Selected:" + selectedString[:-1] + "'", False, False)
+
         # SLOW
         for visibleToAnimate in visiblesToAnimate:
             visibleToAnimate.animateFlow()

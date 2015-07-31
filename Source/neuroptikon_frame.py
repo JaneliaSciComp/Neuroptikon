@@ -52,7 +52,8 @@ class NeuroptikonFrame(wx.Frame):
         self._console = wx.py.shell.Shell(self.splitter, wx.ID_ANY, locals = self._scriptLocals, introText = gettext('Welcome to Neuroptikon.'))
         self._console.autoCompleteIncludeSingle = False
         self._console.autoCompleteIncludeDouble = False
-        
+        self.display.setConsole(self._console)
+
         self.splitter.SplitHorizontally(self.display, self._console)
         self.splitter.SetSashGravity(1.0)
         
@@ -226,6 +227,10 @@ class NeuroptikonFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.onShowHideRegionNames, self.showRegionNamesMenuItem)
         self.showNeuronNamesMenuItem = viewMenu.Append(wx.NewId(), gettext('Show Neuron Names'), gettext('Show/hide the neuron names'), True)
         self.Bind(wx.EVT_MENU, self.onShowHideNeuronNames, self.showNeuronNamesMenuItem)
+        self.showNeuronNamesOnSelectionMenuItem = viewMenu.Append(wx.NewId(), gettext('Show Neuron Names On Selection'), gettext('Show/hide the neuron names on selection'), True)
+        self.Bind(wx.EVT_MENU, self.onShowHideNeuronNamesOnSelection, self.showNeuronNamesOnSelectionMenuItem)
+        self.printNeuronNamesOnSelectionMenuItem = viewMenu.Append(wx.NewId(), gettext('Print Neuron Names On Selection'), gettext('Print the neuron names in the console when selected'), True)
+        self.Bind(wx.EVT_MENU, self.onPrintHideNeuronNamesOnSelection, self.printNeuronNamesOnSelectionMenuItem)
         self.labelsFloatOnTopMenuItem = viewMenu.Append(wx.NewId(), gettext('Float Labels On Top'), gettext('Always show object labels even when the object is behind another'), True)
         self.Bind(wx.EVT_MENU, self.onSetLabelsFloatOnTop, self.labelsFloatOnTopMenuItem)
         self.showFlowMenuItem = viewMenu.Append(wx.NewId(), gettext('Show Flow of Information'), gettext('Animate the connections between objects'), True)
@@ -342,6 +347,10 @@ class NeuroptikonFrame(wx.Frame):
             event.Check(self.display.showRegionNames())
         elif eventId == self.showNeuronNamesMenuItem.GetId():
             event.Check(self.display.showNeuronNames())
+        elif eventId == self.showNeuronNamesOnSelectionMenuItem.GetId():
+            event.Check(self.display.showNeuronNamesOnSelection())
+        elif eventId == self.printNeuronNamesOnSelectionMenuItem.GetId():
+            event.Check(self.display.printNeuronNamesOnSelection())
         elif eventId == self.labelsFloatOnTopMenuItem.GetId():
             event.Check(self.display.labelsFloatOnTop())
         elif eventId == self.decreaseSelectionHighlightDepthItem.GetId():
@@ -546,7 +555,12 @@ class NeuroptikonFrame(wx.Frame):
     
     def onShowHideNeuronNames(self, event_):
         self.display.setShowNeuronNames(not self.display.showNeuronNames())
-    
+
+    def onShowHideNeuronNamesOnSelection(self, event_):
+        self.display.setShowNeuronNamesOnSelection(not self.display.showNeuronNamesOnSelection())
+
+    def onPrintHideNeuronNamesOnSelection(self, event_):
+        self.display.setPrintNeuronNamesOnSelection(not self.display.printNeuronNamesOnSelection())
     
     def onSetLabelsFloatOnTop(self, event_):
         self.display.setLabelsFloatOnTop(not self.display.labelsFloatOnTop())

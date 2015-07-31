@@ -131,6 +131,7 @@ class Visible(object):
             dispatcher.connect(self._displayChangedShowName, ('set', 'showRegionNames'), self.display)
         if isinstance(self.client, Neuron):
             dispatcher.connect(self._displayChangedShowName, ('set', 'showNeuronNames'), self.display)
+            dispatcher.connect(self._displayChangedShowName, ('set', 'showNeuronNamesOnSelection'), self.display)
         dispatcher.connect(self._displayChangedShowName, ('set', 'viewDimensions'), self.display)
         dispatcher.connect(self._displayChangedShowName, ('set', 'orthoViewPlane'), self.display)
         dispatcher.connect(self._displayChangedShowName, ('set', 'labelsFloatOnTop'), self.display)
@@ -879,9 +880,10 @@ class Visible(object):
             self._updateOpacity()
     
     
-    def _updateLabel(self, opacity = 1.0):
+    def _updateLabel(self, opacity = 1.0, isselected = False):
         label = self._label
-        if label is None and ((isinstance(self.client, Region) and self.display.showRegionNames()) or (isinstance(self.client, Neuron) and self.display.showNeuronNames())):
+        if label is None and ((isinstance(self.client, Region) and self.display.showRegionNames()) or (isinstance(self.client, Neuron) and (self.display.showNeuronNames())
+            or (self in self.display.selectedVisibles and self.display.showNeuronNamesOnSelection()))):
             label = self.client.abbreviation or self.client.name
         
         if label is None:
