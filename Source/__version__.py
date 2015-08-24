@@ -4,6 +4,6 @@
 #  http://license.janelia.org/license/jfrc_copyright_1_1.html
 
 
-version = "1.0.0rc12"
-version_info = (1, 0, 0, "rc12")
+version = "1.0.0rc13"
+version_info = (1, 0, 0, "rc13")
 JIRA_version_id = 10011
