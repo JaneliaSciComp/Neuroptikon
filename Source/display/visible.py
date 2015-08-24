@@ -2399,8 +2399,9 @@ class Visible(object):
                 # Place more deeply nested regions in lower render bins so they are rendered before the containing visible.
                 # Each nesting depth needs four render bins: two for the front and back face of the shape and one for the glow shape.
                 # This assumes a maximum nesting depth of 10.
-                sceneDepth = len(self.ancestors())
-                stateSet1.setRenderBinDetails(40 - sceneDepth * 2, 'DepthSortedBin')
+                # TODO: this code is causing problems where glows are hidden when there are regions on top of them. Removing for now.
+                # sceneDepth = len(self.ancestors())
+                # stateSet1.setRenderBinDetails(40 - sceneDepth * 2, 'DepthSortedBin')
     
     
     def setGlowColor(self, color):
