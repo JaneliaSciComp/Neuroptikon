@@ -231,6 +231,8 @@ class NeuroptikonFrame(wx.Frame):
         self.Bind(wx.EVT_MENU, self.onShowHideNeuronNamesOnSelection, self.showNeuronNamesOnSelectionMenuItem)
         self.printNeuronNamesOnSelectionMenuItem = viewMenu.Append(wx.NewId(), gettext('Print Neuron Names On Selection'), gettext('Print the neuron names in the console when selected'), True)
         self.Bind(wx.EVT_MENU, self.onPrintHideNeuronNamesOnSelection, self.printNeuronNamesOnSelectionMenuItem)
+        self.hideUnselectedNeuronsOnSelectionMenuItem = viewMenu.Append(wx.NewId(), gettext('Hide Unselected Neurons On Selection'), gettext('Hides unselected neurons on selection'), True)
+        self.Bind(wx.EVT_MENU, self.onHideUnselectedOnSelection, self.hideUnselectedNeuronsOnSelectionMenuItem)
         self.labelsFloatOnTopMenuItem = viewMenu.Append(wx.NewId(), gettext('Float Labels On Top'), gettext('Always show object labels even when the object is behind another'), True)
         self.Bind(wx.EVT_MENU, self.onSetLabelsFloatOnTop, self.labelsFloatOnTopMenuItem)
         self.showFlowMenuItem = viewMenu.Append(wx.NewId(), gettext('Show Flow of Information'), gettext('Animate the connections between objects'), True)
@@ -349,6 +351,8 @@ class NeuroptikonFrame(wx.Frame):
             event.Check(self.display.showNeuronNames())
         elif eventId == self.showNeuronNamesOnSelectionMenuItem.GetId():
             event.Check(self.display.showNeuronNamesOnSelection())
+        elif eventId == self.hideUnselectedNeuronsOnSelectionMenuItem.GetId():
+            event.Check(self.display.hideUnselectedNeurons())
         elif eventId == self.printNeuronNamesOnSelectionMenuItem.GetId():
             event.Check(self.display.printNeuronNamesOnSelection())
         elif eventId == self.labelsFloatOnTopMenuItem.GetId():
@@ -561,6 +565,9 @@ class NeuroptikonFrame(wx.Frame):
 
     def onPrintHideNeuronNamesOnSelection(self, event_):
         self.display.setPrintNeuronNamesOnSelection(not self.display.printNeuronNamesOnSelection())
+
+    def onHideUnselectedOnSelection(self, event_):
+        self.display.setHideUnselectedNeurons(not self.display.hideUnselectedNeurons())
     
     def onSetLabelsFloatOnTop(self, event_):
         self.display.setLabelsFloatOnTop(not self.display.labelsFloatOnTop())

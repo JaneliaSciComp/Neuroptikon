@@ -76,6 +76,7 @@ class Display(wx.glcanvas.GLCanvas):
         self._showNeuronNames = False
         self._showNeuronNamesOnSelection = False
         self._printNeuronNamesOnSelection = False
+        self._hideUnselectedNeurons = False
         self._labelsFloatOnTop = False
         self._showFlow = False
         self._highlightOnlyWithinSelection = False
@@ -299,6 +300,8 @@ class Display(wx.glcanvas.GLCanvas):
             self.setShowNeuronNamesOnSelection(xmlElement.get('showNeuronNamesOnSelection') in trueValues)
         if xmlElement.get('printNeuronNamesOnSelection') is not None:
             self.setPrintNeuronNamesOnSelection(xmlElement.get('printNeuronNamesOnSelection') in trueValues)
+        if xmlElement.get('hideUnselectedNeurons') is not None:
+            self.setHideUnselectedNeurons(xmlElement.get('hideUnselectedNeurons') in trueValues)
         if xmlElement.get('showFlow') is not None:
             self.setShowFlow(xmlElement.get('showFlow') in trueValues)
         if xmlElement.get('useGhosting') is not None:
@@ -378,6 +381,7 @@ class Display(wx.glcanvas.GLCanvas):
         displayElement.set('showRegionNames', 'true' if self._showRegionNames else 'false')
         displayElement.set('showNeuronNames', 'true' if self._showNeuronNames else 'false')
         displayElement.set('showNeuronNamesOnSelection', 'true' if self._showNeuronNamesOnSelection else 'false')
+        displayElement.set('hideUnselectedNeurons', 'true' if self._hideUnselectedNeurons else 'false')
         displayElement.set('showFlow', 'true' if self._showFlow else 'false')
         displayElement.set('useGhosting', 'true' if self._useGhosts else 'false')
         displayElement.set('ghostingOpacity', str(self._ghostingOpacity))
@@ -409,6 +413,7 @@ class Display(wx.glcanvas.GLCanvas):
         scriptFile.write(displayRef + '.setShowNeuronNames(' + str(self._showNeuronNames) + ')\n')
         scriptFile.write(displayRef + '.setShowNeuronNamesOnSelection(' + str(self._showNeuronNamesOnSelection) + ')\n')
         scriptFile.write(displayRef + '.setPrintNeuronNamesOnSelection(' + str(self._showNeuronNamesOnSelection) + ')\n')
+        scriptFile.write(displayRef + '.setHideUnselectedNeurons(' + str(self._hideUnselectedNeurons) + ')\n')
         scriptFile.write(displayRef + '.setShowFlow(' + str(self._showFlow) + ')\n')
         scriptFile.write(displayRef + '.setUseGhosts(' + str(self._useGhosts) + ')\n')
         scriptFile.write(displayRef + '.setGhostingOpacity(' + str(self._ghostingOpacity) + ')\n')
@@ -1466,13 +1471,27 @@ class Display(wx.glcanvas.GLCanvas):
             dispatcher.send(('set', 'showNeuronNames'), self)
             self.Refresh()
     
-    
     def showNeuronNames(self):
         """
         Return whether the names of neurons should be shown by default in the visualization.
         """
         
         return self._showNeuronNames
+
+    def hideUnselectedNeurons(self):
+        """
+        Returns whether to hide unselected neurons (when at least one item is selected).
+        """
+        return self._hideUnselectedNeurons
+
+    def setHideUnselectedNeurons(self, value):
+        """
+        Set whether to hide hide unselected neurons when at least one other item is selected.
+        """
+        if value != self._hideUnselectedNeurons:
+            self._hideUnselectedNeurons = value
+            dispatcher.send(('set', 'hideUnselectedNeurons'))
+            self.Refresh()
 
     def setShowNeuronNamesOnSelection(self, show):
         """
@@ -1483,7 +1502,6 @@ class Display(wx.glcanvas.GLCanvas):
             self._showNeuronNamesOnSelection = show
             dispatcher.send(('set', 'showNeuronNamesOnSelection'), self)
             self.Refresh()
-    
     
     def showNeuronNamesOnSelection(self):
         """
@@ -1501,7 +1519,6 @@ class Display(wx.glcanvas.GLCanvas):
             self._printNeuronNamesOnSelection = show
             dispatcher.send(('set', 'printNeuronNamesOnSelection'), self)
             self.Refresh()
-    
     
     def printNeuronNamesOnSelection(self):
         """
