@@ -1491,9 +1491,7 @@ class Display(wx.glcanvas.GLCanvas):
         if value != self._hideUnselectedNeurons:
             self._hideUnselectedNeurons = value
             dispatcher.send(('set', 'hideUnselectedNeurons'))
-            reselectedVisibles = set(self.selectedVisibles)
-            self.selectVisibles([])
-            self.selectVisibles(reselectedVisibles)
+            self.selectVisibles(self.selectedVisibles, reselect=True)
             self.Refresh()
 
     def setShowNeuronNamesOnSelection(self, show):
@@ -2271,7 +2269,7 @@ class Display(wx.glcanvas.GLCanvas):
         return False
     
     
-    def selectVisibles(self, visibles, extend = False, findShortestPath = False, fromclick=False):
+    def selectVisibles(self, visibles, extend = False, findShortestPath = False, fromclick=False, reselect=False):
         """
         Select the indicated :class:`visible proxies <display.visible.Visible>`.
         
@@ -2285,6 +2283,8 @@ class Display(wx.glcanvas.GLCanvas):
             newSelection = set()
         if self._hideUnselectedNeurons and fromclick == True and len(visibles):
             visibles = [visible for visible in visibles if visible.getCurrentOpacity() != 0]
+
+        print "here i am"
 
         if findShortestPath:
             # Add the visibles that exist along the path to the selection.
@@ -2322,7 +2322,7 @@ class Display(wx.glcanvas.GLCanvas):
         
         self._selectedShortestPath = findShortestPath
         
-        if newSelection != self.selectedVisibles or (self.hoverSelected and not self.hoverSelecting):
+        if newSelection != self.selectedVisibles or (self.hoverSelected and not self.hoverSelecting) or reselect == True:
             self._clearDragger()
             
             self.selectedVisibles = newSelection

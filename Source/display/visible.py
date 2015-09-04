@@ -1071,10 +1071,10 @@ class Visible(object):
                     partialGhost = True
                     break
             ghosting = self.display.ghostingOpacity()
-            if partialGhost:
-                opacity = opacity * (ghosting + (1.0 - ghosting) / 2.0)
-            elif self.display.hideUnselectedNeurons() and (isinstance(self.client, Neuron) or isinstance(self.client, Arborization)):
+            if self.display.hideUnselectedNeurons() and (isinstance(self.client, Neuron) or isinstance(self.client, Arborization)):
                 opacity = 0
+            elif partialGhost:
+                opacity = opacity * (ghosting + (1.0 - ghosting) / 2.0)
             else:
                 opacity = opacity * ghosting
         
