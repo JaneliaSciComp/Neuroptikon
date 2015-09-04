@@ -3,7 +3,7 @@
 
 
 #ifndef APP_VERSION
-#define APP_VERSION "1.0.0rc13"
+#define APP_VERSION "1.0.0rc14"
 #endif
 
 [Setup]

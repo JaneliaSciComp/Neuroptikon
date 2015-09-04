@@ -2284,8 +2284,6 @@ class Display(wx.glcanvas.GLCanvas):
         if self._hideUnselectedNeurons and fromclick == True and len(visibles):
             visibles = [visible for visible in visibles if visible.getCurrentOpacity() != 0]
 
-        print "here i am"
-
         if findShortestPath:
             # Add the visibles that exist along the path to the selection.
             pathWasFound = False
