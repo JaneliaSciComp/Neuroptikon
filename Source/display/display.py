@@ -1491,6 +1491,9 @@ class Display(wx.glcanvas.GLCanvas):
         if value != self._hideUnselectedNeurons:
             self._hideUnselectedNeurons = value
             dispatcher.send(('set', 'hideUnselectedNeurons'))
+            reselectedVisibles = set(self.selectedVisibles)
+            self.selectVisibles([])
+            self.selectVisibles(reselectedVisibles)
             self.Refresh()
 
     def setShowNeuronNamesOnSelection(self, show):
