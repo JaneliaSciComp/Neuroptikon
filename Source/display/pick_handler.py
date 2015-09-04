@@ -176,13 +176,13 @@ class PickHandler(osgGA.GUIEventHandler):
                         if (visible in self._display.highlightedVisibles or visible in self._display.animatedVisibles) and (deepestVisible is None or deepestVisible in visible.ancestors()):
                             deepestVisible = visible
                     if deepestVisible is not None:
-                        self._display.selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)
+                        self._display.selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath, fromclick=True)
                         return True
                 deepestVisible = None
                 for distance_, visible in visibleHits:
                     if deepestVisible is None or deepestVisible in visible.ancestors():
                         deepestVisible = visible
-                self._display.selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath)
+                self._display.selectVisibles([deepestVisible], self._display.selectionShouldExtend, self._display.findShortestPath, fromclick=True)
             else:
                 self._display.selectVisibles([])
         return True

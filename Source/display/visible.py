@@ -11,6 +11,7 @@ import neuroptikon
 from network.object import Object
 from network.region import Region
 from network.neuron import Neuron
+from network.arborization import Arborization
 from network.neurite import Neurite # pylint: disable=E0611,F0401
 from network.stimulus import Stimulus
 from network.attribute import Attribute
@@ -82,6 +83,7 @@ class Visible(object):
         self._shape = None
         self._color = (0.5, 0.5, 0.5)
         self._opacity = 1.0
+        self._currentOpacity = 1.0
         
         self._dependencies = set()
         self.dependentVisibles = set()
@@ -1071,10 +1073,13 @@ class Visible(object):
             ghosting = self.display.ghostingOpacity()
             if partialGhost:
                 opacity = opacity * (ghosting + (1.0 - ghosting) / 2.0)
+            elif self.display.hideUnselectedNeurons() and (isinstance(self.client, Neuron) or isinstance(self.client, Arborization)):
+                opacity = 0
             else:
                 opacity = opacity * ghosting
         
         if self._shape:
+            self._currentOpacity = opacity
             self._shape.setColor(list(self._color) + [opacity])
             stateSet1 = self._shapeGeode.getOrCreateStateSet()
             if opacity == 1.0:
@@ -1134,9 +1139,10 @@ class Visible(object):
         """
         Return the opacity of the visualized :class:`object <Network.Object.Object>`.
         """
-        
         return self._opacity
-    
+
+    def getCurrentOpacity(self):
+        return self._currentOpacity
     
     def _updateTransform(self):
         if isinstance(self._shape, (UnitShape, type(None))):

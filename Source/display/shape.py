@@ -96,6 +96,10 @@ class Shape(object):
         self._geometry.setColorArray(Shape.vectorArrayFromList([color]))
         self._geometry.setColorBinding(osg.Geometry.BIND_OVERALL)
         self._geometry.dirtyDisplayList()
+
+    # TODO: the world is not ready to iterate over osg:Arrays
+    # def getColor(self):
+    #     return self._geometry.getColorArray()
     
     
     def persistentAttributes(self):

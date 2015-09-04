@@ -2268,7 +2268,7 @@ class Display(wx.glcanvas.GLCanvas):
         return False
     
     
-    def selectVisibles(self, visibles, extend = False, findShortestPath = False):
+    def selectVisibles(self, visibles, extend = False, findShortestPath = False, fromclick=False):
         """
         Select the indicated :class:`visible proxies <display.visible.Visible>`.
         
@@ -2280,6 +2280,9 @@ class Display(wx.glcanvas.GLCanvas):
             newSelection = set(self.selectedVisibles)
         else:
             newSelection = set()
+        if self._hideUnselectedNeurons and fromclick == True and len(visibles):
+            visibles = [visible for visible in visibles if visible.getCurrentOpacity() != 0]
+
         if findShortestPath:
             # Add the visibles that exist along the path to the selection.
             pathWasFound = False
