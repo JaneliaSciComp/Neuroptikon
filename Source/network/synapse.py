@@ -13,7 +13,7 @@ except ImportError:
 
 
 class Synapse(NeuroObject):
-    def __init__(self, network, preSynapticNeurite = None, postSynapticPartners = [], activation = None, *args, **keywords):
+    def __init__(self, network, preSynapticNeurite = None, postSynapticPartners = [], activation = None, region = None, *args, **keywords):
         """
         A Synapse object represents a chemical synapse between a single pre-synaptic neurite and one or more post-synaptic neurites.
         
@@ -28,6 +28,8 @@ class Synapse(NeuroObject):
         self.preSynapticNeurite = preSynapticNeurite
         self.postSynapticPartners = postSynapticPartners
         self.activation = activation
+        # Validate that region is actually a region
+        self.regionLocation = region
     
     
     def defaultName(self):
@@ -124,13 +126,13 @@ class Synapse(NeuroObject):
     def _defaultVisualizationParams(cls):
         params = NeuroObject._defaultVisualizationParams()
         params['shape'] = 'Line' if hasattr(osgUtil, 'PolytopeIntersector') else 'Cylinder'
-        params['color'] = (0.0, 0.0, 1.0)
+        params['color'] = (1.0, 0.5, 1.0)
         return params
     
     
     def defaultVisualizationParams(self):
         params = self.__class__._defaultVisualizationParams()
-        params['color'] = (1.0, 0.0, 0.0) if self.activation == 'inhibitory' else (0.0, 0.0, 1.0)
+        params['color'] = (1.0, 0.0, 0.0) if self.activation == 'inhibitory' else (1.0, 0.5, 1.0)
         if any(self.postSynapticPartners):
             postSynapticObject = self.postSynapticPartners[0]
             if type(postSynapticObject).__name__ == 'Neurite':
