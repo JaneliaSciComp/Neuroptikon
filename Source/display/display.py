@@ -25,6 +25,7 @@ from network.arborization import Arborization
 from network.stimulus import Stimulus
 from network.neuron import Neuron
 from network.object_list import ObjectList
+from network.synapse import Synapse
 from visible import Visible
 import layout as layout_module
 from shape import Shape
@@ -77,6 +78,7 @@ class Display(wx.glcanvas.GLCanvas):
         self._showNeuronNamesOnSelection = False
         self._printNeuronNamesOnSelection = False
         self._hideUnselectedNeurons = False
+        self._hideSynapsesOnConnections = True
         self._labelsFloatOnTop = False
         self._showFlow = False
         self._highlightOnlyWithinSelection = False
@@ -382,6 +384,7 @@ class Display(wx.glcanvas.GLCanvas):
         displayElement.set('showNeuronNames', 'true' if self._showNeuronNames else 'false')
         displayElement.set('showNeuronNamesOnSelection', 'true' if self._showNeuronNamesOnSelection else 'false')
         displayElement.set('hideUnselectedNeurons', 'true' if self._hideUnselectedNeurons else 'false')
+        displayElement.set('hideSynapsesOnConnections', 'true' if self._hideSynapsesOnConnections else 'false')
         displayElement.set('showFlow', 'true' if self._showFlow else 'false')
         displayElement.set('useGhosting', 'true' if self._useGhosts else 'false')
         displayElement.set('ghostingOpacity', str(self._ghostingOpacity))
@@ -414,6 +417,7 @@ class Display(wx.glcanvas.GLCanvas):
         scriptFile.write(displayRef + '.setShowNeuronNamesOnSelection(' + str(self._showNeuronNamesOnSelection) + ')\n')
         scriptFile.write(displayRef + '.setPrintNeuronNamesOnSelection(' + str(self._showNeuronNamesOnSelection) + ')\n')
         scriptFile.write(displayRef + '.setHideUnselectedNeurons(' + str(self._hideUnselectedNeurons) + ')\n')
+        scriptFile.write(displayRef + '.setHideSynapsesOnConnections(' + str(self._hideSynapsesOnConnections) + ')\n')
         scriptFile.write(displayRef + '.setShowFlow(' + str(self._showFlow) + ')\n')
         scriptFile.write(displayRef + '.setUseGhosts(' + str(self._useGhosts) + ')\n')
         scriptFile.write(displayRef + '.setGhostingOpacity(' + str(self._ghostingOpacity) + ')\n')
@@ -1408,10 +1412,10 @@ class Display(wx.glcanvas.GLCanvas):
                 if self.autoVisualize:
                     for networkObject in network.objects:
                         if not networkObject.parentObject():
-                            self.visualizeObject(networkObject)
+                            if not (isinstance(addedObject, Synapse) and self.hideSynapsesOnConnections()):
+                                self.visualizeObject(networkObject)
                 
                 dispatcher.connect(receiver=self._networkChanged, signal=dispatcher.Any, sender=self.network)
-            
             dispatcher.send(('set', 'network'), self)
         
     
@@ -1421,11 +1425,22 @@ class Display(wx.glcanvas.GLCanvas):
         if signal == 'addition' and self.autoVisualize:
             for addedObject in affectedObjects:
                 if not addedObject.parentObject():
-                    self.visualizeObject(addedObject)
+                    # TODO if object is synapse and not display synapse is on then don't add to visualize object
+                    if not (isinstance(addedObject, Synapse) and self.hideSynapsesOnConnections()):
+                        self.visualizeObject(addedObject)
             self.Refresh()
         elif signal == 'deletion':
             for removedObject in affectedObjects:
                 self.removeObject(removedObject)
+        elif signal == 'hideSynapsesOnConnections':
+            # If we hide/show synapses we need to add or delete them from visibles
+            if self.autoVisualize:
+                for networkObject in self.network.objects:
+                    if isinstance(networkObject, Synapse):
+                        if self.hideSynapsesOnConnections():
+                            self.removeObject(networkObject)
+                        else:
+                            self.visualizeObject(networkObject)
         else:
             pass    # TODO: anything?
         self.GetTopLevelParent().setModified(True)
@@ -1492,6 +1507,21 @@ class Display(wx.glcanvas.GLCanvas):
             self._hideUnselectedNeurons = value
             dispatcher.send(('set', 'hideUnselectedNeurons'))
             self.selectVisibles(self.selectedVisibles, reselect=True)
+            self.Refresh()
+
+    def hideSynapsesOnConnections(self):
+        """
+        Returns whether to hide unselected neurons (when at least one item is selected).
+        """
+        return self._hideSynapsesOnConnections
+
+    def setHideSynapsesOnConnections(self, value):
+        """
+        Set whether to hide hide unselected neurons when at least one other item is selected.
+        """
+        if value != self._hideSynapsesOnConnections:
+            self._hideSynapsesOnConnections = value
+            dispatcher.send('hideSynapsesOnConnections', self.network)
             self.Refresh()
 
     def setShowNeuronNamesOnSelection(self, show):
