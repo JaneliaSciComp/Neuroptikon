@@ -459,21 +459,14 @@ class Neuron(NeuroObject):
         """
         Searches for post-synaptic sites
         """
-        from re import search
         # limit synapse to where neuron is presynaptic
-        synapses = [connection for connection in self.connections() if isinstance(connection, Synapse) and connection.preSynapticNeuron() == self]
-        if preRegion:
-            synapses = [synapse for synapse in synapses if search(preRegion, synapse.preSynapticRegion)]
-        if postRegion:
-            synapses = [synapse for synapse in synapses if search(postRegion, synapse.postSynapticRegion)]
-        if activation:
-            synapses = [synapse for synapse in synapses if synapse.activation == activation]
+        synapses = [connection for connection in self.synapses() if connection.preSynapticNeuron() == self]
+        synapses = self._filterSynapsesForSearch(synapses, preRegion = preRegion, postRegion = postRegion, activation = activation)
         # get post synaptic neurons
         neurons = []
         for synapse in synapses:
             neurons.extend(synapse.postSynapticNeurons())
-        if neurotransmitter:
-            neurons = [neuron for neuron in neurons if neurotransmitter in neuron.neurotransmitters]
+        neurons = self._filterNeuronsForSearch(neurons, neurotransmitter=neurotransmitter, name=postNeuron)
         return neurons
 
     def searchPre(self, preRegion = None, postRegion = None, preNeuron = None, activation = None, neurotransmitter = None):
@@ -481,22 +474,36 @@ class Neuron(NeuroObject):
         Searches for pre-synaptic sites
         """
         # limit synapse to where neuron is postsynaptic
-        synapses = [connection for connection in self.connections() if isinstance(connection, Synapse) and self in connection.postSynapticNeurons()]
-        # Filter synapses 
-        if preRegion:
-            synapses = [synapse for synapse in synapses if search(preRegion, synapse.preSynapticRegion)]
-        if postRegion:
-            synapses = [synapse for synapse in synapses if search(postRegion, synapse.postSynapticRegion)]
-        if activation:
-            synapses = [synapse for synapse in synapses if synapse.activation == activation]
+        synapses = [connection for connection in self.synapses() if self in connection.postSynapticNeurons()]
+        synapses = self._filterSynapsesForSearch(synapses, preRegion = preRegion, postRegion = postRegion, activation = activation)
         # get pre synaptic neurons
         neurons = []
         for synapse in synapses:
             neurons.append(synapse.preSynapticNeuron())
+        neurons = self._filterNeuronsForSearch(neurons, neurotransmitter = neurotransmitter, name = preNeuron)
+        return neurons
+
+
+    def _filterNeuronsForSearch(self, neurons, neurotransmitter = None, name = None):
+        from re import search
         if neurotransmitter:
             neurons = [neuron for neuron in neurons if neurotransmitter in neuron.neurotransmitters]
+        if name:
+            neurons = [neuron for neuron in neurons if search(name, neuron.name)]
         return neurons
-    
+
+
+    def _filterSynapsesForSearch(self, synapses, preRegion = None, postRegion = None, activation = None):
+        from re import search
+        if preRegion:
+            synapses = [synapse for synapse in synapses if synapse.preSynapticRegion and search(preRegion, synapse.preSynapticRegion.name)]
+        if postRegion:
+            synapses = [synapse for synapse in synapses if synapse.postSynapticRegion and search(postRegion, synapse.postSynapticRegion.name)]
+        if activation:
+            synapses = [synapse for synapse in synapses if synapse.activation and synapse.activation == activation]
+        return synapses
+
+
     @classmethod
     def _defaultVisualizationParams(cls):
         params = NeuroObject._defaultVisualizationParams()

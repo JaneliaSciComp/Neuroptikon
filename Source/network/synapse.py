@@ -13,7 +13,7 @@ except ImportError:
 
 
 class Synapse(NeuroObject):
-    def __init__(self, network, preSynapticNeurite = None, postSynapticPartners = [], activation = None, presynapticRegion = None, postsynapticRegion = None, *args, **keywords):
+    def __init__(self, network, preSynapticNeurite = None, postSynapticPartners = [], activation = None, preSynapticRegion = None, postSynapticRegion = None, *args, **keywords):
         """
         A Synapse object represents a chemical synapse between a single pre-synaptic neurite and one or more post-synaptic neurites.
         
@@ -28,8 +28,8 @@ class Synapse(NeuroObject):
         self.preSynapticNeurite = preSynapticNeurite
         self.postSynapticPartners = postSynapticPartners
         self.activation = activation
-        self.preSynapticRegion = presynapticRegion
-        self.postSynapticRegion = postsynapticRegion
+        self.preSynapticRegion = preSynapticRegion
+        self.postSynapticRegion = postSynapticRegion
     
     
     def defaultName(self):
