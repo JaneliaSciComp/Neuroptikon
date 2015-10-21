@@ -454,7 +454,48 @@ class Neuron(NeuroObject):
         """
         
         return function in self._functions
-    
+
+    def searchPost(self, preRegion = None, postRegion = None, postNeuron = None, activation = None, neurotransmitter = None):
+        """
+        Searches for post-synaptic sites
+        """
+        from re import search
+        # limit synapse to where neuron is presynaptic
+        synapses = [connection for connection in self.connections() if isinstance(connection, Synapse) and connection.preSynapticNeuron() == self]
+        if preRegion:
+            synapses = [synapse for synapse in synapses if search(preRegion, synapse.preSynapticRegion)]
+        if postRegion:
+            synapses = [synapse for synapse in synapses if search(postRegion, synapse.postSynapticRegion)]
+        if activation:
+            synapses = [synapse for synapse in synapses if synapse.activation == activation]
+        # get post synaptic neurons
+        neurons = []
+        for synapse in synapses:
+            neurons.extend(synapse.postSynapticNeurons())
+        if neurotransmitter:
+            neurons = [neuron for neuron in neurons if neurotransmitter in neuron.neurotransmitters]
+        return neurons
+
+    def searchPre(self, preRegion = None, postRegion = None, preNeuron = None, activation = None, neurotransmitter = None):
+        """
+        Searches for pre-synaptic sites
+        """
+        # limit synapse to where neuron is postsynaptic
+        synapses = [connection for connection in self.connections() if isinstance(connection, Synapse) and self in connection.postSynapticNeurons()]
+        # Filter synapses 
+        if preRegion:
+            synapses = [synapse for synapse in synapses if search(preRegion, synapse.preSynapticRegion)]
+        if postRegion:
+            synapses = [synapse for synapse in synapses if search(postRegion, synapse.postSynapticRegion)]
+        if activation:
+            synapses = [synapse for synapse in synapses if synapse.activation == activation]
+        # get pre synaptic neurons
+        neurons = []
+        for synapse in synapses:
+            neurons.append(synapse.preSynapticNeuron())
+        if neurotransmitter:
+            neurons = [neuron for neuron in neurons if neurotransmitter in neuron.neurotransmitters]
+        return neurons
     
     @classmethod
     def _defaultVisualizationParams(cls):

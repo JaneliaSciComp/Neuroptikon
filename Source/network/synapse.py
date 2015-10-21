@@ -13,7 +13,7 @@ except ImportError:
 
 
 class Synapse(NeuroObject):
-    def __init__(self, network, preSynapticNeurite = None, postSynapticPartners = [], activation = None, region = None, *args, **keywords):
+    def __init__(self, network, preSynapticNeurite = None, postSynapticPartners = [], activation = None, presynapticRegion = None, postsynapticRegion = None, *args, **keywords):
         """
         A Synapse object represents a chemical synapse between a single pre-synaptic neurite and one or more post-synaptic neurites.
         
@@ -28,8 +28,8 @@ class Synapse(NeuroObject):
         self.preSynapticNeurite = preSynapticNeurite
         self.postSynapticPartners = postSynapticPartners
         self.activation = activation
-        # Validate that region is actually a region
-        self.regionLocation = region
+        self.preSynapticRegion = presynapticRegion
+        self.postSynapticRegion = postsynapticRegion
     
     
     def defaultName(self):
@@ -41,7 +41,7 @@ class Synapse(NeuroObject):
         names.sort()
         return str(self.preSynapticNeurite.neuron().name) + ' -> ' + ', '.join(names)
     
-    
+
     @classmethod
     def _fromXMLElement(cls, network, xmlElement):
         synapse = super(Synapse, cls)._fromXMLElement(network, xmlElement)
@@ -115,6 +115,19 @@ class Synapse(NeuroObject):
     def outputs(self, recurse = True):
         return NeuroObject.outputs(self, recurse) + self.postSynapticPartners
     
+
+    def preSynapticNeuron(self):
+        return self.preSynapticNeurite.neuron()
+
+
+    def postSynapticNeurons(self):
+        postNeurons = []
+        for postPartner in self.postSynapticPartners:
+            if type(postPartner).__name__ == 'Neurite':
+                postPartner = postPartner.neuron()
+            postNeurons.append(postPartner)
+        return postNeurons
+        
     
     def disconnectFromNetwork(self):
         self.preSynapticNeurite._synapses.remove(self)
