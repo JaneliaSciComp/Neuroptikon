@@ -200,17 +200,17 @@ class Display(wx.glcanvas.GLCanvas):
         self.rootStateSet.addUniform(self.defaultFlowToColorUniform)
         self.defaultFlowFromColorUniform = osg.Uniform('flowFromColor', osg.Vec4f(*self.defaultFlowColor))
         self.rootStateSet.addUniform(self.defaultFlowFromColorUniform)
-        self.defaultFlowSpacing = 0.05   # Distance between pulses
+        self.defaultFlowSpacing = 0.2   # Distance between pulses
         self.defaultFlowToSpacingUniform = osg.Uniform('flowToSpacing', self.defaultFlowSpacing)
         self.rootStateSet.addUniform(self.defaultFlowToSpacingUniform)
         self.defaultFlowFromSpacingUniform = osg.Uniform('flowFromSpacing', self.defaultFlowSpacing)
         self.rootStateSet.addUniform(self.defaultFlowFromSpacingUniform)
-        self.defaultFlowSpeed = 0.05     # Pulse speed 
+        self.defaultFlowSpeed = 0.08     # Pulse speed 
         self.defaultFlowToSpeedUniform = osg.Uniform('flowToSpeed', self.defaultFlowSpeed)
         self.rootStateSet.addUniform(self.defaultFlowToSpeedUniform)
         self.defaultFlowFromSpeedUniform = osg.Uniform('flowFromSpeed', self.defaultFlowSpeed)
         self.rootStateSet.addUniform(self.defaultFlowFromSpeedUniform)
-        self.defaultFlowSpread = 0.5    # The pulse should cover 50% of the path
+        self.defaultFlowSpread = 0.9    # The pulse should cover 50% of the path
         self.defaultFlowToSpreadUniform = osg.Uniform('flowToSpread', self.defaultFlowSpread)
         self.rootStateSet.addUniform(self.defaultFlowToSpreadUniform)
         self.defaultFlowFromSpreadUniform = osg.Uniform('flowFromSpread', self.defaultFlowSpread)
